@@ -1,0 +1,17 @@
+[package]
+name = "accidental-synth"
+version = "0.1.0"
+description = "Accidental Synthesizer"
+authors = ["Dave White"]
+license = "Apache-2.0"
+edition = "2024"
+publish = false
+
+[profile.release]
+debug = false
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[dependencies]
