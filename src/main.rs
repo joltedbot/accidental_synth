@@ -1,3 +1,11 @@
+use log::info;
+
 fn main() {
-    println!("Accidental Synthesizer!");
+    env_logger::init();
+    info!("Starting Accidental Synthesizer");
+
+    
+
+
+    info!("Accidental Synthesizer Shutting Down");
 }
