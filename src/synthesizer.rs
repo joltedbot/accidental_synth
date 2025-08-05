@@ -1,8 +1,11 @@
 use crate::audio::default_audio_output_device;
+use crate::midi::MidiMessage;
 use crate::synthesizer::sine::Sine;
 use anyhow::Result;
 use cpal::traits::DeviceTrait;
 use cpal::{Device, Stream};
+use crossbeam_channel::Receiver;
+use std::thread;
 
 mod sine;
 
@@ -13,17 +16,29 @@ pub struct Synthesizer {
 impl Synthesizer {
     pub fn new() -> Self {
         log::info!("Constructing Synthesizer Module");
+
         Self {
             output_stream: None,
         }
     }
 
-    pub fn run(&mut self) -> Result<()> {
-        log::debug!("Running Synthesizer Module");
-
+    pub fn run(&mut self, midi_message_receiver: Receiver<MidiMessage>) -> Result<()> {
+        log::info!("Creating synthesizer audio stream");
         let output_audio_device = default_audio_output_device()?;
         let stream = self.create_synthesizer(output_audio_device)?;
         self.output_stream = Some(stream);
+        log::debug!("run(): The synthesizer audio stream has been created");
+
+        thread::spawn(move || {
+            log::debug!("run(): spawned thread to receive MIDI events");
+
+            while let Ok(event) = midi_message_receiver.recv() {
+                // TODO
+                log::debug!("run(): Received event: {event:?}");
+            }
+
+            log::debug!("run(): MIDI event receiver thread has exited");
+        });
 
         Ok(())
     }
@@ -37,11 +52,12 @@ impl Synthesizer {
         let mut sine_wave_generator = Sine::new(sample_rate);
         let tone_frequency = 440.0;
 
-        log::debug!(
-            "Creating Synthesizer Steam on device: {} with sample rate: {}",
+        log::info!(
+            "Creating the synthesizer audio output stream for device {} with sample rate: {}",
             output_device.name().unwrap_or("Unknown".to_string()),
             sample_rate
         );
+
         let stream = output_device.build_output_stream(
             &default_device_stream_config,
             move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
@@ -52,7 +68,7 @@ impl Synthesizer {
                 }
             },
             |err| {
-                log::error!("Audio:run: Error in audio output stream: {err}");
+                log::error!("create_synthesizer(): Error in audio output stream: {err}");
             },
             None,
         )?;

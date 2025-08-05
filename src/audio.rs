@@ -1,6 +1,6 @@
 use anyhow::{Result, anyhow};
 use cpal::traits::{DeviceTrait, HostTrait};
-use cpal::{Device, Stream, default_host};
+use cpal::{Device, default_host};
 use thiserror::Error;
 
 #[derive(Debug, Clone, Error, PartialEq, Eq)]
@@ -23,13 +23,13 @@ pub fn default_audio_output_device() -> Result<Device> {
     match default_output_device {
         Some(device) => {
             log::debug!(
-                "Audio:default_audio_output_device: Using default audio output device: {}",
+                "default_audio_output_device(): Using default audio output device: {}",
                 device.name().unwrap_or("Unknown".to_string())
             );
             Ok(device)
         }
         None => {
-            log::error!("Audio:default_audio_output_device: No default audio output device found.");
+            log::error!("default_audio_output_device(): No default audio output device found.");
             Err(anyhow!(AudioError::NoAudioOutputDevices))
         }
     }
