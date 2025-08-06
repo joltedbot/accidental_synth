@@ -1,8 +1,8 @@
 use crate::synthesizer::Synthesizer;
 
 mod audio;
-mod envelope;
 mod midi;
+mod modules;
 mod synthesizer;
 
 fn main() {

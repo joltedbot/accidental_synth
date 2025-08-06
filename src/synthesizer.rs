@@ -2,8 +2,9 @@ mod constants;
 mod sine;
 
 use crate::audio::default_audio_output_device;
-use crate::envelope::*;
 use crate::midi::MidiMessage;
+use crate::modules::amplifier::*;
+use crate::modules::envelope::*;
 use crate::synthesizer::constants::*;
 use crate::synthesizer::sine::Sine;
 use anyhow::Result;
@@ -66,10 +67,10 @@ impl Synthesizer {
         let number_of_channels = default_device_stream_config.channels as usize;
 
         let mut envelope = Envelope::new(sample_rate);
-        envelope.set_attack_milliseconds(300);
-        envelope.set_decay_milliseconds(100);
+        envelope.set_attack_milliseconds(500);
+        envelope.set_decay_milliseconds(400);
         envelope.set_sustain_level(0.8);
-        envelope.set_release_milliseconds(300);
+        envelope.set_release_milliseconds(500);
         let amp_envelope_arc = Arc::new(Mutex::new(envelope));
         log::debug!("create_synthesizer(): Amp envelope created");
 
@@ -100,7 +101,8 @@ impl Synthesizer {
 
                 for frame in buffer.chunks_mut(number_of_channels) {
                     let sine_sample = sine_wave_generator.next_sample(note_frequency, None);
-                    let output_sample = controllable_amplifier(sine_sample, amp_envelope.next());
+                    let output_sample =
+                        controllable_amplifier(sine_sample, Some(amp_envelope.next()), None);
 
                     frame[0] = output_sample;
                     frame[1] = output_sample;
@@ -147,8 +149,6 @@ fn start_midi_event_listener(
                         .lock()
                         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-                    parameters.current_note.1 = NOTE_REST_VELOCITY;
-
                     let mut midi_events = midi_event_arc
                         .lock()
                         .unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -175,8 +175,4 @@ fn action_midi_events(midi_events: Option<MidiEvent>, amp_envelope: &mut MutexGu
         }
         None => {}
     }
-}
-
-fn controllable_amplifier(sample: f32, control_value: f32) -> f32 {
-    sample * control_value
 }

@@ -9,15 +9,6 @@ pub enum AudioError {
     NoAudioOutputDevices,
 }
 
-pub struct Audio {}
-
-impl Audio {
-    pub fn new() -> Self {
-        log::info!("Constructing Audio Module");
-        Self {}
-    }
-}
-
 pub fn default_audio_output_device() -> Result<Device> {
     let default_output_device = default_host().default_output_device();
     match default_output_device {
