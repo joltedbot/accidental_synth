@@ -2,6 +2,7 @@ mod constants;
 mod sine;
 
 use crate::audio::default_audio_output_device;
+use crate::envelope::*;
 use crate::midi::MidiMessage;
 use crate::synthesizer::constants::*;
 use crate::synthesizer::sine::Sine;
@@ -9,10 +10,16 @@ use anyhow::Result;
 use cpal::traits::DeviceTrait;
 use cpal::{Device, Stream};
 use crossbeam_channel::Receiver;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
 
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum MidiEvent {
+    NoteOn,
+    NoteOff,
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 struct Parameters {
     current_note: (f32, u8),
 }
@@ -20,42 +27,53 @@ struct Parameters {
 pub struct Synthesizer {
     output_stream: Option<Stream>,
     parameters: Arc<Mutex<Parameters>>,
+    midi_events: Arc<Mutex<Option<MidiEvent>>>,
 }
 
 impl Synthesizer {
     pub fn new() -> Self {
         log::info!("Constructing Synthesizer Module");
-
         let parameters = Parameters::default();
 
         Self {
             parameters: Arc::new(Mutex::new(parameters)),
             output_stream: None,
+            midi_events: Arc::new(Mutex::new(None)),
         }
     }
 
     pub fn run(&mut self, midi_message_receiver: Receiver<MidiMessage>) -> Result<()> {
         log::info!("Creating the synthesizer audio stream");
         let output_audio_device = default_audio_output_device()?;
-        let stream = self.create_synthesizer(output_audio_device)?;
-        self.output_stream = Some(stream);
+        self.output_stream = Some(self.create_synthesizer(output_audio_device)?);
         log::debug!("run(): The synthesizer audio stream has been created");
 
         let parameters_arc = self.parameters.clone();
+        let midi_event_arc = self.midi_events.clone();
 
         log::debug!("run(): Start the midi event listener thread");
-        start_midi_event_listener(midi_message_receiver, parameters_arc);
+        start_midi_event_listener(midi_message_receiver, parameters_arc, midi_event_arc);
 
         Ok(())
     }
 
     fn create_synthesizer(&mut self, output_device: Device) -> Result<Stream> {
+        let parameters_arc = self.parameters.clone();
+        let midi_events_arc = self.midi_events.clone();
+
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
         let number_of_channels = default_device_stream_config.channels as usize;
-        let parameters_arc = self.parameters.clone();
 
-        // Temporary testing wave generator. Should be replaced by a proper oscillator module
+        let mut envelope = Envelope::new(sample_rate);
+        envelope.set_attack_milliseconds(300);
+        envelope.set_decay_milliseconds(100);
+        envelope.set_sustain_level(0.8);
+        envelope.set_release_milliseconds(300);
+        let amp_envelope_arc = Arc::new(Mutex::new(envelope));
+        log::debug!("create_synthesizer(): Amp envelope created");
+
+        // TODO - Implement a proper oscillator module with the required controls
         let mut sine_wave_generator = Sine::new(sample_rate);
 
         log::info!(
@@ -70,14 +88,19 @@ impl Synthesizer {
                 let parameters = parameters_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
+                let mut midi_events = midi_events_arc
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                let mut amp_envelope = amp_envelope_arc
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
 
                 let (note_frequency, velocity) = parameters.current_note;
+                action_midi_events(midi_events.take(), &mut amp_envelope);
 
                 for frame in buffer.chunks_mut(number_of_channels) {
                     let sine_sample = sine_wave_generator.next_sample(note_frequency, None);
-
-                    let output_sample =
-                        controllable_amplifier(sine_sample, velocity as f32 / 127.0);
+                    let output_sample = controllable_amplifier(sine_sample, amp_envelope.next());
 
                     frame[0] = output_sample;
                     frame[1] = output_sample;
@@ -89,6 +112,8 @@ impl Synthesizer {
             None,
         )?;
 
+        log::info!("Synthesizer audio output stream was successfully created.");
+
         Ok(stream)
     }
 }
@@ -96,6 +121,7 @@ impl Synthesizer {
 fn start_midi_event_listener(
     midi_message_receiver: Receiver<MidiMessage>,
     parameters_arc: Arc<Mutex<Parameters>>,
+    midi_event_arc: Arc<Mutex<Option<MidiEvent>>>,
 ) {
     thread::spawn(move || {
         log::debug!("run(): spawned thread to receive MIDI events");
@@ -109,9 +135,25 @@ fn start_midi_event_listener(
 
                     parameters.current_note =
                         (MIDI_NOTE_FREQUENCIES[note_number as usize].0, velocity);
+
+                    let mut midi_events = midi_event_arc
+                        .lock()
+                        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+                    *midi_events = Some(MidiEvent::NoteOn);
                 }
                 MidiMessage::NoteOff => {
-                    // TODO - Needs to trigger the amp envelope release stage
+                    let mut parameters = parameters_arc
+                        .lock()
+                        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+                    parameters.current_note.1 = NOTE_REST_VELOCITY;
+
+                    let mut midi_events = midi_event_arc
+                        .lock()
+                        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+                    *midi_events = Some(MidiEvent::NoteOff);
                 }
                 MidiMessage::ControlChange(control_number, value) => {
                     //TODO
@@ -121,6 +163,18 @@ fn start_midi_event_listener(
 
         log::debug!("run(): MIDI event receiver thread has exited");
     });
+}
+
+fn action_midi_events(midi_events: Option<MidiEvent>, amp_envelope: &mut MutexGuard<Envelope>) {
+    match midi_events {
+        Some(MidiEvent::NoteOn) => {
+            amp_envelope.start();
+        }
+        Some(MidiEvent::NoteOff) => {
+            amp_envelope.stop();
+        }
+        None => {}
+    }
 }
 
 fn controllable_amplifier(sample: f32, control_value: f32) -> f32 {

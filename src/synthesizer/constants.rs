@@ -1,4 +1,3 @@
-pub const NOTE_REST_FREQUENCY: f32 = 0.0;
 pub const NOTE_REST_VELOCITY: u8 = 0;
 
 pub const MIDI_NOTE_FREQUENCIES: [(f32, &str); 128] = [

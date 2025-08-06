@@ -1,6 +1,7 @@
 use crate::synthesizer::Synthesizer;
 
 mod audio;
+mod envelope;
 mod midi;
 mod synthesizer;
 
