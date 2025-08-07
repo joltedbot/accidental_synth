@@ -1,12 +1,11 @@
 mod constants;
-mod sine;
 
-use crate::audio::default_audio_output_device;
 use crate::midi::MidiMessage;
-use crate::modules::amplifier::*;
-use crate::modules::envelope::*;
+use crate::modules::amplifier::controllable_amplifier;
+use crate::modules::envelope::Envelope;
+use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::synthesizer::constants::*;
-use crate::synthesizer::sine::Sine;
+
 use anyhow::Result;
 use cpal::traits::DeviceTrait;
 use cpal::{Device, Stream};
@@ -20,33 +19,45 @@ enum MidiEvent {
     NoteOff,
 }
 
+struct Oscillators {
+    one: Oscillator,
+}
+
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 struct Parameters {
     current_note: (f32, u8),
 }
 
 pub struct Synthesizer {
+    sample_rate: u32,
+    audio_output_device: Device,
     output_stream: Option<Stream>,
     parameters: Arc<Mutex<Parameters>>,
     midi_events: Arc<Mutex<Option<MidiEvent>>>,
+    oscillators: Arc<Mutex<Oscillators>>,
 }
 
 impl Synthesizer {
-    pub fn new() -> Self {
+    pub fn new(audio_output_device: Device, sample_rate: u32) -> Self {
         log::info!("Constructing Synthesizer Module");
         let parameters = Parameters::default();
+        let oscillators = Oscillators {
+            one: Oscillator::new(sample_rate, WaveShape::Saw),
+        };
 
         Self {
+            sample_rate,
+            audio_output_device,
             parameters: Arc::new(Mutex::new(parameters)),
             output_stream: None,
             midi_events: Arc::new(Mutex::new(None)),
+            oscillators: Arc::new(Mutex::new(oscillators)),
         }
     }
 
     pub fn run(&mut self, midi_message_receiver: Receiver<MidiMessage>) -> Result<()> {
         log::info!("Creating the synthesizer audio stream");
-        let output_audio_device = default_audio_output_device()?;
-        self.output_stream = Some(self.create_synthesizer(output_audio_device)?);
+        self.output_stream = Some(self.create_synthesizer(self.audio_output_device.clone())?);
         log::debug!("run(): The synthesizer audio stream has been created");
 
         let parameters_arc = self.parameters.clone();
@@ -61,6 +72,7 @@ impl Synthesizer {
     fn create_synthesizer(&mut self, output_device: Device) -> Result<Stream> {
         let parameters_arc = self.parameters.clone();
         let midi_events_arc = self.midi_events.clone();
+        let oscillators_arc = self.oscillators.clone();
 
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
@@ -73,9 +85,6 @@ impl Synthesizer {
         envelope.set_release_milliseconds(500.0);
         let amp_envelope_arc = Arc::new(Mutex::new(envelope));
         log::debug!("create_synthesizer(): Amp envelope created");
-
-        // TODO - Implement a proper oscillator module with the required controls
-        let mut sine_wave_generator = Sine::new(sample_rate);
 
         log::info!(
             "Creating the synthesizer audio output stream for the device {} with sample rate: {}",
@@ -95,12 +104,15 @@ impl Synthesizer {
                 let mut amp_envelope = amp_envelope_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
+                let mut oscillator = oscillators_arc
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
 
                 let (note_frequency, velocity) = parameters.current_note;
                 action_midi_events(midi_events.take(), &mut amp_envelope);
 
                 for frame in buffer.chunks_mut(number_of_channels) {
-                    let sine_sample = sine_wave_generator.next_sample(note_frequency, None);
+                    let sine_sample = oscillator.one.next_sample(note_frequency, None);
                     let output_sample =
                         controllable_amplifier(sine_sample, None, Some(amp_envelope.next()));
 
@@ -145,7 +157,7 @@ fn start_midi_event_listener(
                     *midi_events = Some(MidiEvent::NoteOn);
                 }
                 MidiMessage::NoteOff => {
-                    let mut parameters = parameters_arc
+                    let parameters = parameters_arc
                         .lock()
                         .unwrap_or_else(|poisoned| poisoned.into_inner());
 

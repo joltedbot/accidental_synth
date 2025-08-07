@@ -185,7 +185,6 @@ fn message_type_from_status_byte(status: &u8) -> MessageType {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::modules::envelope::Envelope;
     use crossbeam_channel::internal::SelectHandle;
 
     #[test]

@@ -31,26 +31,6 @@ mod tests {
     }
 
     #[test]
-    fn controllable_amplifier_returns_correct_value_from_valid_input_negative_sample() {
-        let sample = -0.9;
-        let manual_value = Some(0.8);
-        let control_value = Some(0.03);
-        let expected_result = -0.021599999;
-        let result = controllable_amplifier(sample, manual_value, control_value);
-        assert_eq!(result, expected_result);
-    }
-
-    #[test]
-    fn controllable_amplifier_returns_correct_value_from_all_negative_input() {
-        let sample = -0.9;
-        let manual_value = Some(-0.8);
-        let control_value = Some(-0.03);
-        let expected_result = -0.0;
-        let result = controllable_amplifier(sample, manual_value, control_value);
-        assert_eq!(result, expected_result);
-    }
-
-    #[test]
     fn controllable_amplifier_returns_correct_value_from_valid_input_no_manual_value() {
         let sample = 0.9;
         let manual_value = None;

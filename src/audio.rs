@@ -9,7 +9,36 @@ pub enum AudioError {
     NoAudioOutputDevices,
 }
 
-pub fn default_audio_output_device() -> Result<Device> {
+pub struct Audio {
+    default_output_device: Device,
+    sample_rate: u32,
+}
+
+impl Audio {
+    pub fn new() -> Result<Self> {
+        log::info!("Constructing Audio Module");
+        let default_output_device = default_audio_output_device()?;
+        let sample_rate = default_output_device
+            .default_output_config()?
+            .sample_rate()
+            .0;
+
+        Ok(Self {
+            sample_rate,
+            default_output_device,
+        })
+    }
+
+    pub fn default_output_device(&self) -> Device {
+        self.default_output_device.clone()
+    }
+
+    pub fn sample_rate(&self) -> u32 {
+        self.sample_rate
+    }
+}
+
+fn default_audio_output_device() -> Result<Device> {
     let default_output_device = default_host().default_output_device();
     match default_output_device {
         Some(device) => {
