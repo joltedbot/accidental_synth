@@ -67,10 +67,10 @@ impl Synthesizer {
         let number_of_channels = default_device_stream_config.channels as usize;
 
         let mut envelope = Envelope::new(sample_rate);
-        envelope.set_attack_milliseconds(500);
-        envelope.set_decay_milliseconds(400);
+        envelope.set_attack_milliseconds(500.0);
+        envelope.set_decay_milliseconds(400.0);
         envelope.set_sustain_level(0.8);
-        envelope.set_release_milliseconds(500);
+        envelope.set_release_milliseconds(500.0);
         let amp_envelope_arc = Arc::new(Mutex::new(envelope));
         log::debug!("create_synthesizer(): Amp envelope created");
 

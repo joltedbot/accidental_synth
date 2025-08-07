@@ -185,6 +185,26 @@ fn message_type_from_status_byte(status: &u8) -> MessageType {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::modules::envelope::Envelope;
+    use crossbeam_channel::internal::SelectHandle;
+
+    #[test]
+    fn new_returns_midi_with_correct_default_values() {
+        let midi = Midi::new();
+
+        assert!(midi.input_listener.is_none());
+        assert!(midi.midi_message_sender.is_ready());
+        assert_eq!(
+            midi.midi_message_receiver.capacity(),
+            Some(MIDI_MESSAGE_CHANNEL_CAPACITY)
+        );
+        assert!(
+            midi.current_note
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner())
+                .is_none()
+        );
+    }
 
     #[test]
     fn message_type_from_status_byte_returns_correct_status_for_note_on_0_channel() {
@@ -219,7 +239,7 @@ mod tests {
     }
 
     #[test]
-    fn test_message_type_from_status_byte_edge_case_zero() {
+    fn message_type_from_status_byte_correctly_returns_unknown_from_zero_status_byte() {
         let status_byte = 0x00;
         let expected_result = MessageType::Unknown;
         let result = message_type_from_status_byte(&status_byte);
@@ -227,7 +247,7 @@ mod tests {
     }
 
     #[test]
-    fn test_message_type_from_status_byte_edge_case_max() {
+    fn message_type_from_status_byte_correctly_returns_unknown_from_max_status_byte() {
         let status_byte = 0xFF;
         let expected_result = MessageType::Unknown;
         let result = message_type_from_status_byte(&status_byte);
