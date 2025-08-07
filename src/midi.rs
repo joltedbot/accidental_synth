@@ -181,3 +181,56 @@ fn message_type_from_status_byte(status: &u8) -> MessageType {
         _ => MessageType::Unknown,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn message_type_from_status_byte_returns_correct_status_for_note_on_0_channel() {
+        let status_byte = 0x90;
+        let expected_result = MessageType::NoteOn;
+        let result = message_type_from_status_byte(&status_byte);
+        assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn message_type_from_status_byte_returns_correct_status_for_note_on_with_a_channel() {
+        let status_byte = 0x9A;
+        let expected_result = MessageType::NoteOn;
+        let result = message_type_from_status_byte(&status_byte);
+        assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn message_type_from_status_byte_returns_correct_status_for_control_change() {
+        let status_byte = 0xB3;
+        let expected_result = MessageType::ControlChange;
+        let result = message_type_from_status_byte(&status_byte);
+        assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn message_type_from_status_byte_returns_correct_status_for_unknown() {
+        let status_byte = 0x70; // Unknown/invalid status byte
+        let expected_result = MessageType::Unknown;
+        let result = message_type_from_status_byte(&status_byte);
+        assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn test_message_type_from_status_byte_edge_case_zero() {
+        let status_byte = 0x00;
+        let expected_result = MessageType::Unknown;
+        let result = message_type_from_status_byte(&status_byte);
+        assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn test_message_type_from_status_byte_edge_case_max() {
+        let status_byte = 0xFF;
+        let expected_result = MessageType::Unknown;
+        let result = message_type_from_status_byte(&status_byte);
+        assert_eq!(result, expected_result);
+    }
+}

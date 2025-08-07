@@ -102,7 +102,7 @@ impl Synthesizer {
                 for frame in buffer.chunks_mut(number_of_channels) {
                     let sine_sample = sine_wave_generator.next_sample(note_frequency, None);
                     let output_sample =
-                        controllable_amplifier(sine_sample, Some(amp_envelope.next()), None);
+                        controllable_amplifier(sine_sample, None, Some(amp_envelope.next()));
 
                     frame[0] = output_sample;
                     frame[1] = output_sample;

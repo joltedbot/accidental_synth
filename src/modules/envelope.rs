@@ -186,3 +186,8 @@ impl Envelope {
         range / (milliseconds as f32 / self.milliseconds_per_sample)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+}
