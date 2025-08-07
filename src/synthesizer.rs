@@ -25,7 +25,7 @@ struct Oscillators {
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 struct Parameters {
-    current_note: (f32, u8),
+    current_note: (f32, f32),
 }
 
 pub struct Synthesizer {
@@ -42,7 +42,7 @@ impl Synthesizer {
         log::info!("Constructing Synthesizer Module");
         let parameters = Parameters::default();
         let oscillators = Oscillators {
-            one: Oscillator::new(sample_rate, WaveShape::Saw),
+            one: Oscillator::new(sample_rate, WaveShape::Sine),
         };
 
         Self {
@@ -112,9 +112,13 @@ impl Synthesizer {
                 action_midi_events(midi_events.take(), &mut amp_envelope);
 
                 for frame in buffer.chunks_mut(number_of_channels) {
-                    let sine_sample = oscillator.one.next_sample(note_frequency, None);
+                    let oscillator_sample = oscillator.one.next_sample(note_frequency, None);
+
+                    let velocity_sample =
+                        controllable_amplifier(oscillator_sample, None, Some(velocity));
+
                     let output_sample =
-                        controllable_amplifier(sine_sample, None, Some(amp_envelope.next()));
+                        controllable_amplifier(velocity_sample, None, Some(amp_envelope.next()));
 
                     frame[0] = output_sample;
                     frame[1] = output_sample;
@@ -147,8 +151,10 @@ fn start_midi_event_listener(
                         .lock()
                         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-                    parameters.current_note =
-                        (MIDI_NOTE_FREQUENCIES[note_number as usize].0, velocity);
+                    parameters.current_note = (
+                        MIDI_NOTE_FREQUENCIES[note_number as usize].0,
+                        velocity as f32 * MIDI_VELOCITY_TO_SAMPLE_FACTOR,
+                    );
 
                     let mut midi_events = midi_event_arc
                         .lock()
