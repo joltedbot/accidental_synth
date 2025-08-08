@@ -33,6 +33,8 @@ impl GenerateSamples for Sine {
         self.phase.sin()
     }
 
+    fn set_shape_parameters(&mut self, _parameters: Vec<f32>) {}
+
     fn reset(&mut self) {
         self.phase = DEFAULT_PHASE;
     }

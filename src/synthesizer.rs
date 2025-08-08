@@ -41,7 +41,7 @@ impl Synthesizer {
     pub fn new(audio_output_device: Device, sample_rate: u32) -> Self {
         log::info!("Constructing Synthesizer Module");
         let parameters = Parameters::default();
-        let oscillators = Oscillators {
+        let mut oscillators = Oscillators {
             one: Oscillator::new(sample_rate, WaveShape::Sine),
         };
 
@@ -104,15 +104,19 @@ impl Synthesizer {
                 let mut amp_envelope = amp_envelope_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mut oscillator = oscillators_arc
+                let mut oscillators = oscillators_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
 
+                // Begin processing the audio buffer
                 let (note_frequency, velocity) = parameters.current_note;
                 action_midi_events(midi_events.take(), &mut amp_envelope);
 
+                // Split the buffer into frames
                 for frame in buffer.chunks_mut(number_of_channels) {
-                    let oscillator_sample = oscillator.one.next_sample(note_frequency, None);
+                    // Begin generating and processing the samples in the frame
+
+                    let oscillator_sample = oscillators.one.next_sample(note_frequency, None);
 
                     let velocity_sample =
                         controllable_amplifier(oscillator_sample, None, Some(velocity));
@@ -120,6 +124,7 @@ impl Synthesizer {
                     let output_sample =
                         controllable_amplifier(velocity_sample, None, Some(amp_envelope.next()));
 
+                    // Hand back the processed samples to the frame to be sent to the audio device
                     frame[0] = output_sample;
                     frame[1] = output_sample;
                 }
@@ -186,10 +191,10 @@ fn start_midi_event_listener(
 fn action_midi_events(midi_events: Option<MidiEvent>, amp_envelope: &mut MutexGuard<Envelope>) {
     match midi_events {
         Some(MidiEvent::NoteOn) => {
-            amp_envelope.start();
+            amp_envelope.gate_on();
         }
         Some(MidiEvent::NoteOff) => {
-            amp_envelope.stop();
+            amp_envelope.gate_off();
         }
         None => {}
     }

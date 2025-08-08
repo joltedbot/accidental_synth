@@ -62,11 +62,11 @@ impl Envelope {
         self.next_value()
     }
 
-    pub fn start(&mut self) {
+    pub fn gate_on(&mut self) {
         self.state_action(StateAction::Start);
     }
 
-    pub fn stop(&mut self) {
+    pub fn gate_off(&mut self) {
         self.state_action(StateAction::Stop);
     }
 
@@ -352,19 +352,19 @@ mod tests {
         let mut envelope = Envelope::new(44100);
 
         envelope.state = Stage::Off;
-        envelope.start();
+        envelope.gate_on();
         assert_eq!(envelope.state, Stage::Attack);
 
         envelope.state = Stage::Decay;
-        envelope.start();
+        envelope.gate_on();
         assert_eq!(envelope.state, Stage::Attack);
 
         envelope.state = Stage::Sustain;
-        envelope.start();
+        envelope.gate_on();
         assert_eq!(envelope.state, Stage::Attack);
 
         envelope.state = Stage::Release;
-        envelope.start();
+        envelope.gate_on();
         assert_eq!(envelope.state, Stage::Attack);
     }
 
@@ -373,15 +373,15 @@ mod tests {
         let mut envelope = Envelope::new(44100);
 
         envelope.state = Stage::Attack;
-        envelope.stop();
+        envelope.gate_off();
         assert_eq!(envelope.state, Stage::Release);
 
         envelope.state = Stage::Decay;
-        envelope.stop();
+        envelope.gate_off();
         assert_eq!(envelope.state, Stage::Release);
 
         envelope.state = Stage::Sustain;
-        envelope.stop();
+        envelope.gate_off();
         assert_eq!(envelope.state, Stage::Release);
     }
 
@@ -390,11 +390,11 @@ mod tests {
         let mut envelope = Envelope::new(44100);
 
         envelope.state = Stage::Off;
-        envelope.stop();
+        envelope.gate_off();
         assert_eq!(envelope.state, Stage::Off);
 
         envelope.state = Stage::Release;
-        envelope.stop();
+        envelope.gate_off();
         assert_eq!(envelope.state, Stage::Release);
     }
 
@@ -406,7 +406,7 @@ mod tests {
         envelope.set_attack_milliseconds(attack_ms);
         let expected_release_level_increment = 0.00020833334;
 
-        envelope.start();
+        envelope.gate_on();
         assert_eq!(envelope.state, Stage::Attack);
         assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
 
@@ -493,7 +493,7 @@ mod tests {
     fn zero_millisecond_attack_correctly_immediately_transitions_to_decay() {
         let mut envelope = Envelope::new(44100);
         envelope.set_attack_milliseconds(0.0);
-        envelope.start();
+        envelope.gate_on();
 
         let value = envelope.next();
         assert_eq!(value, ENVELOPE_MAX_LEVEL);
@@ -549,7 +549,7 @@ mod tests {
         assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
 
         // Midi Note Start
-        envelope.start();
+        envelope.gate_on();
         assert_eq!(envelope.state, Stage::Attack);
         while envelope.state == Stage::Attack {
             envelope.next();
@@ -571,7 +571,7 @@ mod tests {
         }
 
         // Midi Note Stop
-        envelope.stop();
+        envelope.gate_off();
 
         // Transition to release stage
         assert_eq!(envelope.state, Stage::Release);
