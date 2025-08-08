@@ -3,9 +3,11 @@ mod constants;
 use crate::midi::MidiMessage;
 use crate::modules::amplifier::controllable_amplifier;
 use crate::modules::envelope::Envelope;
+use crate::modules::mixer::{Mixer, MixerInput};
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::synthesizer::constants::*;
 
+use crate::modules::mixer;
 use anyhow::Result;
 use cpal::traits::DeviceTrait;
 use cpal::{Device, Stream};
@@ -21,6 +23,9 @@ enum MidiEvent {
 
 struct Oscillators {
     one: Oscillator,
+    two: Oscillator,
+    three: Oscillator,
+    four: Oscillator,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
@@ -35,23 +40,30 @@ pub struct Synthesizer {
     parameters: Arc<Mutex<Parameters>>,
     midi_events: Arc<Mutex<Option<MidiEvent>>>,
     oscillators: Arc<Mutex<Oscillators>>,
+    amp_envelope: Arc<Mutex<Envelope>>,
+    oscillator_mixer: Arc<Mutex<Mixer>>,
 }
 
 impl Synthesizer {
     pub fn new(audio_output_device: Device, sample_rate: u32) -> Self {
         log::info!("Constructing Synthesizer Module");
         let parameters = Parameters::default();
-        let mut oscillators = Oscillators {
+        let oscillators = Oscillators {
             one: Oscillator::new(sample_rate, WaveShape::Sine),
+            two: Oscillator::new(sample_rate, WaveShape::Sine),
+            three: Oscillator::new(sample_rate, WaveShape::Sine),
+            four: Oscillator::new(sample_rate, WaveShape::Sine),
         };
 
         Self {
             sample_rate,
             audio_output_device,
-            parameters: Arc::new(Mutex::new(parameters)),
             output_stream: None,
+            parameters: Arc::new(Mutex::new(parameters)),
             midi_events: Arc::new(Mutex::new(None)),
             oscillators: Arc::new(Mutex::new(oscillators)),
+            amp_envelope: Arc::new(Mutex::new(Envelope::new(sample_rate))),
+            oscillator_mixer: Arc::new(Mutex::new(Mixer::new())),
         }
     }
 
@@ -73,17 +85,13 @@ impl Synthesizer {
         let parameters_arc = self.parameters.clone();
         let midi_events_arc = self.midi_events.clone();
         let oscillators_arc = self.oscillators.clone();
+        let oscillator_mixer_arc = self.oscillator_mixer.clone();
+        let amp_envelope_arc = self.amp_envelope.clone();
 
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
         let number_of_channels = default_device_stream_config.channels as usize;
 
-        let mut envelope = Envelope::new(sample_rate);
-        envelope.set_attack_milliseconds(500.0);
-        envelope.set_decay_milliseconds(400.0);
-        envelope.set_sustain_level(0.8);
-        envelope.set_release_milliseconds(500.0);
-        let amp_envelope_arc = Arc::new(Mutex::new(envelope));
         log::debug!("create_synthesizer(): Amp envelope created");
 
         log::info!(
@@ -101,10 +109,13 @@ impl Synthesizer {
                 let mut midi_events = midi_events_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mut amp_envelope = amp_envelope_arc
+                let mut oscillators = oscillators_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mut oscillators = oscillators_arc
+                let mut oscillator_mixer = oscillator_mixer_arc
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                let mut amp_envelope = amp_envelope_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
 
@@ -117,16 +128,39 @@ impl Synthesizer {
                     // Begin generating and processing the samples in the frame
 
                     let oscillator_sample = oscillators.one.next_sample(note_frequency, None);
-
                     let velocity_sample =
                         controllable_amplifier(oscillator_sample, None, Some(velocity));
-
-                    let output_sample =
+                    let oscillator1_adsr_sample =
                         controllable_amplifier(velocity_sample, None, Some(amp_envelope.next()));
 
+                    let oscillator_sample = oscillators.two.next_sample(note_frequency, None);
+                    let velocity_sample =
+                        controllable_amplifier(oscillator_sample, None, Some(velocity));
+                    let oscillator2_adsr_sample =
+                        controllable_amplifier(velocity_sample, None, Some(amp_envelope.next()));
+
+                    let oscillator_sample = oscillators.three.next_sample(note_frequency, None);
+                    let velocity_sample =
+                        controllable_amplifier(oscillator_sample, None, Some(velocity));
+                    let oscillator3_adsr_sample =
+                        controllable_amplifier(velocity_sample, None, Some(amp_envelope.next()));
+
+                    let oscillator_sample = oscillators.four.next_sample(note_frequency, None);
+                    let velocity_sample =
+                        controllable_amplifier(oscillator_sample, None, Some(velocity));
+                    let oscillator4_adsr_sample =
+                        controllable_amplifier(velocity_sample, None, Some(amp_envelope.next()));
+
+                    let (output_left, output_right) = oscillator_mixer.mix(
+                        oscillator1_adsr_sample,
+                        oscillator2_adsr_sample,
+                        oscillator3_adsr_sample,
+                        oscillator4_adsr_sample,
+                    );
+
                     // Hand back the processed samples to the frame to be sent to the audio device
-                    frame[0] = output_sample;
-                    frame[1] = output_sample;
+                    frame[0] = output_left;
+                    frame[1] = output_right;
                 }
             },
             |err| {

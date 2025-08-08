@@ -4,10 +4,11 @@ const MIN_SUSTAIN_LEVEL: f32 = 0.0;
 const MAX_SUSTAIN_LEVEL: f32 = 1.0;
 const ENVELOPE_MIN_LEVEL: f32 = 0.0;
 const ENVELOPE_MAX_LEVEL: f32 = 1.0;
-const DEFAULT_SUSTAIN_LEVEL: f32 = 1.0;
-const DEFAULT_ATTACK_LEVEL_INCREMENT: f32 = 0.001;
-const DEFAULT_DECAY_LEVEL_INCREMENT: f32 = 0.001;
-const DEFAULT_RELEASE_LEVEL_INCREMENT: f32 = 0.001;
+const DEFAULT_SUSTAIN_LEVEL: f32 = 0.8;
+const DEFAULT_ATTACK_LEVEL_INCREMENT: f32 = 0.00004;
+const DEFAULT_DECAY_LEVEL_INCREMENT: f32 = 0.00001;
+const DEFAULT_RELEASE_LEVEL_INCREMENT: f32 = 0.00004;
+const DEFAULT_DECAY_MILLISECONDS: f32 = 400.0;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 enum Stage {
@@ -53,8 +54,9 @@ impl Envelope {
             sustain_level: DEFAULT_SUSTAIN_LEVEL,
             attack_level_increment: DEFAULT_ATTACK_LEVEL_INCREMENT,
             decay_level_increment: DEFAULT_DECAY_LEVEL_INCREMENT,
+            decay_milliseconds: DEFAULT_DECAY_MILLISECONDS,
             release_level_increment: DEFAULT_RELEASE_LEVEL_INCREMENT,
-            ..Default::default()
+            state: Stage::Off,
         }
     }
 
