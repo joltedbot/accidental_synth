@@ -1,6 +1,8 @@
 pub const NOTE_REST_VELOCITY: u8 = 0;
 pub const MIDI_VELOCITY_TO_SAMPLE_FACTOR: f32 = 0.00787402; // 1.0/127.0
 
+pub const DEFAULT_OUTPUT_LEVEL: f32 = 0.5;
+
 pub const MIDI_NOTE_FREQUENCIES: [(f32, &str); 128] = [
     (8.175, "C-1"),
     (8.662, "C#-1/Db-1"),

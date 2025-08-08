@@ -60,7 +60,7 @@ impl Envelope {
         }
     }
 
-    pub fn next(&mut self) -> f32 {
+    pub fn generate(&mut self) -> f32 {
         self.next_value()
     }
 
@@ -412,13 +412,13 @@ mod tests {
         assert_eq!(envelope.state, Stage::Attack);
         assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
 
-        let first_value = envelope.next();
+        let first_value = envelope.generate();
         assert_eq!(
             first_value,
             ENVELOPE_MIN_LEVEL + expected_release_level_increment
         );
 
-        let second_value = envelope.next();
+        let second_value = envelope.generate();
         assert_eq!(second_value, first_value + expected_release_level_increment);
     }
 
@@ -435,13 +435,13 @@ mod tests {
         envelope.state = Stage::Decay;
         envelope.level = ENVELOPE_MAX_LEVEL;
 
-        let first_value = envelope.next();
+        let first_value = envelope.generate();
         assert_eq!(
             first_value,
             ENVELOPE_MAX_LEVEL - expected_release_level_increment
         );
 
-        let second_value = envelope.next();
+        let second_value = envelope.generate();
         assert_eq!(second_value, first_value - expected_release_level_increment);
     }
 
@@ -454,7 +454,7 @@ mod tests {
         envelope.state = Stage::Sustain;
 
         for _ in 0..100 {
-            let value = envelope.next();
+            let value = envelope.generate();
             assert_eq!(value, sustain_level);
         }
     }
@@ -471,11 +471,11 @@ mod tests {
         envelope.state = Stage::Release;
         envelope.level = start_level;
 
-        let first_value = envelope.next();
+        let first_value = envelope.generate();
         let expected_first_value = start_level - expected_release_level_increment;
         assert_eq!(first_value, expected_first_value);
 
-        let second_value = envelope.next();
+        let second_value = envelope.generate();
         assert_eq!(second_value, first_value - expected_release_level_increment);
     }
 
@@ -486,7 +486,7 @@ mod tests {
         envelope.level = ENVELOPE_MIN_LEVEL;
 
         for _ in 0..100 {
-            let value = envelope.next();
+            let value = envelope.generate();
             assert_eq!(value, ENVELOPE_MIN_LEVEL);
         }
     }
@@ -497,7 +497,7 @@ mod tests {
         envelope.set_attack_milliseconds(0.0);
         envelope.gate_on();
 
-        let value = envelope.next();
+        let value = envelope.generate();
         assert_eq!(value, ENVELOPE_MAX_LEVEL);
         assert_eq!(envelope.state, Stage::Decay);
     }
@@ -511,7 +511,7 @@ mod tests {
         envelope.level = ENVELOPE_MAX_LEVEL;
         envelope.state = Stage::Decay;
 
-        let value = envelope.next();
+        let value = envelope.generate();
         assert_eq!(value, sustain_level);
         assert_eq!(envelope.state, Stage::Sustain);
     }
@@ -523,7 +523,7 @@ mod tests {
         envelope.state = Stage::Release;
         envelope.level = 0.8;
 
-        let value = envelope.next();
+        let value = envelope.generate();
         assert_eq!(value, ENVELOPE_MIN_LEVEL);
         assert_eq!(envelope.state, Stage::Off);
     }
@@ -554,21 +554,21 @@ mod tests {
         envelope.gate_on();
         assert_eq!(envelope.state, Stage::Attack);
         while envelope.state == Stage::Attack {
-            envelope.next();
+            envelope.generate();
         }
 
         // Transition to decay stage
         assert_eq!(envelope.state, Stage::Decay);
         assert_eq!(envelope.level, ENVELOPE_MAX_LEVEL);
         while envelope.state == Stage::Decay {
-            envelope.next();
+            envelope.generate();
         }
 
         // Transition to sustain stage
         assert_eq!(envelope.state, Stage::Sustain);
         assert_eq!(envelope.level, envelope.sustain_level);
         for _ in 0..100 {
-            envelope.next();
+            envelope.generate();
             assert_eq!(envelope.state, Stage::Sustain);
         }
 
@@ -578,7 +578,7 @@ mod tests {
         // Transition to release stage
         assert_eq!(envelope.state, Stage::Release);
         while envelope.state == Stage::Release {
-            envelope.next();
+            envelope.generate();
         }
 
         // Transition back to off stage

@@ -1,10 +1,12 @@
-use crate::modules::oscillator::GenerateSamples;
+use super::{GenerateSamples, WaveShape};
 
+const SHAPE: WaveShape = WaveShape::Saw;
 const PI: f32 = std::f32::consts::PI;
 const DEFAULT_X_COORDINATE: f32 = 0.0;
 const DEFAULT_X_INCREMENT: f32 = 1.0;
 
 pub struct Saw {
+    shape: WaveShape,
     x_coordinate: f32,
     sample_rate: u32,
 }
@@ -16,6 +18,7 @@ impl Saw {
         let x_coordinate = DEFAULT_X_COORDINATE;
 
         Self {
+            shape: SHAPE,
             x_coordinate,
             sample_rate,
         }
@@ -34,6 +37,10 @@ impl GenerateSamples for Saw {
     }
 
     fn set_shape_parameters(&mut self, _parameters: Vec<f32>) {}
+
+    fn shape(&self) -> WaveShape {
+        self.shape
+    }
 
     fn reset(&mut self) {
         self.x_coordinate = DEFAULT_X_COORDINATE;
