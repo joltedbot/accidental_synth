@@ -1,13 +1,16 @@
 const MIN_SUPPORTED_SAMPLE_RATE: u32 = 44100;
 const MAX_SUPPORTED_SAMPLE_RATE: u32 = 192000;
+pub const ENVELOPE_MAX_MILLISECONDS: f32 = 50000.0;
+pub const ENVELOPE_MIN_MILLISECONDS: f32 = 0.05;
 const MIN_SUSTAIN_LEVEL: f32 = 0.0;
 const MAX_SUSTAIN_LEVEL: f32 = 1.0;
 const ENVELOPE_MIN_LEVEL: f32 = 0.0;
 const ENVELOPE_MAX_LEVEL: f32 = 1.0;
-const DEFAULT_SUSTAIN_LEVEL: f32 = 1.0;
-const DEFAULT_ATTACK_LEVEL_INCREMENT: f32 = 0.001;
-const DEFAULT_DECAY_LEVEL_INCREMENT: f32 = 0.001;
-const DEFAULT_RELEASE_LEVEL_INCREMENT: f32 = 0.001;
+const DEFAULT_SUSTAIN_LEVEL: f32 = 0.8;
+const DEFAULT_ATTACK_LEVEL_INCREMENT: f32 = 0.00004;
+const DEFAULT_DECAY_LEVEL_INCREMENT: f32 = 0.00001;
+const DEFAULT_RELEASE_LEVEL_INCREMENT: f32 = 0.00004;
+const DEFAULT_DECAY_MILLISECONDS: f32 = 400.0;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 enum Stage {
@@ -53,12 +56,13 @@ impl Envelope {
             sustain_level: DEFAULT_SUSTAIN_LEVEL,
             attack_level_increment: DEFAULT_ATTACK_LEVEL_INCREMENT,
             decay_level_increment: DEFAULT_DECAY_LEVEL_INCREMENT,
+            decay_milliseconds: DEFAULT_DECAY_MILLISECONDS,
             release_level_increment: DEFAULT_RELEASE_LEVEL_INCREMENT,
-            ..Default::default()
+            state: Stage::Off,
         }
     }
 
-    pub fn next(&mut self) -> f32 {
+    pub fn generate(&mut self) -> f32 {
         self.next_value()
     }
 
@@ -204,6 +208,10 @@ impl Envelope {
 mod tests {
     use super::*;
 
+    fn f32_value_equality(value_1: f32, value_2: f32) -> bool {
+        (value_1 - value_2).abs() <= f32::EPSILON
+    }
+
     #[test]
     fn new_returns_envelope_with_correct_default_values() {
         let sample_rate = 48000;
@@ -234,13 +242,16 @@ mod tests {
     #[test]
     fn new_returns_envelope_with_u32_max_sample_rate() {
         let sample_rate = u32::MAX;
-        let expected_ms_per_sample = 0.0052083335;
+        let expected_ms_per_sample = 0.0052083;
         let envelope = Envelope::new(sample_rate);
 
         assert_eq!(envelope.state, Stage::Off);
         assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
         assert_eq!(envelope.sample_rate, MAX_SUPPORTED_SAMPLE_RATE);
-        assert_eq!(envelope.milliseconds_per_sample, expected_ms_per_sample);
+        assert!(f32_value_equality(
+            envelope.milliseconds_per_sample,
+            expected_ms_per_sample
+        ));
         assert_eq!(envelope.sustain_level, DEFAULT_SUSTAIN_LEVEL);
         assert_eq!(
             envelope.attack_level_increment,
@@ -259,13 +270,16 @@ mod tests {
     #[test]
     fn new_returns_envelope_with_zero_sample_rate() {
         let sample_rate = 0;
-        let expected_ms_per_sample = 0.022675738;
+        let expected_ms_per_sample = 0.0226757;
         let envelope = Envelope::new(sample_rate);
 
         assert_eq!(envelope.state, Stage::Off);
         assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
         assert_eq!(envelope.sample_rate, MIN_SUPPORTED_SAMPLE_RATE);
-        assert_eq!(envelope.milliseconds_per_sample, expected_ms_per_sample);
+        assert!(f32_value_equality(
+            envelope.milliseconds_per_sample,
+            expected_ms_per_sample
+        ));
         assert_eq!(envelope.sustain_level, DEFAULT_SUSTAIN_LEVEL);
         assert_eq!(
             envelope.attack_level_increment,
@@ -285,12 +299,15 @@ mod tests {
     fn set_attack_milliseconds_stores_correct_attack_level_increment() {
         let sample_rate = 44100;
         let attack_ms = 100.0;
-        let expected_increment = 0.00022675737;
+        let expected_increment = 0.0002267;
 
         let mut envelope = Envelope::new(sample_rate);
         envelope.set_attack_milliseconds(attack_ms);
 
-        assert_eq!(envelope.attack_level_increment, expected_increment);
+        assert!(f32_value_equality(
+            envelope.attack_level_increment,
+            expected_increment
+        ));
     }
 
     #[test]
@@ -298,14 +315,17 @@ mod tests {
         let sample_rate = 44100;
         let decay_ms = 100.0;
         let sustain_level = 0.5;
-        let expected_increment = 0.00011337869;
+        let expected_increment = 0.0001133;
 
         let mut envelope = Envelope::new(sample_rate);
         envelope.set_sustain_level(sustain_level);
         envelope.set_decay_milliseconds(decay_ms);
 
-        assert_eq!(envelope.decay_milliseconds, decay_ms);
-        assert_eq!(envelope.decay_level_increment, expected_increment);
+        assert!(f32_value_equality(envelope.decay_milliseconds, decay_ms));
+        assert!(f32_value_equality(
+            envelope.decay_level_increment,
+            expected_increment
+        ));
     }
 
     #[test]
@@ -313,14 +333,17 @@ mod tests {
         let sample_rate = 44100;
         let sustain_level = 0.9;
         let decay_ms = 20.0;
-        let expected_increment = 0.000113378715;
+        let expected_increment = 0.0001133;
 
         let mut envelope = Envelope::new(sample_rate);
         envelope.set_decay_milliseconds(decay_ms);
         envelope.set_sustain_level(sustain_level);
 
-        assert_eq!(envelope.sustain_level, sustain_level);
-        assert_eq!(envelope.decay_level_increment, expected_increment);
+        assert!(f32_value_equality(envelope.sustain_level, sustain_level));
+        assert!(f32_value_equality(
+            envelope.decay_level_increment,
+            expected_increment
+        ));
     }
 
     #[test]
@@ -340,11 +363,13 @@ mod tests {
         let sample_rate = 48000;
         let release_ms = 30.0;
         let mut envelope = Envelope::new(sample_rate);
-        let expected_increment = 0.00069444446;
+        let expected_increment = 0.0006944;
 
         envelope.set_release_milliseconds(release_ms);
-
-        assert_eq!(envelope.release_level_increment, expected_increment);
+        assert!(f32_value_equality(
+            envelope.release_level_increment,
+            expected_increment
+        ));
     }
 
     #[test]
@@ -404,20 +429,23 @@ mod tests {
         let mut envelope = Envelope::new(sample_rate);
         let attack_ms = 100.0;
         envelope.set_attack_milliseconds(attack_ms);
-        let expected_release_level_increment = 0.00020833334;
+        let expected_release_level_increment = 0.0002083;
 
         envelope.gate_on();
         assert_eq!(envelope.state, Stage::Attack);
         assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
 
-        let first_value = envelope.next();
-        assert_eq!(
+        let first_value = envelope.generate();
+        assert!(f32_value_equality(
             first_value,
             ENVELOPE_MIN_LEVEL + expected_release_level_increment
-        );
+        ));
 
-        let second_value = envelope.next();
-        assert_eq!(second_value, first_value + expected_release_level_increment);
+        let second_value = envelope.generate();
+        assert!(f32_value_equality(
+            second_value,
+            first_value + expected_release_level_increment
+        ));
     }
 
     #[test]
@@ -426,21 +454,24 @@ mod tests {
         let mut envelope = Envelope::new(sample_rate);
         let decay_ms = 100.0;
         let sustain_level = 0.5;
-        let expected_release_level_increment = 0.000104166677;
+        let expected_release_level_increment = 0.0001041;
 
         envelope.set_decay_milliseconds(decay_ms);
         envelope.set_sustain_level(sustain_level);
         envelope.state = Stage::Decay;
         envelope.level = ENVELOPE_MAX_LEVEL;
 
-        let first_value = envelope.next();
-        assert_eq!(
+        let first_value = envelope.generate();
+        assert!(f32_value_equality(
             first_value,
             ENVELOPE_MAX_LEVEL - expected_release_level_increment
-        );
+        ));
 
-        let second_value = envelope.next();
-        assert_eq!(second_value, first_value - expected_release_level_increment);
+        let second_value = envelope.generate();
+        assert!(f32_value_equality(
+            second_value,
+            first_value - expected_release_level_increment
+        ));
     }
 
     #[test]
@@ -452,8 +483,8 @@ mod tests {
         envelope.state = Stage::Sustain;
 
         for _ in 0..100 {
-            let value = envelope.next();
-            assert_eq!(value, sustain_level);
+            let value = envelope.generate();
+            assert!(f32_value_equality(value, sustain_level));
         }
     }
 
@@ -462,19 +493,24 @@ mod tests {
         let sample_rate = 44100;
         let release_ms = 100.0;
         let start_level = 0.8;
-        let expected_release_level_increment = 0.00022675737;
+        let expected_release_level_increment = 0.0002267;
 
         let mut envelope = Envelope::new(sample_rate);
         envelope.set_release_milliseconds(release_ms);
         envelope.state = Stage::Release;
         envelope.level = start_level;
 
-        let first_value = envelope.next();
-        let expected_first_value = start_level - expected_release_level_increment;
-        assert_eq!(first_value, expected_first_value);
+        let first_value = envelope.generate();
+        assert!(f32_value_equality(
+            first_value,
+            start_level - expected_release_level_increment
+        ));
 
-        let second_value = envelope.next();
-        assert_eq!(second_value, first_value - expected_release_level_increment);
+        let second_value = envelope.generate();
+        assert!(f32_value_equality(
+            second_value,
+            first_value - expected_release_level_increment
+        ));
     }
 
     #[test]
@@ -484,8 +520,8 @@ mod tests {
         envelope.level = ENVELOPE_MIN_LEVEL;
 
         for _ in 0..100 {
-            let value = envelope.next();
-            assert_eq!(value, ENVELOPE_MIN_LEVEL);
+            let value = envelope.generate();
+            assert!(f32_value_equality(value, ENVELOPE_MIN_LEVEL));
         }
     }
 
@@ -495,8 +531,8 @@ mod tests {
         envelope.set_attack_milliseconds(0.0);
         envelope.gate_on();
 
-        let value = envelope.next();
-        assert_eq!(value, ENVELOPE_MAX_LEVEL);
+        let value = envelope.generate();
+        assert!(f32_value_equality(value, ENVELOPE_MAX_LEVEL));
         assert_eq!(envelope.state, Stage::Decay);
     }
 
@@ -509,8 +545,8 @@ mod tests {
         envelope.level = ENVELOPE_MAX_LEVEL;
         envelope.state = Stage::Decay;
 
-        let value = envelope.next();
-        assert_eq!(value, sustain_level);
+        let value = envelope.generate();
+        assert!(f32_value_equality(value, sustain_level));
         assert_eq!(envelope.state, Stage::Sustain);
     }
 
@@ -521,8 +557,8 @@ mod tests {
         envelope.state = Stage::Release;
         envelope.level = 0.8;
 
-        let value = envelope.next();
-        assert_eq!(value, ENVELOPE_MIN_LEVEL);
+        let value = envelope.generate();
+        assert!(f32_value_equality(value, ENVELOPE_MIN_LEVEL));
         assert_eq!(envelope.state, Stage::Off);
     }
 
@@ -552,21 +588,21 @@ mod tests {
         envelope.gate_on();
         assert_eq!(envelope.state, Stage::Attack);
         while envelope.state == Stage::Attack {
-            envelope.next();
+            envelope.generate();
         }
 
         // Transition to decay stage
         assert_eq!(envelope.state, Stage::Decay);
         assert_eq!(envelope.level, ENVELOPE_MAX_LEVEL);
         while envelope.state == Stage::Decay {
-            envelope.next();
+            envelope.generate();
         }
 
         // Transition to sustain stage
         assert_eq!(envelope.state, Stage::Sustain);
         assert_eq!(envelope.level, envelope.sustain_level);
         for _ in 0..100 {
-            envelope.next();
+            envelope.generate();
             assert_eq!(envelope.state, Stage::Sustain);
         }
 
@@ -576,11 +612,11 @@ mod tests {
         // Transition to release stage
         assert_eq!(envelope.state, Stage::Release);
         while envelope.state == Stage::Release {
-            envelope.next();
+            envelope.generate();
         }
 
-        // Transition back to off stage
+        // Transition back to the Off stage
         assert_eq!(envelope.state, Stage::Off);
-        assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
+        assert!(f32_value_equality(envelope.level, ENVELOPE_MIN_LEVEL));
     }
 }

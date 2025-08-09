@@ -12,7 +12,7 @@ fn main() {
     log::info!("Starting Accidental Synthesizer");
 
     log::debug!("Initialize the audio module");
-    let mut audio = Audio::new().expect("Could not initialize audio module. Exiting.");
+    let audio = Audio::new().expect("Could not initialize audio module. Exiting.");
 
     log::debug!("Initialize the synthesizer module");
     let default_audio_output_device = audio.default_output_device();

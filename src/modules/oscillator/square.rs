@@ -1,10 +1,12 @@
-use crate::modules::oscillator::GenerateSamples;
+use super::{GenerateSamples, WaveShape};
 
+const SHAPE: WaveShape = WaveShape::Square;
 const PI: f32 = std::f32::consts::PI;
 const DEFAULT_X_COORDINATE: f32 = 0.0;
 const DEFAULT_X_INCREMENT: f32 = 1.0;
 
 pub struct Square {
+    shape: WaveShape,
     x_coordinate: f32,
     sample_rate: u32,
 }
@@ -15,6 +17,7 @@ impl Square {
         let x_coordinate = DEFAULT_X_COORDINATE;
 
         Self {
+            shape: SHAPE,
             x_coordinate,
             sample_rate,
         }
@@ -39,6 +42,10 @@ impl GenerateSamples for Square {
     }
 
     fn set_shape_parameters(&mut self, _parameter: Vec<f32>) {}
+
+    fn shape(&self) -> WaveShape {
+        self.shape
+    }
 
     fn reset(&mut self) {
         self.x_coordinate = DEFAULT_X_COORDINATE;

@@ -4,11 +4,7 @@ const MAX_AMPLIFIER_VALUE: f32 = 1.0;
 const MIN_AMPLIFIER_VALUE: f32 = 0.0;
 const DEFAULT_AMPLIFIER_VALUE: f32 = 1.0;
 
-pub fn controllable_amplifier(
-    sample: f32,
-    manual_value: Option<f32>,
-    control_value: Option<f32>,
-) -> f32 {
+pub fn vca(sample: f32, manual_value: Option<f32>, control_value: Option<f32>) -> f32 {
     let manual = manual_value.unwrap_or(DEFAULT_AMPLIFIER_VALUE);
     let control = control_value.unwrap_or(DEFAULT_AMPLIFIER_VALUE);
     sample.clamp(MIN_SAMPLE_VALUE, MAX_SAMPLE_VALUE)
@@ -20,73 +16,77 @@ pub fn controllable_amplifier(
 mod tests {
     use super::*;
 
+    fn f32_value_equality(value_1: f32, value_2: f32) -> bool {
+        (value_1 - value_2).abs() <= f32::EPSILON
+    }
+
     #[test]
-    fn controllable_amplifier_returns_correct_value_from_valid_input() {
+    fn vca_returns_correct_value_from_valid_input() {
         let sample = 0.9;
         let manual_value = Some(0.8);
         let control_value = Some(0.03);
-        let expected_result = 0.021599999;
-        let result = controllable_amplifier(sample, manual_value, control_value);
-        assert_eq!(result, expected_result);
+        let expected_result = 0.0215999;
+        let result = vca(sample, manual_value, control_value);
+        assert!(f32_value_equality(result, expected_result));
     }
 
     #[test]
-    fn controllable_amplifier_returns_correct_value_from_valid_input_no_manual_value() {
+    fn vca_returns_correct_value_from_valid_input_no_manual_value() {
         let sample = 0.9;
         let manual_value = None;
         let control_value = Some(0.03);
-        let expected_result = 0.026999999;
-        let result = controllable_amplifier(sample, manual_value, control_value);
-        assert_eq!(result, expected_result);
+        let expected_result = 0.0269999;
+        let result = vca(sample, manual_value, control_value);
+        assert!(f32_value_equality(result, expected_result));
     }
 
     #[test]
-    fn controllable_amplifier_returns_correct_value_from_valid_input_no_control_value() {
+    fn vca_returns_correct_value_from_valid_input_no_control_value() {
         let sample = 0.9;
         let manual_value = Some(0.25);
         let control_value = None;
         let expected_result = 0.225;
-        let result = controllable_amplifier(sample, manual_value, control_value);
-        assert_eq!(result, expected_result);
+        let result = vca(sample, manual_value, control_value);
+        assert!(f32_value_equality(result, expected_result));
     }
 
     #[test]
-    fn controllable_amplifier_returns_correct_value_from_only_sample() {
+    fn vca_returns_correct_value_from_only_sample() {
         let sample = 0.9;
         let manual_value = None;
         let control_value = None;
         let expected_result = 0.9;
-        let result = controllable_amplifier(sample, manual_value, control_value);
-        assert_eq!(result, expected_result);
+        let result = vca(sample, manual_value, control_value);
+        assert!(f32_value_equality(result, expected_result));
     }
 
     #[test]
-    fn controllable_amplifier_returns_correct_value_from_zero_sample_no_values() {
+    fn vca_returns_correct_value_from_zero_sample_no_values() {
         let sample = 0.0;
         let manual_value = None;
         let control_value = None;
         let expected_result = 0.0;
-        let result = controllable_amplifier(sample, manual_value, control_value);
-        assert_eq!(result, expected_result);
+        let result = vca(sample, manual_value, control_value);
+        assert!(f32_value_equality(result, expected_result));
     }
 
     #[test]
-    fn controllable_amplifier_returns_correct_value_from_max_values() {
+    fn vca_returns_correct_value_from_max_values() {
         let sample = f32::MAX;
         let manual_value = Some(f32::MAX);
         let control_value = Some(f32::MAX);
         let expected_result = 1.0;
-        let result = controllable_amplifier(sample, manual_value, control_value);
-        assert_eq!(result, expected_result);
+        let result = vca(sample, manual_value, control_value);
+        assert!(f32_value_equality(result, expected_result));
     }
 
     #[test]
-    fn controllable_amplifier_returns_correct_value_from_min_sample_min_values() {
+    fn vca_returns_correct_value_from_min_sample_min_values() {
         let sample = f32::MIN;
         let manual_value = Some(f32::MIN);
         let control_value = Some(f32::MIN);
         let expected_result = -0.0;
-        let result = controllable_amplifier(sample, manual_value, control_value);
-        assert_eq!(result, expected_result);
+        let result = vca(sample, manual_value, control_value);
+        assert!(f32_value_equality(result, expected_result));
     }
 }

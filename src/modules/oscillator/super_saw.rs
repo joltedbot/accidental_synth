@@ -1,11 +1,13 @@
-use crate::modules::oscillator::GenerateSamples;
+use super::{GenerateSamples, WaveShape};
 
+const SHAPE: WaveShape = WaveShape::SuperSaw;
 const PI: f32 = std::f32::consts::PI;
 const DEFAULT_X_COORDINATE: f32 = 0.0;
 const DEFAULT_X_INCREMENT: f32 = 1.0;
 const VOICE_FREQUENCY_SPREAD: [f32; 7] = [0.97, 0.98, 0.99, 1.0, 1.01, 1.02, 1.03];
 
 pub struct SuperSaw {
+    shape: WaveShape,
     x_coordinate: f32,
     x_increment: f32,
     sample_rate: u32,
@@ -18,6 +20,7 @@ impl SuperSaw {
         let x_increment = DEFAULT_X_INCREMENT;
 
         Self {
+            shape: SHAPE,
             x_coordinate,
             x_increment,
             sample_rate,
@@ -43,6 +46,10 @@ impl GenerateSamples for SuperSaw {
     }
 
     fn set_shape_parameters(&mut self, _parameter: Vec<f32>) {}
+
+    fn shape(&self) -> WaveShape {
+        self.shape
+    }
 
     fn reset(&mut self) {
         self.x_coordinate = DEFAULT_X_COORDINATE;

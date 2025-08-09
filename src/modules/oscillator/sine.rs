@@ -1,11 +1,13 @@
-use crate::modules::oscillator::GenerateSamples;
+use super::{GenerateSamples, WaveShape};
 
+const SHAPE: WaveShape = WaveShape::Sine;
 const RADS_PER_CYCLE: f32 = 2.0 * std::f32::consts::PI;
 const DEFAULT_PHASE: f32 = 0.0;
 
 pub struct Sine {
-    pub phase: f32,
-    pub phase_increment: f32,
+    shape: WaveShape,
+    phase: f32,
+    phase_increment: f32,
 }
 
 impl Sine {
@@ -16,6 +18,7 @@ impl Sine {
         let phase_increment = RADS_PER_CYCLE * seconds_per_sample;
 
         Self {
+            shape: SHAPE,
             phase,
             phase_increment,
         }
@@ -35,6 +38,9 @@ impl GenerateSamples for Sine {
 
     fn set_shape_parameters(&mut self, _parameters: Vec<f32>) {}
 
+    fn shape(&self) -> WaveShape {
+        self.shape
+    }
     fn reset(&mut self) {
         self.phase = DEFAULT_PHASE;
     }

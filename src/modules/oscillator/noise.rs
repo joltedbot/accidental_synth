@@ -1,11 +1,15 @@
-use crate::modules::oscillator::GenerateSamples;
+use super::{GenerateSamples, WaveShape};
 
-pub struct Noise {}
+const SHAPE: WaveShape = WaveShape::Noise;
+
+pub struct Noise {
+    shape: WaveShape,
+}
 
 impl Noise {
     pub fn new() -> Self {
         log::info!("Constructing Noise WaveShape Module");
-        Self {}
+        Self { shape: SHAPE }
     }
 }
 
@@ -18,6 +22,10 @@ impl GenerateSamples for Noise {
     }
 
     fn set_shape_parameters(&mut self, _parameter: Vec<f32>) {}
+
+    fn shape(&self) -> WaveShape {
+        self.shape
+    }
 
     fn reset(&mut self) {}
 }

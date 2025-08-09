@@ -1,10 +1,12 @@
-use crate::modules::oscillator::GenerateSamples;
+use super::{GenerateSamples, WaveShape};
 use crate::modules::oscillator::sine::Sine;
 
+const SHAPE: WaveShape = WaveShape::FM;
 const DEFAULT_RATIO: f32 = 1.0;
 const DEFAULT_MODULATION_AMOUNT: f32 = 1.0;
 
 pub struct FM {
+    shape: WaveShape,
     carrier: Box<dyn GenerateSamples + Send + Sync>,
     modulator: Box<dyn GenerateSamples + Send + Sync>,
     modulation_amount: f32,
@@ -15,6 +17,7 @@ impl FM {
     pub fn new(sample_rate: u32) -> Self {
         log::info!("Constructing FM WaveShape Module");
         Self {
+            shape: SHAPE,
             carrier: Box::new(Sine::new(sample_rate)),
             modulator: Box::new(Sine::new(sample_rate)),
             modulation_amount: DEFAULT_MODULATION_AMOUNT,
@@ -35,6 +38,10 @@ impl GenerateSamples for FM {
     fn set_shape_parameters(&mut self, parameters: Vec<f32>) {
         self.modulation_amount = parameters[0];
         self.modulation_ratio = parameters[1];
+    }
+
+    fn shape(&self) -> WaveShape {
+        self.shape
     }
 
     fn reset(&mut self) {
