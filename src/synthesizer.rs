@@ -1,13 +1,12 @@
 mod constants;
 
-use crate::midi::MidiMessage;
+use crate::midi::{CC, MidiMessage};
 use crate::modules::amplifier::vca;
-use crate::modules::envelope::Envelope;
+use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
 use crate::modules::mixer::{Mixer, MixerInput};
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::synthesizer::constants::*;
 
-use crate::modules::mixer;
 use anyhow::Result;
 use cpal::traits::DeviceTrait;
 use cpal::{Device, Stream};
@@ -33,17 +32,16 @@ struct Parameters {
     output_level: f32,
     output_pan: f32,
     current_note: (f32, f32),
+    mixer: Mixer,
 }
 
 pub struct Synthesizer {
-    sample_rate: u32,
     audio_output_device: Device,
     output_stream: Option<Stream>,
     parameters: Arc<Mutex<Parameters>>,
     midi_events: Arc<Mutex<Option<MidiEvent>>>,
     oscillators: Arc<Mutex<Oscillators>>,
     amp_envelope: Arc<Mutex<Envelope>>,
-    mixer: Arc<Mutex<Mixer>>,
 }
 
 impl Synthesizer {
@@ -56,20 +54,18 @@ impl Synthesizer {
 
         let oscillators = Oscillators {
             one: Oscillator::new(sample_rate, WaveShape::Sine),
-            two: Oscillator::new(sample_rate, WaveShape::Sine),
-            three: Oscillator::new(sample_rate, WaveShape::Sine),
-            four: Oscillator::new(sample_rate, WaveShape::Sine),
+            two: Oscillator::new(sample_rate, WaveShape::Triangle),
+            three: Oscillator::new(sample_rate, WaveShape::Saw),
+            four: Oscillator::new(sample_rate, WaveShape::Pulse),
         };
 
         Self {
-            sample_rate,
             audio_output_device,
             output_stream: None,
             parameters: Arc::new(Mutex::new(parameters)),
             midi_events: Arc::new(Mutex::new(None)),
             oscillators: Arc::new(Mutex::new(oscillators)),
             amp_envelope: Arc::new(Mutex::new(Envelope::new(sample_rate))),
-            mixer: Arc::new(Mutex::new(Mixer::new())),
         }
     }
 
@@ -80,9 +76,15 @@ impl Synthesizer {
 
         let parameters_arc = self.parameters.clone();
         let midi_event_arc = self.midi_events.clone();
+        let envelope_arc = self.amp_envelope.clone();
 
         log::debug!("run(): Start the midi event listener thread");
-        start_midi_event_listener(midi_message_receiver, parameters_arc, midi_event_arc);
+        start_midi_event_listener(
+            midi_message_receiver,
+            parameters_arc,
+            midi_event_arc,
+            envelope_arc,
+        );
 
         Ok(())
     }
@@ -91,7 +93,6 @@ impl Synthesizer {
         let parameters_arc = self.parameters.clone();
         let midi_events_arc = self.midi_events.clone();
         let oscillators_arc = self.oscillators.clone();
-        let mixer_arc = self.mixer.clone();
         let amp_envelope_arc = self.amp_envelope.clone();
 
         let default_device_stream_config = output_device.default_output_config()?.config();
@@ -116,9 +117,6 @@ impl Synthesizer {
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
                 let mut oscillators = oscillators_arc
-                    .lock()
-                    .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mixer = mixer_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
                 let mut amp_envelope = amp_envelope_arc
@@ -153,7 +151,7 @@ impl Synthesizer {
                     let osc4_amp_envelope_sample =
                         vca(osc4_velocity_sample, None, Some(amp_envelope.generate()));
 
-                    let (oscillator_mix_left, oscillator_mix_right) = mixer.quad_mix(
+                    let (oscillator_mix_left, oscillator_mix_right) = parameters.mixer.quad_mix(
                         osc1_amp_envelope_sample,
                         osc2_amp_envelope_sample,
                         osc3_adsr_sample,
@@ -161,7 +159,7 @@ impl Synthesizer {
                     );
 
                     // Final output level control
-                    let (output_left, output_right) = mixer.output_mix(
+                    let (output_left, output_right) = parameters.mixer.output_mix(
                         oscillator_mix_left,
                         oscillator_mix_right,
                         parameters.output_level,
@@ -187,8 +185,9 @@ impl Synthesizer {
 
 fn start_midi_event_listener(
     midi_message_receiver: Receiver<MidiMessage>,
-    parameters_arc: Arc<Mutex<Parameters>>,
-    midi_event_arc: Arc<Mutex<Option<MidiEvent>>>,
+    mut parameters_arc: Arc<Mutex<Parameters>>,
+    mut midi_event_arc: Arc<Mutex<Option<MidiEvent>>>,
+    mut amp_envelope_arc: Arc<Mutex<Envelope>>,
 ) {
     thread::spawn(move || {
         log::debug!("run(): spawned thread to receive MIDI events");
@@ -212,24 +211,105 @@ fn start_midi_event_listener(
                     *midi_events = Some(MidiEvent::NoteOn);
                 }
                 MidiMessage::NoteOff => {
-                    let parameters = parameters_arc
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
                     let mut midi_events = midi_event_arc
                         .lock()
                         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
                     *midi_events = Some(MidiEvent::NoteOff);
                 }
-                MidiMessage::ControlChange(control_number, value) => {
-                    //TODO
+                MidiMessage::ControlChange(cc_value) => {
+                    process_midi_cc_values(
+                        cc_value,
+                        &mut parameters_arc,
+                        &mut amp_envelope_arc,
+                        &mut midi_event_arc,
+                    );
                 }
             }
         }
 
         log::debug!("run(): MIDI event receiver thread has exited");
     });
+}
+
+fn process_midi_cc_values(
+    cc_value: CC,
+    parameters_arc: &mut Arc<Mutex<Parameters>>,
+    amp_envelope_arc: &mut Arc<Mutex<Envelope>>,
+    midi_event_arc: &mut Arc<Mutex<Option<MidiEvent>>>,
+) {
+    log::debug!("process_midi_cc_values(): CC received: {:?}", cc_value);
+
+    let mut parameters = parameters_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    let mut envelope = amp_envelope_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    match cc_value {
+        CC::Volume(value) => parameters.output_level = midi_value_to_f32_0_to_1(value),
+        CC::Pan(value) => parameters.output_pan = midi_value_to_f32_negative_1_to_1(value),
+        CC::Oscillator1Level(value) => parameters
+            .mixer
+            .set_quad_level(midi_value_to_f32_0_to_1(value), MixerInput::One),
+        CC::Oscillator2Level(value) => parameters
+            .mixer
+            .set_quad_level(midi_value_to_f32_0_to_1(value), MixerInput::Two),
+        CC::Oscillator3Level(value) => parameters
+            .mixer
+            .set_quad_level(midi_value_to_f32_0_to_1(value), MixerInput::Two),
+        CC::Oscillator4Level(value) => parameters
+            .mixer
+            .set_quad_level(midi_value_to_f32_0_to_1(value), MixerInput::Two),
+        CC::Oscillator1Mute(value) => parameters
+            .mixer
+            .set_quad_mute(midi_value_to_bool(value), MixerInput::One),
+        CC::Oscillator2Mute(value) => parameters
+            .mixer
+            .set_quad_mute(midi_value_to_bool(value), MixerInput::Two),
+        CC::Oscillator3Mute(value) => parameters
+            .mixer
+            .set_quad_mute(midi_value_to_bool(value), MixerInput::Three),
+        CC::Oscillator4Mute(value) => parameters
+            .mixer
+            .set_quad_mute(midi_value_to_bool(value), MixerInput::Four),
+        CC::Oscillator1Pan(value) => parameters
+            .mixer
+            .set_quad_pan(midi_value_to_f32_negative_1_to_1(value), MixerInput::One),
+        CC::Oscillator2Pan(value) => parameters
+            .mixer
+            .set_quad_pan(midi_value_to_f32_negative_1_to_1(value), MixerInput::Two),
+        CC::Oscillator3Pan(value) => parameters
+            .mixer
+            .set_quad_pan(midi_value_to_f32_negative_1_to_1(value), MixerInput::Three),
+        CC::Oscillator4Pan(value) => parameters
+            .mixer
+            .set_quad_pan(midi_value_to_f32_negative_1_to_1(value), MixerInput::Four),
+        CC::AttackTime(value) => envelope.set_attack_milliseconds(midi_value_to_f32_range(
+            value,
+            ENVELOPE_MIN_MILLISECONDS,
+            ENVELOPE_MAX_MILLISECONDS,
+        )),
+        CC::DecayTime(value) => envelope.set_decay_milliseconds(midi_value_to_f32_range(
+            value,
+            ENVELOPE_MIN_MILLISECONDS,
+            ENVELOPE_MAX_MILLISECONDS,
+        )),
+        CC::SustainLevel(value) => envelope.set_sustain_level(midi_value_to_f32_0_to_1(value)),
+        CC::ReleaseTime(value) => envelope.set_release_milliseconds(midi_value_to_f32_range(
+            value,
+            ENVELOPE_MIN_MILLISECONDS,
+            ENVELOPE_MAX_MILLISECONDS,
+        )),
+        CC::AllNotesOff => {
+            let mut midi_events = midi_event_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            *midi_events = Some(MidiEvent::NoteOff);
+        }
+    }
 }
 
 fn action_midi_events(midi_events: Option<MidiEvent>, amp_envelope: &mut MutexGuard<Envelope>) {
@@ -242,4 +322,22 @@ fn action_midi_events(midi_events: Option<MidiEvent>, amp_envelope: &mut MutexGu
         }
         None => {}
     }
+}
+
+fn midi_value_to_f32_range(midi_value: u8, minimum: f32, maximum: f32) -> f32 {
+    let range = maximum - minimum;
+    let increment = range / 127.0;
+    minimum + (midi_value as f32 * increment)
+}
+
+fn midi_value_to_f32_0_to_1(midi_value: u8) -> f32 {
+    midi_value_to_f32_range(midi_value, 0.0, 1.0)
+}
+
+fn midi_value_to_f32_negative_1_to_1(midi_value: u8) -> f32 {
+    midi_value_to_f32_range(midi_value, -1.0, 1.0)
+}
+
+fn midi_value_to_bool(midi_value: u8) -> bool {
+    midi_value > 63
 }

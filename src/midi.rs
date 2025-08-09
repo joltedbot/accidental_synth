@@ -1,6 +1,6 @@
 use anyhow::{Result, anyhow};
 use crossbeam_channel::{Receiver, Sender};
-use midir::{MidiInput, MidiInputConnection, MidiInputPort};
+use midir::{Ignore, MidiInput, MidiInputConnection, MidiInputPort};
 use std::sync::{Arc, Mutex};
 
 const PANIC_MESSAGE_MIDI_SENDER_FAILURE: &str =
@@ -16,6 +16,30 @@ const MIDI_CC_VALUE_BYTE_INDEX: usize = 2;
 const MIDI_MESSAGE_CHANNEL_CAPACITY: usize = 16;
 
 const DEFAULT_NAME_FOR_UNNAMED_MIDI_PORTS: &str = "Name Not Available";
+const MIDI_MESSAGE_IGNORE_VALUE: Ignore = Ignore::SysexAndTime;
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum CC {
+    Volume(u8),
+    Pan(u8),
+    Oscillator1Level(u8),
+    Oscillator2Level(u8),
+    Oscillator3Level(u8),
+    Oscillator4Level(u8),
+    Oscillator1Mute(u8),
+    Oscillator2Mute(u8),
+    Oscillator3Mute(u8),
+    Oscillator4Mute(u8),
+    Oscillator1Pan(u8),
+    Oscillator2Pan(u8),
+    Oscillator3Pan(u8),
+    Oscillator4Pan(u8),
+    AttackTime(u8),
+    DecayTime(u8),
+    SustainLevel(u8),
+    ReleaseTime(u8),
+    AllNotesOff,
+}
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum MessageType {
@@ -29,11 +53,11 @@ enum MessageType {
     Unknown,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum MidiMessage {
     NoteOn(u8, u8),
     NoteOff,
-    ControlChange(u8, u8),
+    ControlChange(CC),
 }
 
 pub struct Midi {
@@ -131,7 +155,10 @@ fn create_midi_input_listener(
                     MessageType::ControlChange => {
                         let cc_number = message[MIDI_CC_NUMBER_BYTE_INDEX];
                         let cc_value = message[MIDI_CC_VALUE_BYTE_INDEX];
-                        Some(MidiMessage::ControlChange(cc_number, cc_value))
+                        match get_supported_cc_from_cc_number(cc_number, cc_value) {
+                            Some(cc) => Some(MidiMessage::ControlChange(cc)),
+                            None => None,
+                        }
                     }
                     _ => None,
                 };
@@ -149,13 +176,15 @@ fn create_midi_input_listener(
 }
 
 fn get_default_midi_device() -> Result<Option<(String, MidiInputPort)>> {
-    let midi_input = match MidiInput::new(MIDI_INPUT_CLIENT_NAME) {
+    let mut midi_input = match MidiInput::new(MIDI_INPUT_CLIENT_NAME) {
         Ok(port) => port,
         Err(err) => {
             log::error!("get_default_midi_device(): Could not create a new MIDI input object.");
             return Err(anyhow!(err));
         }
     };
+
+    midi_input.ignore(MIDI_MESSAGE_IGNORE_VALUE);
 
     match midi_input.ports().get(DEFAULT_MIDI_PORT_INDEX).cloned() {
         Some(port) => {
@@ -179,6 +208,31 @@ fn message_type_from_status_byte(status: &u8) -> MessageType {
         0xD0 => MessageType::ChannelPressure,
         0xE0 => MessageType::PitchBend,
         _ => MessageType::Unknown,
+    }
+}
+
+fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {
+    match cc_number {
+        7 => Some(CC::Volume(cc_value)),
+        10 => Some(CC::Pan(cc_value)),
+        52 => Some(CC::Oscillator1Level(cc_value)),
+        53 => Some(CC::Oscillator2Level(cc_value)),
+        54 => Some(CC::Oscillator3Level(cc_value)),
+        55 => Some(CC::Oscillator4Level(cc_value)),
+        56 => Some(CC::Oscillator1Mute(cc_value)),
+        57 => Some(CC::Oscillator2Mute(cc_value)),
+        58 => Some(CC::Oscillator3Mute(cc_value)),
+        59 => Some(CC::Oscillator4Mute(cc_value)),
+        60 => Some(CC::Oscillator1Pan(cc_value)),
+        61 => Some(CC::Oscillator2Pan(cc_value)),
+        62 => Some(CC::Oscillator3Pan(cc_value)),
+        63 => Some(CC::Oscillator4Pan(cc_value)),
+        72 => Some(CC::ReleaseTime(cc_value)),
+        73 => Some(CC::AttackTime(cc_value)),
+        75 => Some(CC::DecayTime(cc_value)),
+        79 => Some(CC::SustainLevel(cc_value)),
+        123 => Some(CC::AllNotesOff),
+        _ => None,
     }
 }
 
