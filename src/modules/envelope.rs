@@ -615,7 +615,7 @@ mod tests {
             envelope.generate();
         }
 
-        // Transition back to the off stage
+        // Transition back to the Off stage
         assert_eq!(envelope.state, Stage::Off);
         assert!(f32_value_equality(envelope.level, ENVELOPE_MIN_LEVEL));
     }

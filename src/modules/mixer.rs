@@ -1,6 +1,4 @@
-use crate::modules::mixer::MixerInput::Four;
-
-const QUAD_MIX_NUMBER_OF_INPUTS: u8 = 4;
+#![allow(dead_code)]
 const QUAD_MIX_DEFAULT_LEVEL_SUM: f32 = 4.0;
 const QUAD_MIX_DEFAULT_MUTE: bool = false;
 const QUAD_MIX_DEFAULT_CONSTANT_IS_ENABLED: bool = false;
@@ -92,8 +90,8 @@ impl Mixer {
             left_input_sum /= self.quad_mix.level_sum;
             right_input_sum /= self.quad_mix.level_sum;
         } else {
-            left_input_sum /= QUAD_MIX_NUMBER_OF_INPUTS as f32;
-            right_input_sum /= QUAD_MIX_NUMBER_OF_INPUTS as f32;
+            left_input_sum /= QUAD_MIX_DEFAULT_LEVEL_SUM;
+            right_input_sum /= QUAD_MIX_DEFAULT_LEVEL_SUM;
         }
 
         (left_input_sum, right_input_sum)

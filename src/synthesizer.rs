@@ -345,7 +345,6 @@ fn midi_value_to_bool(midi_value: u8) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cpal::traits::HostTrait;
 
     fn f32_value_equality(value_1: f32, value_2: f32) -> bool {
         (value_1 - value_2).abs() <= f32::EPSILON

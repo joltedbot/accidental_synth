@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 pub mod am;
 pub mod fm;
 pub mod noise;
@@ -100,7 +101,6 @@ fn get_wave_generator_from_wave_shape(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::seq::index::sample;
 
     #[test]
     fn new_returns_oscillator_with_correct_default_values() {

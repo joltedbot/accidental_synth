@@ -155,10 +155,7 @@ fn create_midi_input_listener(
                     MessageType::ControlChange => {
                         let cc_number = message[MIDI_CC_NUMBER_BYTE_INDEX];
                         let cc_value = message[MIDI_CC_VALUE_BYTE_INDEX];
-                        match get_supported_cc_from_cc_number(cc_number, cc_value) {
-                            Some(cc) => Some(MidiMessage::ControlChange(cc)),
-                            None => None,
-                        }
+                        get_supported_cc_from_cc_number(cc_number, cc_value).map(MidiMessage::ControlChange)
                     }
                     _ => None,
                 };
