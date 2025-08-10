@@ -1,11 +1,9 @@
-mod constants;
-
 use crate::midi::{CC, MidiMessage};
 use crate::modules::amplifier::vca;
 use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
 use crate::modules::mixer::{Mixer, MixerInput};
 use crate::modules::oscillator::{Oscillator, WaveShape};
-use crate::synthesizer::constants::*;
+use crate::modules::tuner::tune;
 
 use anyhow::Result;
 use cpal::traits::DeviceTrait;
@@ -14,25 +12,70 @@ use crossbeam_channel::Receiver;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
 
+pub const MIDI_VELOCITY_TO_SAMPLE_FACTOR: f32 = 1.0 / 127.0;
+
+pub const DEFAULT_OSCILLATOR_OUTPUT_LEVEL: f32 = 1.0;
+pub const DEFAULT_OSCILLATOR_OUTPUT_PAN: f32 = 0.0;
+pub const DEFAULT_SUB_OSCILLATOR_INTERVAL: i8 = -12;
+pub const DEFAULT_SUB_OSCILLATOR_LEVEL: f32 = 0.0;
+pub const DEFAULT_AMP_ENVELOPE_ATTACK_TIME: f32 = 200.0;
+pub const DEFAULT_AMP_ENVELOPE_DECAY_TIME: f32 = 200.0;
+pub const DEFAULT_AMP_ENVELOPE_SUSTAIN_LEVEL: f32 = 0.8;
+pub const DEFAULT_AMP_ENVELOPE_RELEASE_TIME: f32 = 200.0;
+pub const DEFAULT_OUTPUT_LEVEL: f32 = 0.5;
+pub const DEFAULT_OUTPUT_PAN: f32 = 0.0;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum MidiEvent {
     NoteOn,
     NoteOff,
 }
 
-struct Oscillators {
-    one: Oscillator,
-    two: Oscillator,
-    three: Oscillator,
-    four: Oscillator,
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct OscillatorParameters {
+    level: f32,
+    pan: f32,
+    mute: bool,
+    frequency: f32,
+    course_tune: Option<i8>,
+    fine_tune: Option<i8>,
+}
+
+impl Default for OscillatorParameters {
+    fn default() -> Self {
+        Self {
+            level: DEFAULT_OSCILLATOR_OUTPUT_LEVEL,
+            pan: DEFAULT_OSCILLATOR_OUTPUT_PAN,
+            mute: false,
+            frequency: 0.0,
+            course_tune: None,
+            fine_tune: None,
+        }
+    }
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
+struct EnvelopeParameters {
+    attack_time: f32,
+    decay_time: f32,
+    sustain_level: f32,
+    release_time: f32,
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
+struct CurrentNote {
+    midi_note: u8,
+    velocity: f32,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 struct Parameters {
     output_level: f32,
     output_pan: f32,
-    current_note: (f32, f32),
+    current_note: CurrentNote,
     mixer: Mixer,
+    oscillators: [OscillatorParameters; 4],
+    amp_envelope: EnvelopeParameters,
 }
 
 pub struct Synthesizer {
@@ -40,24 +83,56 @@ pub struct Synthesizer {
     output_stream: Option<Stream>,
     parameters: Arc<Mutex<Parameters>>,
     midi_events: Arc<Mutex<Option<MidiEvent>>>,
-    oscillators: Arc<Mutex<Oscillators>>,
+    oscillators: Arc<Mutex<[Oscillator; 4]>>,
     amp_envelope: Arc<Mutex<Envelope>>,
 }
 
 impl Synthesizer {
     pub fn new(audio_output_device: Device, sample_rate: u32) -> Self {
         log::info!("Constructing Synthesizer Module");
-        let parameters = Parameters {
-            output_level: DEFAULT_OUTPUT_LEVEL,
+
+        let sub_oscillator = OscillatorParameters {
+            level: DEFAULT_SUB_OSCILLATOR_LEVEL,
+            course_tune: Some(DEFAULT_SUB_OSCILLATOR_INTERVAL),
             ..Default::default()
         };
 
-        let oscillators = Oscillators {
-            one: Oscillator::new(sample_rate, WaveShape::Sine),
-            two: Oscillator::new(sample_rate, WaveShape::Triangle),
-            three: Oscillator::new(sample_rate, WaveShape::Saw),
-            four: Oscillator::new(sample_rate, WaveShape::Pulse),
+        let oscillator_parameters = [
+            sub_oscillator,
+            Default::default(),
+            Default::default(),
+            Default::default(),
+        ];
+
+        let mut mixer = Mixer::new();
+        mixer.set_quad_level(DEFAULT_SUB_OSCILLATOR_LEVEL, MixerInput::One);
+
+        let parameters = Parameters {
+            output_level: DEFAULT_OUTPUT_LEVEL,
+            output_pan: DEFAULT_OUTPUT_PAN,
+            mixer,
+            current_note: Default::default(),
+            oscillators: oscillator_parameters,
+            amp_envelope: EnvelopeParameters {
+                attack_time: DEFAULT_AMP_ENVELOPE_ATTACK_TIME,
+                decay_time: DEFAULT_AMP_ENVELOPE_DECAY_TIME,
+                sustain_level: DEFAULT_AMP_ENVELOPE_SUSTAIN_LEVEL,
+                release_time: DEFAULT_AMP_ENVELOPE_RELEASE_TIME,
+            },
         };
+
+        let oscillators = [
+            Oscillator::new(sample_rate, WaveShape::Sine),
+            Oscillator::new(sample_rate, WaveShape::Sine),
+            Oscillator::new(sample_rate, WaveShape::Sine),
+            Oscillator::new(sample_rate, WaveShape::Sine),
+        ];
+
+        let mut amp_envelope = Envelope::new(sample_rate);
+        amp_envelope.set_attack_milliseconds(DEFAULT_AMP_ENVELOPE_ATTACK_TIME);
+        amp_envelope.set_decay_milliseconds(DEFAULT_AMP_ENVELOPE_DECAY_TIME);
+        amp_envelope.set_sustain_level(DEFAULT_AMP_ENVELOPE_SUSTAIN_LEVEL);
+        amp_envelope.set_release_milliseconds(DEFAULT_AMP_ENVELOPE_RELEASE_TIME);
 
         Self {
             audio_output_device,
@@ -65,7 +140,7 @@ impl Synthesizer {
             parameters: Arc::new(Mutex::new(parameters)),
             midi_events: Arc::new(Mutex::new(None)),
             oscillators: Arc::new(Mutex::new(oscillators)),
-            amp_envelope: Arc::new(Mutex::new(Envelope::new(sample_rate))),
+            amp_envelope: Arc::new(Mutex::new(amp_envelope)),
         }
     }
 
@@ -124,38 +199,51 @@ impl Synthesizer {
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
 
                 // Begin processing the audio buffer
-                let (note_frequency, velocity) = parameters.current_note;
                 action_midi_events(midi_events.take(), &mut amp_envelope);
 
                 // Split the buffer into frames
                 for frame in buffer.chunks_mut(number_of_channels) {
-                    // Begin generating and processing the samples in the frame
+                    // Begin generating and processing the samples for the frame
 
-                    let osc1_sample = oscillators.one.generate(note_frequency, None);
-                    let osc1_velocity_sample = vca(osc1_sample, None, Some(velocity));
-                    let osc1_amp_envelope_sample =
-                        vca(osc1_velocity_sample, None, Some(amp_envelope.generate()));
+                    let amp_envelope_value = amp_envelope.generate();
 
-                    let osc2_sample = oscillators.two.generate(note_frequency, None);
-                    let osc2_velocity_sample = vca(osc2_sample, None, Some(velocity));
-                    let osc2_amp_envelope_sample =
-                        vca(osc2_velocity_sample, None, Some(amp_envelope.generate()));
+                    let sub_oscillator_raw_sample =
+                        oscillators[0].generate(parameters.oscillators[0].frequency, None);
+                    let sub_oscillator_sample = vca(
+                        sub_oscillator_raw_sample,
+                        Some(parameters.current_note.velocity),
+                        Some(amp_envelope_value),
+                    );
 
-                    let osc3_sample = oscillators.three.generate(note_frequency, None);
-                    let osc3_velocity_sample = vca(osc3_sample, None, Some(velocity));
-                    let osc3_adsr_sample =
-                        vca(osc3_velocity_sample, None, Some(amp_envelope.generate()));
+                    let oscillator1_raw_sample =
+                        oscillators[1].generate(parameters.oscillators[1].frequency, None);
+                    let oscillator1_sample = vca(
+                        oscillator1_raw_sample,
+                        Some(parameters.current_note.velocity),
+                        Some(amp_envelope_value),
+                    );
 
-                    let osc4_sample = oscillators.four.generate(note_frequency, None);
-                    let osc4_velocity_sample = vca(osc4_sample, None, Some(velocity));
-                    let osc4_amp_envelope_sample =
-                        vca(osc4_velocity_sample, None, Some(amp_envelope.generate()));
+                    let oscillator2_raw_sample =
+                        oscillators[2].generate(parameters.oscillators[2].frequency, None);
+                    let oscillator2_sample = vca(
+                        oscillator2_raw_sample,
+                        Some(parameters.current_note.velocity),
+                        Some(amp_envelope_value),
+                    );
+
+                    let oscillator3_raw_sample =
+                        oscillators[3].generate(parameters.oscillators[3].frequency, None);
+                    let oscillator3_sample = vca(
+                        oscillator3_raw_sample,
+                        Some(parameters.current_note.velocity),
+                        Some(amp_envelope_value),
+                    );
 
                     let (oscillator_mix_left, oscillator_mix_right) = parameters.mixer.quad_mix(
-                        osc1_amp_envelope_sample,
-                        osc2_amp_envelope_sample,
-                        osc3_adsr_sample,
-                        osc4_amp_envelope_sample,
+                        sub_oscillator_sample,
+                        oscillator1_sample,
+                        oscillator2_sample,
+                        oscillator3_sample,
                     );
 
                     // Final output level control
@@ -194,15 +282,12 @@ fn start_midi_event_listener(
 
         while let Ok(event) = midi_message_receiver.recv() {
             match event {
-                MidiMessage::NoteOn(note_number, velocity) => {
+                MidiMessage::NoteOn(midi_note, velocity) => {
                     let mut parameters = parameters_arc
                         .lock()
                         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-                    parameters.current_note = (
-                        MIDI_NOTE_FREQUENCIES[note_number as usize].0,
-                        velocity as f32 * MIDI_VELOCITY_TO_SAMPLE_FACTOR,
-                    );
+                    update_current_note_from_midi_note(midi_note, velocity, &mut parameters);
 
                     let mut midi_events = midi_event_arc
                         .lock()
@@ -232,6 +317,41 @@ fn start_midi_event_listener(
     });
 }
 
+fn update_current_note_from_midi_note(
+    midi_note: u8,
+    velocity: u8,
+    parameters: &mut MutexGuard<Parameters>,
+) {
+    let sub_osc_frequency = tune(
+        midi_note,
+        parameters.oscillators[0].course_tune,
+        parameters.oscillators[0].fine_tune,
+    );
+
+    let osc1_frequency = tune(
+        midi_note,
+        parameters.oscillators[1].course_tune,
+        parameters.oscillators[1].fine_tune,
+    );
+    let osc2_frequency = tune(
+        midi_note,
+        parameters.oscillators[2].course_tune,
+        parameters.oscillators[2].fine_tune,
+    );
+    let osc3_frequency = tune(
+        midi_note,
+        parameters.oscillators[3].course_tune,
+        parameters.oscillators[3].fine_tune,
+    );
+
+    parameters.current_note.midi_note = midi_note;
+    parameters.current_note.velocity = velocity as f32 * MIDI_VELOCITY_TO_SAMPLE_FACTOR;
+    parameters.oscillators[0].frequency = sub_osc_frequency;
+    parameters.oscillators[1].frequency = osc1_frequency;
+    parameters.oscillators[2].frequency = osc2_frequency;
+    parameters.oscillators[3].frequency = osc3_frequency;
+}
+
 fn process_midi_cc_values(
     cc_value: CC,
     parameters_arc: &mut Arc<Mutex<Parameters>>,
@@ -250,58 +370,97 @@ fn process_midi_cc_values(
     match cc_value {
         CC::Volume(value) => parameters.output_level = midi_value_to_f32_0_to_1(value),
         CC::Pan(value) => parameters.output_pan = midi_value_to_f32_negative_1_to_1(value),
-        CC::Oscillator1Level(value) => parameters
-            .mixer
-            .set_quad_level(midi_value_to_f32_0_to_1(value), MixerInput::One),
-        CC::Oscillator2Level(value) => parameters
-            .mixer
-            .set_quad_level(midi_value_to_f32_0_to_1(value), MixerInput::Two),
-        CC::Oscillator3Level(value) => parameters
-            .mixer
-            .set_quad_level(midi_value_to_f32_0_to_1(value), MixerInput::Three),
-        CC::Oscillator4Level(value) => parameters
-            .mixer
-            .set_quad_level(midi_value_to_f32_0_to_1(value), MixerInput::Four),
-        CC::Oscillator1Mute(value) => parameters
-            .mixer
-            .set_quad_mute(midi_value_to_bool(value), MixerInput::One),
-        CC::Oscillator2Mute(value) => parameters
-            .mixer
-            .set_quad_mute(midi_value_to_bool(value), MixerInput::Two),
-        CC::Oscillator3Mute(value) => parameters
-            .mixer
-            .set_quad_mute(midi_value_to_bool(value), MixerInput::Three),
-        CC::Oscillator4Mute(value) => parameters
-            .mixer
-            .set_quad_mute(midi_value_to_bool(value), MixerInput::Four),
-        CC::Oscillator1Pan(value) => parameters
-            .mixer
-            .set_quad_pan(midi_value_to_f32_negative_1_to_1(value), MixerInput::One),
-        CC::Oscillator2Pan(value) => parameters
-            .mixer
-            .set_quad_pan(midi_value_to_f32_negative_1_to_1(value), MixerInput::Two),
-        CC::Oscillator3Pan(value) => parameters
-            .mixer
-            .set_quad_pan(midi_value_to_f32_negative_1_to_1(value), MixerInput::Three),
-        CC::Oscillator4Pan(value) => parameters
-            .mixer
-            .set_quad_pan(midi_value_to_f32_negative_1_to_1(value), MixerInput::Four),
-        CC::AttackTime(value) => envelope.set_attack_milliseconds(midi_value_to_f32_range(
-            value,
-            ENVELOPE_MIN_MILLISECONDS,
-            ENVELOPE_MAX_MILLISECONDS,
-        )),
-        CC::DecayTime(value) => envelope.set_decay_milliseconds(midi_value_to_f32_range(
-            value,
-            ENVELOPE_MIN_MILLISECONDS,
-            ENVELOPE_MAX_MILLISECONDS,
-        )),
-        CC::SustainLevel(value) => envelope.set_sustain_level(midi_value_to_f32_0_to_1(value)),
-        CC::ReleaseTime(value) => envelope.set_release_milliseconds(midi_value_to_f32_range(
-            value,
-            ENVELOPE_MIN_MILLISECONDS,
-            ENVELOPE_MAX_MILLISECONDS,
-        )),
+        CC::SubOscillatorLevel(value) => {
+            let level = midi_value_to_f32_0_to_1(value);
+            parameters.mixer.set_quad_level(level, MixerInput::One);
+            parameters.oscillators[0].level = level;
+        }
+        CC::Oscillator1Level(value) => {
+            let level = midi_value_to_f32_0_to_1(value);
+            parameters.mixer.set_quad_level(level, MixerInput::Two);
+            parameters.oscillators[1].level = level;
+        }
+        CC::Oscillator2Level(value) => {
+            let level = midi_value_to_f32_0_to_1(value);
+            parameters.mixer.set_quad_level(level, MixerInput::Three);
+            parameters.oscillators[2].level = level;
+        }
+        CC::Oscillator3Level(value) => {
+            let level = midi_value_to_f32_0_to_1(value);
+            parameters.mixer.set_quad_level(level, MixerInput::Four);
+            parameters.oscillators[3].level = level;
+        }
+        CC::SubOscillatorMute(value) => {
+            let mute = midi_value_to_bool(value);
+            parameters.mixer.set_quad_mute(mute, MixerInput::One);
+            parameters.oscillators[0].mute = mute;
+        }
+        CC::Oscillator1Mute(value) => {
+            let mute = midi_value_to_bool(value);
+            parameters.mixer.set_quad_mute(mute, MixerInput::Two);
+            parameters.oscillators[1].mute = mute;
+        }
+        CC::Oscillator2Mute(value) => {
+            let mute = midi_value_to_bool(value);
+            parameters.mixer.set_quad_mute(mute, MixerInput::Three);
+            parameters.oscillators[2].mute = mute;
+        }
+        CC::Oscillator3Mute(value) => {
+            let mute = midi_value_to_bool(value);
+            parameters.mixer.set_quad_mute(mute, MixerInput::Four);
+            parameters.oscillators[3].mute = mute;
+        }
+        CC::SubOscillatorPan(value) => {
+            let pan = midi_value_to_f32_negative_1_to_1(value);
+            parameters.mixer.set_quad_pan(pan, MixerInput::One);
+            parameters.oscillators[0].pan = pan;
+        }
+        CC::Oscillator1Pan(value) => {
+            let pan = midi_value_to_f32_negative_1_to_1(value);
+            parameters.mixer.set_quad_pan(pan, MixerInput::Two);
+            parameters.oscillators[1].pan = pan;
+        }
+        CC::Oscillator2Pan(value) => {
+            let pan = midi_value_to_f32_negative_1_to_1(value);
+            parameters.mixer.set_quad_pan(pan, MixerInput::Three);
+            parameters.oscillators[2].pan = pan;
+        }
+        CC::Oscillator3Pan(value) => {
+            let pan = midi_value_to_f32_negative_1_to_1(value);
+            parameters.mixer.set_quad_pan(pan, MixerInput::Four);
+            parameters.oscillators[3].pan = pan;
+        }
+        CC::AttackTime(value) => {
+            let time = midi_value_to_f32_range(
+                value,
+                ENVELOPE_MIN_MILLISECONDS,
+                ENVELOPE_MAX_MILLISECONDS,
+            );
+            envelope.set_attack_milliseconds(time);
+            parameters.amp_envelope.attack_time = time;
+        }
+        CC::DecayTime(value) => {
+            let time = midi_value_to_f32_range(
+                value,
+                ENVELOPE_MIN_MILLISECONDS,
+                ENVELOPE_MAX_MILLISECONDS,
+            );
+            envelope.set_decay_milliseconds(time);
+            parameters.amp_envelope.decay_time = time;
+        }
+        CC::SustainLevel(value) => {
+            envelope.set_sustain_level(midi_value_to_f32_0_to_1(value));
+            parameters.amp_envelope.sustain_level = midi_value_to_f32_0_to_1(value);
+        }
+        CC::ReleaseTime(value) => {
+            let time = midi_value_to_f32_range(
+                value,
+                ENVELOPE_MIN_MILLISECONDS,
+                ENVELOPE_MAX_MILLISECONDS,
+            );
+            envelope.set_release_milliseconds(time);
+            parameters.amp_envelope.release_time = time;
+        }
         CC::AllNotesOff => {
             let mut midi_events = midi_event_arc
                 .lock()

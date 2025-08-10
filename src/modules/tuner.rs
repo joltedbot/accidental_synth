@@ -1,6 +1,22 @@
-pub const MIDI_VELOCITY_TO_SAMPLE_FACTOR: f32 = 1.0 / 127.0;
+pub fn tune(mut note_number: u8, interval: Option<i8>, cents: Option<i8>) -> f32 {
+    if let Some(interval) = interval {
+        note_number = (note_number as i8 + interval).clamp(0, 127) as u8;
+    }
+    let mut note_frequency = midi_note_to_frequency(note_number);
 
-pub const DEFAULT_OUTPUT_LEVEL: f32 = 0.5;
+    if let Some(cents) = cents {
+        note_frequency = frequency_from_cents(note_frequency, cents);
+    }
+    note_frequency
+}
+
+fn midi_note_to_frequency(note_number: u8) -> f32 {
+    MIDI_NOTE_FREQUENCIES[note_number as usize].0
+}
+
+fn frequency_from_cents(frequency: f32, cents: i8) -> f32 {
+    frequency * (2.0f32.powf(cents as f32 / 1200.0))
+}
 
 pub const MIDI_NOTE_FREQUENCIES: [(f32, &str); 128] = [
     (8.175, "C-1"),
