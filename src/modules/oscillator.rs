@@ -102,6 +102,10 @@ fn get_wave_generator_from_wave_shape(
 mod tests {
     use super::*;
 
+    fn f32_value_equality(value_1: f32, value_2: f32) -> bool {
+        (value_1 - value_2).abs() <= f32::EPSILON
+    }
+
     #[test]
     fn new_returns_oscillator_with_correct_default_values() {
         let sample_rate = 44100;
@@ -109,6 +113,64 @@ mod tests {
         let oscillator = Oscillator::new(sample_rate, wave_shape);
         assert_eq!(oscillator.sample_rate, sample_rate);
         assert_eq!(oscillator.wave_generator.shape(), wave_shape);
+    }
+
+    #[test]
+    fn set_shape_parameters_correctly_sets_the_oscillators_shape_specific_parameters() {
+        let sample_rate = 44100;
+        let wave_shape = WaveShape::FM;
+        let mut oscillator = Oscillator::new(sample_rate, wave_shape);
+
+        let first_value = oscillator.generate(100.0, None);
+        for _ in 0..5 {
+            assert!(!f32_value_equality(
+                oscillator.generate(100.0, None),
+                first_value
+            ));
+        }
+        let first_sample = oscillator.generate(100.0, None);
+
+        oscillator.reset();
+        oscillator.set_shape_parameters(vec![1.0, 2.0]);
+
+        let first_value = oscillator.generate(100.0, None);
+        for _ in 0..5 {
+            assert!(!f32_value_equality(
+                oscillator.generate(100.0, None),
+                first_value
+            ));
+        }
+        let second_sample = oscillator.generate(100.0, None);
+
+        assert_ne!(first_sample, second_sample);
+    }
+
+    #[test]
+    fn reset_correctly_resets_oscillator_phase() {
+        let sample_rate = 44100;
+        let wave_shape = WaveShape::Sine;
+        let mut oscillator = Oscillator::new(sample_rate, wave_shape);
+        let first_value = oscillator.generate(100.0, None);
+        for _ in 0..5 {
+            assert!(!f32_value_equality(
+                oscillator.generate(100.0, None),
+                first_value
+            ));
+        }
+        oscillator.reset();
+        assert!(f32_value_equality(
+            oscillator.generate(100.0, None),
+            first_value
+        ));
+    }
+
+    #[test]
+    fn set_wave_shape_returns_oscillator_with_correct_wave_shape() {
+        let sample_rate = 44100;
+        let wave_shape = WaveShape::Sine;
+        let mut oscillator = Oscillator::new(sample_rate, wave_shape);
+        oscillator.set_wave_shape(WaveShape::Square);
+        assert_eq!(oscillator.wave_generator.shape(), WaveShape::Square);
     }
 
     #[test]
