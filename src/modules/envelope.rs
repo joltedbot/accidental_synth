@@ -23,15 +23,15 @@ enum Stage {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum StateAction {
+enum StageAction {
     Start,
     Stop,
-    NextState,
+    NextStage,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct Envelope {
-    state: Stage,
+    stage: Stage,
     level: f32,
     sample_rate: u32,
     milliseconds_per_sample: f32,
@@ -58,7 +58,7 @@ impl Envelope {
             decay_level_increment: DEFAULT_DECAY_LEVEL_INCREMENT,
             decay_milliseconds: DEFAULT_DECAY_MILLISECONDS,
             release_level_increment: DEFAULT_RELEASE_LEVEL_INCREMENT,
-            state: Stage::Off,
+            stage: Stage::Off,
         }
     }
 
@@ -67,11 +67,11 @@ impl Envelope {
     }
 
     pub fn gate_on(&mut self) {
-        self.state_action(StateAction::Start);
+        self.state_action(StageAction::Start);
     }
 
     pub fn gate_off(&mut self) {
-        self.state_action(StateAction::Stop);
+        self.state_action(StageAction::Stop);
     }
 
     pub fn set_attack_milliseconds(&mut self, milliseconds: f32) {
@@ -117,32 +117,38 @@ impl Envelope {
         );
     }
 
-    fn state_action(&mut self, action: StateAction) {
-        match (action, self.state) {
-            (StateAction::Start, _) => {
-                self.state = Stage::Attack;
+    fn state_action(&mut self, action: StageAction) {
+        match (action, self.stage) {
+            (StageAction::Start, _) => {
+                self.stage = Stage::Attack;
             }
-            (StateAction::Stop, Stage::Off) => {}
-            (StateAction::Stop, Stage::Release) => {}
-            (StateAction::Stop, _) => {
-                self.state = Stage::Release;
+            (StageAction::Stop, Stage::Off) => {}
+            (StageAction::Stop, Stage::Release) => {}
+            (StageAction::Stop, _) => {
+                self.stage = Stage::Release;
             }
-            (StateAction::NextState, Stage::Attack) => {
-                self.state = Stage::Decay;
+            (StageAction::NextStage, Stage::Attack) => {
+                self.stage = Stage::Decay;
             }
-            (StateAction::NextState, Stage::Decay) => {
-                self.state = Stage::Sustain;
+            (StageAction::NextStage, Stage::Decay) => {
+                self.stage = Stage::Sustain;
             }
-            (StateAction::NextState, Stage::Release) => {
+            (StageAction::NextStage, Stage::Release) => {
                 self.level = ENVELOPE_MIN_LEVEL;
-                self.state = Stage::Off;
+                self.stage = Stage::Off;
             }
-            (StateAction::NextState, _) => {}
+            (StageAction::NextStage, _) => {
+                log::debug!(
+                    "state_action(): invalid state transition: state: {:?}, action: {:?}",
+                    self.stage,
+                    action
+                );
+            }
         }
     }
 
     fn next_value(&mut self) -> f32 {
-        match self.state {
+        match self.stage {
             Stage::Off => self.level,
             Stage::Attack => self.attack_next_value(),
             Stage::Decay => self.decay_next_value(),
@@ -156,7 +162,7 @@ impl Envelope {
 
         if self.level >= ENVELOPE_MAX_LEVEL {
             self.level = ENVELOPE_MAX_LEVEL;
-            self.state_action(StateAction::NextState);
+            self.state_action(StageAction::NextStage);
         }
 
         self.level
@@ -167,7 +173,7 @@ impl Envelope {
 
         if self.level <= self.sustain_level {
             self.level = self.sustain_level;
-            self.state_action(StateAction::NextState);
+            self.state_action(StageAction::NextStage);
         }
 
         self.level
@@ -182,7 +188,7 @@ impl Envelope {
 
         if self.level <= ENVELOPE_MIN_LEVEL {
             self.level = ENVELOPE_MIN_LEVEL;
-            self.state_action(StateAction::NextState);
+            self.state_action(StageAction::NextStage);
         }
 
         self.level
@@ -217,7 +223,7 @@ mod tests {
         let sample_rate = 48000;
         let envelope = Envelope::new(sample_rate);
 
-        assert_eq!(envelope.state, Stage::Off);
+        assert_eq!(envelope.stage, Stage::Off);
         assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
         assert_eq!(envelope.sample_rate, sample_rate);
         assert_eq!(
@@ -245,7 +251,7 @@ mod tests {
         let expected_ms_per_sample = 0.0052083;
         let envelope = Envelope::new(sample_rate);
 
-        assert_eq!(envelope.state, Stage::Off);
+        assert_eq!(envelope.stage, Stage::Off);
         assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
         assert_eq!(envelope.sample_rate, MAX_SUPPORTED_SAMPLE_RATE);
         assert!(f32_value_equality(
@@ -273,7 +279,7 @@ mod tests {
         let expected_ms_per_sample = 0.0226757;
         let envelope = Envelope::new(sample_rate);
 
-        assert_eq!(envelope.state, Stage::Off);
+        assert_eq!(envelope.stage, Stage::Off);
         assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
         assert_eq!(envelope.sample_rate, MIN_SUPPORTED_SAMPLE_RATE);
         assert!(f32_value_equality(
@@ -376,51 +382,51 @@ mod tests {
     fn start_correctly_initiates_attack_stage_from_all_stages() {
         let mut envelope = Envelope::new(44100);
 
-        envelope.state = Stage::Off;
+        envelope.stage = Stage::Off;
         envelope.gate_on();
-        assert_eq!(envelope.state, Stage::Attack);
+        assert_eq!(envelope.stage, Stage::Attack);
 
-        envelope.state = Stage::Decay;
+        envelope.stage = Stage::Decay;
         envelope.gate_on();
-        assert_eq!(envelope.state, Stage::Attack);
+        assert_eq!(envelope.stage, Stage::Attack);
 
-        envelope.state = Stage::Sustain;
+        envelope.stage = Stage::Sustain;
         envelope.gate_on();
-        assert_eq!(envelope.state, Stage::Attack);
+        assert_eq!(envelope.stage, Stage::Attack);
 
-        envelope.state = Stage::Release;
+        envelope.stage = Stage::Release;
         envelope.gate_on();
-        assert_eq!(envelope.state, Stage::Attack);
+        assert_eq!(envelope.stage, Stage::Attack);
     }
 
     #[test]
     fn stop_correctly_initiates_release_stage_from_all_valid_stages() {
         let mut envelope = Envelope::new(44100);
 
-        envelope.state = Stage::Attack;
+        envelope.stage = Stage::Attack;
         envelope.gate_off();
-        assert_eq!(envelope.state, Stage::Release);
+        assert_eq!(envelope.stage, Stage::Release);
 
-        envelope.state = Stage::Decay;
+        envelope.stage = Stage::Decay;
         envelope.gate_off();
-        assert_eq!(envelope.state, Stage::Release);
+        assert_eq!(envelope.stage, Stage::Release);
 
-        envelope.state = Stage::Sustain;
+        envelope.stage = Stage::Sustain;
         envelope.gate_off();
-        assert_eq!(envelope.state, Stage::Release);
+        assert_eq!(envelope.stage, Stage::Release);
     }
 
     #[test]
     fn stop_correctly_does_not_transition_to_release_from_off_or_release() {
         let mut envelope = Envelope::new(44100);
 
-        envelope.state = Stage::Off;
+        envelope.stage = Stage::Off;
         envelope.gate_off();
-        assert_eq!(envelope.state, Stage::Off);
+        assert_eq!(envelope.stage, Stage::Off);
 
-        envelope.state = Stage::Release;
+        envelope.stage = Stage::Release;
         envelope.gate_off();
-        assert_eq!(envelope.state, Stage::Release);
+        assert_eq!(envelope.stage, Stage::Release);
     }
 
     #[test]
@@ -432,7 +438,7 @@ mod tests {
         let expected_release_level_increment = 0.0002083;
 
         envelope.gate_on();
-        assert_eq!(envelope.state, Stage::Attack);
+        assert_eq!(envelope.stage, Stage::Attack);
         assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
 
         let first_value = envelope.generate();
@@ -458,7 +464,7 @@ mod tests {
 
         envelope.set_decay_milliseconds(decay_ms);
         envelope.set_sustain_level(sustain_level);
-        envelope.state = Stage::Decay;
+        envelope.stage = Stage::Decay;
         envelope.level = ENVELOPE_MAX_LEVEL;
 
         let first_value = envelope.generate();
@@ -480,7 +486,7 @@ mod tests {
         let sustain_level = 0.7;
         envelope.set_sustain_level(sustain_level);
         envelope.level = sustain_level;
-        envelope.state = Stage::Sustain;
+        envelope.stage = Stage::Sustain;
 
         for _ in 0..100 {
             let value = envelope.generate();
@@ -497,7 +503,7 @@ mod tests {
 
         let mut envelope = Envelope::new(sample_rate);
         envelope.set_release_milliseconds(release_ms);
-        envelope.state = Stage::Release;
+        envelope.stage = Stage::Release;
         envelope.level = start_level;
 
         let first_value = envelope.generate();
@@ -516,7 +522,7 @@ mod tests {
     #[test]
     fn off_stage_correctly_returns_min_level_continuously() {
         let mut envelope = Envelope::new(44100);
-        envelope.state = Stage::Off;
+        envelope.stage = Stage::Off;
         envelope.level = ENVELOPE_MIN_LEVEL;
 
         for _ in 0..100 {
@@ -533,7 +539,7 @@ mod tests {
 
         let value = envelope.generate();
         assert!(f32_value_equality(value, ENVELOPE_MAX_LEVEL));
-        assert_eq!(envelope.state, Stage::Decay);
+        assert_eq!(envelope.stage, Stage::Decay);
     }
 
     #[test]
@@ -543,23 +549,23 @@ mod tests {
         envelope.set_sustain_level(sustain_level);
         envelope.set_decay_milliseconds(0.0);
         envelope.level = ENVELOPE_MAX_LEVEL;
-        envelope.state = Stage::Decay;
+        envelope.stage = Stage::Decay;
 
         let value = envelope.generate();
         assert!(f32_value_equality(value, sustain_level));
-        assert_eq!(envelope.state, Stage::Sustain);
+        assert_eq!(envelope.stage, Stage::Sustain);
     }
 
     #[test]
     fn zero_millisecond_release_correctly_immediately_transitions_to_off() {
         let mut envelope = Envelope::new(44100);
         envelope.set_release_milliseconds(0.0);
-        envelope.state = Stage::Release;
+        envelope.stage = Stage::Release;
         envelope.level = 0.8;
 
         let value = envelope.generate();
         assert!(f32_value_equality(value, ENVELOPE_MIN_LEVEL));
-        assert_eq!(envelope.state, Stage::Off);
+        assert_eq!(envelope.stage, Stage::Off);
     }
 
     #[test]
@@ -572,6 +578,22 @@ mod tests {
     }
 
     #[test]
+    fn envelope_correctly_rejects_invalid_nextstage_transition() {
+        let mut envelope = Envelope::new(44100);
+        envelope.stage = Stage::Sustain;
+        envelope.state_action(StageAction::NextStage);
+        assert_eq!(envelope.stage, Stage::Sustain);
+    }
+
+    #[test]
+    fn envelope_correctly_rejects_invalid_stop_action() {
+        let mut envelope = Envelope::new(44100);
+        envelope.stage = Stage::Off;
+        envelope.state_action(StageAction::Stop);
+        assert_eq!(envelope.stage, Stage::Off);
+    }
+
+    #[test]
     fn envelope_correctly_transitions_through_all_stages() {
         let sample_rate = 44100;
         let mut envelope = Envelope::new(sample_rate);
@@ -581,42 +603,42 @@ mod tests {
         envelope.set_release_milliseconds(10.0);
 
         // Before the first note
-        assert_eq!(envelope.state, Stage::Off);
+        assert_eq!(envelope.stage, Stage::Off);
         assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
 
         // Midi Note Start
         envelope.gate_on();
-        assert_eq!(envelope.state, Stage::Attack);
-        while envelope.state == Stage::Attack {
+        assert_eq!(envelope.stage, Stage::Attack);
+        while envelope.stage == Stage::Attack {
             envelope.generate();
         }
 
         // Transition to decay stage
-        assert_eq!(envelope.state, Stage::Decay);
+        assert_eq!(envelope.stage, Stage::Decay);
         assert_eq!(envelope.level, ENVELOPE_MAX_LEVEL);
-        while envelope.state == Stage::Decay {
+        while envelope.stage == Stage::Decay {
             envelope.generate();
         }
 
         // Transition to sustain stage
-        assert_eq!(envelope.state, Stage::Sustain);
+        assert_eq!(envelope.stage, Stage::Sustain);
         assert_eq!(envelope.level, envelope.sustain_level);
         for _ in 0..100 {
             envelope.generate();
-            assert_eq!(envelope.state, Stage::Sustain);
+            assert_eq!(envelope.stage, Stage::Sustain);
         }
 
         // Midi Note Stop
         envelope.gate_off();
 
         // Transition to release stage
-        assert_eq!(envelope.state, Stage::Release);
-        while envelope.state == Stage::Release {
+        assert_eq!(envelope.stage, Stage::Release);
+        while envelope.stage == Stage::Release {
             envelope.generate();
         }
 
         // Transition back to the Off stage
-        assert_eq!(envelope.state, Stage::Off);
+        assert_eq!(envelope.stage, Stage::Off);
         assert!(f32_value_equality(envelope.level, ENVELOPE_MIN_LEVEL));
     }
 }
