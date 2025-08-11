@@ -4,7 +4,8 @@ const SHAPE: WaveShape = WaveShape::SuperSaw;
 const PI: f32 = std::f32::consts::PI;
 const DEFAULT_X_COORDINATE: f32 = 0.0;
 const DEFAULT_X_INCREMENT: f32 = 1.0;
-const VOICE_FREQUENCY_SPREAD: [f32; 7] = [0.97, 0.98, 0.99, 1.0, 1.01, 1.02, 1.03];
+const VOICE_FREQUENCY_SPREAD_CENTS: [i8; 7] = [-12, -7, -4, 0, 4, 7, 12];
+const VOICE_COUNT_OUTPUT_LEVEL_OFFSET: f32 = 0.3;
 
 pub struct SuperSaw {
     shape: WaveShape,
@@ -32,9 +33,9 @@ impl GenerateSamples for SuperSaw {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         let mut voice_samples: Vec<f32> = vec![];
 
-        for frequency_offset in VOICE_FREQUENCY_SPREAD {
+        for frequency_offset in VOICE_FREQUENCY_SPREAD_CENTS {
             voice_samples.push(self.single_saw_sample(
-                tone_frequency * frequency_offset,
+                frequency_from_cents(tone_frequency, frequency_offset),
                 self.x_coordinate,
                 modulation,
             ));
@@ -42,7 +43,7 @@ impl GenerateSamples for SuperSaw {
 
         self.x_coordinate += self.x_increment;
 
-        voice_samples.iter().sum::<f32>() / 7.0
+        voice_samples.iter().sum::<f32>() * VOICE_COUNT_OUTPUT_LEVEL_OFFSET
     }
 
     fn set_shape_parameters(&mut self, _parameter: Vec<f32>) {}
@@ -71,4 +72,8 @@ impl SuperSaw {
                 .atan();
         y_coordinate
     }
+}
+
+fn frequency_from_cents(frequency: f32, cents: i8) -> f32 {
+    frequency * (2.0f32.powf(cents as f32 / 1200.0))
 }

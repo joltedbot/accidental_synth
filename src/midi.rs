@@ -38,6 +38,9 @@ pub enum CC {
     DecayTime(u8),
     SustainLevel(u8),
     ReleaseTime(u8),
+    FilterPoleSwitch(u8),
+    FilterResonance(u8),
+    FilterCutoff(u8),
     AllNotesOff,
 }
 
@@ -224,8 +227,11 @@ fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {
         61 => Some(CC::Oscillator1Pan(cc_value)),
         62 => Some(CC::Oscillator2Pan(cc_value)),
         63 => Some(CC::Oscillator3Pan(cc_value)),
+        70 => Some(CC::FilterPoleSwitch(cc_value)),
+        71 => Some(CC::FilterResonance(cc_value)),
         72 => Some(CC::ReleaseTime(cc_value)),
         73 => Some(CC::AttackTime(cc_value)),
+        74 => Some(CC::FilterCutoff(cc_value)),
         75 => Some(CC::DecayTime(cc_value)),
         79 => Some(CC::SustainLevel(cc_value)),
         123 => Some(CC::AllNotesOff),

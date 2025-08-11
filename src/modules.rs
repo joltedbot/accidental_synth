@@ -1,5 +1,6 @@
 pub mod amplifier;
 pub mod envelope;
-pub(crate) mod mixer;
+pub mod filter;
+pub mod mixer;
 pub mod oscillator;
-pub(crate) mod tuner;
+pub mod tuner;
