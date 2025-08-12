@@ -1,7 +1,9 @@
+use super::constants::*;
 use super::{GenerateSamples, WaveShape};
 
 const SHAPE: WaveShape = WaveShape::Saw;
-const PI: f32 = std::f32::consts::PI;
+use std::f32::consts::PI;
+
 const DEFAULT_X_COORDINATE: f32 = 0.0;
 const DEFAULT_X_INCREMENT: f32 = 1.0;
 
@@ -37,6 +39,8 @@ impl GenerateSamples for Saw {
     }
 
     fn set_shape_parameters(&mut self, _parameters: Vec<f32>) {}
+
+    fn set_phase(&mut self, _phase: f32) {}
 
     fn shape(&self) -> WaveShape {
         self.shape

@@ -1,8 +1,6 @@
+use super::constants::*;
 use super::{GenerateSamples, WaveShape};
-
-const SHAPE: WaveShape = WaveShape::Sine;
-const RADS_PER_CYCLE: f32 = 2.0 * std::f32::consts::PI;
-const DEFAULT_PHASE: f32 = 0.0;
+use std::f32::consts::PI;
 
 pub struct Sine {
     shape: WaveShape,
@@ -18,7 +16,7 @@ impl Sine {
         let phase_increment = RADS_PER_CYCLE * seconds_per_sample;
 
         Self {
-            shape: SHAPE,
+            shape: WaveShape::Sine,
             phase,
             phase_increment,
         }
@@ -38,9 +36,14 @@ impl GenerateSamples for Sine {
 
     fn set_shape_parameters(&mut self, _parameters: Vec<f32>) {}
 
+    fn set_phase(&mut self, phase: f32) {
+        self.phase = (2.0 * PI) * phase.clamp(MIN_PHASE, MAX_PHASE);
+    }
+
     fn shape(&self) -> WaveShape {
         self.shape
     }
+
     fn reset(&mut self) {
         self.phase = DEFAULT_PHASE;
     }

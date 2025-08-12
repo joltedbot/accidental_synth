@@ -1,11 +1,6 @@
+use super::constants::*;
 use super::{GenerateSamples, WaveShape};
-
-const SHAPE: WaveShape = WaveShape::Pulse;
-const PI: f32 = std::f32::consts::PI;
-const DEFAULT_X_COORDINATE: f32 = 0.0;
-const DEFAULT_X_INCREMENT: f32 = 1.0;
-const DEFAULT_PULSE_WIDTH_ADJUSTMENT: f32 = 0.5;
-const OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR: f32 = 0.5;
+use std::f32::consts::PI;
 
 pub struct Pulse {
     shape: WaveShape,
@@ -20,7 +15,7 @@ impl Pulse {
         let x_coordinate = DEFAULT_X_COORDINATE;
 
         Self {
-            shape: SHAPE,
+            shape: WaveShape::Pulse,
             x_coordinate,
             sample_rate,
             pulse_width: DEFAULT_PULSE_WIDTH_ADJUSTMENT,
@@ -42,7 +37,7 @@ impl GenerateSamples for Pulse {
         let mut y_coordinate: f32 =
             (tone_frequency * (2.0 * PI) * (self.x_coordinate / self.sample_rate as f32)).sin();
 
-        if y_coordinate >= 0.0 - duty_cycle {
+        if y_coordinate >= 0.0 + duty_cycle {
             y_coordinate = 1.0;
         } else {
             y_coordinate = -1.0;
@@ -55,6 +50,8 @@ impl GenerateSamples for Pulse {
     fn set_shape_parameters(&mut self, parameters: Vec<f32>) {
         self.pulse_width = parameters[0];
     }
+
+    fn set_phase(&mut self, _phase: f32) {}
 
     fn shape(&self) -> WaveShape {
         self.shape

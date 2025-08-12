@@ -1,9 +1,6 @@
+use super::constants::*;
 use super::{GenerateSamples, WaveShape};
-
-const SHAPE: WaveShape = WaveShape::Ramp;
-const PI: f32 = std::f32::consts::PI;
-const DEFAULT_X_COORDINATE: f32 = 0.0;
-const DEFAULT_X_INCREMENT: f32 = 1.0;
+use std::f32::consts::PI;
 
 pub struct Ramp {
     shape: WaveShape,
@@ -17,7 +14,7 @@ impl Ramp {
         let x_coordinate = DEFAULT_X_COORDINATE;
 
         Self {
-            shape: SHAPE,
+            shape: WaveShape::Ramp,
             x_coordinate,
             sample_rate,
         }
@@ -37,6 +34,9 @@ impl GenerateSamples for Ramp {
     }
 
     fn set_shape_parameters(&mut self, _parameter: Vec<f32>) {}
+
+    fn set_phase(&mut self, _phase: f32) {}
+
     fn shape(&self) -> WaveShape {
         self.shape
     }

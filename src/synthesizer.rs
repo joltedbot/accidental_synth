@@ -1,10 +1,12 @@
 mod constants;
+mod midi_messages;
 
 use self::constants::*;
 use crate::midi::{CC, MidiMessage};
 use crate::modules::amplifier::vca;
 use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
-use crate::modules::filter::{Filter, FilterSlope};
+use crate::modules::filter::Filter;
+use crate::modules::lfo::LFO;
 use crate::modules::mixer::{Mixer, MixerInput};
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::modules::tuner::tune;
@@ -80,6 +82,7 @@ pub struct Synthesizer {
     oscillators: Arc<Mutex<[Oscillator; 4]>>,
     amp_envelope: Arc<Mutex<Envelope>>,
     filter_envelope: Arc<Mutex<Envelope>>,
+    lfo1: Arc<Mutex<LFO>>,
 }
 
 impl Synthesizer {
@@ -144,6 +147,8 @@ impl Synthesizer {
         filter_envelope.set_sustain_level(DEFAULT_AMP_ENVELOPE_SUSTAIN_LEVEL);
         filter_envelope.set_release_milliseconds(DEFAULT_AMP_ENVELOPE_RELEASE_TIME);
 
+        let lfo1 = LFO::new(sample_rate);
+
         Self {
             audio_output_device,
             output_stream: None,
@@ -152,6 +157,7 @@ impl Synthesizer {
             oscillators: Arc::new(Mutex::new(oscillators)),
             amp_envelope: Arc::new(Mutex::new(amp_envelope)),
             filter_envelope: Arc::new(Mutex::new(filter_envelope)),
+            lfo1: Arc::new(Mutex::new(lfo1)),
         }
     }
 
@@ -181,6 +187,7 @@ impl Synthesizer {
         let oscillators_arc = self.oscillators.clone();
         let amp_envelope_arc = self.amp_envelope.clone();
         let filter_envelope_arc = self.filter_envelope.clone();
+        let lfo1_arc = self.lfo1.clone();
 
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
@@ -211,8 +218,11 @@ impl Synthesizer {
                 let mut filter_envelope = filter_envelope_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
+                let mut lfo1 = lfo1_arc
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-                process_midi_note_events(
+                midi_messages::process_midi_note_events(
                     midi_note_events.take(),
                     &mut amp_envelope,
                     &mut filter_envelope,
@@ -280,7 +290,8 @@ impl Synthesizer {
                     let (output_left, output_right) = parameters.mixer.output_mix(
                         filtered_left,
                         filtered_right,
-                        parameters.output_level,
+                        //parameters.output_level,
+                        lfo1.generate(),
                         parameters.output_pan,
                     );
 
@@ -401,70 +412,74 @@ fn process_midi_cc_values(
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
     match cc_value {
-        CC::Volume(value) => parameters.output_level = midi_value_to_f32_0_to_1(value),
-        CC::Pan(value) => parameters.output_pan = midi_value_to_f32_negative_1_to_1(value),
+        CC::Volume(value) => {
+            parameters.output_level = midi_messages::midi_value_to_f32_0_to_1(value)
+        }
+        CC::Pan(value) => {
+            parameters.output_pan = midi_messages::midi_value_to_f32_negative_1_to_1(value)
+        }
         CC::SubOscillatorLevel(value) => {
-            let level = midi_value_to_f32_0_to_1(value);
+            let level = midi_messages::midi_value_to_f32_0_to_1(value);
             parameters.mixer.set_quad_level(level, MixerInput::One);
             parameters.oscillators[0].level = level;
         }
         CC::Oscillator1Level(value) => {
-            let level = midi_value_to_f32_0_to_1(value);
+            let level = midi_messages::midi_value_to_f32_0_to_1(value);
             parameters.mixer.set_quad_level(level, MixerInput::Two);
             parameters.oscillators[1].level = level;
         }
         CC::Oscillator2Level(value) => {
-            let level = midi_value_to_f32_0_to_1(value);
+            let level = midi_messages::midi_value_to_f32_0_to_1(value);
             parameters.mixer.set_quad_level(level, MixerInput::Three);
             parameters.oscillators[2].level = level;
         }
         CC::Oscillator3Level(value) => {
-            let level = midi_value_to_f32_0_to_1(value);
+            let level = midi_messages::midi_value_to_f32_0_to_1(value);
             parameters.mixer.set_quad_level(level, MixerInput::Four);
             parameters.oscillators[3].level = level;
         }
         CC::SubOscillatorMute(value) => {
-            let mute = midi_value_to_bool(value);
+            let mute = midi_messages::midi_value_to_bool(value);
             parameters.mixer.set_quad_mute(mute, MixerInput::One);
             parameters.oscillators[0].mute = mute;
         }
         CC::Oscillator1Mute(value) => {
-            let mute = midi_value_to_bool(value);
+            let mute = midi_messages::midi_value_to_bool(value);
             parameters.mixer.set_quad_mute(mute, MixerInput::Two);
             parameters.oscillators[1].mute = mute;
         }
         CC::Oscillator2Mute(value) => {
-            let mute = midi_value_to_bool(value);
+            let mute = midi_messages::midi_value_to_bool(value);
             parameters.mixer.set_quad_mute(mute, MixerInput::Three);
             parameters.oscillators[2].mute = mute;
         }
         CC::Oscillator3Mute(value) => {
-            let mute = midi_value_to_bool(value);
+            let mute = midi_messages::midi_value_to_bool(value);
             parameters.mixer.set_quad_mute(mute, MixerInput::Four);
             parameters.oscillators[3].mute = mute;
         }
         CC::SubOscillatorPan(value) => {
-            let pan = midi_value_to_f32_negative_1_to_1(value);
+            let pan = midi_messages::midi_value_to_f32_negative_1_to_1(value);
             parameters.mixer.set_quad_pan(pan, MixerInput::One);
             parameters.oscillators[0].pan = pan;
         }
         CC::Oscillator1Pan(value) => {
-            let pan = midi_value_to_f32_negative_1_to_1(value);
+            let pan = midi_messages::midi_value_to_f32_negative_1_to_1(value);
             parameters.mixer.set_quad_pan(pan, MixerInput::Two);
             parameters.oscillators[1].pan = pan;
         }
         CC::Oscillator2Pan(value) => {
-            let pan = midi_value_to_f32_negative_1_to_1(value);
+            let pan = midi_messages::midi_value_to_f32_negative_1_to_1(value);
             parameters.mixer.set_quad_pan(pan, MixerInput::Three);
             parameters.oscillators[2].pan = pan;
         }
         CC::Oscillator3Pan(value) => {
-            let pan = midi_value_to_f32_negative_1_to_1(value);
+            let pan = midi_messages::midi_value_to_f32_negative_1_to_1(value);
             parameters.mixer.set_quad_pan(pan, MixerInput::Four);
             parameters.oscillators[3].pan = pan;
         }
         CC::AttackTime(value) => {
-            let time = midi_value_to_f32_range(
+            let time = midi_messages::midi_value_to_f32_range(
                 value,
                 ENVELOPE_MIN_MILLISECONDS,
                 ENVELOPE_MAX_MILLISECONDS,
@@ -473,7 +488,7 @@ fn process_midi_cc_values(
             parameters.amp_envelope.attack_time = time;
         }
         CC::DecayTime(value) => {
-            let time = midi_value_to_f32_range(
+            let time = midi_messages::midi_value_to_f32_range(
                 value,
                 ENVELOPE_MIN_MILLISECONDS,
                 ENVELOPE_MAX_MILLISECONDS,
@@ -482,11 +497,11 @@ fn process_midi_cc_values(
             parameters.amp_envelope.decay_time = time;
         }
         CC::SustainLevel(value) => {
-            envelope.set_sustain_level(midi_value_to_f32_0_to_1(value));
-            parameters.amp_envelope.sustain_level = midi_value_to_f32_0_to_1(value);
+            envelope.set_sustain_level(midi_messages::midi_value_to_f32_0_to_1(value));
+            parameters.amp_envelope.sustain_level = midi_messages::midi_value_to_f32_0_to_1(value);
         }
         CC::ReleaseTime(value) => {
-            let time = midi_value_to_f32_range(
+            let time = midi_messages::midi_value_to_f32_range(
                 value,
                 ENVELOPE_MIN_MILLISECONDS,
                 ENVELOPE_MAX_MILLISECONDS,
@@ -497,17 +512,17 @@ fn process_midi_cc_values(
         CC::FilterResonance(value) => {
             parameters
                 .filter
-                .set_resonance(midi_value_to_f32_range(value, 0.0, 1.0));
+                .set_resonance(midi_messages::midi_value_to_f32_range(value, 0.0, 1.0));
         }
         CC::FilterCutoff(value) => {
             parameters
                 .filter
-                .set_cutoff_frequency(midi_value_to_filter_cutoff(value));
+                .set_cutoff_frequency(midi_messages::midi_value_to_filter_cutoff(value));
         }
         CC::FilterPoleSwitch(value) => {
             parameters
                 .filter
-                .set_filter_slope(midi_value_to_filter_slope(value));
+                .set_filter_slope(midi_messages::midi_value_to_filter_slope(value));
         }
         CC::AllNotesOff => {
             let mut midi_events = midi_event_arc
@@ -516,132 +531,5 @@ fn process_midi_cc_values(
 
             *midi_events = Some(MidiNoteEvent::NoteOff);
         }
-    }
-}
-
-fn process_midi_note_events(
-    midi_events: Option<MidiNoteEvent>,
-    amp_envelope: &mut MutexGuard<Envelope>,
-    filter_envelope: &mut MutexGuard<Envelope>,
-) {
-    match midi_events {
-        Some(MidiNoteEvent::NoteOn) => {
-            amp_envelope.gate_on();
-            filter_envelope.gate_on();
-        }
-        Some(MidiNoteEvent::NoteOff) => {
-            amp_envelope.gate_off();
-            filter_envelope.gate_off();
-        }
-        None => {}
-    }
-}
-
-fn midi_value_to_f32_range(midi_value: u8, minimum: f32, maximum: f32) -> f32 {
-    let range = maximum - minimum;
-    let increment = range / 127.0;
-    minimum + (midi_value as f32 * increment)
-}
-
-fn midi_value_to_f32_0_to_1(midi_value: u8) -> f32 {
-    midi_value_to_f32_range(midi_value, 0.0, 1.0)
-}
-
-fn midi_value_to_f32_negative_1_to_1(midi_value: u8) -> f32 {
-    midi_value_to_f32_range(midi_value, -1.0, 1.0)
-}
-
-fn midi_value_to_bool(midi_value: u8) -> bool {
-    midi_value > 63
-}
-
-fn midi_value_to_filter_slope(midi_value: u8) -> FilterSlope {
-    if midi_value < 32 {
-        FilterSlope::Db6
-    } else if midi_value < 64 {
-        FilterSlope::Db12
-    } else if midi_value < 96 {
-        FilterSlope::Db18
-    } else {
-        FilterSlope::Db24
-    }
-}
-
-fn midi_value_to_filter_cutoff(midi_value: u8) -> f32 {
-    midi_value_to_f32_range(midi_value, MINIMUM_FILTER_CUTOFF, MAXIMUM_FILTER_CUTOFF)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn f32_value_equality(value_1: f32, value_2: f32) -> bool {
-        (value_1 - value_2).abs() <= f32::EPSILON
-    }
-
-    #[test]
-    fn midi_value_to_f32_range_correctly_maps_edge_values() {
-        assert!(f32_value_equality(
-            midi_value_to_f32_range(0, 0.0, 1.0),
-            0.0
-        ));
-        assert!(f32_value_equality(
-            midi_value_to_f32_range(127, 0.0, 1.0),
-            1.0
-        ));
-        assert!(f32_value_equality(
-            midi_value_to_f32_range(0, -1.0, 1.0),
-            -1.0
-        ));
-        assert!(f32_value_equality(
-            midi_value_to_f32_range(127, -1.0, 1.0),
-            1.0
-        ));
-    }
-
-    #[test]
-    fn midi_value_to_f32_range_correctly_maps_middle_values() {
-        let middle_value1 = midi_value_to_f32_range(64, 0.0, 1.0);
-        assert!(middle_value1 > 0.5 && middle_value1 < 0.51);
-
-        let middle_value2 = midi_value_to_f32_range(64, -1.0, 1.0);
-        assert!(middle_value2 > 0.0 && middle_value2 < 0.01);
-
-        let middle_value3 = midi_value_to_f32_range(64, 20.0, 800.0);
-        assert!(middle_value3 > 410.0 && middle_value3 < 415.0);
-
-        let middle_value4 = midi_value_to_f32_range(64, -800.0, 20.0);
-        assert!(middle_value4 < -386.0 && middle_value1 > -387.0);
-    }
-
-    #[test]
-    fn midi_value_to_f32_0_to_1_correctly_maps_values() {
-        assert!(f32_value_equality(midi_value_to_f32_0_to_1(0), 0.0));
-        assert!(f32_value_equality(midi_value_to_f32_0_to_1(127), 1.0));
-    }
-
-    #[test]
-    fn midi_value_to_f32_negative_1_to_1_correctly_maps_values() {
-        assert!(f32_value_equality(
-            midi_value_to_f32_negative_1_to_1(0),
-            -1.0
-        ));
-
-        assert!(f32_value_equality(
-            midi_value_to_f32_negative_1_to_1(12),
-            -0.8110236
-        ));
-        assert!(f32_value_equality(
-            midi_value_to_f32_negative_1_to_1(127),
-            1.0
-        ));
-    }
-
-    #[test]
-    fn midi_value_to_bool_correctly_converts_threshold() {
-        assert!(!midi_value_to_bool(0));
-        assert!(!midi_value_to_bool(63));
-        assert!(midi_value_to_bool(64));
-        assert!(midi_value_to_bool(127));
     }
 }

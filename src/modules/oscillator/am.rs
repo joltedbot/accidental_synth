@@ -1,8 +1,7 @@
+use super::constants::*;
 use super::sine::Sine;
 use super::{GenerateSamples, WaveShape};
-
-const SHAPE: WaveShape = WaveShape::AM;
-const DEFAULT_MODULATION_AMOUNT: f32 = 4.0;
+use crate::modules::oscillator::constants::{MAX_PHASE, MIN_PHASE};
 
 pub struct AM {
     shape: WaveShape,
@@ -15,10 +14,10 @@ impl AM {
     pub fn new(sample_rate: u32) -> Self {
         log::info!("Constructing AM WaveShape Module");
         Self {
-            shape: SHAPE,
+            shape: WaveShape::AM,
             carrier: Box::new(Sine::new(sample_rate)),
             modulator: Box::new(Sine::new(sample_rate)),
-            modulation_amount: DEFAULT_MODULATION_AMOUNT,
+            modulation_amount: DEFAULT_AMPLITUDE_MODULATION_AMOUNT,
         }
     }
 }
@@ -37,6 +36,10 @@ impl GenerateSamples for AM {
 
     fn shape(&self) -> WaveShape {
         self.shape
+    }
+
+    fn set_phase(&mut self, phase: f32) {
+        self.carrier.set_phase(phase.clamp(MIN_PHASE, MAX_PHASE));
     }
 
     fn reset(&mut self) {

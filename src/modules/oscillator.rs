@@ -1,5 +1,6 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused_imports)]
 pub mod am;
+mod constants;
 pub mod fm;
 pub mod noise;
 pub mod pulse;
@@ -25,6 +26,8 @@ pub trait GenerateSamples {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32;
 
     fn set_shape_parameters(&mut self, parameters: Vec<f32>);
+
+    fn set_phase(&mut self, phase: f32);
 
     fn shape(&self) -> WaveShape;
 
@@ -73,6 +76,10 @@ impl Oscillator {
 
     pub fn set_shape_parameters(&mut self, parameters: Vec<f32>) {
         self.wave_generator.set_shape_parameters(parameters);
+    }
+
+    pub fn set_phase(&mut self, phase: f32) {
+        self.wave_generator.set_phase(phase);
     }
 
     pub fn reset(&mut self) {

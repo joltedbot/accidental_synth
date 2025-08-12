@@ -1,4 +1,5 @@
 // Derived from https://www.musicdsp.org/en/latest/Filters/253-perfect-lp4-filter.html
+#![allow(dead_code)]
 
 const DEFAULT_CUTOFF_FREQUENCY: f32 = 20000.0;
 const MAX_FILTER_FREQUENCY: f32 = 20000.0;

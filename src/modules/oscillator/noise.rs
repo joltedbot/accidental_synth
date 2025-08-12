@@ -1,7 +1,5 @@
 use super::{GenerateSamples, WaveShape};
 
-const SHAPE: WaveShape = WaveShape::Noise;
-
 pub struct Noise {
     shape: WaveShape,
 }
@@ -9,7 +7,9 @@ pub struct Noise {
 impl Noise {
     pub fn new() -> Self {
         log::info!("Constructing Noise WaveShape Module");
-        Self { shape: SHAPE }
+        Self {
+            shape: WaveShape::Noise,
+        }
     }
 }
 
@@ -22,6 +22,8 @@ impl GenerateSamples for Noise {
     }
 
     fn set_shape_parameters(&mut self, _parameter: Vec<f32>) {}
+
+    fn set_phase(&mut self, _phase: f32) {}
 
     fn shape(&self) -> WaveShape {
         self.shape

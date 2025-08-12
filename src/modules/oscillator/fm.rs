@@ -1,3 +1,4 @@
+use super::constants::*;
 use super::{GenerateSamples, WaveShape};
 use crate::modules::oscillator::sine::Sine;
 
@@ -38,6 +39,10 @@ impl GenerateSamples for FM {
     fn set_shape_parameters(&mut self, parameters: Vec<f32>) {
         self.modulation_amount = parameters[0];
         self.modulation_ratio = parameters[1];
+    }
+
+    fn set_phase(&mut self, phase: f32) {
+        self.carrier.set_phase(phase.clamp(MIN_PHASE, MAX_PHASE));
     }
 
     fn shape(&self) -> WaveShape {
