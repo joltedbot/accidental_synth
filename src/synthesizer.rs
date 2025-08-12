@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 mod constants;
 mod midi_messages;
 
@@ -218,7 +219,8 @@ impl Synthesizer {
                 let mut filter_envelope = filter_envelope_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mut lfo1 = lfo1_arc
+
+                let lfo1 = lfo1_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
 
