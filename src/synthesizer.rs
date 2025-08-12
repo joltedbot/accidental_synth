@@ -290,8 +290,7 @@ impl Synthesizer {
                     let (output_left, output_right) = parameters.mixer.output_mix(
                         filtered_left,
                         filtered_right,
-                        //parameters.output_level,
-                        lfo1.generate(),
+                        parameters.output_level,
                         parameters.output_pan,
                     );
 
