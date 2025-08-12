@@ -4,7 +4,7 @@ use self::constants::*;
 use crate::midi::{CC, MidiMessage};
 use crate::modules::amplifier::vca;
 use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
-use crate::modules::filter::Filter;
+use crate::modules::filter::{Filter, FilterSlope};
 use crate::modules::mixer::{Mixer, MixerInput};
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::modules::tuner::tune;
@@ -117,10 +117,10 @@ impl Synthesizer {
         };
 
         let oscillators = [
-            Oscillator::new(sample_rate, WaveShape::Saw),
-            Oscillator::new(sample_rate, WaveShape::Saw),
-            Oscillator::new(sample_rate, WaveShape::Saw),
-            Oscillator::new(sample_rate, WaveShape::Sine),
+            Oscillator::new(sample_rate, WaveShape::Square),
+            Oscillator::new(sample_rate, WaveShape::Square),
+            Oscillator::new(sample_rate, WaveShape::Square),
+            Oscillator::new(sample_rate, WaveShape::Square),
         ];
 
         let mut amp_envelope = Envelope::new(sample_rate);
@@ -477,7 +477,7 @@ fn process_midi_cc_values(
         CC::FilterPoleSwitch(value) => {
             parameters
                 .filter
-                .set_is_four_pole(midi_value_to_bool(value));
+                .set_filter_slope(midi_value_to_filter_slope(value));
         }
         CC::AllNotesOff => {
             let mut midi_events = midi_event_arc
@@ -520,6 +520,18 @@ fn midi_value_to_f32_negative_1_to_1(midi_value: u8) -> f32 {
 
 fn midi_value_to_bool(midi_value: u8) -> bool {
     midi_value > 63
+}
+
+fn midi_value_to_filter_slope(midi_value: u8) -> FilterSlope {
+    if midi_value < 32 {
+        FilterSlope::Db6
+    } else if midi_value < 64 {
+        FilterSlope::Db12
+    } else if midi_value < 96 {
+        FilterSlope::Db18
+    } else {
+        FilterSlope::Db24
+    }
 }
 
 fn midi_value_to_filter_cutoff(midi_value: u8) -> f32 {
