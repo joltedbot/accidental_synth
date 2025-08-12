@@ -4,7 +4,7 @@ mod midi_messages;
 
 use self::constants::*;
 use crate::midi::{CC, MidiMessage};
-use crate::modules::amplifier::vca;
+use crate::modules::amplifier::stereo_vca;
 use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
 use crate::modules::filter::Filter;
 use crate::modules::lfo::LFO;
@@ -236,39 +236,17 @@ impl Synthesizer {
                 for frame in buffer.chunks_mut(number_of_channels) {
                     // Begin generating and processing the samples for the frame
 
-                    let amp_envelope_value = Some(amp_envelope.generate());
-
-                    let sub_oscillator_raw_sample =
+                    let sub_oscillator_sample =
                         oscillators[0].generate(parameters.oscillators[0].frequency, None);
-                    let sub_oscillator_sample = vca(
-                        sub_oscillator_raw_sample,
-                        parameters.current_note.velocity,
-                        amp_envelope_value,
-                    );
 
-                    let oscillator1_raw_sample =
+                    let oscillator1_sample =
                         oscillators[1].generate(parameters.oscillators[1].frequency, None);
-                    let oscillator1_sample = vca(
-                        oscillator1_raw_sample,
-                        parameters.current_note.velocity,
-                        amp_envelope_value,
-                    );
 
-                    let oscillator2_raw_sample =
+                    let oscillator2_sample =
                         oscillators[2].generate(parameters.oscillators[2].frequency, None);
-                    let oscillator2_sample = vca(
-                        oscillator2_raw_sample,
-                        parameters.current_note.velocity,
-                        amp_envelope_value,
-                    );
 
-                    let oscillator3_raw_sample =
+                    let oscillator3_sample =
                         oscillators[3].generate(parameters.oscillators[3].frequency, None);
-                    let oscillator3_sample = vca(
-                        oscillator3_raw_sample,
-                        parameters.current_note.velocity,
-                        amp_envelope_value,
-                    );
 
                     // Any per-oscillator processing should happen before this stereo mix down
                     let (oscillator_mix_left, oscillator_mix_right) = parameters.mixer.quad_mix(
@@ -276,6 +254,14 @@ impl Synthesizer {
                         oscillator1_sample,
                         oscillator2_sample,
                         oscillator3_sample,
+                    );
+
+                    let amp_envelope_value = Some(amp_envelope.generate());
+                    let (left_envelope_sample, right_envelope_sample) = stereo_vca(
+                        oscillator_mix_left,
+                        oscillator_mix_right,
+                        parameters.current_note.velocity,
+                        amp_envelope_value,
                     );
 
                     // Disable filter envelope processing until the UI is implemented to use it
@@ -286,7 +272,7 @@ impl Synthesizer {
 
                     let (filtered_left, filtered_right) = parameters
                         .filter
-                        .filter(oscillator_mix_left, oscillator_mix_right);
+                        .filter(left_envelope_sample, right_envelope_sample);
 
                     // Final output level control
                     let (output_left, output_right) = parameters.mixer.output_mix(
