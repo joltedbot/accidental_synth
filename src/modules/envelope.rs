@@ -1,11 +1,11 @@
+const ENVELOPE_MAX_LEVEL: f32 = 1.0;
+const ENVELOPE_MIN_LEVEL: f32 = 0.0;
 const MIN_SUPPORTED_SAMPLE_RATE: u32 = 44100;
 const MAX_SUPPORTED_SAMPLE_RATE: u32 = 192000;
 pub const ENVELOPE_MAX_MILLISECONDS: f32 = 10000.0;
 pub const ENVELOPE_MIN_MILLISECONDS: f32 = 0.05;
 const MIN_SUSTAIN_LEVEL: f32 = 0.0;
 const MAX_SUSTAIN_LEVEL: f32 = 1.0;
-const ENVELOPE_MIN_LEVEL: f32 = 0.0;
-const ENVELOPE_MAX_LEVEL: f32 = 1.0;
 const DEFAULT_SUSTAIN_LEVEL: f32 = 0.8;
 pub const DEFAULT_ATTACK_LEVEL_INCREMENT: f32 = 0.0002;
 pub const DEFAULT_DECAY_LEVEL_INCREMENT: f32 = 0.0002;
@@ -34,6 +34,7 @@ pub struct Envelope {
     stage: Stage,
     level: f32,
     sample_rate: u32,
+    is_inverted: bool,
     milliseconds_per_sample: f32,
     attack_level_increment: f32,
     decay_milliseconds: f32,
@@ -53,6 +54,7 @@ impl Envelope {
             level: ENVELOPE_MIN_LEVEL,
             sample_rate,
             milliseconds_per_sample,
+            is_inverted: false,
             sustain_level: DEFAULT_SUSTAIN_LEVEL,
             attack_level_increment: DEFAULT_ATTACK_LEVEL_INCREMENT,
             decay_level_increment: DEFAULT_DECAY_LEVEL_INCREMENT,
@@ -63,7 +65,11 @@ impl Envelope {
     }
 
     pub fn generate(&mut self) -> f32 {
-        self.next_value()
+        let mut envelope_output_value = self.next_value();
+        if self.is_inverted {
+            envelope_output_value = ENVELOPE_MAX_LEVEL - envelope_output_value;
+        }
+        envelope_output_value
     }
 
     pub fn gate_on(&mut self) {
@@ -115,6 +121,10 @@ impl Envelope {
             ENVELOPE_MIN_LEVEL,
             clamped_milliseconds,
         );
+    }
+
+    pub fn set_is_inverted(&mut self, is_inverted: bool) {
+        self.is_inverted = is_inverted
     }
 
     fn state_action(&mut self, action: StageAction) {
@@ -226,10 +236,11 @@ mod tests {
         assert_eq!(envelope.stage, Stage::Off);
         assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
         assert_eq!(envelope.sample_rate, sample_rate);
-        assert_eq!(
+        assert_eq!(envelope.is_inverted, false);
+        assert!(f32_value_equality(
             envelope.milliseconds_per_sample,
-            1000.0 / sample_rate as f32
-        );
+            0.0208333
+        ));
         assert_eq!(envelope.sustain_level, DEFAULT_SUSTAIN_LEVEL);
         assert_eq!(
             envelope.attack_level_increment,

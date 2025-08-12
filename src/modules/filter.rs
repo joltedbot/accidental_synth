@@ -88,6 +88,11 @@ impl Filter {
         self.calculate_coefficients_on_cutoff_update(cut_off_frequency);
     }
 
+    pub fn modulate_cutoff_frequency(&mut self, cutoff_modulation: f32) {
+        self.cutoff_frequency = cutoff_modulation.clamp(0.0, 1.0) * MAX_FILTER_FREQUENCY;
+        self.calculate_coefficients_on_cutoff_update(self.cutoff_frequency);
+    }
+
     pub fn set_resonance(&mut self, resonance: f32) {
         self.resonance = resonance.clamp(MIN_RESONANCE, MAX_RESONANCE);
         self.coefficients.feedback_gain = calculate_feedback_gain(

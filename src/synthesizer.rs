@@ -68,6 +68,7 @@ struct Parameters {
     mixer: Mixer,
     oscillators: [OscillatorParameters; 4],
     amp_envelope: EnvelopeParameters,
+    filter_envelope: EnvelopeParameters,
     filter: Filter,
 }
 
@@ -78,6 +79,7 @@ pub struct Synthesizer {
     midi_note_events: Arc<Mutex<Option<MidiNoteEvent>>>,
     oscillators: Arc<Mutex<[Oscillator; 4]>>,
     amp_envelope: Arc<Mutex<Envelope>>,
+    filter_envelope: Arc<Mutex<Envelope>>,
 }
 
 impl Synthesizer {
@@ -114,6 +116,12 @@ impl Synthesizer {
                 sustain_level: DEFAULT_AMP_ENVELOPE_SUSTAIN_LEVEL,
                 release_time: DEFAULT_AMP_ENVELOPE_RELEASE_TIME,
             },
+            filter_envelope: EnvelopeParameters {
+                attack_time: DEFAULT_FILTER_ENVELOPE_ATTACK_TIME,
+                decay_time: DEFAULT_FILTER_ENVELOPE_DECAY_TIME,
+                sustain_level: DEFAULT_FILTER_ENVELOPE_SUSTAIN_LEVEL,
+                release_time: DEFAULT_FILTER_ENVELOPE_RELEASE_TIME,
+            },
         };
 
         let oscillators = [
@@ -129,6 +137,13 @@ impl Synthesizer {
         amp_envelope.set_sustain_level(DEFAULT_AMP_ENVELOPE_SUSTAIN_LEVEL);
         amp_envelope.set_release_milliseconds(DEFAULT_AMP_ENVELOPE_RELEASE_TIME);
 
+        let mut filter_envelope = Envelope::new(sample_rate);
+        filter_envelope.set_is_inverted(true);
+        filter_envelope.set_attack_milliseconds(DEFAULT_AMP_ENVELOPE_ATTACK_TIME);
+        filter_envelope.set_decay_milliseconds(DEFAULT_AMP_ENVELOPE_DECAY_TIME);
+        filter_envelope.set_sustain_level(DEFAULT_AMP_ENVELOPE_SUSTAIN_LEVEL);
+        filter_envelope.set_release_milliseconds(DEFAULT_AMP_ENVELOPE_RELEASE_TIME);
+
         Self {
             audio_output_device,
             output_stream: None,
@@ -136,6 +151,7 @@ impl Synthesizer {
             midi_note_events: Arc::new(Mutex::new(None)),
             oscillators: Arc::new(Mutex::new(oscillators)),
             amp_envelope: Arc::new(Mutex::new(amp_envelope)),
+            filter_envelope: Arc::new(Mutex::new(filter_envelope)),
         }
     }
 
@@ -164,6 +180,7 @@ impl Synthesizer {
         let midi_note_events_arc = self.midi_note_events.clone();
         let oscillators_arc = self.oscillators.clone();
         let amp_envelope_arc = self.amp_envelope.clone();
+        let filter_envelope_arc = self.filter_envelope.clone();
 
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
@@ -191,8 +208,15 @@ impl Synthesizer {
                 let mut amp_envelope = amp_envelope_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
+                let mut filter_envelope = filter_envelope_arc
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-                process_midi_note_events(midi_note_events.take(), &mut amp_envelope);
+                process_midi_note_events(
+                    midi_note_events.take(),
+                    &mut amp_envelope,
+                    &mut filter_envelope,
+                );
 
                 // Begin processing the audio buffer
 
@@ -241,6 +265,12 @@ impl Synthesizer {
                         oscillator2_sample,
                         oscillator3_sample,
                     );
+
+                    // Disable filter envelope processing until the UI is implemented to use it
+                    /*
+                    let filter_envelope_value = filter_envelope.generate();
+                    parameters.filter.modulate_cutoff_frequency(filter_envelope_value);
+                    */
 
                     let (filtered_left, filtered_right) = parameters
                         .filter
@@ -492,13 +522,16 @@ fn process_midi_cc_values(
 fn process_midi_note_events(
     midi_events: Option<MidiNoteEvent>,
     amp_envelope: &mut MutexGuard<Envelope>,
+    filter_envelope: &mut MutexGuard<Envelope>,
 ) {
     match midi_events {
         Some(MidiNoteEvent::NoteOn) => {
             amp_envelope.gate_on();
+            filter_envelope.gate_on();
         }
         Some(MidiNoteEvent::NoteOff) => {
             amp_envelope.gate_off();
+            filter_envelope.gate_off();
         }
         None => {}
     }
