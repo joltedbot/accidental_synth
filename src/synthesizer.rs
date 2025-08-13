@@ -7,7 +7,6 @@ use crate::midi::{CC, MidiMessage};
 use crate::modules::amplifier::amplify_stereo;
 use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
 use crate::modules::filter::Filter;
-use crate::modules::lfo::LFO;
 use crate::modules::mixer::{Mixer, MixerInput};
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::modules::tuner::tune;
@@ -220,7 +219,7 @@ impl Synthesizer {
                     let parameter_mutex = parameters_arc
                         .lock()
                         .unwrap_or_else(|poisoned| poisoned.into_inner());
-                    parameter_mutex.clone()
+                    parameter_mutex.to_owned()
                 };
 
                 // Begin processing the audio buffer

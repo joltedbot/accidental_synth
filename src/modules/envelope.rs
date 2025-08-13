@@ -233,7 +233,7 @@ mod tests {
         assert_eq!(envelope.stage, Stage::Off);
         assert_eq!(envelope.level, ENVELOPE_MIN_LEVEL);
         assert_eq!(envelope.sample_rate, sample_rate);
-        assert_eq!(envelope.is_inverted, false);
+        assert!(!envelope.is_inverted);
         assert!(f32_value_equality(
             envelope.milliseconds_per_sample,
             0.0208333
