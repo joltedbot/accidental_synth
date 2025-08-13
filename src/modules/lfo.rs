@@ -35,7 +35,6 @@ impl LFO {
 
     pub fn generate(&mut self) -> f32 {
         let wave_position = self.oscillator.generate(self.frequency, None);
-
         self.center_value + (wave_position * (self.range / 2.0))
     }
 

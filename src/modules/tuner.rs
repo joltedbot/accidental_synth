@@ -1,6 +1,11 @@
+const MAX_MIDI_NOTE_NUMBER: i8 = 127;
+const MIN_MIDI_NOTE_NUMBER: i8 = 0;
+
 pub fn tune(mut note_number: u8, interval: Option<i8>, cents: Option<i8>) -> f32 {
     if let Some(interval) = interval {
-        note_number = (note_number as i8 + interval).clamp(0, 127) as u8;
+        note_number = (note_number as i8)
+            .saturating_add(interval)
+            .clamp(MIN_MIDI_NOTE_NUMBER, MAX_MIDI_NOTE_NUMBER) as u8;
     }
     let mut note_frequency = midi_note_to_frequency(note_number);
 
@@ -148,3 +153,123 @@ pub const MIDI_NOTE_FREQUENCIES: [(f32, &str); 128] = [
     (11839.821, "F#9/Gb9"),
     (12543.854, "G9"),
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn f32_value_equality(value_1: f32, value_2: f32) -> bool {
+        (value_1 - value_2).abs() <= f32::EPSILON
+    }
+
+    #[test]
+    fn midi_note_to_frequency_returns_correct_values_for_note_numbers() {
+        let notes: [u8; 4] = [0, 21, 72, 127];
+        let expected_frequencies: [f32; 4] = [8.175, 27.5, 523.251, 12543.854];
+
+        for i in 0..notes.len() {
+            assert!(f32_value_equality(
+                midi_note_to_frequency(notes[i]),
+                expected_frequencies[i]
+            ));
+        }
+    }
+
+    #[test]
+    fn frequency_from_cents_returns_correct_values_for_value_frequencies_and_cents() {
+        let frequencies: [f32; 4] = [8.175, 27.5, 523.251, 12543.854];
+        let cents = 50;
+        let expected_frequencies: [f32; 4] = [8.414546, 28.30581, 538.5834, 12911.417];
+
+        for i in 0..frequencies.len() {
+            assert!(f32_value_equality(
+                frequency_from_cents(frequencies[i], cents),
+                expected_frequencies[i]
+            ));
+        }
+    }
+
+    #[test]
+    fn frequency_from_cents_returns_correct_values_for_value_frequencies_and_negative_cents() {
+        let frequencies: [f32; 4] = [8.175, 27.5, 523.251, 12543.854];
+        let cents = -50;
+        let expected_frequencies: [f32; 4] = [7.9422736, 26.717129, 508.35504, 12186.754];
+
+        for i in 0..frequencies.len() {
+            assert!(f32_value_equality(
+                frequency_from_cents(frequencies[i], cents),
+                expected_frequencies[i]
+            ));
+        }
+    }
+
+    #[test]
+    fn tune_returns_correct_values_without_interval_or_cents() {
+        let note_number = 60;
+        let interval = None;
+        let cents = None;
+        let expected_frequency = 261.625;
+        assert!(f32_value_equality(
+            tune(note_number, interval, cents),
+            expected_frequency
+        ));
+    }
+
+    #[test]
+    fn tune_returns_correct_values_with_interval_but_no_cents() {
+        let note_number = 60;
+        let interval = Some(7);
+        let cents = None;
+        let expected_frequency = 391.995;
+        assert!(f32_value_equality(
+            tune(note_number, interval, cents),
+            expected_frequency
+        ));
+    }
+
+    #[test]
+    fn tune_returns_correct_values_without_interval_but_with_cents() {
+        let note_number = 60;
+        let interval = None;
+        let cents = Some(-12);
+        let expected_frequency = 259.8178;
+        assert!(f32_value_equality(
+            tune(note_number, interval, cents),
+            expected_frequency
+        ));
+    }
+
+    #[test]
+    fn tune_returns_correct_values_with_interval_and_cents() {
+        let note_number = 60;
+        let interval = Some(7);
+        let cents = Some(-12);
+        let expected_frequency = 389.2873;
+        assert!(f32_value_equality(
+            tune(note_number, interval, cents),
+            expected_frequency
+        ));
+    }
+
+    #[test]
+    fn tune_correctly_clamps_note_plus_interval_range_minimum_to_zero() {
+        let note_number = 0;
+        let interval = Some(-127);
+        let expected_frequency = 8.175;
+        assert!(f32_value_equality(
+            tune(note_number, interval, None),
+            expected_frequency
+        ));
+    }
+
+    #[test]
+    fn tune_correctly_clamps_note_plus_interval_range_maximum_to_127() {
+        let note_number = 127;
+        let interval = Some(127);
+        let expected_frequency = 12543.854;
+        assert!(f32_value_equality(
+            tune(note_number, interval, None),
+            expected_frequency
+        ));
+    }
+}
