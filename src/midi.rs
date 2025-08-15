@@ -13,6 +13,10 @@ const MIDI_NOTE_NUMBER_BYTE_INDEX: usize = 1;
 const MIDI_VELOCITY_BYTE_INDEX: usize = 2;
 const MIDI_CC_NUMBER_BYTE_INDEX: usize = 1;
 const MIDI_CC_VALUE_BYTE_INDEX: usize = 2;
+const MIDI_CHANNEL_PRESSURE_VALUE_BYTE_INDEX: usize = 2;
+const MIDI_PITCHBEND_MSB_BYTE_INDEX: usize = 2;
+const MIDI_PITCHBEND_LSB_BYTE_INDEX: usize = 1;
+
 const MIDI_MESSAGE_CHANNEL_CAPACITY: usize = 16;
 
 const DEFAULT_NAME_FOR_UNNAMED_MIDI_PORTS: &str = "Name Not Available";
@@ -20,8 +24,30 @@ const MIDI_MESSAGE_IGNORE_VALUE: Ignore = Ignore::SysexAndTime;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum CC {
+    ModWheel(u8),
     Volume(u8),
+    ConstantLevel(u8),
     Pan(u8),
+    SubOscillatorShapeParameter1(u8),
+    SubOscillatorShapeParameter2(u8),
+    Oscillator1ShapeParameter1(u8),
+    Oscillator1ShapeParameter2(u8),
+    Oscillator2ShapeParameter1(u8),
+    Oscillator2ShapeParameter2(u8),
+    Oscillator3ShapeParameter1(u8),
+    Oscillator3ShapeParameter2(u8),
+    SubOscillatorShape(u8),
+    Oscillator1Shape(u8),
+    Oscillator2Shape(u8),
+    Oscillator3Shape(u8),
+    SubOscillatorCourseTune(u8),
+    Oscillator1CourseTune(u8),
+    Oscillator2CourseTune(u8),
+    Oscillator3CourseTune(u8),
+    SubOscillatorFineTune(u8),
+    Oscillator1FineTune(u8),
+    Oscillator2FineTune(u8),
+    Oscillator3FineTune(u8),
     SubOscillatorLevel(u8),
     Oscillator1Level(u8),
     Oscillator2Level(u8),
@@ -34,13 +60,26 @@ pub enum CC {
     Oscillator1Pan(u8),
     Oscillator2Pan(u8),
     Oscillator3Pan(u8),
-    AttackTime(u8),
-    DecayTime(u8),
-    SustainLevel(u8),
-    ReleaseTime(u8),
     FilterPoleSwitch(u8),
     FilterResonance(u8),
     FilterCutoff(u8),
+    AmpEGReleaseTime(u8),
+    AmpEGAttackTime(u8),
+    AmpEGDecayTime(u8),
+    AmpEGSustainLevel(u8),
+    AmpEGInverted(u8),
+    FilterEGAttackTime(u8),
+    FilterEGDecayTime(u8),
+    FilterEGSustainLevel(u8),
+    FilterEGReleaseTime(u8),
+    FilterEGInverted(u8),
+    FilterEGAmount(u8),
+    LFO1Frequency(u8),
+    LFO1CenterValue(u8),
+    LFO1Range(u8),
+    LFO1WaveShape(u8),
+    LFO1Inverted(u8),
+    LFO1Reset(u8),
     AllNotesOff,
 }
 
@@ -61,6 +100,8 @@ pub enum MidiMessage {
     NoteOn(u8, u8),
     NoteOff,
     ControlChange(CC),
+    PitchBend(i16),
+    ChannelPressure(u8),
 }
 
 pub struct Midi {
@@ -160,6 +201,16 @@ fn create_midi_input_listener(
                         let cc_value = message[MIDI_CC_VALUE_BYTE_INDEX];
                         get_supported_cc_from_cc_number(cc_number, cc_value).map(MidiMessage::ControlChange)
                     }
+                    MessageType::PitchBend => {
+                        let amount_msb = message[MIDI_PITCHBEND_MSB_BYTE_INDEX];
+                        let amount_lsb = message[MIDI_PITCHBEND_LSB_BYTE_INDEX];
+                        let pitch_bend_amount = (amount_msb as u16) << 7 | amount_lsb as u16;
+                        Some(MidiMessage::PitchBend(pitch_bend_amount as i16))
+                    }
+                    MessageType::ChannelPressure => {
+                        let preasure_amount = message[MIDI_CHANNEL_PRESSURE_VALUE_BYTE_INDEX];
+                        Some(MidiMessage::ChannelPressure(preasure_amount))
+                    }
                     _ => None,
                 };
 
@@ -213,8 +264,30 @@ fn message_type_from_status_byte(status: &u8) -> MessageType {
 
 fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {
     match cc_number {
+        1 => Some(CC::ModWheel(cc_value)),
         7 => Some(CC::Volume(cc_value)),
+        9 => Some(CC::ConstantLevel(cc_value)),
         10 => Some(CC::Pan(cc_value)),
+        12 => Some(CC::SubOscillatorShapeParameter1(cc_value)),
+        13 => Some(CC::SubOscillatorShapeParameter2(cc_value)),
+        14 => Some(CC::Oscillator1ShapeParameter1(cc_value)),
+        15 => Some(CC::Oscillator1ShapeParameter2(cc_value)),
+        16 => Some(CC::Oscillator2ShapeParameter1(cc_value)),
+        17 => Some(CC::Oscillator2ShapeParameter2(cc_value)),
+        18 => Some(CC::Oscillator3ShapeParameter1(cc_value)),
+        19 => Some(CC::Oscillator3ShapeParameter2(cc_value)),
+        40 => Some(CC::SubOscillatorShape(cc_value)),
+        41 => Some(CC::Oscillator1Shape(cc_value)),
+        42 => Some(CC::Oscillator2Shape(cc_value)),
+        43 => Some(CC::Oscillator3Shape(cc_value)),
+        44 => Some(CC::SubOscillatorCourseTune(cc_value)),
+        45 => Some(CC::Oscillator1CourseTune(cc_value)),
+        46 => Some(CC::Oscillator2CourseTune(cc_value)),
+        47 => Some(CC::Oscillator3CourseTune(cc_value)),
+        48 => Some(CC::SubOscillatorFineTune(cc_value)),
+        49 => Some(CC::Oscillator1FineTune(cc_value)),
+        50 => Some(CC::Oscillator2FineTune(cc_value)),
+        51 => Some(CC::Oscillator3FineTune(cc_value)),
         52 => Some(CC::SubOscillatorLevel(cc_value)),
         53 => Some(CC::Oscillator1Level(cc_value)),
         54 => Some(CC::Oscillator2Level(cc_value)),
@@ -229,11 +302,24 @@ fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {
         63 => Some(CC::Oscillator3Pan(cc_value)),
         70 => Some(CC::FilterPoleSwitch(cc_value)),
         71 => Some(CC::FilterResonance(cc_value)),
-        72 => Some(CC::ReleaseTime(cc_value)),
-        73 => Some(CC::AttackTime(cc_value)),
+        72 => Some(CC::AmpEGReleaseTime(cc_value)),
+        73 => Some(CC::AmpEGAttackTime(cc_value)),
         74 => Some(CC::FilterCutoff(cc_value)),
-        75 => Some(CC::DecayTime(cc_value)),
-        79 => Some(CC::SustainLevel(cc_value)),
+        75 => Some(CC::AmpEGDecayTime(cc_value)),
+        79 => Some(CC::AmpEGSustainLevel(cc_value)),
+        80 => Some(CC::AmpEGInverted(cc_value)),
+        85 => Some(CC::FilterEGAttackTime(cc_value)),
+        86 => Some(CC::FilterEGDecayTime(cc_value)),
+        87 => Some(CC::FilterEGSustainLevel(cc_value)),
+        88 => Some(CC::FilterEGReleaseTime(cc_value)),
+        89 => Some(CC::FilterEGInverted(cc_value)),
+        90 => Some(CC::FilterEGAmount(cc_value)),
+        102 => Some(CC::LFO1Frequency(cc_value)),
+        103 => Some(CC::LFO1CenterValue(cc_value)),
+        104 => Some(CC::LFO1Range(cc_value)),
+        105 => Some(CC::LFO1WaveShape(cc_value)),
+        106 => Some(CC::LFO1Inverted(cc_value)),
+        107 => Some(CC::LFO1Reset(cc_value)),
         123 => Some(CC::AllNotesOff),
         _ => None,
     }

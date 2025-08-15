@@ -3,20 +3,18 @@ mod constants;
 mod midi_messages;
 
 use self::constants::*;
-use crate::midi::{CC, MidiMessage};
+use crate::midi::MidiMessage;
 use crate::modules::amplifier::amplify_stereo;
-use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
+use crate::modules::envelope::Envelope;
 use crate::modules::filter::Filter;
 use crate::modules::mixer::{Mixer, MixerInput};
 use crate::modules::oscillator::{Oscillator, WaveShape};
-use crate::modules::tuner::tune;
 
 use anyhow::Result;
 use cpal::traits::DeviceTrait;
 use cpal::{Device, Stream};
 use crossbeam_channel::Receiver;
-use std::sync::{Arc, Mutex, MutexGuard};
-use std::thread;
+use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum MidiNoteEvent {
@@ -30,8 +28,9 @@ struct OscillatorParameters {
     pan: f32,
     mute: bool,
     frequency: f32,
+    pitch_bend: Option<i16>,
     course_tune: Option<i8>,
-    fine_tune: Option<i8>,
+    fine_tune: Option<i16>,
 }
 
 impl Default for OscillatorParameters {
@@ -41,6 +40,7 @@ impl Default for OscillatorParameters {
             pan: DEFAULT_OSCILLATOR_OUTPUT_PAN,
             mute: false,
             frequency: 0.0,
+            pitch_bend: None,
             course_tune: None,
             fine_tune: None,
         }
@@ -58,6 +58,8 @@ struct Parameters {
     is_fixed_velocity: bool,
     filter_envelope_is_enabled: bool,
     current_note: CurrentNote,
+    mod_wheel_amount: f32,
+    aftertouch_amount: f32,
     oscillators: [OscillatorParameters; 4],
 }
 
@@ -98,8 +100,8 @@ impl Synthesizer {
         let parameters = Parameters {
             is_fixed_velocity: DEFAULT_FIXED_VELOCITY_STATE,
             filter_envelope_is_enabled: DEFAULT_FILTER_ENVELOPE_STATE,
-            current_note: Default::default(),
             oscillators: oscillator_parameters,
+            ..Default::default()
         };
 
         let oscillators = [
@@ -150,7 +152,7 @@ impl Synthesizer {
         let mixer_arc = self.mixer.clone();
 
         log::debug!("run(): Start the midi event listener thread");
-        start_midi_event_listener(
+        midi_messages::start_midi_event_listener(
             midi_message_receiver,
             parameters_arc,
             midi_event_arc,
@@ -282,378 +284,5 @@ impl Synthesizer {
         log::info!("Synthesizer audio output stream was successfully created.");
 
         Ok(stream)
-    }
-}
-
-fn start_midi_event_listener(
-    midi_message_receiver: Receiver<MidiMessage>,
-    mut parameters_arc: Arc<Mutex<Parameters>>,
-    mut midi_event_arc: Arc<Mutex<Option<MidiNoteEvent>>>,
-    mut amp_envelope_arc: Arc<Mutex<Envelope>>,
-    mut filter_arc: Arc<Mutex<Filter>>,
-    mut mixer_arc: Arc<Mutex<Mixer>>,
-) {
-    thread::spawn(move || {
-        log::debug!("run(): spawned thread to receive MIDI events");
-
-        while let Ok(event) = midi_message_receiver.recv() {
-            match event {
-                MidiMessage::NoteOn(midi_note, velocity) => {
-                    let mut parameters = parameters_arc
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-                    update_current_note_from_midi_note(midi_note, velocity, &mut parameters);
-
-                    let mut midi_events = midi_event_arc
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-                    *midi_events = Some(MidiNoteEvent::NoteOn);
-                }
-                MidiMessage::NoteOff => {
-                    let mut midi_events = midi_event_arc
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-                    *midi_events = Some(MidiNoteEvent::NoteOff);
-                }
-                MidiMessage::ControlChange(cc_value) => {
-                    process_midi_cc_values(
-                        cc_value,
-                        &mut parameters_arc,
-                        &mut amp_envelope_arc,
-                        &mut midi_event_arc,
-                        &mut filter_arc,
-                        &mut mixer_arc,
-                    );
-                }
-            }
-        }
-
-        log::debug!("run(): MIDI event receiver thread has exited");
-    });
-}
-
-fn update_current_note_from_midi_note(
-    midi_note: u8,
-    velocity: u8,
-    parameters: &mut MutexGuard<Parameters>,
-) {
-    let sub_osc_frequency = tune(
-        midi_note,
-        parameters.oscillators[0].course_tune,
-        parameters.oscillators[0].fine_tune,
-    );
-
-    let osc1_frequency = tune(
-        midi_note,
-        parameters.oscillators[1].course_tune,
-        parameters.oscillators[1].fine_tune,
-    );
-    let osc2_frequency = tune(
-        midi_note,
-        parameters.oscillators[2].course_tune,
-        parameters.oscillators[2].fine_tune,
-    );
-    let osc3_frequency = tune(
-        midi_note,
-        parameters.oscillators[3].course_tune,
-        parameters.oscillators[3].fine_tune,
-    );
-
-    parameters.current_note.midi_note = midi_note;
-    parameters.current_note.velocity = match parameters.is_fixed_velocity {
-        false => Some(velocity as f32 * MIDI_VELOCITY_TO_SAMPLE_FACTOR),
-        true => None,
-    };
-    parameters.oscillators[0].frequency = sub_osc_frequency;
-    parameters.oscillators[1].frequency = osc1_frequency;
-    parameters.oscillators[2].frequency = osc2_frequency;
-    parameters.oscillators[3].frequency = osc3_frequency;
-}
-
-fn process_midi_cc_values(
-    cc_value: CC,
-    parameters_arc: &mut Arc<Mutex<Parameters>>,
-    amp_envelope_arc: &mut Arc<Mutex<Envelope>>,
-    midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
-    filter_arc: &mut Arc<Mutex<Filter>>,
-    mixer_arc: &mut Arc<Mutex<Mixer>>,
-) {
-    log::debug!("process_midi_cc_values(): CC received: {:?}", cc_value);
-
-    match cc_value {
-        CC::Volume(value) => {
-            let output_level = midi_messages::midi_value_to_f32_0_to_1(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_output_level(output_level);
-        }
-        CC::Pan(value) => {
-            let output_pan = midi_messages::midi_value_to_f32_negative_1_to_1(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_output_pan(output_pan);
-        }
-        CC::SubOscillatorLevel(value) => {
-            let level = midi_messages::midi_value_to_f32_0_to_1(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_quad_level(level, MixerInput::One);
-
-            let mut parameters = parameters_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            parameters.oscillators[0].level = level;
-        }
-        CC::Oscillator1Level(value) => {
-            let level = midi_messages::midi_value_to_f32_0_to_1(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_quad_level(level, MixerInput::Two);
-
-            let mut parameters = parameters_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            parameters.oscillators[1].level = level;
-        }
-        CC::Oscillator2Level(value) => {
-            let level = midi_messages::midi_value_to_f32_0_to_1(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_quad_level(level, MixerInput::Three);
-
-            let mut parameters = parameters_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            parameters.oscillators[2].level = level;
-        }
-        CC::Oscillator3Level(value) => {
-            let level = midi_messages::midi_value_to_f32_0_to_1(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_quad_level(level, MixerInput::Four);
-
-            let mut parameters = parameters_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            parameters.oscillators[3].level = level;
-        }
-        CC::SubOscillatorMute(value) => {
-            let mute = midi_messages::midi_value_to_bool(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_quad_mute(mute, MixerInput::One);
-
-            let mut parameters = parameters_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            parameters.oscillators[0].mute = mute;
-        }
-        CC::Oscillator1Mute(value) => {
-            let mute = midi_messages::midi_value_to_bool(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_quad_mute(mute, MixerInput::Two);
-
-            let mut parameters = parameters_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            parameters.oscillators[1].mute = mute;
-        }
-        CC::Oscillator2Mute(value) => {
-            let mute = midi_messages::midi_value_to_bool(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_quad_mute(mute, MixerInput::Three);
-
-            let mut parameters = parameters_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            parameters.oscillators[2].mute = mute;
-        }
-        CC::Oscillator3Mute(value) => {
-            let mute = midi_messages::midi_value_to_bool(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_quad_mute(mute, MixerInput::Four);
-
-            let mut parameters = parameters_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            parameters.oscillators[3].mute = mute;
-        }
-        CC::SubOscillatorPan(value) => {
-            let pan = midi_messages::midi_value_to_f32_negative_1_to_1(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_quad_pan(pan, MixerInput::One);
-
-            let mut parameters = parameters_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            parameters.oscillators[0].pan = pan;
-        }
-        CC::Oscillator1Pan(value) => {
-            let pan = midi_messages::midi_value_to_f32_negative_1_to_1(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_quad_pan(pan, MixerInput::Two);
-
-            let mut parameters = parameters_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            parameters.oscillators[1].pan = pan;
-        }
-        CC::Oscillator2Pan(value) => {
-            let pan = midi_messages::midi_value_to_f32_negative_1_to_1(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_quad_pan(pan, MixerInput::Three);
-
-            let mut parameters = parameters_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            parameters.oscillators[2].pan = pan;
-        }
-        CC::Oscillator3Pan(value) => {
-            let pan = midi_messages::midi_value_to_f32_negative_1_to_1(value);
-
-            let mut mixer = mixer_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            mixer.set_quad_pan(pan, MixerInput::Four);
-
-            let mut parameters = parameters_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            parameters.oscillators[3].pan = pan;
-        }
-        CC::AttackTime(value) => {
-            let time = midi_messages::midi_value_to_f32_range(
-                value,
-                ENVELOPE_MIN_MILLISECONDS,
-                ENVELOPE_MAX_MILLISECONDS,
-            );
-
-            let mut envelope = amp_envelope_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            envelope.set_attack_milliseconds(time);
-        }
-        CC::DecayTime(value) => {
-            let time = midi_messages::midi_value_to_f32_range(
-                value,
-                ENVELOPE_MIN_MILLISECONDS,
-                ENVELOPE_MAX_MILLISECONDS,
-            );
-
-            let mut envelope = amp_envelope_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            envelope.set_decay_milliseconds(time);
-        }
-        CC::SustainLevel(value) => {
-            let mut envelope = amp_envelope_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            envelope.set_sustain_level(midi_messages::midi_value_to_f32_0_to_1(value));
-        }
-        CC::ReleaseTime(value) => {
-            let time = midi_messages::midi_value_to_f32_range(
-                value,
-                ENVELOPE_MIN_MILLISECONDS,
-                ENVELOPE_MAX_MILLISECONDS,
-            );
-            let mut envelope = amp_envelope_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            envelope.set_release_milliseconds(time);
-        }
-        CC::FilterResonance(value) => {
-            let mut filter = filter_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            filter.set_resonance(midi_messages::midi_value_to_f32_range(value, 0.0, 1.0));
-        }
-        CC::FilterCutoff(value) => {
-            let mut filter = filter_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            filter.set_cutoff_frequency(midi_messages::midi_value_to_filter_cutoff(value));
-        }
-        CC::FilterPoleSwitch(value) => {
-            let mut filter = filter_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            filter.set_filter_slope(midi_messages::midi_value_to_filter_slope(value));
-        }
-        CC::AllNotesOff => {
-            let mut midi_events = midi_event_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-            *midi_events = Some(MidiNoteEvent::NoteOff);
-        }
     }
 }
