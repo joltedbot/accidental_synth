@@ -148,6 +148,7 @@ impl Synthesizer {
         let parameters_arc = self.parameters.clone();
         let midi_event_arc = self.midi_note_events.clone();
         let envelope_arc = self.amp_envelope.clone();
+        let oscillators_arc = self.oscillators.clone();
         let filter_arc = self.filter.clone();
         let mixer_arc = self.mixer.clone();
 
@@ -157,6 +158,7 @@ impl Synthesizer {
             parameters_arc,
             midi_event_arc,
             envelope_arc,
+            oscillators_arc,
             filter_arc,
             mixer_arc,
         );

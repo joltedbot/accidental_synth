@@ -2,11 +2,9 @@ use crate::midi::{CC, MidiMessage};
 use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
 use crate::modules::filter::{Filter, FilterSlope};
 use crate::modules::mixer::{Mixer, MixerInput};
+use crate::modules::oscillator::Oscillator;
 use crate::modules::tuner::tune;
-use crate::synthesizer::constants::{
-    MAX_MIDI_NOTE, MAXIMUM_FILTER_CUTOFF, MIDI_VELOCITY_TO_SAMPLE_FACTOR, MINIMUM_FILTER_CUTOFF,
-    PITCH_BEND_AMOUNT_CENTS, PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT,
-};
+use crate::synthesizer::constants::*;
 use crate::synthesizer::{MidiNoteEvent, Parameters};
 use crossbeam_channel::Receiver;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -35,6 +33,7 @@ pub fn start_midi_event_listener(
     mut parameters_arc: Arc<Mutex<Parameters>>,
     mut midi_event_arc: Arc<Mutex<Option<MidiNoteEvent>>>,
     mut amp_envelope_arc: Arc<Mutex<Envelope>>,
+    mut oscillators_arc: Arc<Mutex<[Oscillator; 4]>>,
     mut filter_arc: Arc<Mutex<Filter>>,
     mut mixer_arc: Arc<Mutex<Mixer>>,
 ) {
@@ -88,6 +87,7 @@ pub fn start_midi_event_listener(
                         cc_value,
                         &mut parameters_arc,
                         &mut amp_envelope_arc,
+                        &mut oscillators_arc,
                         &mut midi_event_arc,
                         &mut filter_arc,
                         &mut mixer_arc,
@@ -104,6 +104,7 @@ pub fn process_midi_cc_values(
     cc_value: CC,
     parameters_arc: &mut Arc<Mutex<Parameters>>,
     amp_envelope_arc: &mut Arc<Mutex<Envelope>>,
+    oscillators_arc: &mut Arc<Mutex<[Oscillator; 4]>>,
     midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
     filter_arc: &mut Arc<Mutex<Filter>>,
     mixer_arc: &mut Arc<Mutex<Mixer>>,
@@ -120,7 +121,7 @@ pub fn process_midi_cc_values(
             parameters.mod_wheel_amount = mod_wheel_amount;
         }
         CC::Volume(value) => {
-            let output_level = exponential_level_curve_from_midi_value(value);
+            let output_level = exponential_curve_level_adjustment_from_midi_value(value);
 
             let mut mixer = mixer_arc
                 .lock()
@@ -182,31 +183,75 @@ pub fn process_midi_cc_values(
             //TODO
         }
         CC::SubOscillatorCourseTune(value) => {
-            //TODO
+            let mut parameters = parameters_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            parameters.oscillators[0].course_tune =
+                Some(midi_value_to_course_tune_intervals(value));
+            update_current_note_from_stored_parameters(&mut parameters);
         }
         CC::Oscillator1CourseTune(value) => {
-            //TODO
+            let mut parameters = parameters_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            parameters.oscillators[1].course_tune =
+                Some(midi_value_to_course_tune_intervals(value));
+            update_current_note_from_stored_parameters(&mut parameters);
         }
         CC::Oscillator2CourseTune(value) => {
-            //TODO
+            let mut parameters = parameters_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            parameters.oscillators[2].course_tune =
+                Some(midi_value_to_course_tune_intervals(value));
+            update_current_note_from_stored_parameters(&mut parameters);
         }
         CC::Oscillator3CourseTune(value) => {
-            //TODO
+            let mut parameters = parameters_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            parameters.oscillators[3].course_tune =
+                Some(midi_value_to_course_tune_intervals(value));
+            update_current_note_from_stored_parameters(&mut parameters);
         }
         CC::SubOscillatorFineTune(value) => {
-            //TODO
+            let mut parameters = parameters_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            parameters.oscillators[0].fine_tune = Some(midi_value_to_fine_tune_cents(value));
+            update_current_note_from_stored_parameters(&mut parameters);
         }
         CC::Oscillator1FineTune(value) => {
-            //TODO
+            let mut parameters = parameters_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            parameters.oscillators[1].fine_tune = Some(midi_value_to_fine_tune_cents(value));
+            update_current_note_from_stored_parameters(&mut parameters);
         }
         CC::Oscillator2FineTune(value) => {
-            //TODO
+            let mut parameters = parameters_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            parameters.oscillators[2].fine_tune = Some(midi_value_to_fine_tune_cents(value));
+            update_current_note_from_stored_parameters(&mut parameters);
         }
         CC::Oscillator3FineTune(value) => {
-            //TODO
+            let mut parameters = parameters_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            parameters.oscillators[3].fine_tune = Some(midi_value_to_fine_tune_cents(value));
+            update_current_note_from_stored_parameters(&mut parameters);
         }
         CC::SubOscillatorLevel(value) => {
-            let level = exponential_level_curve_from_midi_value(value);
+            let level = exponential_curve_level_adjustment_from_midi_value(value);
 
             let mut mixer = mixer_arc
                 .lock()
@@ -221,7 +266,7 @@ pub fn process_midi_cc_values(
             parameters.oscillators[0].level = level;
         }
         CC::Oscillator1Level(value) => {
-            let level = exponential_level_curve_from_midi_value(value);
+            let level = exponential_curve_level_adjustment_from_midi_value(value);
 
             let mut mixer = mixer_arc
                 .lock()
@@ -236,7 +281,7 @@ pub fn process_midi_cc_values(
             parameters.oscillators[1].level = level;
         }
         CC::Oscillator2Level(value) => {
-            let level = exponential_level_curve_from_midi_value(value);
+            let level = exponential_curve_level_adjustment_from_midi_value(value);
 
             let mut mixer = mixer_arc
                 .lock()
@@ -251,7 +296,7 @@ pub fn process_midi_cc_values(
             parameters.oscillators[2].level = level;
         }
         CC::Oscillator3Level(value) => {
-            let level = exponential_level_curve_from_midi_value(value);
+            let level = exponential_curve_level_adjustment_from_midi_value(value);
 
             let mut mixer = mixer_arc
                 .lock()
@@ -429,7 +474,7 @@ pub fn process_midi_cc_values(
                 .lock()
                 .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-            filter.set_cutoff_frequency(midi_value_to_filter_cutoff(value));
+            filter.set_cutoff_frequency(exponential_curve_filter_cutoff_from_midi_value(value));
         }
         CC::AmpEGDecayTime(value) => {
             let time = midi_value_to_f32_range(
@@ -518,6 +563,22 @@ fn midi_value_to_bool(midi_value: u8) -> bool {
     midi_value > 63
 }
 
+fn midi_value_to_fine_tune_cents(midi_value: u8) -> i16 {
+    midi_value_to_f32_range(
+        midi_value,
+        OSCILLATOR_FINE_TUNE_MIN_CENTS as f32,
+        OSCILLATOR_FINE_TUNE_MAX_CENTS as f32,
+    ) as i16
+}
+
+fn midi_value_to_course_tune_intervals(midi_value: u8) -> i8 {
+    midi_value_to_f32_range(
+        midi_value,
+        OSCILLATOR_COURSE_TUNE_MIN_INTERVAL as f32,
+        OSCILLATOR_COURSE_TUNE_MAX_INTERVAL as f32,
+    ) as i8
+}
+
 fn midi_value_to_filter_slope(midi_value: u8) -> FilterSlope {
     if midi_value < 32 {
         FilterSlope::Db6
@@ -530,15 +591,28 @@ fn midi_value_to_filter_slope(midi_value: u8) -> FilterSlope {
     }
 }
 
-fn midi_value_to_filter_cutoff(midi_value: u8) -> f32 {
-    midi_value_to_f32_range(midi_value, MINIMUM_FILTER_CUTOFF, MAXIMUM_FILTER_CUTOFF)
-}
-
-fn exponential_level_curve_from_midi_value(midi_value: u8) -> f32 {
+fn exponential_curve_filter_cutoff_from_midi_value(midi_value: u8) -> f32 {
     if midi_value == 0 {
         return 0.0;
     }
-    (6.908 * (midi_value as f32 / 127.0)).exp() / 1000.0
+    exponential_curve_from_midi_value_and_coefficient(midi_value, EXPONENTIAL_FILTER_COEFFICIENT)
+}
+
+fn exponential_curve_level_adjustment_from_midi_value(midi_value: u8) -> f32 {
+    if midi_value == 0 {
+        return 0.0;
+    }
+    exponential_curve_from_midi_value_and_coefficient(midi_value, EXPONENTIAL_LEVEL_COEFFICIENT)
+        / LEVEL_CURVE_LINEAR_RANGE
+}
+
+fn exponential_curve_from_midi_value_and_coefficient(
+    midi_value: u8,
+    exponential_coefficient: f32,
+) -> f32 {
+    // exponential_coefficient is the log of the magnitude for the linear range you want to map to exponential range
+    // If the range max is 1000x then min, then the exponential_coefficient is log(1000) = 6.908
+    (exponential_coefficient * (midi_value as f32 / MAX_MIDI_NOTE as f32)).exp()
 }
 
 fn update_current_note_from_midi_pitch_bend(
