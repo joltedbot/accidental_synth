@@ -50,7 +50,8 @@ impl Default for OscillatorParameters {
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 struct CurrentNote {
     midi_note: u8,
-    velocity: Option<f32>,
+    velocity: f32,
+    velocity_curve: u8,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
@@ -100,6 +101,11 @@ impl Synthesizer {
         let parameters = Parameters {
             is_fixed_velocity: DEFAULT_FIXED_VELOCITY_STATE,
             filter_envelope_is_enabled: DEFAULT_FILTER_ENVELOPE_STATE,
+            current_note: CurrentNote {
+                midi_note: DEFAULT_MIDI_NOTE,
+                velocity: DEFAULT_VELOCITY,
+                velocity_curve: DEFAULT_VELOCITY_CURVE,
+            },
             oscillators: oscillator_parameters,
             ..Default::default()
         };
@@ -256,7 +262,7 @@ impl Synthesizer {
                     let (left_envelope_sample, right_envelope_sample) = amplify_stereo(
                         oscillator_mix_left,
                         oscillator_mix_right,
-                        parameters.current_note.velocity,
+                        Some(parameters.current_note.velocity),
                         amp_envelope_value,
                     );
 

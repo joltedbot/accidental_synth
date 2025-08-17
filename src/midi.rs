@@ -25,6 +25,7 @@ const MIDI_MESSAGE_IGNORE_VALUE: Ignore = Ignore::SysexAndTime;
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum CC {
     ModWheel(u8),
+    VelocityCurve(u8),
     Volume(u8),
     ConstantLevel(u8),
     Pan(u8),
@@ -265,6 +266,7 @@ fn message_type_from_status_byte(status: &u8) -> MessageType {
 fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {
     match cc_number {
         1 => Some(CC::ModWheel(cc_value)),
+        3 => Some(CC::VelocityCurve(cc_value)),
         7 => Some(CC::Volume(cc_value)),
         9 => Some(CC::ConstantLevel(cc_value)),
         10 => Some(CC::Pan(cc_value)),

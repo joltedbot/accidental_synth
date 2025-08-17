@@ -47,10 +47,11 @@ pub fn start_midi_event_listener(
                         .lock()
                         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-                    parameters.current_note.velocity = match parameters.is_fixed_velocity {
-                        false => Some(velocity as f32 * MIDI_VELOCITY_TO_SAMPLE_FACTOR),
-                        true => None,
-                    };
+                    parameters.current_note.velocity =
+                        continuously_variable_curve_mapping_from_midi_value(
+                            parameters.current_note.velocity_curve,
+                            velocity,
+                        );
 
                     parameters.current_note.midi_note = midi_note;
                     update_current_note_from_stored_parameters(&mut parameters);
@@ -119,6 +120,13 @@ pub fn process_midi_cc_values(
                 .unwrap_or_else(|poisoned| poisoned.into_inner());
 
             parameters.mod_wheel_amount = mod_wheel_amount;
+        }
+        CC::VelocityCurve(value) => {
+            let mut parameters = parameters_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            parameters.current_note.velocity_curve = value;
         }
         CC::Volume(value) => {
             let output_level = exponential_curve_level_adjustment_from_midi_value(value);
@@ -547,7 +555,7 @@ pub fn process_midi_cc_values(
 
 pub fn midi_value_to_f32_range(midi_value: u8, minimum: f32, maximum: f32) -> f32 {
     let range = maximum - minimum;
-    let increment = range / MAX_MIDI_NOTE as f32;
+    let increment = range / MAX_MIDI_NAME as f32;
     minimum + (midi_value as f32 * increment)
 }
 
@@ -612,7 +620,25 @@ fn exponential_curve_from_midi_value_and_coefficient(
 ) -> f32 {
     // exponential_coefficient is the log of the magnitude for the linear range you want to map to exponential range
     // If the range max is 1000x then min, then the exponential_coefficient is log(1000) = 6.908
-    (exponential_coefficient * (midi_value as f32 / MAX_MIDI_NOTE as f32)).exp()
+    (exponential_coefficient * (midi_value as f32 / MAX_MIDI_NAME as f32)).exp()
+}
+fn continuously_variable_curve_mapping_from_midi_value(
+    mut slope_midi_value: u8,
+    input_midi_exponent: u8,
+) -> f32 {
+    if slope_midi_value == 0 {
+        slope_midi_value = 1;
+    }
+
+    let curve_exponent = if slope_midi_value == 64 {
+        1.0
+    } else if slope_midi_value > 64 {
+        ((slope_midi_value - 64) as f32 / 63f32) * 7.0
+    } else {
+        slope_midi_value as f32 / 64f32
+    };
+
+    (input_midi_exponent as f32).powf(curve_exponent) / (MAX_MIDI_NAME as f32).powf(curve_exponent)
 }
 
 fn update_current_note_from_midi_pitch_bend(
