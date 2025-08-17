@@ -28,6 +28,7 @@ struct OscillatorParameters {
     pan: f32,
     mute: bool,
     frequency: f32,
+    wave_shape: WaveShape,
     pitch_bend: Option<i16>,
     course_tune: Option<i8>,
     fine_tune: Option<i16>,
@@ -40,6 +41,7 @@ impl Default for OscillatorParameters {
             pan: DEFAULT_OSCILLATOR_OUTPUT_PAN,
             mute: false,
             frequency: 0.0,
+            wave_shape: DEFAULT_OSCILLATOR_WAVE_SHAPE,
             pitch_bend: None,
             course_tune: None,
             fine_tune: None,
@@ -111,10 +113,10 @@ impl Synthesizer {
         };
 
         let oscillators = [
-            Oscillator::new(sample_rate, WaveShape::Square),
-            Oscillator::new(sample_rate, WaveShape::Square),
-            Oscillator::new(sample_rate, WaveShape::Square),
-            Oscillator::new(sample_rate, WaveShape::Square),
+            Oscillator::new(sample_rate, DEFAULT_OSCILLATOR_WAVE_SHAPE),
+            Oscillator::new(sample_rate, DEFAULT_OSCILLATOR_WAVE_SHAPE),
+            Oscillator::new(sample_rate, DEFAULT_OSCILLATOR_WAVE_SHAPE),
+            Oscillator::new(sample_rate, DEFAULT_OSCILLATOR_WAVE_SHAPE),
         ];
 
         let mut amp_envelope = Envelope::new(sample_rate);
@@ -156,6 +158,7 @@ impl Synthesizer {
         let envelope_arc = self.amp_envelope.clone();
         let oscillators_arc = self.oscillators.clone();
         let filter_arc = self.filter.clone();
+        let filter_envelope_arc = self.filter_envelope.clone();
         let mixer_arc = self.mixer.clone();
 
         log::debug!("run(): Start the midi event listener thread");
@@ -166,6 +169,7 @@ impl Synthesizer {
             envelope_arc,
             oscillators_arc,
             filter_arc,
+            filter_envelope_arc,
             mixer_arc,
         );
 

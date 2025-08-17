@@ -5,6 +5,7 @@ pub const ENVELOPE_MIN_MILLISECONDS: f32 = 0.05;
 const MIN_SUSTAIN_LEVEL: f32 = 0.0;
 const MAX_SUSTAIN_LEVEL: f32 = 1.0;
 const DEFAULT_SUSTAIN_LEVEL: f32 = 0.8;
+const DEFAULT_EG_AMOUNT: f32 = 1.0;
 pub const DEFAULT_ATTACK_LEVEL_INCREMENT: f32 = 0.0002;
 pub const DEFAULT_DECAY_LEVEL_INCREMENT: f32 = 0.0002;
 pub const DEFAULT_RELEASE_LEVEL_INCREMENT: f32 = 0.0002;
@@ -32,6 +33,7 @@ pub struct Envelope {
     stage: Stage,
     level: f32,
     sample_rate: u32,
+    amount: f32,
     is_inverted: bool,
     milliseconds_per_sample: f32,
     attack_level_increment: f32,
@@ -52,6 +54,7 @@ impl Envelope {
             sample_rate,
             milliseconds_per_sample,
             is_inverted: false,
+            amount: DEFAULT_EG_AMOUNT,
             sustain_level: DEFAULT_SUSTAIN_LEVEL,
             attack_level_increment: DEFAULT_ATTACK_LEVEL_INCREMENT,
             decay_level_increment: DEFAULT_DECAY_LEVEL_INCREMENT,
@@ -66,7 +69,7 @@ impl Envelope {
         if self.is_inverted {
             envelope_output_value = ENVELOPE_MAX_LEVEL - envelope_output_value;
         }
-        envelope_output_value
+        envelope_output_value * self.amount
     }
 
     pub fn gate_on(&mut self) {
@@ -118,6 +121,10 @@ impl Envelope {
             ENVELOPE_MIN_LEVEL,
             clamped_milliseconds,
         );
+    }
+
+    pub fn set_amount(&mut self, amount: f32) {
+        self.amount = amount;
     }
 
     pub fn set_is_inverted(&mut self, is_inverted: bool) {

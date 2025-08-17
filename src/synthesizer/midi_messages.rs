@@ -2,7 +2,7 @@ use crate::midi::{CC, MidiMessage};
 use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
 use crate::modules::filter::{Filter, FilterSlope};
 use crate::modules::mixer::{Mixer, MixerInput};
-use crate::modules::oscillator::Oscillator;
+use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::modules::tuner::tune;
 use crate::synthesizer::constants::*;
 use crate::synthesizer::{MidiNoteEvent, Parameters};
@@ -35,6 +35,7 @@ pub fn start_midi_event_listener(
     mut amp_envelope_arc: Arc<Mutex<Envelope>>,
     mut oscillators_arc: Arc<Mutex<[Oscillator; 4]>>,
     mut filter_arc: Arc<Mutex<Filter>>,
+    mut filter_envelope_arc: Arc<Mutex<Envelope>>,
     mut mixer_arc: Arc<Mutex<Mixer>>,
 ) {
     thread::spawn(move || {
@@ -91,6 +92,7 @@ pub fn start_midi_event_listener(
                         &mut oscillators_arc,
                         &mut midi_event_arc,
                         &mut filter_arc,
+                        &mut filter_envelope_arc,
                         &mut mixer_arc,
                     );
                 }
@@ -108,6 +110,7 @@ pub fn process_midi_cc_values(
     oscillators_arc: &mut Arc<Mutex<[Oscillator; 4]>>,
     midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
     filter_arc: &mut Arc<Mutex<Filter>>,
+    filter_envelope_arc: &mut Arc<Mutex<Envelope>>,
     mixer_arc: &mut Arc<Mutex<Mixer>>,
 ) {
     log::debug!("process_midi_cc_values(): CC received: {:?}", cc_value);
@@ -179,16 +182,64 @@ pub fn process_midi_cc_values(
             //TODO
         }
         CC::SubOscillatorShape(value) => {
-            //TODO
+            let wave_shape = midi_value_to_oscillator_wave_shape(value);
+
+            let mut parameters = parameters_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            parameters.oscillators[0].wave_shape = wave_shape;
+
+            let mut oscillators = oscillators_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            oscillators[0].set_wave_shape(wave_shape);
         }
         CC::Oscillator1Shape(value) => {
-            //TODO
+            let wave_shape = midi_value_to_oscillator_wave_shape(value);
+
+            let mut parameters = parameters_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            parameters.oscillators[1].wave_shape = wave_shape;
+
+            let mut oscillators = oscillators_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            oscillators[1].set_wave_shape(wave_shape);
         }
         CC::Oscillator2Shape(value) => {
-            //TODO
+            let wave_shape = midi_value_to_oscillator_wave_shape(value);
+
+            let mut parameters = parameters_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            parameters.oscillators[2].wave_shape = wave_shape;
+
+            let mut oscillators = oscillators_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            oscillators[2].set_wave_shape(wave_shape);
         }
         CC::Oscillator3Shape(value) => {
-            //TODO
+            let wave_shape = midi_value_to_oscillator_wave_shape(value);
+
+            let mut parameters = parameters_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            parameters.oscillators[3].wave_shape = wave_shape;
+
+            let mut oscillators = oscillators_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            oscillators[3].set_wave_shape(wave_shape);
         }
         CC::SubOscillatorCourseTune(value) => {
             let mut parameters = parameters_arc
@@ -505,25 +556,68 @@ pub fn process_midi_cc_values(
             envelope.set_sustain_level(midi_value_to_f32_0_to_1(value));
         }
         CC::AmpEGInverted(value) => {
-            //TODO
+            let mut envelope = amp_envelope_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            envelope.set_is_inverted(midi_value_to_bool(value));
         }
         CC::FilterEGAttackTime(value) => {
-            //TODO
+            let time = midi_value_to_f32_range(
+                value,
+                ENVELOPE_MIN_MILLISECONDS,
+                ENVELOPE_MAX_MILLISECONDS,
+            );
+
+            let mut envelope = filter_envelope_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            envelope.set_attack_milliseconds(time);
         }
         CC::FilterEGDecayTime(value) => {
-            //TODO
+            let time = midi_value_to_f32_range(
+                value,
+                ENVELOPE_MIN_MILLISECONDS,
+                ENVELOPE_MAX_MILLISECONDS,
+            );
+
+            let mut envelope = filter_envelope_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            envelope.set_decay_milliseconds(time);
         }
         CC::FilterEGSustainLevel(value) => {
-            //TODO
+            let mut envelope = filter_envelope_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            envelope.set_sustain_level(midi_value_to_f32_0_to_1(value));
         }
         CC::FilterEGReleaseTime(value) => {
-            //TODO
+            let time = midi_value_to_f32_range(
+                value,
+                ENVELOPE_MIN_MILLISECONDS,
+                ENVELOPE_MAX_MILLISECONDS,
+            );
+
+            let mut envelope = filter_envelope_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+            envelope.set_release_milliseconds(time);
         }
         CC::FilterEGInverted(value) => {
-            //TODO
+            let mut filter_envelope = filter_envelope_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            filter_envelope.set_is_inverted(midi_value_to_bool(value));
         }
         CC::FilterEGAmount(value) => {
-            //TODO
+            let mut filter_envelope = filter_envelope_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            filter_envelope.set_amount(midi_value_to_f32_0_to_1(value));
         }
         CC::LFO1Frequency(value) => {
             //TODO
@@ -596,6 +690,30 @@ fn midi_value_to_filter_slope(midi_value: u8) -> FilterSlope {
         FilterSlope::Db18
     } else {
         FilterSlope::Db24
+    }
+}
+
+fn midi_value_to_oscillator_wave_shape(midi_value: u8) -> WaveShape {
+    if midi_value < 13 {
+        WaveShape::AM
+    } else if midi_value < 26 {
+        WaveShape::FM
+    } else if midi_value < 39 {
+        WaveShape::Noise
+    } else if midi_value < 52 {
+        WaveShape::Pulse
+    } else if midi_value < 65 {
+        WaveShape::Ramp
+    } else if midi_value < 78 {
+        WaveShape::Saw
+    } else if midi_value < 91 {
+        WaveShape::Sine
+    } else if midi_value < 104 {
+        WaveShape::Square
+    } else if midi_value < 117 {
+        WaveShape::SuperSaw
+    } else {
+        WaveShape::Triangle
     }
 }
 
