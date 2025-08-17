@@ -70,6 +70,10 @@ impl Oscillator {
     }
 
     pub fn set_wave_shape(&mut self, wave_shape: WaveShape) {
+        if wave_shape == self.wave_generator.shape() {
+            return;
+        }
+
         log::info!("Setting Oscillator Shape to {wave_shape:?}");
         self.wave_generator = get_wave_generator_from_wave_shape(self.sample_rate, wave_shape)
     }

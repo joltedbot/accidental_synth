@@ -1,6 +1,7 @@
 #![allow(unused_variables)]
 mod constants;
 mod midi_messages;
+pub mod tuner;
 
 use self::constants::*;
 use crate::midi::MidiMessage;
@@ -15,6 +16,7 @@ use cpal::traits::DeviceTrait;
 use cpal::{Device, Stream};
 use crossbeam_channel::Receiver;
 use std::sync::{Arc, Mutex};
+use std::thread;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum MidiNoteEvent {
@@ -23,7 +25,7 @@ enum MidiNoteEvent {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct OscillatorParameters {
+pub struct OscillatorParameters {
     level: f32,
     pan: f32,
     mute: bool,
@@ -59,7 +61,6 @@ struct CurrentNote {
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 struct Parameters {
     is_fixed_velocity: bool,
-    filter_envelope_is_enabled: bool,
     current_note: CurrentNote,
     mod_wheel_amount: f32,
     aftertouch_amount: f32,
@@ -102,7 +103,6 @@ impl Synthesizer {
 
         let parameters = Parameters {
             is_fixed_velocity: DEFAULT_FIXED_VELOCITY_STATE,
-            filter_envelope_is_enabled: DEFAULT_FILTER_ENVELOPE_STATE,
             current_note: CurrentNote {
                 midi_note: DEFAULT_MIDI_NOTE,
                 velocity: DEFAULT_VELOCITY,
@@ -131,6 +131,7 @@ impl Synthesizer {
         filter_envelope.set_decay_milliseconds(DEFAULT_AMP_ENVELOPE_DECAY_TIME);
         filter_envelope.set_sustain_level(DEFAULT_AMP_ENVELOPE_SUSTAIN_LEVEL);
         filter_envelope.set_release_milliseconds(DEFAULT_AMP_ENVELOPE_RELEASE_TIME);
+        filter_envelope.set_amount(DEFAULT_FILTER_ENVELOPE_AMOUNT);
 
         let mixer = Mixer::new();
         let filter = Filter::new(sample_rate);
@@ -153,27 +154,66 @@ impl Synthesizer {
         self.output_stream = Some(self.create_synthesizer(self.audio_output_device.clone())?);
         log::debug!("run(): The synthesizer audio stream has been created");
 
-        let parameters_arc = self.parameters.clone();
-        let midi_event_arc = self.midi_note_events.clone();
-        let envelope_arc = self.amp_envelope.clone();
-        let oscillators_arc = self.oscillators.clone();
-        let filter_arc = self.filter.clone();
-        let filter_envelope_arc = self.filter_envelope.clone();
-        let mixer_arc = self.mixer.clone();
-
         log::debug!("run(): Start the midi event listener thread");
-        midi_messages::start_midi_event_listener(
-            midi_message_receiver,
-            parameters_arc,
-            midi_event_arc,
-            envelope_arc,
-            oscillators_arc,
-            filter_arc,
-            filter_envelope_arc,
-            mixer_arc,
-        );
-
+        self.start_midi_event_listener(midi_message_receiver);
+        log::debug!("run(): The midi event listener thread is running");
         Ok(())
+    }
+
+    fn start_midi_event_listener(&mut self, midi_message_receiver: Receiver<MidiMessage>) {
+        let mut parameters_arc = self.parameters.clone();
+        let mut midi_event_arc = self.midi_note_events.clone();
+        let mut amp_envelope_arc = self.amp_envelope.clone();
+        let mut oscillators_arc = self.oscillators.clone();
+        let mut filter_arc = self.filter.clone();
+        let mut filter_envelope_arc = self.filter_envelope.clone();
+        let mut mixer_arc = self.mixer.clone();
+
+        thread::spawn(move || {
+            log::debug!("run(): spawned thread to receive MIDI events");
+
+            while let Ok(event) = midi_message_receiver.recv() {
+                match event {
+                    MidiMessage::NoteOn(midi_note, velocity) => {
+                        midi_messages::process_midi_note_on_message(
+                            &mut parameters_arc,
+                            &mut midi_event_arc,
+                            midi_note,
+                            velocity,
+                        );
+                    }
+                    MidiMessage::NoteOff => {
+                        midi_messages::process_midi_note_off_message(&mut midi_event_arc);
+                    }
+                    MidiMessage::PitchBend(bend_amount) => {
+                        midi_messages::process_midi_pitch_bend_message(
+                            &mut parameters_arc,
+                            bend_amount,
+                        );
+                    }
+                    MidiMessage::ChannelPressure(pressure_value) => {
+                        midi_messages::process_midi_channel_pressure_message(
+                            &mut parameters_arc,
+                            pressure_value,
+                        );
+                    }
+                    MidiMessage::ControlChange(cc_value) => {
+                        midi_messages::process_midi_cc_values(
+                            cc_value,
+                            &mut parameters_arc,
+                            &mut amp_envelope_arc,
+                            &mut oscillators_arc,
+                            &mut midi_event_arc,
+                            &mut filter_arc,
+                            &mut filter_envelope_arc,
+                            &mut mixer_arc,
+                        );
+                    }
+                }
+            }
+
+            log::debug!("run(): MIDI event receiver thread has exited");
+        });
     }
 
     fn create_synthesizer(&mut self, output_device: Device) -> Result<Stream> {
@@ -270,10 +310,8 @@ impl Synthesizer {
                         amp_envelope_value,
                     );
 
-                    if parameters.filter_envelope_is_enabled {
-                        let filter_envelope_value = filter_envelope.generate();
-                        filter.modulate_cutoff_frequency(filter_envelope_value);
-                    }
+                    let filter_envelope_value = filter_envelope.generate();
+                    filter.modulate_cutoff_frequency(filter_envelope_value);
 
                     let (filtered_left, filtered_right) =
                         filter.filter(left_envelope_sample, right_envelope_sample);

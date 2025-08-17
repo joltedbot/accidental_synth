@@ -1,15 +1,11 @@
+use super::OscillatorParameters;
 const MAX_MIDI_NOTE_NUMBER: i8 = 127;
 const MIN_MIDI_NOTE_NUMBER: i8 = 0;
 const MAX_NOTE_FREQUENCY: f32 = 12543.854;
 const MIN_NOTE_FREQUENCY: f32 = 8.175;
 
-pub fn tune(
-    mut note_number: u8,
-    interval: Option<i8>,
-    cents: Option<i16>,
-    pitch_bend: Option<i16>,
-) -> f32 {
-    if let Some(interval) = interval {
+pub fn tune(mut note_number: u8, parameters: &mut OscillatorParameters) -> f32 {
+    if let Some(interval) = parameters.course_tune {
         note_number = (note_number as i8)
             .saturating_add(interval)
             .clamp(MIN_MIDI_NOTE_NUMBER, MAX_MIDI_NOTE_NUMBER) as u8;
@@ -17,12 +13,12 @@ pub fn tune(
 
     let mut note_frequency = midi_note_to_frequency(note_number);
 
-    if let Some(pitch_bend_cents) = pitch_bend {
+    if let Some(pitch_bend_cents) = parameters.pitch_bend {
         note_frequency = frequency_from_cents(note_frequency, pitch_bend_cents)
             .clamp(MIN_NOTE_FREQUENCY, MAX_NOTE_FREQUENCY);
     }
 
-    if let Some(cents) = cents {
+    if let Some(cents) = parameters.fine_tune {
         note_frequency = frequency_from_cents(note_frequency, cents);
     }
     note_frequency
@@ -218,13 +214,16 @@ mod tests {
 
     #[test]
     fn tune_returns_correct_values_without_interval_or_cents() {
+        let mut parameters = OscillatorParameters {
+            course_tune: None,
+            fine_tune: None,
+            pitch_bend: None,
+            ..Default::default()
+        };
         let note_number = 60;
-        let interval = None;
-        let cents = None;
-        let pitch_bend = None;
         let expected_frequency = 261.625;
         assert!(f32_value_equality(
-            tune(note_number, interval, cents, pitch_bend),
+            tune(note_number, &mut parameters),
             expected_frequency
         ));
     }
@@ -232,12 +231,15 @@ mod tests {
     #[test]
     fn tune_returns_correct_values_with_interval_but_no_cents() {
         let note_number = 60;
-        let interval = Some(7);
-        let cents = None;
-        let pitch_bend = None;
+        let mut parameters = OscillatorParameters {
+            course_tune: Some(7),
+            fine_tune: None,
+            pitch_bend: None,
+            ..Default::default()
+        };
         let expected_frequency = 391.995;
         assert!(f32_value_equality(
-            tune(note_number, interval, cents, pitch_bend),
+            tune(note_number, &mut parameters),
             expected_frequency
         ));
     }
@@ -245,12 +247,15 @@ mod tests {
     #[test]
     fn tune_returns_correct_values_without_interval_but_with_cents() {
         let note_number = 60;
-        let interval = None;
-        let cents = Some(-12);
-        let pitch_bend = None;
+        let mut parameters = OscillatorParameters {
+            course_tune: None,
+            fine_tune: Some(-12),
+            pitch_bend: None,
+            ..Default::default()
+        };
         let expected_frequency = 259.8178;
         assert!(f32_value_equality(
-            tune(note_number, interval, cents, pitch_bend),
+            tune(note_number, &mut parameters),
             expected_frequency
         ));
     }
@@ -258,12 +263,15 @@ mod tests {
     #[test]
     fn tune_returns_correct_values_with_interval_and_cents() {
         let note_number = 60;
-        let interval = Some(7);
-        let cents = Some(-12);
-        let pitch_bend = None;
+        let mut parameters = OscillatorParameters {
+            course_tune: Some(7),
+            fine_tune: Some(-12),
+            pitch_bend: None,
+            ..Default::default()
+        };
         let expected_frequency = 389.2873;
         assert!(f32_value_equality(
-            tune(note_number, interval, cents, pitch_bend),
+            tune(note_number, &mut parameters),
             expected_frequency
         ));
     }
@@ -271,12 +279,15 @@ mod tests {
     #[test]
     fn tune_correctly_clamps_note_plus_interval_range_minimum_to_zero() {
         let note_number = 0;
-        let interval = Some(-127);
-        let cents = None;
-        let pitch_bend = None;
+        let mut parameters = OscillatorParameters {
+            course_tune: Some(-127),
+            fine_tune: None,
+            pitch_bend: None,
+            ..Default::default()
+        };
         let expected_frequency = 8.175;
         assert!(f32_value_equality(
-            tune(note_number, interval, cents, pitch_bend),
+            tune(note_number, &mut parameters),
             expected_frequency
         ));
     }
@@ -284,12 +295,15 @@ mod tests {
     #[test]
     fn tune_correctly_clamps_note_plus_interval_range_maximum_to_127() {
         let note_number = 127;
-        let interval = Some(127);
-        let cents = None;
-        let pitch_bend = None;
+        let mut parameters = OscillatorParameters {
+            course_tune: Some(127),
+            fine_tune: None,
+            pitch_bend: None,
+            ..Default::default()
+        };
         let expected_frequency = 12543.854;
         assert!(f32_value_equality(
-            tune(note_number, interval, cents, pitch_bend),
+            tune(note_number, &mut parameters),
             expected_frequency
         ));
     }

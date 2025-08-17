@@ -90,7 +90,9 @@ impl Filter {
     }
 
     pub fn modulate_cutoff_frequency(&mut self, cutoff_modulation: f32) {
-        self.cutoff_frequency = cutoff_modulation.clamp(0.0, 1.0) * MAX_FILTER_FREQUENCY;
+        self.cutoff_frequency = (self.cutoff_frequency
+            + (cutoff_modulation * MAX_FILTER_FREQUENCY))
+            .clamp(MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY);
         self.calculate_coefficients_on_cutoff_update(self.cutoff_frequency);
     }
 
