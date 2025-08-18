@@ -1,9 +1,9 @@
 use crate::modules::oscillator::WaveShape;
 
-pub const MAX_MIDI_NAME: u8 = 127;
+pub const MAX_MIDI_VALUE: u8 = 127;
 pub const DEFAULT_OSCILLATOR_OUTPUT_LEVEL: f32 = 1.0;
 pub const DEFAULT_OSCILLATOR_OUTPUT_PAN: f32 = 0.0;
-pub const DEFAULT_OSCILLATOR_WAVE_SHAPE: WaveShape = WaveShape::Sine;
+pub const DEFAULT_OSCILLATOR_WAVE_SHAPE: WaveShape = WaveShape::Saw;
 pub const DEFAULT_SUB_OSCILLATOR_INTERVAL: i8 = -12;
 pub const DEFAULT_SUB_OSCILLATOR_LEVEL: f32 = 0.0;
 pub const DEFAULT_AMP_ENVELOPE_ATTACK_TIME: f32 = 200.0;

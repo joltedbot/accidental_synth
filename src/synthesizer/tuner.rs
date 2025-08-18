@@ -3,6 +3,7 @@ const MAX_MIDI_NOTE_NUMBER: i8 = 127;
 const MIN_MIDI_NOTE_NUMBER: i8 = 0;
 const MAX_NOTE_FREQUENCY: f32 = 12543.854;
 const MIN_NOTE_FREQUENCY: f32 = 8.175;
+const CENTS_PER_OCTAVE: f32 = 1200.0;
 
 pub fn tune(mut note_number: u8, parameters: &mut OscillatorParameters) -> f32 {
     if let Some(interval) = parameters.course_tune {
@@ -29,7 +30,7 @@ fn midi_note_to_frequency(note_number: u8) -> f32 {
 }
 
 fn frequency_from_cents(frequency: f32, cents: i16) -> f32 {
-    frequency * (2.0f32.powf(cents as f32 / 1200.0))
+    frequency * (2.0f32.powf(cents as f32 / CENTS_PER_OCTAVE))
 }
 
 pub const MIDI_NOTE_FREQUENCIES: [(f32, &str); 128] = [

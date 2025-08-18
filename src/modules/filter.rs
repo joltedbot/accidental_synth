@@ -7,7 +7,7 @@ const MIN_FILTER_FREQUENCY: f32 = 0.0;
 const MIN_RESONANCE: f32 = 0.0;
 const MAX_RESONANCE: f32 = 1.0;
 
-const NATURAL_LOG_OF_4: f32 = 1.386294361;
+const NATURAL_LOG_OF_4: f32 = 1.3862943;
 const DEFAULT_RESONANCE: f32 = 0.0;
 const DENORMAL_GUARD: f32 = 1e-25_f32;
 
@@ -33,6 +33,7 @@ struct Coefficients {
 pub struct Filter {
     sample_rate: u32,
     cutoff_frequency: f32,
+    cutoff_modulation_amount: f32,
     resonance: f32,
     filter_slope: FilterSlope,
     coefficients: Coefficients,
@@ -86,14 +87,16 @@ impl Filter {
 
     pub fn set_cutoff_frequency(&mut self, cut_off_frequency: f32) {
         self.cutoff_frequency = cut_off_frequency.clamp(MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY);
-        self.calculate_coefficients_on_cutoff_update(cut_off_frequency);
+        let frequency = (self.cutoff_frequency + self.cutoff_modulation_amount)
+            .clamp(MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY);
+        self.calculate_coefficients_on_cutoff_update(frequency);
     }
 
     pub fn modulate_cutoff_frequency(&mut self, cutoff_modulation: f32) {
-        self.cutoff_frequency = (self.cutoff_frequency
-            + (cutoff_modulation * MAX_FILTER_FREQUENCY))
+        self.cutoff_modulation_amount = cutoff_modulation * MAX_FILTER_FREQUENCY;
+        let frequency = (self.cutoff_frequency + self.cutoff_modulation_amount)
             .clamp(MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY);
-        self.calculate_coefficients_on_cutoff_update(self.cutoff_frequency);
+        self.calculate_coefficients_on_cutoff_update(frequency);
     }
 
     pub fn set_resonance(&mut self, resonance: f32) {
@@ -233,7 +236,7 @@ mod tests {
         let expected_gain = 0.9444442;
         let expected_pole = 0.8888885;
         let expected_res_factor = 0.0770165;
-        let expected_adj_res_factor = 12.0059319;
+        let expected_adj_res_factor = 12.005931;
         let expected_feedback = 0.0;
 
         assert!(f32_value_equality(

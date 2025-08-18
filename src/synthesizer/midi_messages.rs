@@ -561,7 +561,7 @@ fn set_oscillator_wave_shape(
 
 pub fn midi_value_to_f32_range(midi_value: u8, minimum: f32, maximum: f32) -> f32 {
     let range = maximum - minimum;
-    let increment = range / MAX_MIDI_NAME as f32;
+    let increment = range / MAX_MIDI_VALUE as f32;
     minimum + (midi_value as f32 * increment)
 }
 
@@ -650,11 +650,12 @@ fn exponential_curve_from_midi_value_and_coefficient(
 ) -> f32 {
     // exponential_coefficient is the log of the magnitude for the linear range you want to map to exponential range
     // If the range max is 1000x then min, then the exponential_coefficient is log(1000) = 6.908
-    (exponential_coefficient * (midi_value as f32 / MAX_MIDI_NAME as f32)).exp()
+    (exponential_coefficient * (midi_value as f32 / MAX_MIDI_VALUE as f32)).exp()
 }
+
 fn continuously_variable_curve_mapping_from_midi_value(
     mut slope_midi_value: u8,
-    input_midi_exponent: u8,
+    input_midi_value: u8,
 ) -> f32 {
     if slope_midi_value == 0 {
         slope_midi_value = 1;
@@ -668,7 +669,7 @@ fn continuously_variable_curve_mapping_from_midi_value(
         slope_midi_value as f32 / 64f32
     };
 
-    (input_midi_exponent as f32).powf(curve_exponent) / (MAX_MIDI_NAME as f32).powf(curve_exponent)
+    (input_midi_value as f32).powf(curve_exponent) / (MAX_MIDI_VALUE as f32).powf(curve_exponent)
 }
 
 fn update_current_note_from_midi_pitch_bend(
