@@ -281,7 +281,7 @@ impl Synthesizer {
                 let mut filter_envelope = filter_envelope_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mut lfos = lfos_arc
+                let lfos = lfos_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
 
