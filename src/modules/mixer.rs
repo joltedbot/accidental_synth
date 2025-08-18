@@ -46,7 +46,7 @@ pub struct OutputMix {
     pan: f32,
 }
 
-#[derive(Default, Copy, Clone, Debug, PartialEq)]
+#[derive(Default, Clone, Debug, PartialEq)]
 pub struct Mixer {
     quad_mix: QuadMix,
     output_mix: OutputMix,

@@ -11,6 +11,7 @@ use crate::modules::filter::Filter;
 use crate::modules::mixer::{Mixer, MixerInput};
 use crate::modules::oscillator::{Oscillator, WaveShape};
 
+use crate::modules::lfo::Lfo;
 use anyhow::Result;
 use cpal::traits::DeviceTrait;
 use cpal::{Device, Stream};
@@ -76,6 +77,7 @@ pub struct Synthesizer {
     oscillators: Arc<Mutex<[Oscillator; 4]>>,
     amp_envelope: Arc<Mutex<Envelope>>,
     filter_envelope: Arc<Mutex<Envelope>>,
+    lfos: Arc<Mutex<[Lfo; 1]>>,
     mixer: Arc<Mutex<Mixer>>,
     filter: Arc<Mutex<Filter>>,
 }
@@ -137,6 +139,8 @@ impl Synthesizer {
 
         let filter = Filter::new(sample_rate);
 
+        let lfos = [Lfo::new(sample_rate)];
+
         Self {
             audio_output_device,
             output_stream: None,
@@ -145,6 +149,7 @@ impl Synthesizer {
             oscillators: Arc::new(Mutex::new(oscillators)),
             amp_envelope: Arc::new(Mutex::new(amp_envelope)),
             filter_envelope: Arc::new(Mutex::new(filter_envelope)),
+            lfos: Arc::new(Mutex::new(lfos)),
             mixer: Arc::new(Mutex::new(mixer)),
             filter: Arc::new(Mutex::new(filter)),
         }
@@ -168,6 +173,7 @@ impl Synthesizer {
         let mut oscillators_arc = self.oscillators.clone();
         let mut filter_arc = self.filter.clone();
         let mut filter_envelope_arc = self.filter_envelope.clone();
+        let mut lfos_arc = self.lfos.clone();
         let mut mixer_arc = self.mixer.clone();
 
         thread::spawn(move || {
@@ -179,6 +185,7 @@ impl Synthesizer {
                         midi_messages::process_midi_note_on_message(
                             &mut parameters_arc,
                             &mut midi_event_arc,
+                            &mut lfos_arc,
                             midi_note,
                             velocity,
                         );
@@ -207,6 +214,7 @@ impl Synthesizer {
                             &mut midi_event_arc,
                             &mut filter_arc,
                             &mut filter_envelope_arc,
+                            &mut lfos_arc,
                             &mut mixer_arc,
                         );
                     }
@@ -223,6 +231,7 @@ impl Synthesizer {
         let oscillators_arc = self.oscillators.clone();
         let amp_envelope_arc = self.amp_envelope.clone();
         let filter_envelope_arc = self.filter_envelope.clone();
+        let lfos_arc = self.lfos.clone();
         let filter_arc = self.filter.clone();
         let mixer_arc = self.mixer.clone();
 
@@ -240,10 +249,27 @@ impl Synthesizer {
         let stream = output_device.build_output_stream(
             &default_device_stream_config,
             move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
+                let mixer = {
+                    let mixer = mixer_arc
+                        .lock()
+                        .unwrap_or_else(|poisoned| poisoned.into_inner());
+                    mixer.clone()
+                };
+                let note_event = {
+                    let mut midi_note_events = midi_note_events_arc
+                        .lock()
+                        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+                    midi_note_events.take()
+                };
+                let parameters = {
+                    let parameter_mutex = parameters_arc
+                        .lock()
+                        .unwrap_or_else(|poisoned| poisoned.into_inner());
+                    parameter_mutex.to_owned()
+                };
+
                 let mut oscillators = oscillators_arc
-                    .lock()
-                    .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mixer = mixer_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
                 let mut filter = filter_arc
@@ -255,21 +281,9 @@ impl Synthesizer {
                 let mut filter_envelope = filter_envelope_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-                let note_event = {
-                    let mut midi_note_events = midi_note_events_arc
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-                    midi_note_events.take()
-                };
-
-                let parameters = {
-                    let parameter_mutex = parameters_arc
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner());
-                    parameter_mutex.to_owned()
-                };
+                let mut lfos = lfos_arc
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
 
                 midi_messages::action_midi_note_events(
                     note_event,

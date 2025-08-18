@@ -1,6 +1,9 @@
 use crate::midi::CC;
 use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
 use crate::modules::filter::{Filter, FilterSlope};
+use crate::modules::lfo::{
+    Lfo, MAX_LFO_FREQUENCY, MAX_LFO_RANGE, MIN_LFO_FREQUENCY, MIN_LFO_RANGE,
+};
 use crate::modules::mixer::{Mixer, MixerInput};
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::synthesizer::constants::*;
@@ -66,6 +69,7 @@ pub fn process_midi_note_off_message(midi_event_arc: &mut Arc<Mutex<Option<MidiN
 pub fn process_midi_note_on_message(
     parameters_arc: &mut Arc<Mutex<Parameters>>,
     midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
+    lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>,
     midi_note: u8,
     velocity: u8,
 ) {
@@ -96,6 +100,7 @@ pub fn process_midi_cc_values(
     midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
     filter_arc: &mut Arc<Mutex<Filter>>,
     filter_envelope_arc: &mut Arc<Mutex<Envelope>>,
+    lfos_arc: &mut Arc<Mutex<[Lfo; 1]>>,
     mixer_arc: &mut Arc<Mutex<Mixer>>,
 ) {
     log::debug!("process_midi_cc_values(): CC received: {:?}", cc_value);
@@ -257,21 +262,23 @@ pub fn process_midi_cc_values(
         CC::FilterEGAmount(value) => {
             set_filter_eg_amount(filter_envelope_arc, value);
         }
-        CC::LFO1Frequency(value) => {}
+        CC::LFO1Frequency(value) => {
+            set_lfo_frequency(lfos_arc, 0, value);
+        }
         CC::LFO1CenterValue(value) => {
-            //TODO
+            set_lfo_center_value(lfos_arc, 0, value);
         }
         CC::LFO1Range(value) => {
-            //TODO
+            set_lfo_range(lfos_arc, 0, value);
         }
         CC::LFO1WaveShape(value) => {
-            //TODO
+            set_lfo_wave_shape(lfos_arc, 0, value);
         }
-        CC::LFO1Inverted(value) => {
-            //TODO
+        CC::LFO1Phase(value) => {
+            set_lfo_phase(lfos_arc, 0, value);
         }
         CC::LFO1Reset(value) => {
-            //TODO
+            lfo_reset(lfos_arc, 0);
         }
         CC::AllNotesOff => {
             set_all_note_off(midi_event_arc);
@@ -285,6 +292,57 @@ fn set_all_note_off(midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>) {
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
     *midi_events = Some(MidiNoteEvent::NoteOff);
+}
+
+fn set_lfo_frequency(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u8) {
+    let mut lfos = lfo_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    lfos[lfo].set_frequency(midi_value_to_f32_range(
+        value,
+        MIN_LFO_FREQUENCY,
+        MAX_LFO_FREQUENCY,
+    ));
+}
+
+fn set_lfo_center_value(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u8) {
+    let mut lfos = lfo_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    lfos[lfo].set_center_value(midi_value_to_f32_negative_1_to_1(value));
+}
+
+fn set_lfo_range(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u8) {
+    let mut lfos = lfo_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    lfos[lfo].set_range(midi_value_to_f32_range(value, MIN_LFO_RANGE, MAX_LFO_RANGE));
+}
+
+fn set_lfo_wave_shape(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u8) {
+    let mut lfos = lfo_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    lfos[lfo].set_wave_shape(midi_value_to_oscillator_wave_shape(value));
+}
+
+fn set_lfo_phase(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u8) {
+    let mut lfos = lfo_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    lfos[lfo].set_phase(midi_value_to_f32_0_to_1(value));
+}
+
+fn lfo_reset(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize) {
+    let mut lfos = lfo_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    lfos[lfo].reset()
 }
 
 fn set_filter_eg_amount(filter_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
@@ -614,7 +672,7 @@ fn midi_value_to_f32_negative_1_to_1(midi_value: u8) -> f32 {
 }
 
 fn midi_value_to_bool(midi_value: u8) -> bool {
-    midi_value > 63
+    midi_value > MIDI_SWITCH_MAX_OFF_VALUE
 }
 
 fn midi_value_to_fine_tune_cents(midi_value: u8) -> i16 {

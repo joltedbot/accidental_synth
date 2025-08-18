@@ -1,6 +1,7 @@
 use crate::modules::oscillator::WaveShape;
 
 pub const MAX_MIDI_VALUE: u8 = 127;
+pub const MIDI_SWITCH_MAX_OFF_VALUE: u8 = 63;
 pub const DEFAULT_OSCILLATOR_OUTPUT_LEVEL: f32 = 1.0;
 pub const DEFAULT_OSCILLATOR_OUTPUT_PAN: f32 = 0.0;
 pub const DEFAULT_OSCILLATOR_WAVE_SHAPE: WaveShape = WaveShape::Saw;

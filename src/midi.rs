@@ -80,7 +80,7 @@ pub enum CC {
     LFO1CenterValue(u8),
     LFO1Range(u8),
     LFO1WaveShape(u8),
-    LFO1Inverted(u8),
+    LFO1Phase(u8),
     LFO1Reset(u8),
     AllNotesOff,
 }
@@ -322,7 +322,7 @@ fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {
         103 => Some(CC::LFO1CenterValue(cc_value)),
         104 => Some(CC::LFO1Range(cc_value)),
         105 => Some(CC::LFO1WaveShape(cc_value)),
-        106 => Some(CC::LFO1Inverted(cc_value)),
+        106 => Some(CC::LFO1Phase(cc_value)),
         107 => Some(CC::LFO1Reset(cc_value)),
         123 => Some(CC::AllNotesOff),
         _ => None,
