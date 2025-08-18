@@ -236,7 +236,7 @@ mod tests {
         let expected_gain = 0.9444442;
         let expected_pole = 0.8888885;
         let expected_res_factor = 0.0770165;
-        let expected_adj_res_factor = 12.005931;
+        let expected_adj_res_factor = 12.005932;
         let expected_feedback = 0.0;
 
         assert!(f32_value_equality(

@@ -47,9 +47,11 @@ impl GenerateSamples for Pulse {
         y_coordinate
     }
 
-    fn set_shape_parameters(&mut self, parameters: Vec<f32>) {
-        self.pulse_width = parameters[0];
+    fn set_shape_parameter1(&mut self, parameter: f32) {
+        self.pulse_width = parameter;
     }
+
+    fn set_shape_parameter2(&mut self, _parameter: f32) {}
 
     fn set_phase(&mut self, _phase: f32) {}
 

@@ -64,6 +64,7 @@ struct Parameters {
     current_note: CurrentNote,
     mod_wheel_amount: f32,
     aftertouch_amount: f32,
+    oscillator_key_sync_enabled: bool,
     oscillators: [OscillatorParameters; 4],
 }
 
@@ -108,6 +109,7 @@ impl Synthesizer {
                 velocity: DEFAULT_VELOCITY,
                 velocity_curve: DEFAULT_VELOCITY_CURVE,
             },
+            oscillator_key_sync_enabled: DEFAULT_OSCILLATOR_KEY_SYNC_STATE,
             oscillators: oscillator_parameters,
             ..Default::default()
         };
@@ -133,7 +135,6 @@ impl Synthesizer {
         filter_envelope.set_release_milliseconds(DEFAULT_AMP_ENVELOPE_RELEASE_TIME);
         filter_envelope.set_amount(DEFAULT_FILTER_ENVELOPE_AMOUNT);
 
-        let mixer = Mixer::new();
         let filter = Filter::new(sample_rate);
 
         Self {
@@ -263,18 +264,20 @@ impl Synthesizer {
                     midi_note_events.take()
                 };
 
-                midi_messages::process_midi_note_events(
-                    note_event,
-                    &mut amp_envelope,
-                    &mut filter_envelope,
-                );
-
                 let parameters = {
                     let parameter_mutex = parameters_arc
                         .lock()
                         .unwrap_or_else(|poisoned| poisoned.into_inner());
                     parameter_mutex.to_owned()
                 };
+
+                midi_messages::action_midi_note_events(
+                    note_event,
+                    &mut amp_envelope,
+                    &mut filter_envelope,
+                    &mut oscillators,
+                    parameters.oscillator_key_sync_enabled,
+                );
 
                 // Begin processing the audio buffer
 

@@ -36,9 +36,12 @@ impl GenerateSamples for FM {
         self.carrier.next_sample(modulated_frequency, None)
     }
 
-    fn set_shape_parameters(&mut self, parameters: Vec<f32>) {
-        self.modulation_amount = parameters[0];
-        self.modulation_ratio = parameters[1];
+    fn set_shape_parameter1(&mut self, parameter: f32) {
+        self.modulation_amount = parameter;
+    }
+
+    fn set_shape_parameter2(&mut self, parameter: f32) {
+        self.modulation_ratio = parameter;
     }
 
     fn set_phase(&mut self, phase: f32) {

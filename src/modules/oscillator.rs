@@ -25,7 +25,8 @@ use self::triangle::Triangle;
 pub trait GenerateSamples {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32;
 
-    fn set_shape_parameters(&mut self, parameters: Vec<f32>);
+    fn set_shape_parameter1(&mut self, parameter: f32);
+    fn set_shape_parameter2(&mut self, parameter: f32);
 
     fn set_phase(&mut self, phase: f32);
 
@@ -78,8 +79,12 @@ impl Oscillator {
         self.wave_generator = get_wave_generator_from_wave_shape(self.sample_rate, wave_shape)
     }
 
-    pub fn set_shape_parameters(&mut self, parameters: Vec<f32>) {
-        self.wave_generator.set_shape_parameters(parameters);
+    pub fn set_shape_parameter1(&mut self, parameter: f32) {
+        self.wave_generator.set_shape_parameter1(parameter);
+    }
+
+    pub fn set_shape_parameter2(&mut self, parameter: f32) {
+        self.wave_generator.set_shape_parameter2(parameter);
     }
 
     pub fn set_phase(&mut self, phase: f32) {
@@ -142,7 +147,8 @@ mod tests {
         let first_sample = oscillator.generate(100.0, None);
 
         oscillator.reset();
-        oscillator.set_shape_parameters(vec![1.0, 2.0]);
+        oscillator.set_shape_parameter1(1.0);
+        oscillator.set_shape_parameter2(2.0);
 
         let first_value = oscillator.generate(100.0, None);
         for _ in 0..5 {

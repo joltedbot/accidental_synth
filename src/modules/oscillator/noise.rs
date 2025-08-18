@@ -21,7 +21,9 @@ impl GenerateSamples for Noise {
         rand::random_range(-1.0..=1.0) * modulation.unwrap_or(1.0)
     }
 
-    fn set_shape_parameters(&mut self, _parameter: Vec<f32>) {}
+    fn set_shape_parameter1(&mut self, _parameter: f32) {}
+
+    fn set_shape_parameter2(&mut self, _parameter: f32) {}
 
     fn set_phase(&mut self, _phase: f32) {}
 

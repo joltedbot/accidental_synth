@@ -48,7 +48,9 @@ impl GenerateSamples for SuperSaw {
         voice_samples.iter().sum::<f32>() * VOICE_COUNT_OUTPUT_LEVEL_OFFSET
     }
 
-    fn set_shape_parameters(&mut self, _parameter: Vec<f32>) {}
+    fn set_shape_parameter1(&mut self, _parameter: f32) {}
+
+    fn set_shape_parameter2(&mut self, _parameter: f32) {}
 
     fn set_phase(&mut self, _phase: f32) {}
 

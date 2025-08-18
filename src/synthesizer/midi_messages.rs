@@ -8,15 +8,22 @@ use crate::synthesizer::tuner::tune;
 use crate::synthesizer::{MidiNoteEvent, Parameters};
 use std::sync::{Arc, Mutex, MutexGuard};
 
-pub fn process_midi_note_events(
+pub fn action_midi_note_events(
     midi_events: Option<MidiNoteEvent>,
     amp_envelope: &mut MutexGuard<Envelope>,
     filter_envelope: &mut MutexGuard<Envelope>,
+    oscillator: &mut MutexGuard<[Oscillator; 4]>,
+    oscillator_key_sync_enabled: bool,
 ) {
     match midi_events {
         Some(MidiNoteEvent::NoteOn) => {
             amp_envelope.gate_on();
             filter_envelope.gate_on();
+            if oscillator_key_sync_enabled {
+                for oscillator in oscillator.iter_mut() {
+                    oscillator.reset()
+                }
+            }
         }
         Some(MidiNoteEvent::NoteOff) => {
             amp_envelope.gate_off();
@@ -110,28 +117,31 @@ pub fn process_midi_cc_values(
             set_output_pan(mixer_arc, value);
         }
         CC::SubOscillatorShapeParameter1(value) => {
-            //TODO
+            set_oscillator_shape_parameter1(oscillators_arc, 0, value);
         }
         CC::SubOscillatorShapeParameter2(value) => {
-            //TODO
+            set_oscillator_shape_parameter2(oscillators_arc, 0, value);
         }
         CC::Oscillator1ShapeParameter1(value) => {
-            //TODO
+            set_oscillator_shape_parameter1(oscillators_arc, 1, value);
         }
         CC::Oscillator1ShapeParameter2(value) => {
-            //TODO
+            set_oscillator_shape_parameter2(oscillators_arc, 1, value);
         }
         CC::Oscillator2ShapeParameter1(value) => {
-            //TODO
+            set_oscillator_shape_parameter1(oscillators_arc, 2, value);
         }
         CC::Oscillator2ShapeParameter2(value) => {
-            //TODO
+            set_oscillator_shape_parameter2(oscillators_arc, 2, value);
         }
         CC::Oscillator3ShapeParameter1(value) => {
-            //TODO
+            set_oscillator_shape_parameter1(oscillators_arc, 3, value);
         }
         CC::Oscillator3ShapeParameter2(value) => {
-            //TODO
+            set_oscillator_shape_parameter2(oscillators_arc, 3, value);
+        }
+        CC::OscillatorKeySyncEnabled(value) => {
+            set_oscillator_key_sync(parameters_arc, value);
         }
         CC::SubOscillatorShape(value) => {
             set_oscillator_wave_shape(parameters_arc, oscillators_arc, 0, value);
@@ -179,7 +189,7 @@ pub fn process_midi_cc_values(
             set_oscillator_level(parameters_arc, mixer_arc, 2, MixerInput::Three, value);
         }
         CC::Oscillator3Level(value) => {
-            set_oscillator_level(parameters_arc, mixer_arc, 4, MixerInput::Four, value);
+            set_oscillator_level(parameters_arc, mixer_arc, 3, MixerInput::Four, value);
         }
         CC::SubOscillatorMute(value) => {
             set_oscillator_mute(parameters_arc, mixer_arc, 0, MixerInput::One, value);
@@ -247,9 +257,7 @@ pub fn process_midi_cc_values(
         CC::FilterEGAmount(value) => {
             set_filter_eg_amount(filter_envelope_arc, value);
         }
-        CC::LFO1Frequency(value) => {
-            //TODO
-        }
+        CC::LFO1Frequency(value) => {}
         CC::LFO1CenterValue(value) => {
             //TODO
         }
@@ -443,6 +451,38 @@ fn set_mod_wheel(parameters_arc: &mut Arc<Mutex<Parameters>>, value: u8) {
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
     parameters.mod_wheel_amount = mod_wheel_amount;
+}
+
+fn set_oscillator_shape_parameter1(
+    oscillators_arc: &mut Arc<Mutex<[Oscillator; 4]>>,
+    oscillator: usize,
+    value: u8,
+) {
+    let mut oscillators = oscillators_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    oscillators[oscillator].set_shape_parameter1(midi_value_to_f32_0_to_1(value));
+}
+
+fn set_oscillator_shape_parameter2(
+    oscillators_arc: &mut Arc<Mutex<[Oscillator; 4]>>,
+    oscillator: usize,
+    value: u8,
+) {
+    let mut oscillators = oscillators_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    oscillators[oscillator].set_shape_parameter2(midi_value_to_f32_0_to_1(value));
+}
+
+fn set_oscillator_key_sync(parameters_arc: &mut Arc<Mutex<Parameters>>, value: u8) {
+    let mut parameters = parameters_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    parameters.oscillator_key_sync_enabled = midi_value_to_bool(value);
 }
 
 fn set_oscillator_pan(

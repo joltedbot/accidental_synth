@@ -34,7 +34,8 @@ impl GenerateSamples for Sine {
         self.phase.sin()
     }
 
-    fn set_shape_parameters(&mut self, _parameters: Vec<f32>) {}
+    fn set_shape_parameter1(&mut self, _parameters: f32) {}
+    fn set_shape_parameter2(&mut self, _parameter: f32) {}
 
     fn set_phase(&mut self, phase: f32) {
         self.phase = (2.0 * PI) * phase.clamp(MIN_PHASE, MAX_PHASE);
