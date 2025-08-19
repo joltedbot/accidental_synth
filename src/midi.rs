@@ -82,6 +82,11 @@ pub enum CC {
     LFO1WaveShape(u8),
     LFO1Phase(u8),
     LFO1Reset(u8),
+    FilterModLFOFrequency(u8),
+    FilterModLFOAmount(u8),
+    FilterModLFOWaveShape(u8),
+    FilterModLFOPhase(u8),
+    FilterModLFOReset(u8),
     AllNotesOff,
 }
 
@@ -324,6 +329,11 @@ fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {
         105 => Some(CC::LFO1WaveShape(cc_value)),
         106 => Some(CC::LFO1Phase(cc_value)),
         107 => Some(CC::LFO1Reset(cc_value)),
+        108 => Some(CC::FilterModLFOFrequency(cc_value)),
+        109 => Some(CC::FilterModLFOAmount(cc_value)),
+        110 => Some(CC::FilterModLFOWaveShape(cc_value)),
+        111 => Some(CC::FilterModLFOPhase(cc_value)),
+        112 => Some(CC::FilterModLFOReset(cc_value)),
         123 => Some(CC::AllNotesOff),
         _ => None,
     }
