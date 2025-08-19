@@ -36,9 +36,6 @@ impl Lfo {
     }
 
     pub fn generate(&mut self) -> f32 {
-        if self.range == 0.0 {
-            return 1.0;
-        }
         let wave_sample = self.oscillator.generate(self.frequency, None);
         self.center_value + (wave_sample * (self.range / 2.0))
     }
@@ -52,7 +49,11 @@ impl Lfo {
     }
 
     pub fn set_range(&mut self, range: f32) {
-        self.range = range.clamp(MIN_LFO_RANGE, MAX_LFO_RANGE);
+        self.range = if range == 0.0 {
+            0.0
+        } else {
+            range.clamp(MIN_LFO_RANGE, MAX_LFO_RANGE)
+        }
     }
 
     pub fn set_wave_shape(&mut self, wave_shape: WaveShape) {

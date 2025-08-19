@@ -139,7 +139,8 @@ impl Synthesizer {
 
         let filter = Filter::new(sample_rate);
 
-        let lfos = [Lfo::new(sample_rate), Lfo::new(sample_rate)];
+        let mut lfos = [Lfo::new(sample_rate), Lfo::new(sample_rate)];
+        lfos[LFO_INDEX_FILTER_MODULATION].set_range(0.0);
 
         Self {
             audio_output_device,

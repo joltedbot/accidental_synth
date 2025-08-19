@@ -324,11 +324,17 @@ fn set_lfo_center_value(lfo_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: usize, value: u
 }
 
 fn set_lfo_range(lfo_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: usize, value: u8) {
+    let lfo_range = if value == 0 {
+        0.0
+    } else {
+        midi_value_to_f32_0_to_1(value)
+    };
+
     let mut lfos = lfo_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    lfos[lfo].set_range(midi_value_to_f32_range(value, MIN_LFO_RANGE, MAX_LFO_RANGE));
+    lfos[lfo].set_range(lfo_range);
 }
 
 fn set_lfo_wave_shape(lfo_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: usize, value: u8) {
@@ -419,7 +425,7 @@ fn set_amp_eq_sustain_level(amp_envelope_arc: &mut Arc<Mutex<Envelope>>, value: 
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    envelope.set_sustain_level(midi_value_to_f32_0_to_1(value));
+    envelope.set_sustain_level(exponential_curve_level_adjustment_from_midi_value(value));
 }
 
 fn set_amp_eg_decay_time(amp_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
