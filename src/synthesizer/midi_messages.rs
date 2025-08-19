@@ -1,9 +1,7 @@
 use crate::midi::CC;
 use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
 use crate::modules::filter::{Filter, FilterSlope};
-use crate::modules::lfo::{
-    Lfo, MAX_LFO_FREQUENCY, MAX_LFO_RANGE, MIN_LFO_FREQUENCY, MIN_LFO_RANGE,
-};
+use crate::modules::lfo::{Lfo, MAX_LFO_RANGE, MIN_LFO_RANGE};
 use crate::modules::mixer::{Mixer, MixerInput};
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::synthesizer::constants::*;
@@ -69,7 +67,7 @@ pub fn process_midi_note_off_message(midi_event_arc: &mut Arc<Mutex<Option<MidiN
 pub fn process_midi_note_on_message(
     parameters_arc: &mut Arc<Mutex<Parameters>>,
     midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
-    lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>,
+    lfo_arc: &mut Arc<Mutex<[Lfo; 2]>>,
     midi_note: u8,
     velocity: u8,
 ) {
@@ -100,7 +98,7 @@ pub fn process_midi_cc_values(
     midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
     filter_arc: &mut Arc<Mutex<Filter>>,
     filter_envelope_arc: &mut Arc<Mutex<Envelope>>,
-    lfos_arc: &mut Arc<Mutex<[Lfo; 1]>>,
+    lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>,
     mixer_arc: &mut Arc<Mutex<Mixer>>,
 ) {
     log::debug!("process_midi_cc_values(): CC received: {:?}", cc_value);
@@ -263,22 +261,37 @@ pub fn process_midi_cc_values(
             set_filter_eg_amount(filter_envelope_arc, value);
         }
         CC::LFO1Frequency(value) => {
-            set_lfo_frequency(lfos_arc, 0, value);
+            set_lfo_frequency(lfos_arc, LFO_INDEX_GENERAL_LFO1, value);
         }
         CC::LFO1CenterValue(value) => {
-            set_lfo_center_value(lfos_arc, 0, value);
+            set_lfo_center_value(lfos_arc, LFO_INDEX_GENERAL_LFO1, value);
         }
         CC::LFO1Range(value) => {
-            set_lfo_range(lfos_arc, 0, value);
+            set_lfo_range(lfos_arc, LFO_INDEX_GENERAL_LFO1, value);
         }
         CC::LFO1WaveShape(value) => {
-            set_lfo_wave_shape(lfos_arc, 0, value);
+            set_lfo_wave_shape(lfos_arc, LFO_INDEX_GENERAL_LFO1, value);
         }
         CC::LFO1Phase(value) => {
-            set_lfo_phase(lfos_arc, 0, value);
+            set_lfo_phase(lfos_arc, LFO_INDEX_GENERAL_LFO1, value);
         }
         CC::LFO1Reset(value) => {
-            lfo_reset(lfos_arc, 0);
+            lfo_reset(lfos_arc, LFO_INDEX_GENERAL_LFO1);
+        }
+        CC::FilterModLFOFrequency(value) => {
+            set_lfo_frequency(lfos_arc, LFO_INDEX_FILTER_MODULATION, value);
+        }
+        CC::FilterModLFOAmount(value) => {
+            set_lfo_range(lfos_arc, LFO_INDEX_FILTER_MODULATION, value);
+        }
+        CC::FilterModLFOWaveShape(value) => {
+            set_lfo_wave_shape(lfos_arc, LFO_INDEX_FILTER_MODULATION, value);
+        }
+        CC::FilterModLFOPhase(value) => {
+            set_lfo_phase(lfos_arc, LFO_INDEX_FILTER_MODULATION, value);
+        }
+        CC::FilterModLFOReset(value) => {
+            lfo_reset(lfos_arc, LFO_INDEX_FILTER_MODULATION);
         }
         CC::AllNotesOff => {
             set_all_note_off(midi_event_arc);
@@ -294,18 +307,15 @@ fn set_all_note_off(midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>) {
     *midi_events = Some(MidiNoteEvent::NoteOff);
 }
 
-fn set_lfo_frequency(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u8) {
+fn set_lfo_frequency(lfo_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: usize, value: u8) {
     let mut lfos = lfo_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
-    lfos[lfo].set_frequency(midi_value_to_f32_range(
-        value,
-        MIN_LFO_FREQUENCY,
-        MAX_LFO_FREQUENCY,
-    ));
+
+    lfos[lfo].set_frequency(exponential_curve_lfo_frequency_from_midi_value(value));
 }
 
-fn set_lfo_center_value(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u8) {
+fn set_lfo_center_value(lfo_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: usize, value: u8) {
     let mut lfos = lfo_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -313,7 +323,7 @@ fn set_lfo_center_value(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u
     lfos[lfo].set_center_value(midi_value_to_f32_negative_1_to_1(value));
 }
 
-fn set_lfo_range(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u8) {
+fn set_lfo_range(lfo_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: usize, value: u8) {
     let mut lfos = lfo_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -321,7 +331,7 @@ fn set_lfo_range(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u8) {
     lfos[lfo].set_range(midi_value_to_f32_range(value, MIN_LFO_RANGE, MAX_LFO_RANGE));
 }
 
-fn set_lfo_wave_shape(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u8) {
+fn set_lfo_wave_shape(lfo_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: usize, value: u8) {
     let mut lfos = lfo_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -329,7 +339,7 @@ fn set_lfo_wave_shape(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u8)
     lfos[lfo].set_wave_shape(midi_value_to_oscillator_wave_shape(value));
 }
 
-fn set_lfo_phase(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u8) {
+fn set_lfo_phase(lfo_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: usize, value: u8) {
     let mut lfos = lfo_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -337,7 +347,7 @@ fn set_lfo_phase(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize, value: u8) {
     lfos[lfo].set_phase(midi_value_to_f32_0_to_1(value));
 }
 
-fn lfo_reset(lfo_arc: &mut Arc<Mutex<[Lfo; 1]>>, lfo: usize) {
+fn lfo_reset(lfo_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: usize) {
     let mut lfos = lfo_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -423,11 +433,13 @@ fn set_amp_eg_decay_time(amp_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8)
 }
 
 fn set_filter_cutoff(filter_arc: &mut Arc<Mutex<Filter>>, value: u8) {
+    let cutoff_frequency = exponential_curve_filter_cutoff_from_midi_value(value);
+
     let mut filter = filter_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    filter.set_cutoff_frequency(exponential_curve_filter_cutoff_from_midi_value(value));
+    filter.set_cutoff_frequency(cutoff_frequency);
 }
 
 fn set_amp_eg_attack_time(amp_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
@@ -732,6 +744,14 @@ fn exponential_curve_filter_cutoff_from_midi_value(midi_value: u8) -> f32 {
         return 0.0;
     }
     exponential_curve_from_midi_value_and_coefficient(midi_value, EXPONENTIAL_FILTER_COEFFICIENT)
+}
+
+fn exponential_curve_lfo_frequency_from_midi_value(midi_value: u8) -> f32 {
+    if midi_value == 0 {
+        return 0.0;
+    }
+    exponential_curve_from_midi_value_and_coefficient(midi_value, EXPONENTIAL_LFO_COEFFICIENT)
+        / 100.0
 }
 
 fn exponential_curve_level_adjustment_from_midi_value(midi_value: u8) -> f32 {

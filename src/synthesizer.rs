@@ -77,7 +77,7 @@ pub struct Synthesizer {
     oscillators: Arc<Mutex<[Oscillator; 4]>>,
     amp_envelope: Arc<Mutex<Envelope>>,
     filter_envelope: Arc<Mutex<Envelope>>,
-    lfos: Arc<Mutex<[Lfo; 1]>>,
+    lfos: Arc<Mutex<[Lfo; 2]>>,
     mixer: Arc<Mutex<Mixer>>,
     filter: Arc<Mutex<Filter>>,
 }
@@ -139,7 +139,7 @@ impl Synthesizer {
 
         let filter = Filter::new(sample_rate);
 
-        let lfos = [Lfo::new(sample_rate)];
+        let lfos = [Lfo::new(sample_rate), Lfo::new(sample_rate)];
 
         Self {
             audio_output_device,
@@ -281,7 +281,7 @@ impl Synthesizer {
                 let mut filter_envelope = filter_envelope_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let lfos = lfos_arc
+                let mut lfos = lfos_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
 
@@ -328,7 +328,9 @@ impl Synthesizer {
                     );
 
                     let filter_envelope_value = filter_envelope.generate();
-                    filter.modulate_cutoff_frequency(filter_envelope_value);
+                    filter.modulate_cutoff_frequency(
+                        filter_envelope_value + lfos[LFO_INDEX_FILTER_MODULATION].generate(),
+                    );
 
                     let (filtered_left, filtered_right) =
                         filter.filter(left_envelope_sample, right_envelope_sample);
