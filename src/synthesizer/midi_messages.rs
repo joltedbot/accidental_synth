@@ -1,7 +1,7 @@
 use crate::midi::CC;
 use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
 use crate::modules::filter::{Filter, FilterSlope};
-use crate::modules::lfo::{Lfo, MAX_LFO_RANGE, MIN_LFO_RANGE};
+use crate::modules::lfo::Lfo;
 use crate::modules::mixer::{Mixer, MixerInput};
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::synthesizer::constants::*;
