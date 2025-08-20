@@ -9,11 +9,11 @@ const DENORMAL_GUARD: f32 = 1e-25_f32;
 
 #[derive(Default, Copy, Clone, Debug, PartialEq)]
 pub enum FilterSlope {
-    Db6,  // 1-pole
-    Db12, // 2-pole
-    Db18, // 3-pole
+    Db6,
+    Db12,
+    Db18,
     #[default]
-    Db24, // 4-pole
+    Db24,
 }
 #[derive(Default, Copy, Clone, Debug, PartialEq)]
 struct Coefficients {
@@ -150,7 +150,7 @@ impl Filter {
     }
 
     fn calculate_non_linear_saturation(&mut self) -> f32 {
-        self.stage4_output - ((self.stage4_output * self.stage4_output * self.stage4_output) / 6.0)
+        self.stage4_output - (self.stage4_output * self.stage4_output * self.stage4_output / 6.0)
     }
 
     fn calculate_ladder_stage4(&mut self) -> f32 {
@@ -217,7 +217,7 @@ mod tests {
     #[test]
     fn new_returns_filter_with_correct_default_values() {
         let sample_rate = 48000;
-        let max_frequency = sample_rate as f32 / 4.0;
+        let max_frequency = sample_rate as f32 * 0.35;
         let filter = Filter::new(sample_rate);
 
         assert_eq!(filter.sample_rate, sample_rate);
@@ -234,11 +234,11 @@ mod tests {
         assert_eq!(filter.stage2_unit_delay, 0.0);
         assert_eq!(filter.stage3_unit_delay, 0.0);
 
-        let expected_cutoff = 0.8333333;
-        let expected_gain = 0.9444442;
-        let expected_pole = 0.8888885;
-        let expected_res_factor = 0.0770165;
-        let expected_adj_res_factor = 12.005932;
+        let expected_cutoff = 0.7;
+        let expected_gain = 0.868;
+        let expected_pole = 0.7359999;
+        let expected_res_factor = 0.18299088;
+        let expected_adj_res_factor = 12.033485;
         let expected_feedback = 0.0;
 
         assert!(f32_value_equality(
