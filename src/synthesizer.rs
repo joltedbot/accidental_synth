@@ -75,8 +75,7 @@ pub struct Synthesizer {
     parameters: Arc<Mutex<Parameters>>,
     midi_note_events: Arc<Mutex<Option<MidiNoteEvent>>>,
     oscillators: Arc<Mutex<[Oscillator; 4]>>,
-    amp_envelope: Arc<Mutex<Envelope>>,
-    filter_envelope: Arc<Mutex<Envelope>>,
+    envelopes: Arc<Mutex<[Envelope; 2]>>,
     lfos: Arc<Mutex<[Lfo; 2]>>,
     mixer: Arc<Mutex<Mixer>>,
     filter: Arc<Mutex<Filter>>,
@@ -123,19 +122,10 @@ impl Synthesizer {
             Oscillator::new(sample_rate, DEFAULT_OSCILLATOR_WAVE_SHAPE),
         ];
 
-        let mut amp_envelope = Envelope::new(sample_rate);
-        amp_envelope.set_attack_milliseconds(DEFAULT_AMP_ENVELOPE_ATTACK_TIME);
-        amp_envelope.set_decay_milliseconds(DEFAULT_AMP_ENVELOPE_DECAY_TIME);
-        amp_envelope.set_sustain_level(DEFAULT_AMP_ENVELOPE_SUSTAIN_LEVEL);
-        amp_envelope.set_release_milliseconds(DEFAULT_AMP_ENVELOPE_RELEASE_TIME);
-
+        let amp_envelope = Envelope::new(sample_rate);
         let mut filter_envelope = Envelope::new(sample_rate);
-        filter_envelope.set_is_inverted(true);
-        filter_envelope.set_attack_milliseconds(DEFAULT_AMP_ENVELOPE_ATTACK_TIME);
-        filter_envelope.set_decay_milliseconds(DEFAULT_AMP_ENVELOPE_DECAY_TIME);
-        filter_envelope.set_sustain_level(DEFAULT_AMP_ENVELOPE_SUSTAIN_LEVEL);
-        filter_envelope.set_release_milliseconds(DEFAULT_AMP_ENVELOPE_RELEASE_TIME);
         filter_envelope.set_amount(DEFAULT_FILTER_ENVELOPE_AMOUNT);
+        let envelopes = [amp_envelope, filter_envelope];
 
         let filter = Filter::new(sample_rate);
 
@@ -148,8 +138,7 @@ impl Synthesizer {
             parameters: Arc::new(Mutex::new(parameters)),
             midi_note_events: Arc::new(Mutex::new(None)),
             oscillators: Arc::new(Mutex::new(oscillators)),
-            amp_envelope: Arc::new(Mutex::new(amp_envelope)),
-            filter_envelope: Arc::new(Mutex::new(filter_envelope)),
+            envelopes: Arc::new(Mutex::new(envelopes)),
             lfos: Arc::new(Mutex::new(lfos)),
             mixer: Arc::new(Mutex::new(mixer)),
             filter: Arc::new(Mutex::new(filter)),
@@ -170,11 +159,10 @@ impl Synthesizer {
     fn start_midi_event_listener(&mut self, midi_message_receiver: Receiver<MidiMessage>) {
         let mut parameters_arc = self.parameters.clone();
         let mut midi_event_arc = self.midi_note_events.clone();
-        let mut amp_envelope_arc = self.amp_envelope.clone();
         let mut oscillators_arc = self.oscillators.clone();
-        let mut filter_arc = self.filter.clone();
-        let mut filter_envelope_arc = self.filter_envelope.clone();
+        let mut envelopes_arc = self.envelopes.clone();
         let mut lfos_arc = self.lfos.clone();
+        let mut filter_arc = self.filter.clone();
         let mut mixer_arc = self.mixer.clone();
 
         thread::spawn(move || {
@@ -210,12 +198,11 @@ impl Synthesizer {
                         midi_messages::process_midi_cc_values(
                             cc_value,
                             &mut parameters_arc,
-                            &mut amp_envelope_arc,
                             &mut oscillators_arc,
                             &mut midi_event_arc,
-                            &mut filter_arc,
-                            &mut filter_envelope_arc,
+                            &mut envelopes_arc,
                             &mut lfos_arc,
+                            &mut filter_arc,
                             &mut mixer_arc,
                         );
                     }
@@ -230,8 +217,7 @@ impl Synthesizer {
         let parameters_arc = self.parameters.clone();
         let midi_note_events_arc = self.midi_note_events.clone();
         let oscillators_arc = self.oscillators.clone();
-        let amp_envelope_arc = self.amp_envelope.clone();
-        let filter_envelope_arc = self.filter_envelope.clone();
+        let envelopes_arc = self.envelopes.clone();
         let lfos_arc = self.lfos.clone();
         let filter_arc = self.filter.clone();
         let mixer_arc = self.mixer.clone();
@@ -256,13 +242,6 @@ impl Synthesizer {
                         .unwrap_or_else(|poisoned| poisoned.into_inner());
                     mixer.clone()
                 };
-                let note_event = {
-                    let mut midi_note_events = midi_note_events_arc
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-                    midi_note_events.take()
-                };
                 let parameters = {
                     let parameter_mutex = parameters_arc
                         .lock()
@@ -276,24 +255,29 @@ impl Synthesizer {
                 let mut filter = filter_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mut amp_envelope = amp_envelope_arc
-                    .lock()
-                    .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mut filter_envelope = filter_envelope_arc
+                let mut envelopes = envelopes_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
                 let mut lfos = lfos_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-                midi_messages::action_midi_note_events(
-                    note_event,
-                    &mut amp_envelope,
-                    &mut filter_envelope,
-                    &mut oscillators,
-                    parameters.oscillator_key_sync_enabled,
-                );
+                let note_event = {
+                    let mut midi_note_events = midi_note_events_arc
+                        .lock()
+                        .unwrap_or_else(|poisoned| poisoned.into_inner());
 
+                    midi_note_events.take()
+                };
+
+                if let Some(event) = note_event {
+                    midi_messages::action_midi_note_events(
+                        event,
+                        &mut envelopes,
+                        &mut oscillators,
+                        parameters.oscillator_key_sync_enabled,
+                    );
+                }
                 // Begin processing the audio buffer
 
                 // Split the buffer into frames
@@ -320,7 +304,8 @@ impl Synthesizer {
                         oscillator3_sample,
                     );
 
-                    let amp_envelope_value = Some(amp_envelope.generate());
+                    let amp_envelope_value =
+                        Some(envelopes[ENVELOPE_INDEX_AMP_ENVELOPE].generate());
                     let (left_envelope_sample, right_envelope_sample) = amplify_stereo(
                         oscillator_mix_left,
                         oscillator_mix_right,
@@ -328,7 +313,8 @@ impl Synthesizer {
                         amp_envelope_value,
                     );
 
-                    let filter_envelope_value = filter_envelope.generate();
+                    let filter_envelope_value =
+                        envelopes[ENVELOPE_INDEX_FILTER_ENVELOPE].generate();
                     filter.modulate_cutoff_frequency(
                         filter_envelope_value + lfos[LFO_INDEX_FILTER_MODULATION].generate(),
                     );

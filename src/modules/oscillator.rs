@@ -37,17 +37,17 @@ pub trait GenerateSamples {
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WaveShape {
+    #[default]
+    Sine,
+    Triangle,
+    Square,
+    Saw,
+    Pulse,
+    Ramp,
+    SuperSaw,
     AM,
     FM,
     Noise,
-    Pulse,
-    Ramp,
-    Saw,
-    #[default]
-    Sine,
-    Square,
-    SuperSaw,
-    Triangle,
 }
 
 pub struct Oscillator {
@@ -101,16 +101,16 @@ fn get_wave_generator_from_wave_shape(
     wave_shape: WaveShape,
 ) -> Box<dyn GenerateSamples + Send + Sync> {
     match wave_shape {
+        WaveShape::Sine => Box::new(Sine::new(sample_rate)),
+        WaveShape::Triangle => Box::new(Triangle::new(sample_rate)),
+        WaveShape::Square => Box::new(Square::new(sample_rate)),
+        WaveShape::Saw => Box::new(Saw::new(sample_rate)),
+        WaveShape::Pulse => Box::new(Pulse::new(sample_rate)),
+        WaveShape::Ramp => Box::new(Ramp::new(sample_rate)),
+        WaveShape::SuperSaw => Box::new(SuperSaw::new(sample_rate)),
         WaveShape::AM => Box::new(AM::new(sample_rate)),
         WaveShape::FM => Box::new(FM::new(sample_rate)),
         WaveShape::Noise => Box::new(Noise::new()),
-        WaveShape::Pulse => Box::new(Pulse::new(sample_rate)),
-        WaveShape::Ramp => Box::new(Ramp::new(sample_rate)),
-        WaveShape::Saw => Box::new(Saw::new(sample_rate)),
-        WaveShape::Sine => Box::new(Sine::new(sample_rate)),
-        WaveShape::Square => Box::new(Square::new(sample_rate)),
-        WaveShape::SuperSaw => Box::new(SuperSaw::new(sample_rate)),
-        WaveShape::Triangle => Box::new(Triangle::new(sample_rate)),
     }
 }
 

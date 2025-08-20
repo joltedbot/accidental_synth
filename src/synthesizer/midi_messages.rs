@@ -8,29 +8,30 @@ use crate::synthesizer::constants::*;
 use crate::synthesizer::tuner::tune;
 use crate::synthesizer::{MidiNoteEvent, Parameters};
 use std::sync::{Arc, Mutex, MutexGuard};
+use std::time::Instant;
 
 pub fn action_midi_note_events(
-    midi_events: Option<MidiNoteEvent>,
-    amp_envelope: &mut MutexGuard<Envelope>,
-    filter_envelope: &mut MutexGuard<Envelope>,
+    midi_events: MidiNoteEvent,
+    envelopes: &mut MutexGuard<[Envelope; 2]>,
     oscillator: &mut MutexGuard<[Oscillator; 4]>,
     oscillator_key_sync_enabled: bool,
 ) {
     match midi_events {
-        Some(MidiNoteEvent::NoteOn) => {
-            amp_envelope.gate_on();
-            filter_envelope.gate_on();
+        MidiNoteEvent::NoteOn => {
+            for envelope in envelopes.iter_mut() {
+                envelope.gate_on();
+            }
             if oscillator_key_sync_enabled {
                 for oscillator in oscillator.iter_mut() {
                     oscillator.reset()
                 }
             }
         }
-        Some(MidiNoteEvent::NoteOff) => {
-            amp_envelope.gate_off();
-            filter_envelope.gate_off();
+        MidiNoteEvent::NoteOff => {
+            for envelope in envelopes.iter_mut() {
+                envelope.gate_off();
+            }
         }
-        None => {}
     }
 }
 
@@ -93,16 +94,15 @@ pub fn process_midi_note_on_message(
 pub fn process_midi_cc_values(
     cc_value: CC,
     parameters_arc: &mut Arc<Mutex<Parameters>>,
-    amp_envelope_arc: &mut Arc<Mutex<Envelope>>,
     oscillators_arc: &mut Arc<Mutex<[Oscillator; 4]>>,
     midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
-    filter_arc: &mut Arc<Mutex<Filter>>,
-    filter_envelope_arc: &mut Arc<Mutex<Envelope>>,
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
     lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>,
+    filter_arc: &mut Arc<Mutex<Filter>>,
     mixer_arc: &mut Arc<Mutex<Mixer>>,
 ) {
     log::debug!("process_midi_cc_values(): CC received: {:?}", cc_value);
-
+    let start = Instant::now();
     match cc_value {
         CC::ModWheel(value) => {
             set_mod_wheel(parameters_arc, value);
@@ -225,40 +225,40 @@ pub fn process_midi_cc_values(
             set_filter_resonance(filter_arc, value);
         }
         CC::AmpEGReleaseTime(value) => {
-            set_amp_eg_release_time(amp_envelope_arc, value);
+            set_amp_eg_release_time(envelopes_arc, ENVELOPE_INDEX_AMP_ENVELOPE, value);
         }
         CC::AmpEGAttackTime(value) => {
-            set_amp_eg_attack_time(amp_envelope_arc, value);
+            set_amp_eg_attack_time(envelopes_arc, ENVELOPE_INDEX_AMP_ENVELOPE, value);
         }
         CC::FilterCutoff(value) => {
             set_filter_cutoff(filter_arc, value);
         }
         CC::AmpEGDecayTime(value) => {
-            set_amp_eg_decay_time(amp_envelope_arc, value);
+            set_amp_eg_decay_time(envelopes_arc, ENVELOPE_INDEX_AMP_ENVELOPE, value);
         }
         CC::AmpEGSustainLevel(value) => {
-            set_amp_eq_sustain_level(amp_envelope_arc, value);
+            set_amp_eq_sustain_level(envelopes_arc, ENVELOPE_INDEX_AMP_ENVELOPE, value);
         }
         CC::AmpEGInverted(value) => {
-            set_amp_eg_inverted(amp_envelope_arc, value);
+            set_amp_eg_inverted(envelopes_arc, ENVELOPE_INDEX_AMP_ENVELOPE, value);
         }
         CC::FilterEGAttackTime(value) => {
-            set_filter_eg_attack_time(filter_envelope_arc, value);
+            set_filter_eg_attack_time(envelopes_arc, ENVELOPE_INDEX_FILTER_ENVELOPE, value);
         }
         CC::FilterEGDecayTime(value) => {
-            set_filter_eq_decay_time(filter_envelope_arc, value);
+            set_filter_eq_decay_time(envelopes_arc, ENVELOPE_INDEX_FILTER_ENVELOPE, value);
         }
         CC::FilterEGSustainLevel(value) => {
-            set_filter_eq_sustain_level(filter_envelope_arc, value);
+            set_filter_eq_sustain_level(envelopes_arc, ENVELOPE_INDEX_FILTER_ENVELOPE, value);
         }
         CC::FilterEGReleaseTime(value) => {
-            set_filter_eq_release_time(filter_envelope_arc, value);
+            set_filter_eq_release_time(envelopes_arc, ENVELOPE_INDEX_FILTER_ENVELOPE, value);
         }
         CC::FilterEGInverted(value) => {
-            set_filter_eq_inverted(filter_envelope_arc, value);
+            set_filter_eq_inverted(envelopes_arc, ENVELOPE_INDEX_FILTER_ENVELOPE, value);
         }
         CC::FilterEGAmount(value) => {
-            set_filter_eg_amount(filter_envelope_arc, value);
+            set_filter_eg_amount(envelopes_arc, ENVELOPE_INDEX_FILTER_ENVELOPE, value);
         }
         CC::LFO1Frequency(value) => {
             set_lfo_frequency(lfos_arc, LFO_INDEX_GENERAL_LFO1, value);
@@ -297,6 +297,7 @@ pub fn process_midi_cc_values(
             set_all_note_off(midi_event_arc);
         }
     }
+    println!("{:?}", start.elapsed())
 }
 
 fn set_all_note_off(midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>) {
@@ -361,81 +362,110 @@ fn lfo_reset(lfo_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: usize) {
     lfos[lfo].reset()
 }
 
-fn set_filter_eg_amount(filter_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
-    let mut filter_envelope = filter_envelope_arc
+fn set_filter_eg_amount(envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>, envelope: usize, value: u8) {
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
-    filter_envelope.set_amount(midi_value_to_f32_0_to_1(value));
+    envelopes[envelope].set_amount(midi_value_to_f32_0_to_1(value));
 }
 
-fn set_filter_eq_inverted(filter_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
-    let mut filter_envelope = filter_envelope_arc
+fn set_filter_eq_inverted(
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
+    envelope: usize,
+    value: u8,
+) {
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
-    filter_envelope.set_is_inverted(midi_value_to_bool(value));
+    envelopes[envelope].set_is_inverted(midi_value_to_bool(value));
 }
 
-fn set_filter_eq_release_time(filter_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
+fn set_filter_eq_release_time(
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
+    envelope: usize,
+    value: u8,
+) {
     let time = midi_value_to_f32_range(value, ENVELOPE_MIN_MILLISECONDS, ENVELOPE_MAX_MILLISECONDS);
 
-    let mut envelope = filter_envelope_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    envelope.set_release_milliseconds(time);
+    envelopes[envelope].set_release_milliseconds(time);
 }
 
-fn set_filter_eq_sustain_level(filter_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
-    let mut envelope = filter_envelope_arc
+fn set_filter_eq_sustain_level(
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
+    envelope: usize,
+    value: u8,
+) {
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    envelope.set_sustain_level(midi_value_to_f32_0_to_1(value));
+    envelopes[envelope].set_sustain_level(midi_value_to_f32_0_to_1(value));
 }
 
-fn set_filter_eq_decay_time(filter_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
+fn set_filter_eq_decay_time(
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
+    envelope: usize,
+    value: u8,
+) {
     let time = midi_value_to_f32_range(value, ENVELOPE_MIN_MILLISECONDS, ENVELOPE_MAX_MILLISECONDS);
 
-    let mut envelope = filter_envelope_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    envelope.set_decay_milliseconds(time);
+    envelopes[envelope].set_decay_milliseconds(time);
 }
 
-fn set_filter_eg_attack_time(filter_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
+fn set_filter_eg_attack_time(
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
+    envelope: usize,
+    value: u8,
+) {
     let time = midi_value_to_f32_range(value, ENVELOPE_MIN_MILLISECONDS, ENVELOPE_MAX_MILLISECONDS);
 
-    let mut envelope = filter_envelope_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    envelope.set_attack_milliseconds(time);
+    envelopes[envelope].set_attack_milliseconds(time);
 }
 
-fn set_amp_eg_inverted(amp_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
-    let mut envelope = amp_envelope_arc
+fn set_amp_eg_inverted(envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>, envelope: usize, value: u8) {
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
-    envelope.set_is_inverted(midi_value_to_bool(value));
+    envelopes[envelope].set_is_inverted(midi_value_to_bool(value));
 }
 
-fn set_amp_eq_sustain_level(amp_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
-    let mut envelope = amp_envelope_arc
+fn set_amp_eq_sustain_level(
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
+    envelope: usize,
+    value: u8,
+) {
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    envelope.set_sustain_level(exponential_curve_level_adjustment_from_midi_value(value));
+    envelopes[envelope]
+        .set_sustain_level(exponential_curve_level_adjustment_from_midi_value(value));
 }
 
-fn set_amp_eg_decay_time(amp_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
+fn set_amp_eg_decay_time(
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
+    envelope: usize,
+    value: u8,
+) {
     let time = midi_value_to_f32_range(value, ENVELOPE_MIN_MILLISECONDS, ENVELOPE_MAX_MILLISECONDS);
 
-    let mut envelope = amp_envelope_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    envelope.set_decay_milliseconds(time);
+    envelopes[envelope].set_decay_milliseconds(time);
 }
 
 fn set_filter_cutoff(filter_arc: &mut Arc<Mutex<Filter>>, value: u8) {
@@ -448,23 +478,31 @@ fn set_filter_cutoff(filter_arc: &mut Arc<Mutex<Filter>>, value: u8) {
     filter.set_cutoff_frequency(cutoff_frequency);
 }
 
-fn set_amp_eg_attack_time(amp_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
+fn set_amp_eg_attack_time(
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
+    envelope: usize,
+    value: u8,
+) {
     let time = midi_value_to_f32_range(value, ENVELOPE_MIN_MILLISECONDS, ENVELOPE_MAX_MILLISECONDS);
 
-    let mut envelope = amp_envelope_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    envelope.set_attack_milliseconds(time);
+    envelopes[envelope].set_attack_milliseconds(time);
 }
 
-fn set_amp_eg_release_time(amp_envelope_arc: &mut Arc<Mutex<Envelope>>, value: u8) {
+fn set_amp_eg_release_time(
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
+    envelope: usize,
+    value: u8,
+) {
     let time = midi_value_to_f32_range(value, ENVELOPE_MIN_MILLISECONDS, ENVELOPE_MAX_MILLISECONDS);
-    let mut envelope = amp_envelope_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    envelope.set_release_milliseconds(time);
+    envelopes[envelope].set_release_milliseconds(time);
 }
 
 fn set_filter_resonance(filter_arc: &mut Arc<Mutex<Filter>>, value: u8) {
@@ -723,25 +761,25 @@ fn midi_value_to_filter_slope(midi_value: u8) -> FilterSlope {
 
 fn midi_value_to_oscillator_wave_shape(midi_value: u8) -> WaveShape {
     if midi_value < 13 {
-        WaveShape::AM
-    } else if midi_value < 26 {
-        WaveShape::FM
-    } else if midi_value < 39 {
-        WaveShape::Noise
-    } else if midi_value < 52 {
-        WaveShape::Pulse
-    } else if midi_value < 65 {
-        WaveShape::Ramp
-    } else if midi_value < 78 {
-        WaveShape::Saw
-    } else if midi_value < 91 {
         WaveShape::Sine
-    } else if midi_value < 104 {
-        WaveShape::Square
-    } else if midi_value < 117 {
-        WaveShape::SuperSaw
-    } else {
+    } else if midi_value < 26 {
         WaveShape::Triangle
+    } else if midi_value < 39 {
+        WaveShape::Square
+    } else if midi_value < 52 {
+        WaveShape::Saw
+    } else if midi_value < 65 {
+        WaveShape::Pulse
+    } else if midi_value < 78 {
+        WaveShape::Ramp
+    } else if midi_value < 91 {
+        WaveShape::SuperSaw
+    } else if midi_value < 104 {
+        WaveShape::AM
+    } else if midi_value < 117 {
+        WaveShape::FM
+    } else {
+        WaveShape::Noise
     }
 }
 
