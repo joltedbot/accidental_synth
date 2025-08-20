@@ -1,23 +1,19 @@
 // Derived from https://www.musicdsp.org/en/latest/Filters/253-perfect-lp4-filter.html
-#![allow(dead_code)]
 
-const DEFAULT_CUTOFF_FREQUENCY: f32 = 20000.0;
-const MAX_FILTER_FREQUENCY: f32 = 20000.0;
-const MIN_FILTER_FREQUENCY: f32 = 0.0;
+const MAXIMUM_FILTER_CUTOFF: f32 = 20000.0;
+const MIN_CUTOFF_FREQUENCY: f32 = 20.0;
 const MIN_RESONANCE: f32 = 0.0;
-const MAX_RESONANCE: f32 = 1.0;
-
+const MAX_RESONANCE: f32 = 0.90;
 const NATURAL_LOG_OF_4: f32 = 1.3862943;
-const DEFAULT_RESONANCE: f32 = 0.0;
 const DENORMAL_GUARD: f32 = 1e-25_f32;
 
 #[derive(Default, Copy, Clone, Debug, PartialEq)]
 pub enum FilterSlope {
-    Db6,  // 1-pole
-    Db12, // 2-pole
-    Db18, // 3-pole
+    Db6,
+    Db12,
+    Db18,
     #[default]
-    Db24, // 4-pole
+    Db24,
 }
 #[derive(Default, Copy, Clone, Debug, PartialEq)]
 struct Coefficients {
@@ -32,6 +28,7 @@ struct Coefficients {
 #[derive(Default, Copy, Clone, Debug, PartialEq)]
 pub struct Filter {
     sample_rate: u32,
+    max_frequency: f32,
     cutoff_frequency: f32,
     cutoff_modulation_amount: f32,
     resonance: f32,
@@ -51,22 +48,21 @@ impl Filter {
     pub fn new(sample_rate: u32) -> Self {
         log::info!("Constructing Filter Module");
 
-        let cutoff_coefficient =
-            calculate_cutoff_coefficient(DEFAULT_CUTOFF_FREQUENCY, sample_rate);
+        let max_frequency = (sample_rate as f32 * 0.35).min(MAXIMUM_FILTER_CUTOFF);
+
+        let cutoff_coefficient = calculate_cutoff_coefficient(max_frequency, sample_rate);
         let gain_coefficient = calculate_gain_coefficient(cutoff_coefficient);
         let pole_coefficient = calculate_pole_coefficient(gain_coefficient);
         let resonance_factor = calculate_resonance_factor(gain_coefficient);
         let adjusted_resonance_factor = calculate_adjusted_resonance_factor(resonance_factor);
-        let feedback_gain = calculate_feedback_gain(
-            DEFAULT_RESONANCE,
-            resonance_factor,
-            adjusted_resonance_factor,
-        );
+        let feedback_gain =
+            calculate_feedback_gain(MIN_RESONANCE, resonance_factor, adjusted_resonance_factor);
 
         Self {
             sample_rate,
-            cutoff_frequency: DEFAULT_CUTOFF_FREQUENCY,
-            resonance: DEFAULT_RESONANCE,
+            cutoff_frequency: max_frequency,
+            max_frequency,
+            resonance: MIN_RESONANCE,
             coefficients: Coefficients {
                 cutoff_coefficient,
                 gain_coefficient,
@@ -86,16 +82,16 @@ impl Filter {
     }
 
     pub fn set_cutoff_frequency(&mut self, cut_off_frequency: f32) {
-        self.cutoff_frequency = cut_off_frequency.clamp(MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY);
+        self.cutoff_frequency = cut_off_frequency.min(self.max_frequency);
         let frequency = (self.cutoff_frequency + self.cutoff_modulation_amount)
-            .clamp(MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY);
+            .clamp(MIN_CUTOFF_FREQUENCY, self.max_frequency);
         self.calculate_coefficients_on_cutoff_update(frequency);
     }
 
     pub fn modulate_cutoff_frequency(&mut self, cutoff_modulation: f32) {
-        self.cutoff_modulation_amount = cutoff_modulation * MAX_FILTER_FREQUENCY;
-        let frequency = (self.cutoff_frequency + self.cutoff_modulation_amount)
-            .clamp(MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY);
+        self.cutoff_modulation_amount = cutoff_modulation * self.max_frequency;
+        let frequency =
+            (self.cutoff_frequency + self.cutoff_modulation_amount).clamp(0.0, self.max_frequency);
         self.calculate_coefficients_on_cutoff_update(frequency);
     }
 
@@ -123,6 +119,11 @@ impl Filter {
             calculate_resonance_factor(self.coefficients.gain_coefficient);
         self.coefficients.adjusted_resonance_factor =
             calculate_adjusted_resonance_factor(self.coefficients.resonance_factor);
+        self.coefficients.feedback_gain = calculate_feedback_gain(
+            self.resonance,
+            self.coefficients.resonance_factor,
+            self.coefficients.adjusted_resonance_factor,
+        );
     }
 
     fn ladder_filter(&mut self, sample: f32) -> f32 {
@@ -149,7 +150,7 @@ impl Filter {
     }
 
     fn calculate_non_linear_saturation(&mut self) -> f32 {
-        self.stage4_output - ((self.stage4_output * self.stage4_output * self.stage4_output) / 6.0)
+        self.stage4_output - (self.stage4_output * self.stage4_output * self.stage4_output / 6.0)
     }
 
     fn calculate_ladder_stage4(&mut self) -> f32 {
@@ -216,11 +217,12 @@ mod tests {
     #[test]
     fn new_returns_filter_with_correct_default_values() {
         let sample_rate = 48000;
+        let max_frequency = sample_rate as f32 * 0.35;
         let filter = Filter::new(sample_rate);
 
         assert_eq!(filter.sample_rate, sample_rate);
-        assert_eq!(filter.cutoff_frequency, DEFAULT_CUTOFF_FREQUENCY);
-        assert_eq!(filter.resonance, DEFAULT_RESONANCE);
+        assert_eq!(filter.cutoff_frequency, max_frequency);
+        assert_eq!(filter.resonance, MIN_RESONANCE);
         assert_eq!(filter.filter_slope, FilterSlope::Db24);
 
         assert_eq!(filter.stage1_output, 0.0);
@@ -232,11 +234,11 @@ mod tests {
         assert_eq!(filter.stage2_unit_delay, 0.0);
         assert_eq!(filter.stage3_unit_delay, 0.0);
 
-        let expected_cutoff = 0.8333333;
-        let expected_gain = 0.9444442;
-        let expected_pole = 0.8888885;
-        let expected_res_factor = 0.0770165;
-        let expected_adj_res_factor = 12.005932;
+        let expected_cutoff = 0.7;
+        let expected_gain = 0.868;
+        let expected_pole = 0.7359999;
+        let expected_res_factor = 0.18299088;
+        let expected_adj_res_factor = 12.033485;
         let expected_feedback = 0.0;
 
         assert!(f32_value_equality(
