@@ -19,7 +19,6 @@ use cpal::{Device, Stream};
 use crossbeam_channel::Receiver;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Instant;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum MidiNoteEvent {
@@ -224,7 +223,6 @@ impl Synthesizer {
         let stream = output_device.build_output_stream(
             &default_device_stream_config,
             move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                //       let start = Instant::now();
                 let parameters = {
                     let parameter_mutex = parameters_arc
                         .lock()
@@ -308,7 +306,6 @@ impl Synthesizer {
                     frame[0] = output_left;
                     frame[1] = output_right;
                 }
-                //println!("{:?}", start.elapsed());
             },
             |err| {
                 log::error!("create_synthesizer(): Error in audio output stream: {err}");
