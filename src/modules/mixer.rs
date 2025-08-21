@@ -3,28 +3,29 @@
 const QUAD_MIX_DEFAULT_LEVEL_SUM: f32 = 4.0;
 const QUAD_MIX_DEFAULT_MUTE: bool = false;
 const QUAD_MIX_DEFAULT_CONSTANT_IS_ENABLED: bool = false;
-const DEFAULT_LEVEL: f32 = 1.0;
-const DEFAULT_PAN: f32 = 0.0;
+const QUAD_MIX_DEFAULT_INPUT_LEVEL: f32 = 1.0;
+const DEFAULT_OUTPUT_LEVEL: f32 = 0.5;
+const DEFAULT_BALANCE: f32 = 0.0;
 
-pub enum MixerInput {
-    One,
-    Two,
-    Three,
-    Four,
+pub enum MixerInput<T> {
+    One(T),
+    Two(T),
+    Three(T),
+    Four(T),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 struct Input {
     level: f32,
-    pan: f32,
+    balance: f32,
     mute: bool,
 }
 
 impl Default for Input {
     fn default() -> Self {
         Self {
-            level: DEFAULT_LEVEL,
-            pan: DEFAULT_PAN,
+            level: QUAD_MIX_DEFAULT_INPUT_LEVEL,
+            balance: DEFAULT_BALANCE,
             mute: QUAD_MIX_DEFAULT_MUTE,
         }
     }
@@ -43,7 +44,7 @@ pub struct QuadMix {
 #[derive(Default, Copy, Clone, Debug, PartialEq)]
 pub struct OutputMix {
     level: f32,
-    pan: f32,
+    balance: f32,
 }
 
 #[derive(Default, Clone, Debug, PartialEq)]
@@ -62,8 +63,8 @@ impl Mixer {
                 ..Default::default()
             },
             output_mix: OutputMix {
-                level: DEFAULT_LEVEL,
-                pan: DEFAULT_PAN,
+                level: DEFAULT_OUTPUT_LEVEL,
+                balance: DEFAULT_BALANCE,
             },
         }
     }
@@ -90,10 +91,14 @@ impl Mixer {
             self.quad_mix.input4.mute,
         );
 
-        let (input1_left, input1_right) = apply_quad_pan(leveled_input1, self.quad_mix.input1.pan);
-        let (input2_left, input2_right) = apply_quad_pan(leveled_input2, self.quad_mix.input2.pan);
-        let (input3_left, input3_right) = apply_quad_pan(leveled_input3, self.quad_mix.input3.pan);
-        let (input4_left, input4_right) = apply_quad_pan(leveled_input4, self.quad_mix.input4.pan);
+        let (input1_left, input1_right) =
+            apply_quad_balance(leveled_input1, self.quad_mix.input1.balance);
+        let (input2_left, input2_right) =
+            apply_quad_balance(leveled_input2, self.quad_mix.input2.balance);
+        let (input3_left, input3_right) =
+            apply_quad_balance(leveled_input3, self.quad_mix.input3.balance);
+        let (input4_left, input4_right) =
+            apply_quad_balance(leveled_input4, self.quad_mix.input4.balance);
 
         let mut left_input_sum = input1_left + input2_left + input3_left + input4_left;
         let mut right_input_sum = input1_right + input2_right + input3_right + input4_right;
@@ -112,34 +117,38 @@ impl Mixer {
     pub fn output_mix(&self, left_input: f32, right_input: f32) -> (f32, f32) {
         let leveled_left_input = left_input * self.output_mix.level;
         let leveled_right_input = right_input * self.output_mix.level;
-        apply_pan(leveled_left_input, leveled_right_input, self.output_mix.pan)
+        apply_balance(
+            leveled_left_input,
+            leveled_right_input,
+            self.output_mix.balance,
+        )
     }
 
-    pub fn set_quad_level(&mut self, level: f32, input: MixerInput) {
+    pub fn set_quad_level(&mut self, input: MixerInput<f32>) {
         match input {
-            MixerInput::One => self.quad_mix.input1.level = level,
-            MixerInput::Two => self.quad_mix.input2.level = level,
-            MixerInput::Three => self.quad_mix.input3.level = level,
-            MixerInput::Four => self.quad_mix.input4.level = level,
+            MixerInput::One(level) => self.quad_mix.input1.level = level,
+            MixerInput::Two(level) => self.quad_mix.input2.level = level,
+            MixerInput::Three(level) => self.quad_mix.input3.level = level,
+            MixerInput::Four(level) => self.quad_mix.input4.level = level,
         }
         self.sum_quad_input_levels();
     }
 
-    pub fn set_quad_pan(&mut self, pan: f32, input: MixerInput) {
+    pub fn set_quad_balance(&mut self, input: MixerInput<f32>) {
         match input {
-            MixerInput::One => self.quad_mix.input1.pan = pan,
-            MixerInput::Two => self.quad_mix.input2.pan = pan,
-            MixerInput::Three => self.quad_mix.input3.pan = pan,
-            MixerInput::Four => self.quad_mix.input4.pan = pan,
+            MixerInput::One(balance) => self.quad_mix.input1.balance = balance,
+            MixerInput::Two(balance) => self.quad_mix.input2.balance = balance,
+            MixerInput::Three(balance) => self.quad_mix.input3.balance = balance,
+            MixerInput::Four(balance) => self.quad_mix.input4.balance = balance,
         }
     }
 
-    pub fn set_quad_mute(&mut self, mute: bool, input: MixerInput) {
+    pub fn set_quad_mute(&mut self, input: MixerInput<bool>) {
         match input {
-            MixerInput::One => self.quad_mix.input1.mute = mute,
-            MixerInput::Two => self.quad_mix.input2.mute = mute,
-            MixerInput::Three => self.quad_mix.input3.mute = mute,
-            MixerInput::Four => self.quad_mix.input4.mute = mute,
+            MixerInput::One(mute) => self.quad_mix.input1.mute = mute,
+            MixerInput::Two(mute) => self.quad_mix.input2.mute = mute,
+            MixerInput::Three(mute) => self.quad_mix.input3.mute = mute,
+            MixerInput::Four(mute) => self.quad_mix.input4.mute = mute,
         }
     }
 
@@ -151,8 +160,8 @@ impl Mixer {
         self.output_mix.level = level;
     }
 
-    pub fn set_output_pan(&mut self, pan: f32) {
-        self.output_mix.pan = pan;
+    pub fn set_output_balance(&mut self, balance: f32) {
+        self.output_mix.balance = balance;
     }
 
     fn sum_quad_input_levels(&mut self) {
@@ -171,20 +180,20 @@ fn apply_quad_level(input: f32, level: f32, mute: bool) -> f32 {
     input * level
 }
 
-fn apply_quad_pan(input: f32, pan: f32) -> (f32, f32) {
-    apply_pan(input, input, pan)
+fn apply_quad_balance(input: f32, balance: f32) -> (f32, f32) {
+    apply_balance(input, input, balance)
 }
 
-fn apply_pan(mut input_left: f32, mut input_right: f32, pan: f32) -> (f32, f32) {
-    if pan == 0.0 {
+fn apply_balance(mut input_left: f32, mut input_right: f32, balance: f32) -> (f32, f32) {
+    if balance == 0.0 {
         return (input_left, input_right);
     }
 
-    if pan.is_sign_positive() {
-        input_left *= 1.0 - pan;
+    if balance.is_sign_positive() {
+        input_left *= 1.0 - balance;
         (input_left, input_right)
     } else {
-        input_right *= 1.0 - pan.abs();
+        input_right *= 1.0 - balance.abs();
         (input_left, input_right)
     }
 }
@@ -224,12 +233,12 @@ mod tests {
     }
 
     #[test]
-    fn quad_mix_returns_correct_values_from_four_inputs_with_pan() {
+    fn quad_mix_returns_correct_values_from_four_inputs_with_balance() {
         let mut mixer = Mixer::new();
-        mixer.set_quad_pan(0.5, MixerInput::One);
-        mixer.set_quad_pan(0.5, MixerInput::Two);
-        mixer.set_quad_pan(0.5, MixerInput::Three);
-        mixer.set_quad_pan(0.5, MixerInput::Four);
+        mixer.set_quad_balance(MixerInput::One(0.5));
+        mixer.set_quad_balance(MixerInput::Two(0.5));
+        mixer.set_quad_balance(MixerInput::Three(0.5));
+        mixer.set_quad_balance(MixerInput::Four(0.5));
         let expected_result_left = 1.25;
         let expected_result_right = 2.5;
 
@@ -239,12 +248,12 @@ mod tests {
     }
 
     #[test]
-    fn quad_mix_returns_correct_values_from_four_inputs_with_negative_pan() {
+    fn quad_mix_returns_correct_values_from_four_inputs_with_negative_balance() {
         let mut mixer = Mixer::new();
-        mixer.set_quad_pan(-0.5, MixerInput::One);
-        mixer.set_quad_pan(-0.5, MixerInput::Two);
-        mixer.set_quad_pan(-0.5, MixerInput::Three);
-        mixer.set_quad_pan(-0.5, MixerInput::Four);
+        mixer.set_quad_balance(MixerInput::One(-0.5));
+        mixer.set_quad_balance(MixerInput::Two(-0.5));
+        mixer.set_quad_balance(MixerInput::Three(-0.5));
+        mixer.set_quad_balance(MixerInput::Four(-0.5));
 
         let expected_result_left = 2.5;
         let expected_result_right = 1.25;
@@ -258,10 +267,10 @@ mod tests {
     #[test]
     fn quad_mix_returns_correct_values_from_four_inputs_with_level() {
         let mut mixer = Mixer::new();
-        mixer.set_quad_level(0.5, MixerInput::One);
-        mixer.set_quad_level(0.5, MixerInput::Two);
-        mixer.set_quad_level(0.5, MixerInput::Three);
-        mixer.set_quad_level(0.5, MixerInput::Four);
+        mixer.set_quad_level(MixerInput::One(0.5));
+        mixer.set_quad_level(MixerInput::Two(0.5));
+        mixer.set_quad_level(MixerInput::Three(0.5));
+        mixer.set_quad_level(MixerInput::Four(0.5));
         let expected_result_left = 1.25;
         let expected_result_right = 1.25;
 
@@ -271,16 +280,16 @@ mod tests {
     }
 
     #[test]
-    fn quad_mix_returns_correct_values_from_four_inputs_with_level_and_pan() {
+    fn quad_mix_returns_correct_values_from_four_inputs_with_level_and_balance() {
         let mut mixer = Mixer::new();
-        mixer.set_quad_level(0.5, MixerInput::One);
-        mixer.set_quad_level(0.5, MixerInput::Two);
-        mixer.set_quad_level(0.5, MixerInput::Three);
-        mixer.set_quad_level(0.5, MixerInput::Four);
-        mixer.set_quad_pan(0.8, MixerInput::One);
-        mixer.set_quad_pan(0.8, MixerInput::Two);
-        mixer.set_quad_pan(0.8, MixerInput::Three);
-        mixer.set_quad_pan(0.8, MixerInput::Four);
+        mixer.set_quad_level(MixerInput::One(0.5));
+        mixer.set_quad_level(MixerInput::Two(0.5));
+        mixer.set_quad_level(MixerInput::Three(0.5));
+        mixer.set_quad_level(MixerInput::Four(0.5));
+        mixer.set_quad_balance(MixerInput::One(0.8));
+        mixer.set_quad_balance(MixerInput::Two(0.8));
+        mixer.set_quad_balance(MixerInput::Three(0.8));
+        mixer.set_quad_balance(MixerInput::Four(0.8));
         let expected_result_left = 0.2499999;
         let expected_result_right = 1.25;
 
@@ -302,10 +311,10 @@ mod tests {
             default_expected_result_right
         ));
 
-        mixer.set_quad_mute(true, MixerInput::One);
-        mixer.set_quad_mute(true, MixerInput::Two);
-        mixer.set_quad_mute(true, MixerInput::Three);
-        mixer.set_quad_mute(true, MixerInput::Four);
+        mixer.set_quad_mute(MixerInput::One(true));
+        mixer.set_quad_mute(MixerInput::Two(true));
+        mixer.set_quad_mute(MixerInput::Three(true));
+        mixer.set_quad_mute(MixerInput::Four(true));
         let muted_expected_result_left = 0.0;
         let muted_expected_result_right = 0.0;
 
@@ -317,10 +326,10 @@ mod tests {
     #[test]
     fn quad_mix_returns_correct_values_from_four_one_input_and_constant_level() {
         let mut mixer = Mixer::new();
-        mixer.set_quad_level(1.0, MixerInput::One);
-        mixer.set_quad_level(0.0, MixerInput::Two);
-        mixer.set_quad_level(0.0, MixerInput::Three);
-        mixer.set_quad_level(0.0, MixerInput::Four);
+        mixer.set_quad_level(MixerInput::One(1.0));
+        mixer.set_quad_level(MixerInput::Two(0.0));
+        mixer.set_quad_level(MixerInput::Three(0.0));
+        mixer.set_quad_level(MixerInput::Four(0.0));
 
         let default_expected_result_left = 0.25;
         let default_expected_result_right = 0.25;
@@ -345,8 +354,8 @@ mod tests {
         let mixer = Mixer::new();
         let left_input = 1.0;
         let right_input = 2.0;
-        let expected_result_left = 1.0;
-        let expected_result_right = 2.0;
+        let expected_result_left = 0.5;
+        let expected_result_right = 1.0;
 
         let (left_result, right_result) = mixer.output_mix(left_input, right_input);
         assert!(f32_value_equality(left_result, expected_result_left));
@@ -368,44 +377,44 @@ mod tests {
     }
 
     #[test]
-    fn output_mix_returns_correct_values_with_pan() {
-        let mut mixer = Mixer::new();
-        let left_input = 1.0;
-        let right_input = 2.0;
-        let expected_result_left = 0.5;
-        let expected_result_right = 2.0;
-
-        mixer.set_output_pan(0.5);
-        let (left_result, right_result) = mixer.output_mix(left_input, right_input);
-        assert!(f32_value_equality(left_result, expected_result_left));
-        assert!(f32_value_equality(right_result, expected_result_right));
-    }
-
-    #[test]
-    fn output_mix_returns_correct_values_with_negative_pan() {
-        let mut mixer = Mixer::new();
-        let left_input = 1.0;
-        let right_input = 1.0;
-        let expected_result_left = 1.0;
-        let expected_result_right = 0.5;
-
-        mixer.set_output_pan(-0.5);
-
-        let (left_result, right_result) = mixer.output_mix(left_input, right_input);
-        println!("{:?}, {:?}", left_result, right_result);
-        assert!(f32_value_equality(left_result, expected_result_left));
-        assert!(f32_value_equality(right_result, expected_result_right));
-    }
-
-    #[test]
-    fn output_mix_returns_correct_values_with_level_and_pan() {
+    fn output_mix_returns_correct_values_with_balance() {
         let mut mixer = Mixer::new();
         let left_input = 1.0;
         let right_input = 2.0;
         let expected_result_left = 0.25;
         let expected_result_right = 1.0;
 
-        mixer.set_output_pan(0.5);
+        mixer.set_output_balance(0.5);
+        let (left_result, right_result) = mixer.output_mix(left_input, right_input);
+        assert!(f32_value_equality(left_result, expected_result_left));
+        assert!(f32_value_equality(right_result, expected_result_right));
+    }
+
+    #[test]
+    fn output_mix_returns_correct_values_with_negative_balance() {
+        let mut mixer = Mixer::new();
+        let left_input = 1.0;
+        let right_input = 1.0;
+        let expected_result_left = 0.5;
+        let expected_result_right = 0.25;
+
+        mixer.set_output_balance(-0.5);
+
+        let (left_result, right_result) = mixer.output_mix(left_input, right_input);
+
+        assert!(f32_value_equality(left_result, expected_result_left));
+        assert!(f32_value_equality(right_result, expected_result_right));
+    }
+
+    #[test]
+    fn output_mix_returns_correct_values_with_level_and_balance() {
+        let mut mixer = Mixer::new();
+        let left_input = 1.0;
+        let right_input = 2.0;
+        let expected_result_left = 0.25;
+        let expected_result_right = 1.0;
+
+        mixer.set_output_balance(0.5);
         mixer.set_output_level(0.5);
         let (left_result, right_result) = mixer.output_mix(left_input, right_input);
         assert!(f32_value_equality(left_result, expected_result_left));

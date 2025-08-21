@@ -10,6 +10,7 @@ use crate::modules::envelope::Envelope;
 use crate::modules::filter::Filter;
 use crate::modules::mixer::{Mixer, MixerInput};
 use crate::modules::oscillator::{Oscillator, WaveShape};
+use std::default::Default;
 
 use crate::modules::lfo::Lfo;
 use anyhow::Result;
@@ -18,6 +19,7 @@ use cpal::{Device, Stream};
 use crossbeam_channel::Receiver;
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::Instant;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum MidiNoteEvent {
@@ -26,30 +28,32 @@ enum MidiNoteEvent {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
+pub enum OscillatorIndex {
+    Sub = 0,
+    One = 1,
+    Two = 2,
+    Three = 3,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum EnvelopeIndex {
+    Amplifier = 0,
+    Filter = 1,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum LfoIndex {
+    Filter = 0,
+    Lfo1 = 1,
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct OscillatorParameters {
-    level: f32,
-    pan: f32,
-    mute: bool,
     frequency: f32,
-    wave_shape: WaveShape,
     pitch_bend: Option<i16>,
     course_tune: Option<i8>,
     fine_tune: Option<i16>,
-}
-
-impl Default for OscillatorParameters {
-    fn default() -> Self {
-        Self {
-            level: DEFAULT_OSCILLATOR_OUTPUT_LEVEL,
-            pan: DEFAULT_OSCILLATOR_OUTPUT_PAN,
-            mute: false,
-            frequency: 0.0,
-            wave_shape: DEFAULT_OSCILLATOR_WAVE_SHAPE,
-            pitch_bend: None,
-            course_tune: None,
-            fine_tune: None,
-        }
-    }
+    is_sub_oscillator: bool,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
@@ -69,79 +73,76 @@ struct Parameters {
     oscillators: [OscillatorParameters; 4],
 }
 
+pub struct Modules {
+    envelopes: [Envelope; 2],
+    filter: Filter,
+    lfos: [Lfo; 2],
+    mixer: Mixer,
+    oscillators: [Oscillator; 4],
+}
+
 pub struct Synthesizer {
     audio_output_device: Device,
     output_stream: Option<Stream>,
     parameters: Arc<Mutex<Parameters>>,
     midi_note_events: Arc<Mutex<Option<MidiNoteEvent>>>,
-    oscillators: Arc<Mutex<[Oscillator; 4]>>,
-    envelopes: Arc<Mutex<[Envelope; 2]>>,
-    lfos: Arc<Mutex<[Lfo; 2]>>,
-    mixer: Arc<Mutex<Mixer>>,
-    filter: Arc<Mutex<Filter>>,
+    modules: Arc<Mutex<Modules>>,
 }
 
 impl Synthesizer {
     pub fn new(audio_output_device: Device, sample_rate: u32) -> Self {
         log::info!("Constructing Synthesizer Module");
 
-        let sub_oscillator = OscillatorParameters {
-            level: DEFAULT_SUB_OSCILLATOR_LEVEL,
-            course_tune: Some(DEFAULT_SUB_OSCILLATOR_INTERVAL),
-            ..Default::default()
+        let mut oscillator_parameters: [OscillatorParameters; 4] = Default::default();
+        oscillator_parameters[0].is_sub_oscillator = true;
+
+        let current_note = CurrentNote {
+            midi_note: 0,
+            velocity: MAX_MIDI_KEY_VELOCITY,
+            velocity_curve: DEFAULT_MIDI_KEY_VELOCITY_CURVE_MIDI_VALUE,
         };
 
-        let oscillator_parameters = [
-            sub_oscillator,
-            Default::default(),
-            Default::default(),
-            Default::default(),
-        ];
-
-        let mut mixer = Mixer::new();
-        mixer.set_quad_level(DEFAULT_SUB_OSCILLATOR_LEVEL, MixerInput::One);
-        mixer.set_output_level(DEFAULT_OUTPUT_LEVEL);
-        mixer.set_output_pan(DEFAULT_OUTPUT_PAN);
-
         let parameters = Parameters {
-            is_fixed_velocity: DEFAULT_FIXED_VELOCITY_STATE,
-            current_note: CurrentNote {
-                midi_note: DEFAULT_MIDI_NOTE,
-                velocity: DEFAULT_VELOCITY,
-                velocity_curve: DEFAULT_VELOCITY_CURVE,
-            },
-            oscillator_key_sync_enabled: DEFAULT_OSCILLATOR_KEY_SYNC_STATE,
+            current_note,
+            oscillator_key_sync_enabled: true,
             oscillators: oscillator_parameters,
             ..Default::default()
         };
-
-        let oscillators = [
-            Oscillator::new(sample_rate, DEFAULT_OSCILLATOR_WAVE_SHAPE),
-            Oscillator::new(sample_rate, DEFAULT_OSCILLATOR_WAVE_SHAPE),
-            Oscillator::new(sample_rate, DEFAULT_OSCILLATOR_WAVE_SHAPE),
-            Oscillator::new(sample_rate, DEFAULT_OSCILLATOR_WAVE_SHAPE),
-        ];
 
         let amp_envelope = Envelope::new(sample_rate);
         let mut filter_envelope = Envelope::new(sample_rate);
         filter_envelope.set_amount(DEFAULT_FILTER_ENVELOPE_AMOUNT);
         let envelopes = [amp_envelope, filter_envelope];
 
-        let filter = Filter::new(sample_rate);
+        let mut filter_modulation_lfo = Lfo::new(sample_rate);
+        filter_modulation_lfo.set_range(0.0);
+        let shared_lfo1 = Lfo::new(sample_rate);
+        let lfos = [filter_modulation_lfo, shared_lfo1];
 
-        let mut lfos = [Lfo::new(sample_rate), Lfo::new(sample_rate)];
-        lfos[LFO_INDEX_FILTER_MODULATION].set_range(0.0);
+        let mut mixer = Mixer::new();
+        mixer.set_quad_level(MixerInput::One(0.0));
+
+        let oscillators = [
+            Oscillator::new(sample_rate, WaveShape::Saw),
+            Oscillator::new(sample_rate, WaveShape::Saw),
+            Oscillator::new(sample_rate, WaveShape::Saw),
+            Oscillator::new(sample_rate, WaveShape::Saw),
+        ];
+
+        let modules = Modules {
+            envelopes,
+            filter: Filter::new(sample_rate),
+            lfos,
+            mixer,
+            oscillators,
+        };
 
         Self {
             audio_output_device,
             output_stream: None,
             parameters: Arc::new(Mutex::new(parameters)),
             midi_note_events: Arc::new(Mutex::new(None)),
-            oscillators: Arc::new(Mutex::new(oscillators)),
-            envelopes: Arc::new(Mutex::new(envelopes)),
-            lfos: Arc::new(Mutex::new(lfos)),
-            mixer: Arc::new(Mutex::new(mixer)),
-            filter: Arc::new(Mutex::new(filter)),
+            modules: Arc::new(Mutex::new(modules)),
         }
     }
 
@@ -159,11 +160,7 @@ impl Synthesizer {
     fn start_midi_event_listener(&mut self, midi_message_receiver: Receiver<MidiMessage>) {
         let mut parameters_arc = self.parameters.clone();
         let mut midi_event_arc = self.midi_note_events.clone();
-        let mut oscillators_arc = self.oscillators.clone();
-        let mut envelopes_arc = self.envelopes.clone();
-        let mut lfos_arc = self.lfos.clone();
-        let mut filter_arc = self.filter.clone();
-        let mut mixer_arc = self.mixer.clone();
+        let mut modules_arc = self.modules.clone();
 
         thread::spawn(move || {
             log::debug!("run(): spawned thread to receive MIDI events");
@@ -174,7 +171,6 @@ impl Synthesizer {
                         midi_messages::process_midi_note_on_message(
                             &mut parameters_arc,
                             &mut midi_event_arc,
-                            &mut lfos_arc,
                             midi_note,
                             velocity,
                         );
@@ -198,12 +194,8 @@ impl Synthesizer {
                         midi_messages::process_midi_cc_values(
                             cc_value,
                             &mut parameters_arc,
-                            &mut oscillators_arc,
                             &mut midi_event_arc,
-                            &mut envelopes_arc,
-                            &mut lfos_arc,
-                            &mut filter_arc,
-                            &mut mixer_arc,
+                            &mut modules_arc,
                         );
                     }
                 }
@@ -216,11 +208,7 @@ impl Synthesizer {
     fn create_synthesizer(&mut self, output_device: Device) -> Result<Stream> {
         let parameters_arc = self.parameters.clone();
         let midi_note_events_arc = self.midi_note_events.clone();
-        let oscillators_arc = self.oscillators.clone();
-        let envelopes_arc = self.envelopes.clone();
-        let lfos_arc = self.lfos.clone();
-        let filter_arc = self.filter.clone();
-        let mixer_arc = self.mixer.clone();
+        let modules_arc = self.modules.clone();
 
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
@@ -236,12 +224,7 @@ impl Synthesizer {
         let stream = output_device.build_output_stream(
             &default_device_stream_config,
             move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                let mixer = {
-                    let mixer = mixer_arc
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner());
-                    mixer.clone()
-                };
+                //       let start = Instant::now();
                 let parameters = {
                     let parameter_mutex = parameters_arc
                         .lock()
@@ -249,16 +232,7 @@ impl Synthesizer {
                     parameter_mutex.to_owned()
                 };
 
-                let mut oscillators = oscillators_arc
-                    .lock()
-                    .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mut filter = filter_arc
-                    .lock()
-                    .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mut envelopes = envelopes_arc
-                    .lock()
-                    .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mut lfos = lfos_arc
+                let mut modules = modules_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
 
@@ -273,11 +247,11 @@ impl Synthesizer {
                 if let Some(event) = note_event {
                     midi_messages::action_midi_note_events(
                         event,
-                        &mut envelopes,
-                        &mut oscillators,
+                        &mut modules,
                         parameters.oscillator_key_sync_enabled,
                     );
                 }
+
                 // Begin processing the audio buffer
 
                 // Split the buffer into frames
@@ -285,19 +259,19 @@ impl Synthesizer {
                     // Begin generating and processing the samples for the frame
 
                     let sub_oscillator_sample =
-                        oscillators[0].generate(parameters.oscillators[0].frequency, None);
+                        modules.oscillators[0].generate(parameters.oscillators[0].frequency, None);
 
                     let oscillator1_sample =
-                        oscillators[1].generate(parameters.oscillators[1].frequency, None);
+                        modules.oscillators[1].generate(parameters.oscillators[1].frequency, None);
 
                     let oscillator2_sample =
-                        oscillators[2].generate(parameters.oscillators[2].frequency, None);
+                        modules.oscillators[2].generate(parameters.oscillators[2].frequency, None);
 
                     let oscillator3_sample =
-                        oscillators[3].generate(parameters.oscillators[3].frequency, None);
+                        modules.oscillators[3].generate(parameters.oscillators[3].frequency, None);
 
                     // Any per-oscillator processing should happen before this stereo mix down
-                    let (oscillator_mix_left, oscillator_mix_right) = mixer.quad_mix(
+                    let (oscillator_mix_left, oscillator_mix_right) = modules.mixer.quad_mix(
                         sub_oscillator_sample,
                         oscillator1_sample,
                         oscillator2_sample,
@@ -305,7 +279,8 @@ impl Synthesizer {
                     );
 
                     let amp_envelope_value =
-                        Some(envelopes[ENVELOPE_INDEX_AMP_ENVELOPE].generate());
+                        Some(modules.envelopes[EnvelopeIndex::Amplifier as usize].generate());
+
                     let (left_envelope_sample, right_envelope_sample) = amplify_stereo(
                         oscillator_mix_left,
                         oscillator_mix_right,
@@ -314,22 +289,26 @@ impl Synthesizer {
                     );
 
                     let filter_envelope_value =
-                        envelopes[ENVELOPE_INDEX_FILTER_ENVELOPE].generate();
-                    filter.modulate_cutoff_frequency(
-                        filter_envelope_value + lfos[LFO_INDEX_FILTER_MODULATION].generate(),
-                    );
+                        modules.envelopes[EnvelopeIndex::Filter as usize].generate();
 
-                    let (filtered_left, filtered_right) =
-                        filter.filter(left_envelope_sample, right_envelope_sample);
+                    let filter_lfo_value = modules.lfos[LfoIndex::Filter as usize].generate();
+                    modules
+                        .filter
+                        .modulate_cutoff_frequency(filter_envelope_value + filter_lfo_value);
+
+                    let (filtered_left, filtered_right) = modules
+                        .filter
+                        .filter(left_envelope_sample, right_envelope_sample);
 
                     // Final output level control
                     let (output_left, output_right) =
-                        mixer.output_mix(filtered_left, filtered_right);
+                        modules.mixer.output_mix(filtered_left, filtered_right);
 
                     // Hand back the processed samples to the frame to be sent to the audio device
                     frame[0] = output_left;
                     frame[1] = output_right;
                 }
+                //println!("{:?}", start.elapsed());
             },
             |err| {
                 log::error!("create_synthesizer(): Error in audio output stream: {err}");

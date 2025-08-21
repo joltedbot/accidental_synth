@@ -12,6 +12,12 @@ pub fn tune(mut note_number: u8, parameters: &mut OscillatorParameters) -> f32 {
             .clamp(MIN_MIDI_NOTE_NUMBER, MAX_MIDI_NOTE_NUMBER) as u8;
     }
 
+    if parameters.is_sub_oscillator {
+        note_number = (note_number as i8)
+            .saturating_sub(12)
+            .clamp(MIN_MIDI_NOTE_NUMBER, MAX_MIDI_NOTE_NUMBER) as u8;
+    }
+
     let mut note_frequency = midi_note_to_frequency(note_number);
 
     if let Some(pitch_bend_cents) = parameters.pitch_bend {

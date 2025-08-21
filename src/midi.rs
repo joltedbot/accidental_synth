@@ -149,7 +149,7 @@ impl Midi {
                     self.midi_message_sender.clone(),
                     self.current_note.clone(),
                 )?);
-                log::debug!(
+                log::info!(
                     "create_midi_input_listener(): The MIDI input connection has been created for {name}."
                 );
             }
