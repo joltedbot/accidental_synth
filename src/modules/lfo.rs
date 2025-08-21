@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::modules::oscillator::{Oscillator, WaveShape};
 
 pub const MIN_LFO_FREQUENCY: f32 = 0.01;
@@ -10,28 +8,23 @@ const DEFAULT_CENTER_VALUE: f32 = 0.0;
 const MAX_CENTER_VALUE: f32 = 1.0;
 const MIN_CENTER_VALUE: f32 = -1.0;
 const DEFAULT_RANGE: f32 = 2.0;
-const DEFAULT_PHASE: f32 = 0.0;
 const DEFAULT_FREQUENCY: f32 = 0.1;
 
 pub struct Lfo {
-    sample_rate: u32,
     oscillator: Oscillator,
     frequency: f32,
     center_value: f32,
     range: f32,
-    phase: f32,
 }
 
 impl Lfo {
     pub fn new(sample_rate: u32) -> Self {
         let oscillator = Oscillator::new(sample_rate, WaveShape::Sine);
         Self {
-            sample_rate,
             oscillator,
             frequency: DEFAULT_FREQUENCY,
             center_value: DEFAULT_CENTER_VALUE,
             range: DEFAULT_RANGE,
-            phase: DEFAULT_PHASE,
         }
     }
 

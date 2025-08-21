@@ -1,4 +1,3 @@
-#![allow(dead_code, unused_imports)]
 pub mod am;
 mod constants;
 pub mod fm;

@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 const QUAD_MIX_DEFAULT_LEVEL_SUM: f32 = 4.0;
 const QUAD_MIX_DEFAULT_MUTE: bool = false;
 const QUAD_MIX_DEFAULT_CONSTANT_IS_ENABLED: bool = false;

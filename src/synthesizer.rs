@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 mod constants;
 mod midi_messages;
 pub mod tuner;

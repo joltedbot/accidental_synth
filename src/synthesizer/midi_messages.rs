@@ -140,16 +140,16 @@ pub fn process_midi_cc_values(
             set_oscillator_key_sync(parameters_arc, value);
         }
         CC::SubOscillatorShape(value) => {
-            set_oscillator_wave_shape(parameters_arc, modules_arc, OscillatorIndex::Sub, value);
+            set_oscillator_wave_shape(modules_arc, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1Shape(value) => {
-            set_oscillator_wave_shape(parameters_arc, modules_arc, OscillatorIndex::One, value);
+            set_oscillator_wave_shape(modules_arc, OscillatorIndex::One, value);
         }
         CC::Oscillator2Shape(value) => {
-            set_oscillator_wave_shape(parameters_arc, modules_arc, OscillatorIndex::Two, value);
+            set_oscillator_wave_shape(modules_arc, OscillatorIndex::Two, value);
         }
         CC::Oscillator3Shape(value) => {
-            set_oscillator_wave_shape(parameters_arc, modules_arc, OscillatorIndex::Three, value);
+            set_oscillator_wave_shape(modules_arc, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorCourseTune(value) => {
             set_oscillator_course_tune(parameters_arc, OscillatorIndex::Sub, value);
@@ -176,40 +176,40 @@ pub fn process_midi_cc_values(
             set_oscillator_fine_tune(parameters_arc, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorLevel(value) => {
-            set_oscillator_level(parameters_arc, modules_arc, OscillatorIndex::Sub, value);
+            set_oscillator_level(modules_arc, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1Level(value) => {
-            set_oscillator_level(parameters_arc, modules_arc, OscillatorIndex::One, value);
+            set_oscillator_level(modules_arc, OscillatorIndex::One, value);
         }
         CC::Oscillator2Level(value) => {
-            set_oscillator_level(parameters_arc, modules_arc, OscillatorIndex::Two, value);
+            set_oscillator_level(modules_arc, OscillatorIndex::Two, value);
         }
         CC::Oscillator3Level(value) => {
-            set_oscillator_level(parameters_arc, modules_arc, OscillatorIndex::Three, value);
+            set_oscillator_level(modules_arc, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorMute(value) => {
-            set_oscillator_mute(parameters_arc, modules_arc, OscillatorIndex::Sub, value);
+            set_oscillator_mute(modules_arc, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1Mute(value) => {
-            set_oscillator_mute(parameters_arc, modules_arc, OscillatorIndex::One, value);
+            set_oscillator_mute(modules_arc, OscillatorIndex::One, value);
         }
         CC::Oscillator2Mute(value) => {
-            set_oscillator_mute(parameters_arc, modules_arc, OscillatorIndex::Two, value);
+            set_oscillator_mute(modules_arc, OscillatorIndex::Two, value);
         }
         CC::Oscillator3Mute(value) => {
-            set_oscillator_mute(parameters_arc, modules_arc, OscillatorIndex::Three, value);
+            set_oscillator_mute(modules_arc, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorPan(value) => {
-            set_oscillator_balance(parameters_arc, modules_arc, OscillatorIndex::Sub, value);
+            set_oscillator_balance(modules_arc, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1Pan(value) => {
-            set_oscillator_balance(parameters_arc, modules_arc, OscillatorIndex::One, value);
+            set_oscillator_balance(modules_arc, OscillatorIndex::One, value);
         }
         CC::Oscillator2Pan(value) => {
-            set_oscillator_balance(parameters_arc, modules_arc, OscillatorIndex::Two, value);
+            set_oscillator_balance(modules_arc, OscillatorIndex::Two, value);
         }
         CC::Oscillator3Pan(value) => {
-            set_oscillator_balance(parameters_arc, modules_arc, OscillatorIndex::Three, value);
+            set_oscillator_balance(modules_arc, OscillatorIndex::Three, value);
         }
         CC::FilterPoles(value) => {
             set_filter_poles(modules_arc, value);
@@ -268,7 +268,7 @@ pub fn process_midi_cc_values(
         CC::LFO1Phase(value) => {
             set_lfo_phase(modules_arc, LfoIndex::Lfo1, value);
         }
-        CC::LFO1Reset(value) => {
+        CC::LFO1Reset => {
             lfo_reset(modules_arc, LfoIndex::Lfo1);
         }
         CC::FilterModLFOFrequency(value) => {
@@ -283,7 +283,7 @@ pub fn process_midi_cc_values(
         CC::FilterModLFOPhase(value) => {
             set_lfo_phase(modules_arc, LfoIndex::Filter, value);
         }
-        CC::FilterModLFOReset(value) => {
+        CC::FilterModLFOReset => {
             lfo_reset(modules_arc, LfoIndex::Filter);
         }
         CC::AllNotesOff => {
@@ -597,7 +597,6 @@ fn set_oscillator_key_sync(parameters_arc: &mut Arc<Mutex<Parameters>>, value: u
 }
 
 fn set_oscillator_balance(
-    parameters_arc: &mut Arc<Mutex<Parameters>>,
     modules_arc: &mut Arc<Mutex<Modules>>,
     oscillator: OscillatorIndex,
     value: u8,
@@ -614,7 +613,6 @@ fn set_oscillator_balance(
 }
 
 fn set_oscillator_mute(
-    parameters_arc: &mut Arc<Mutex<Parameters>>,
     modules_arc: &mut Arc<Mutex<Modules>>,
     oscillator: OscillatorIndex,
     value: u8,
@@ -631,7 +629,6 @@ fn set_oscillator_mute(
 }
 
 fn set_oscillator_level(
-    parameters_arc: &mut Arc<Mutex<Parameters>>,
     modules_arc: &mut Arc<Mutex<Modules>>,
     oscillator: OscillatorIndex,
     value: u8,
@@ -676,7 +673,6 @@ fn set_oscillator_course_tune(
 }
 
 fn set_oscillator_wave_shape(
-    parameters_arc: &mut Arc<Mutex<Parameters>>,
     modules_arc: &mut Arc<Mutex<Modules>>,
     oscillator: OscillatorIndex,
     value: u8,
