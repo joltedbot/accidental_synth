@@ -29,12 +29,13 @@ impl Lfo {
     }
 
     pub fn generate(&mut self) -> f32 {
-        let wave_sample = self.oscillator.generate(self.frequency, None);
+        let wave_sample = self.oscillator.generate(None);
         self.center_value + (wave_sample * (self.range / 2.0))
     }
 
     pub fn set_frequency(&mut self, frequency: f32) {
         self.frequency = frequency.clamp(MIN_LFO_FREQUENCY, MAX_LFO_FREQUENCY);
+        self.oscillator.set_frequency(self.frequency);
     }
 
     pub fn set_center_value(&mut self, center_value: f32) {

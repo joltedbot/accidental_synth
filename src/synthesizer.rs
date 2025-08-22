@@ -1,6 +1,5 @@
 mod constants;
 mod midi_messages;
-pub mod tuner;
 
 use self::constants::*;
 use crate::midi::MidiMessage;
@@ -91,9 +90,6 @@ impl Synthesizer {
     pub fn new(audio_output_device: Device, sample_rate: u32) -> Self {
         log::info!("Constructing Synthesizer Module");
 
-        let mut oscillator_parameters: [OscillatorParameters; 4] = Default::default();
-        oscillator_parameters[0].is_sub_oscillator = true;
-
         let current_note = CurrentNote {
             midi_note: 0,
             velocity: MAX_MIDI_KEY_VELOCITY,
@@ -103,7 +99,6 @@ impl Synthesizer {
         let parameters = Parameters {
             current_note,
             oscillator_key_sync_enabled: true,
-            oscillators: oscillator_parameters,
             ..Default::default()
         };
 
@@ -120,12 +115,13 @@ impl Synthesizer {
         let mut mixer = Mixer::new();
         mixer.set_quad_level(MixerInput::One(0.0));
 
-        let oscillators = [
+        let mut oscillators = [
             Oscillator::new(sample_rate, WaveShape::Saw),
             Oscillator::new(sample_rate, WaveShape::Saw),
             Oscillator::new(sample_rate, WaveShape::Saw),
             Oscillator::new(sample_rate, WaveShape::Saw),
         ];
+        oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
 
         let modules = Modules {
             envelopes,
@@ -166,9 +162,15 @@ impl Synthesizer {
             while let Ok(event) = midi_message_receiver.recv() {
                 match event {
                     MidiMessage::NoteOn(midi_note, velocity) => {
+                        let mut modules = modules_arc
+                            .lock()
+                            .unwrap_or_else(|poisoned| poisoned.into_inner());
+                        let oscillators = &mut modules.oscillators;
+
                         midi_messages::process_midi_note_on_message(
                             &mut parameters_arc,
                             &mut midi_event_arc,
+                            oscillators,
                             midi_note,
                             velocity,
                         );
@@ -178,6 +180,7 @@ impl Synthesizer {
                     }
                     MidiMessage::PitchBend(bend_amount) => {
                         midi_messages::process_midi_pitch_bend_message(
+                            &mut modules_arc,
                             &mut parameters_arc,
                             bend_amount,
                         );
@@ -255,17 +258,13 @@ impl Synthesizer {
                 for frame in buffer.chunks_mut(number_of_channels) {
                     // Begin generating and processing the samples for the frame
 
-                    let sub_oscillator_sample =
-                        modules.oscillators[0].generate(parameters.oscillators[0].frequency, None);
+                    let sub_oscillator_sample = modules.oscillators[0].generate(None);
 
-                    let oscillator1_sample =
-                        modules.oscillators[1].generate(parameters.oscillators[1].frequency, None);
+                    let oscillator1_sample = modules.oscillators[1].generate(None);
 
-                    let oscillator2_sample =
-                        modules.oscillators[2].generate(parameters.oscillators[2].frequency, None);
+                    let oscillator2_sample = modules.oscillators[2].generate(None);
 
-                    let oscillator3_sample =
-                        modules.oscillators[3].generate(parameters.oscillators[3].frequency, None);
+                    let oscillator3_sample = modules.oscillators[3].generate(None);
 
                     // Any per-oscillator processing should happen before this stereo mix down
                     let (oscillator_mix_left, oscillator_mix_right) = modules.mixer.quad_mix(

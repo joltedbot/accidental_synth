@@ -2,9 +2,8 @@ use crate::midi::CC;
 use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS};
 use crate::modules::filter::FilterSlope;
 use crate::modules::mixer::MixerInput;
-use crate::modules::oscillator::WaveShape;
+use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::synthesizer::constants::*;
-use crate::synthesizer::tuner::tune;
 use crate::synthesizer::{
     EnvelopeIndex, LfoIndex, MidiNoteEvent, Modules, OscillatorIndex, Parameters,
 };
@@ -45,15 +44,22 @@ pub fn process_midi_channel_pressure_message(
 }
 
 pub fn process_midi_pitch_bend_message(
+    modules_arc: &mut Arc<Mutex<Modules>>,
     parameters_arc: &mut Arc<Mutex<Parameters>>,
     bend_amount: i16,
 ) {
-    let mut parameters = parameters_arc
+    let mut modules = modules_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
+    let oscillators = &mut modules.oscillators;
 
-    update_current_note_from_midi_pitch_bend(bend_amount, &mut parameters);
-    update_current_note_from_stored_parameters(&mut parameters);
+    let parameters = parameters_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    let midi_note = parameters.current_note.midi_note;
+
+    update_current_note_from_midi_pitch_bend(bend_amount, oscillators);
+    update_current_note_from_stored_parameters(midi_note, oscillators);
 }
 
 pub fn process_midi_note_off_message(midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>) {
@@ -67,6 +73,7 @@ pub fn process_midi_note_off_message(midi_event_arc: &mut Arc<Mutex<Option<MidiN
 pub fn process_midi_note_on_message(
     parameters_arc: &mut Arc<Mutex<Parameters>>,
     midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
+    oscillators: &mut [Oscillator; 4],
     midi_note: u8,
     velocity: u8,
 ) {
@@ -80,7 +87,7 @@ pub fn process_midi_note_on_message(
     );
 
     parameters.current_note.midi_note = midi_note;
-    update_current_note_from_stored_parameters(&mut parameters);
+    update_current_note_from_stored_parameters(midi_note, oscillators);
 
     let mut midi_events = midi_event_arc
         .lock()
@@ -152,28 +159,60 @@ pub fn process_midi_cc_values(
             set_oscillator_wave_shape(modules_arc, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorCourseTune(value) => {
-            set_oscillator_course_tune(parameters_arc, OscillatorIndex::Sub, value);
+            let mut modules = modules_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            let oscillators = &mut modules.oscillators;
+            set_oscillator_course_tune(parameters_arc, oscillators, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1CourseTune(value) => {
-            set_oscillator_course_tune(parameters_arc, OscillatorIndex::One, value);
+            let mut modules = modules_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            let oscillators = &mut modules.oscillators;
+            set_oscillator_course_tune(parameters_arc, oscillators, OscillatorIndex::One, value);
         }
         CC::Oscillator2CourseTune(value) => {
-            set_oscillator_course_tune(parameters_arc, OscillatorIndex::Two, value);
+            let mut modules = modules_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            let oscillators = &mut modules.oscillators;
+            set_oscillator_course_tune(parameters_arc, oscillators, OscillatorIndex::Two, value);
         }
         CC::Oscillator3CourseTune(value) => {
-            set_oscillator_course_tune(parameters_arc, OscillatorIndex::Three, value);
+            let mut modules = modules_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            let oscillators = &mut modules.oscillators;
+            set_oscillator_course_tune(parameters_arc, oscillators, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorFineTune(value) => {
-            set_oscillator_fine_tune(parameters_arc, OscillatorIndex::Sub, value);
+            let mut modules = modules_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            let oscillators = &mut modules.oscillators;
+            set_oscillator_fine_tune(parameters_arc, oscillators, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1FineTune(value) => {
-            set_oscillator_fine_tune(parameters_arc, OscillatorIndex::One, value);
+            let mut modules = modules_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            let oscillators = &mut modules.oscillators;
+            set_oscillator_fine_tune(parameters_arc, oscillators, OscillatorIndex::One, value);
         }
         CC::Oscillator2FineTune(value) => {
-            set_oscillator_fine_tune(parameters_arc, OscillatorIndex::Two, value);
+            let mut modules = modules_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            let oscillators = &mut modules.oscillators;
+            set_oscillator_fine_tune(parameters_arc, oscillators, OscillatorIndex::Two, value);
         }
         CC::Oscillator3FineTune(value) => {
-            set_oscillator_fine_tune(parameters_arc, OscillatorIndex::Three, value);
+            let mut modules = modules_arc
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            let oscillators = &mut modules.oscillators;
+            set_oscillator_fine_tune(parameters_arc, oscillators, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorLevel(value) => {
             set_oscillator_level(modules_arc, OscillatorIndex::Sub, value);
@@ -646,30 +685,34 @@ fn set_oscillator_level(
 
 fn set_oscillator_fine_tune(
     parameters_arc: &mut Arc<Mutex<Parameters>>,
+    oscillators: &mut [Oscillator; 4],
     oscillator: OscillatorIndex,
     value: u8,
 ) {
-    let mut parameters = parameters_arc
+    oscillators[oscillator as usize].set_fine_tune(Some(midi_value_to_fine_tune_cents(value)));
+
+    let parameters = parameters_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    parameters.oscillators[oscillator as usize].fine_tune =
-        Some(midi_value_to_fine_tune_cents(value));
-    update_current_note_from_stored_parameters(&mut parameters);
+    let midi_note = parameters.current_note.midi_note;
+    update_current_note_from_stored_parameters(midi_note, oscillators);
 }
 
 fn set_oscillator_course_tune(
     parameters_arc: &mut Arc<Mutex<Parameters>>,
+    oscillators: &mut [Oscillator; 4],
     oscillator: OscillatorIndex,
     value: u8,
 ) {
-    let mut parameters = parameters_arc
+    oscillators[oscillator as usize]
+        .set_course_tune(Some(midi_value_to_course_tune_intervals(value)));
+
+    let parameters = parameters_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    parameters.oscillators[oscillator as usize].course_tune =
-        Some(midi_value_to_course_tune_intervals(value));
-    update_current_note_from_stored_parameters(&mut parameters);
+    let midi_note = parameters.current_note.midi_note;
+    update_current_note_from_stored_parameters(midi_note, oscillators);
 }
 
 fn set_oscillator_wave_shape(
@@ -821,45 +864,26 @@ fn continuously_variable_curve_mapping_from_midi_value(
 
 fn update_current_note_from_midi_pitch_bend(
     pitch_bend_amount: i16,
-    parameters: &mut MutexGuard<Parameters>,
+    oscillators: &mut [Oscillator; 4],
 ) {
-    for oscillator in parameters.oscillators.iter_mut() {
+    for oscillator in oscillators.iter_mut() {
         if pitch_bend_amount == PITCH_BEND_AMOUNT_ZERO_POINT {
-            oscillator.pitch_bend = None;
+            oscillator.set_pitch_bend(None);
         } else if pitch_bend_amount == PITCH_BEND_AMOUNT_MAX_VALUE {
-            oscillator.pitch_bend = Some(PITCH_BEND_AMOUNT_CENTS);
+            oscillator.set_pitch_bend(Some(PITCH_BEND_AMOUNT_CENTS));
         } else {
             let pitch_bend_in_cents = (pitch_bend_amount - PITCH_BEND_AMOUNT_ZERO_POINT) as f32
                 / PITCH_BEND_AMOUNT_ZERO_POINT as f32
                 * PITCH_BEND_AMOUNT_CENTS as f32;
-            oscillator.pitch_bend = Some(pitch_bend_in_cents as i16);
+            oscillator.set_pitch_bend(Some(pitch_bend_in_cents as i16));
         }
     }
 }
 
-fn update_current_note_from_stored_parameters(parameters: &mut MutexGuard<Parameters>) {
-    let sub_osc_frequency = tune(
-        parameters.current_note.midi_note,
-        &mut parameters.oscillators[0],
-    );
-
-    let osc1_frequency = tune(
-        parameters.current_note.midi_note,
-        &mut parameters.oscillators[1],
-    );
-    let osc2_frequency = tune(
-        parameters.current_note.midi_note,
-        &mut parameters.oscillators[2],
-    );
-    let osc3_frequency = tune(
-        parameters.current_note.midi_note,
-        &mut parameters.oscillators[3],
-    );
-
-    parameters.oscillators[0].frequency = sub_osc_frequency;
-    parameters.oscillators[1].frequency = osc1_frequency;
-    parameters.oscillators[2].frequency = osc2_frequency;
-    parameters.oscillators[3].frequency = osc3_frequency;
+fn update_current_note_from_stored_parameters(midi_note: u8, oscillators: &mut [Oscillator; 4]) {
+    for oscillator in oscillators.iter_mut() {
+        oscillator.tune(midi_note);
+    }
 }
 
 #[cfg(test)]

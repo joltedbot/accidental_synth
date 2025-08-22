@@ -11,6 +11,7 @@ pub mod super_saw;
 pub mod triangle;
 
 use self::am::AM;
+use self::constants::*;
 use self::fm::FM;
 use self::noise::Noise;
 use self::pulse::Pulse;
@@ -52,6 +53,11 @@ pub enum WaveShape {
 pub struct Oscillator {
     sample_rate: u32,
     wave_generator: Box<dyn GenerateSamples + Send + Sync>,
+    tone_frequency: f32,
+    pitch_bend: Option<i16>,
+    course_tune: Option<i8>,
+    fine_tune: Option<i16>,
+    is_sub_oscillator: bool,
 }
 
 impl Oscillator {
@@ -62,11 +68,17 @@ impl Oscillator {
         Self {
             sample_rate,
             wave_generator,
+            tone_frequency: 0.0,
+            pitch_bend: None,
+            course_tune: None,
+            fine_tune: None,
+            is_sub_oscillator: false,
         }
     }
 
-    pub fn generate(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
-        self.wave_generator.next_sample(tone_frequency, modulation)
+    pub fn generate(&mut self, modulation: Option<f32>) -> f32 {
+        self.wave_generator
+            .next_sample(self.tone_frequency, modulation)
     }
 
     pub fn set_wave_shape(&mut self, wave_shape: WaveShape) {
@@ -76,6 +88,26 @@ impl Oscillator {
 
         log::info!("Setting Oscillator Shape to {wave_shape:?}");
         self.wave_generator = get_wave_generator_from_wave_shape(self.sample_rate, wave_shape)
+    }
+
+    pub fn set_frequency(&mut self, tone_frequency: f32) {
+        self.tone_frequency = tone_frequency;
+    }
+
+    pub fn set_pitch_bend(&mut self, pitch_bend: Option<i16>) {
+        self.pitch_bend = pitch_bend;
+    }
+
+    pub fn set_course_tune(&mut self, course_tune: Option<i8>) {
+        self.course_tune = course_tune;
+    }
+
+    pub fn set_fine_tune(&mut self, fine_tune: Option<i16>) {
+        self.fine_tune = fine_tune;
+    }
+
+    pub fn set_is_sub_oscillator(&mut self, is_sub_oscillator: bool) {
+        self.is_sub_oscillator = is_sub_oscillator;
     }
 
     pub fn set_shape_parameter1(&mut self, parameter: f32) {
@@ -92,6 +124,32 @@ impl Oscillator {
 
     pub fn reset(&mut self) {
         self.wave_generator.reset();
+    }
+
+    pub fn tune(&mut self, mut note_number: u8) {
+        if let Some(interval) = self.course_tune {
+            note_number = (note_number as i8)
+                .saturating_add(interval)
+                .clamp(MIN_MIDI_NOTE_NUMBER, MAX_MIDI_NOTE_NUMBER) as u8;
+        }
+
+        if self.is_sub_oscillator {
+            note_number = (note_number as i8)
+                .saturating_sub(12)
+                .clamp(MIN_MIDI_NOTE_NUMBER, MAX_MIDI_NOTE_NUMBER) as u8;
+        }
+
+        let mut note_frequency = midi_note_to_frequency(note_number);
+
+        if let Some(pitch_bend_cents) = self.pitch_bend {
+            note_frequency = frequency_from_cents(note_frequency, pitch_bend_cents)
+                .clamp(MIN_NOTE_FREQUENCY, MAX_NOTE_FREQUENCY);
+        }
+
+        if let Some(cents) = self.fine_tune {
+            note_frequency = frequency_from_cents(note_frequency, cents);
+        }
+        self.tone_frequency = note_frequency
     }
 }
 
@@ -111,6 +169,14 @@ fn get_wave_generator_from_wave_shape(
         WaveShape::FM => Box::new(FM::new(sample_rate)),
         WaveShape::Noise => Box::new(Noise::new()),
     }
+}
+
+fn midi_note_to_frequency(note_number: u8) -> f32 {
+    MIDI_NOTE_FREQUENCIES[note_number as usize].0
+}
+
+fn frequency_from_cents(frequency: f32, cents: i16) -> f32 {
+    frequency * (2.0f32.powf(cents as f32 / CENTS_PER_OCTAVE))
 }
 
 #[cfg(test)]
@@ -136,27 +202,21 @@ mod tests {
         let wave_shape = WaveShape::FM;
         let mut oscillator = Oscillator::new(sample_rate, wave_shape);
 
-        let first_value = oscillator.generate(100.0, None);
+        let first_value = oscillator.generate(None);
         for _ in 0..5 {
-            assert!(!f32_value_equality(
-                oscillator.generate(100.0, None),
-                first_value
-            ));
+            assert!(!f32_value_equality(oscillator.generate(None), first_value));
         }
-        let first_sample = oscillator.generate(100.0, None);
+        let first_sample = oscillator.generate(None);
 
         oscillator.reset();
         oscillator.set_shape_parameter1(1.0);
         oscillator.set_shape_parameter2(2.0);
 
-        let first_value = oscillator.generate(100.0, None);
+        let first_value = oscillator.generate(None);
         for _ in 0..5 {
-            assert!(!f32_value_equality(
-                oscillator.generate(100.0, None),
-                first_value
-            ));
+            assert!(!f32_value_equality(oscillator.generate(None), first_value));
         }
-        let second_sample = oscillator.generate(100.0, None);
+        let second_sample = oscillator.generate(None);
 
         assert_ne!(first_sample, second_sample);
     }
@@ -166,18 +226,15 @@ mod tests {
         let sample_rate = 44100;
         let wave_shape = WaveShape::Sine;
         let mut oscillator = Oscillator::new(sample_rate, wave_shape);
-        let first_value = oscillator.generate(100.0, None);
+        let frequency = 100.0;
+        oscillator.set_frequency(frequency);
+
+        let first_value = oscillator.generate(None);
         for _ in 0..5 {
-            assert!(!f32_value_equality(
-                oscillator.generate(100.0, None),
-                first_value
-            ));
+            assert!(!f32_value_equality(oscillator.generate(None), first_value));
         }
         oscillator.reset();
-        assert!(f32_value_equality(
-            oscillator.generate(100.0, None),
-            first_value
-        ));
+        assert!(f32_value_equality(oscillator.generate(None), first_value));
     }
 
     #[test]
@@ -233,5 +290,46 @@ mod tests {
             get_wave_generator_from_wave_shape(sample_rate, WaveShape::Triangle).shape(),
             WaveShape::Triangle
         );
+    }
+
+    #[test]
+    fn midi_note_to_frequency_returns_correct_values_for_note_numbers() {
+        let notes: [u8; 4] = [0, 21, 72, 127];
+        let expected_frequencies: [f32; 4] = [8.175, 27.5, 523.251, 12543.854];
+
+        for i in 0..notes.len() {
+            assert!(f32_value_equality(
+                midi_note_to_frequency(notes[i]),
+                expected_frequencies[i]
+            ));
+        }
+    }
+
+    #[test]
+    fn frequency_from_cents_returns_correct_values_for_value_frequencies_and_cents() {
+        let frequencies: [f32; 4] = [8.175, 27.5, 523.251, 12543.854];
+        let cents = 50;
+        let expected_frequencies: [f32; 4] = [8.414546, 28.30581, 538.5834, 12911.417];
+
+        for i in 0..frequencies.len() {
+            assert!(f32_value_equality(
+                frequency_from_cents(frequencies[i], cents),
+                expected_frequencies[i]
+            ));
+        }
+    }
+
+    #[test]
+    fn frequency_from_cents_returns_correct_values_for_value_frequencies_and_negative_cents() {
+        let frequencies: [f32; 4] = [8.175, 27.5, 523.251, 12543.854];
+        let cents = -50;
+        let expected_frequencies: [f32; 4] = [7.9422736, 26.717129, 508.35504, 12186.754];
+
+        for i in 0..frequencies.len() {
+            assert!(f32_value_equality(
+                frequency_from_cents(frequencies[i], cents),
+                expected_frequencies[i]
+            ));
+        }
     }
 }
