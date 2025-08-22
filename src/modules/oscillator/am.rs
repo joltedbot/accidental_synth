@@ -36,12 +36,12 @@ impl GenerateSamples for AM {
 
     fn set_shape_parameter2(&mut self, _parameter: f32) {}
 
-    fn shape(&self) -> WaveShape {
-        self.shape
-    }
-
     fn set_phase(&mut self, phase: f32) {
         self.carrier.set_phase(phase.clamp(MIN_PHASE, MAX_PHASE));
+    }
+
+    fn shape(&self) -> WaveShape {
+        self.shape
     }
 
     fn reset(&mut self) {
