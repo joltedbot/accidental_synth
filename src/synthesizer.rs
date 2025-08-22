@@ -6,17 +6,18 @@ use crate::midi::MidiMessage;
 use crate::modules::amplifier::amplify_stereo;
 use crate::modules::envelope::Envelope;
 use crate::modules::filter::Filter;
+use crate::modules::lfo::Lfo;
 use crate::modules::mixer::{Mixer, MixerInput};
 use crate::modules::oscillator::{Oscillator, WaveShape};
-use std::default::Default;
-
-use crate::modules::lfo::Lfo;
 use anyhow::Result;
 use cpal::traits::DeviceTrait;
 use cpal::{Device, Stream};
 use crossbeam_channel::Receiver;
+use std::default::Default;
+use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::Instant;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum MidiNoteEvent {
@@ -44,30 +45,18 @@ pub enum LfoIndex {
     Lfo1 = 1,
 }
 
-#[derive(Default, Debug, Clone, Copy, PartialEq)]
-pub struct OscillatorParameters {
-    frequency: f32,
-    pitch_bend: Option<i16>,
-    course_tune: Option<i8>,
-    fine_tune: Option<i16>,
-    is_sub_oscillator: bool,
-}
-
-#[derive(Default, Debug, Clone, Copy, PartialEq)]
+#[derive(Default, Debug)]
 struct CurrentNote {
-    midi_note: u8,
-    velocity: f32,
-    velocity_curve: u8,
+    midi_note: AtomicU8,
+    velocity: AtomicU32,
+    velocity_curve: AtomicU8,
+    oscillator_key_sync_enabled: AtomicBool,
 }
 
-#[derive(Default, Debug, Clone, Copy, PartialEq)]
+#[derive(Default, Debug)]
 struct Parameters {
-    is_fixed_velocity: bool,
-    current_note: CurrentNote,
     mod_wheel_amount: f32,
     aftertouch_amount: f32,
-    oscillator_key_sync_enabled: bool,
-    oscillators: [OscillatorParameters; 4],
 }
 
 pub struct Modules {
@@ -82,6 +71,7 @@ pub struct Synthesizer {
     audio_output_device: Device,
     output_stream: Option<Stream>,
     parameters: Arc<Mutex<Parameters>>,
+    current_note: Arc<CurrentNote>,
     midi_note_events: Arc<Mutex<Option<MidiNoteEvent>>>,
     modules: Arc<Mutex<Modules>>,
 }
@@ -90,25 +80,31 @@ impl Synthesizer {
     pub fn new(audio_output_device: Device, sample_rate: u32) -> Self {
         log::info!("Constructing Synthesizer Module");
 
+        let velocity = AtomicU32::new(0);
+        midi_messages::store_f32_as_atomic_u32(&velocity, MAX_MIDI_KEY_VELOCITY);
+
         let current_note = CurrentNote {
-            midi_note: 0,
-            velocity: MAX_MIDI_KEY_VELOCITY,
-            velocity_curve: DEFAULT_MIDI_KEY_VELOCITY_CURVE_MIDI_VALUE,
+            midi_note: AtomicU8::new(0),
+            velocity,
+            velocity_curve: AtomicU8::new(DEFAULT_MIDI_KEY_VELOCITY_CURVE_MIDI_VALUE),
+            oscillator_key_sync_enabled: AtomicBool::new(true),
         };
 
         let parameters = Parameters {
-            current_note,
-            oscillator_key_sync_enabled: true,
             ..Default::default()
         };
 
         let amp_envelope = Envelope::new(sample_rate);
         let mut filter_envelope = Envelope::new(sample_rate);
-        filter_envelope.set_amount(DEFAULT_FILTER_ENVELOPE_AMOUNT);
+        filter_envelope.set_amount(1.0); //DEFAULT_FILTER_ENVELOPE_AMOUNT);
+        // ****  SET THE Filter envelope OFF AGAIN **** //
+
         let envelopes = [amp_envelope, filter_envelope];
 
         let mut filter_modulation_lfo = Lfo::new(sample_rate);
-        filter_modulation_lfo.set_range(0.0);
+        filter_modulation_lfo.set_range(1.0);
+        // ****  SET THE MOD LFO OFF AGAIN **** //
+
         let shared_lfo1 = Lfo::new(sample_rate);
         let lfos = [filter_modulation_lfo, shared_lfo1];
 
@@ -134,6 +130,7 @@ impl Synthesizer {
         Self {
             audio_output_device,
             output_stream: None,
+            current_note: Arc::new(current_note),
             parameters: Arc::new(Mutex::new(parameters)),
             midi_note_events: Arc::new(Mutex::new(None)),
             modules: Arc::new(Mutex::new(modules)),
@@ -155,6 +152,7 @@ impl Synthesizer {
         let mut parameters_arc = self.parameters.clone();
         let mut midi_event_arc = self.midi_note_events.clone();
         let mut modules_arc = self.modules.clone();
+        let mut current_note = self.current_note.clone();
 
         thread::spawn(move || {
             log::debug!("run(): spawned thread to receive MIDI events");
@@ -162,26 +160,20 @@ impl Synthesizer {
             while let Ok(event) = midi_message_receiver.recv() {
                 match event {
                     MidiMessage::NoteOn(midi_note, velocity) => {
-                        let mut modules = modules_arc
-                            .lock()
-                            .unwrap_or_else(|poisoned| poisoned.into_inner());
-                        let oscillators = &mut modules.oscillators;
-
                         midi_messages::process_midi_note_on_message(
-                            &mut parameters_arc,
-                            &mut midi_event_arc,
-                            oscillators,
+                            &mut modules_arc,
+                            &mut current_note,
                             midi_note,
                             velocity,
                         );
                     }
                     MidiMessage::NoteOff => {
-                        midi_messages::process_midi_note_off_message(&mut midi_event_arc);
+                        midi_messages::process_midi_note_off_message(&mut modules_arc);
                     }
                     MidiMessage::PitchBend(bend_amount) => {
                         midi_messages::process_midi_pitch_bend_message(
                             &mut modules_arc,
-                            &mut parameters_arc,
+                            &mut current_note,
                             bend_amount,
                         );
                     }
@@ -194,6 +186,7 @@ impl Synthesizer {
                     MidiMessage::ControlChange(cc_value) => {
                         midi_messages::process_midi_cc_values(
                             cc_value,
+                            &mut current_note,
                             &mut parameters_arc,
                             &mut midi_event_arc,
                             &mut modules_arc,
@@ -207,9 +200,8 @@ impl Synthesizer {
     }
 
     fn create_synthesizer(&mut self, output_device: Device) -> Result<Stream> {
-        let parameters_arc = self.parameters.clone();
-        let midi_note_events_arc = self.midi_note_events.clone();
         let modules_arc = self.modules.clone();
+        let current_note_arc = self.current_note.clone();
 
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
@@ -225,32 +217,11 @@ impl Synthesizer {
         let stream = output_device.build_output_stream(
             &default_device_stream_config,
             move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                let parameters = {
-                    let parameter_mutex = parameters_arc
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner());
-                    parameter_mutex.to_owned()
-                };
+                let start = Instant::now();
 
                 let mut modules = modules_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-                let note_event = {
-                    let mut midi_note_events = midi_note_events_arc
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-                    midi_note_events.take()
-                };
-
-                if let Some(event) = note_event {
-                    midi_messages::action_midi_note_events(
-                        event,
-                        &mut modules,
-                        parameters.oscillator_key_sync_enabled,
-                    );
-                }
 
                 // Begin processing the audio buffer
 
@@ -280,7 +251,9 @@ impl Synthesizer {
                     let (left_envelope_sample, right_envelope_sample) = amplify_stereo(
                         oscillator_mix_left,
                         oscillator_mix_right,
-                        Some(parameters.current_note.velocity),
+                        Some(midi_messages::load_f32_from_atomic_u32(
+                            &current_note_arc.velocity,
+                        )),
                         amp_envelope_value,
                     );
 
@@ -288,6 +261,7 @@ impl Synthesizer {
                         modules.envelopes[EnvelopeIndex::Filter as usize].generate();
 
                     let filter_lfo_value = modules.lfos[LfoIndex::Filter as usize].generate();
+
                     modules
                         .filter
                         .modulate_cutoff_frequency(filter_envelope_value + filter_lfo_value);
@@ -304,6 +278,7 @@ impl Synthesizer {
                     frame[0] = output_left;
                     frame[1] = output_right;
                 }
+                println!("{:?}", start.elapsed().as_nanos());
             },
             |err| {
                 log::error!("create_synthesizer(): Error in audio output stream: {err}");

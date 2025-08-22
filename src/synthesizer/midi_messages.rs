@@ -5,8 +5,10 @@ use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::synthesizer::constants::*;
 use crate::synthesizer::{
-    EnvelopeIndex, LfoIndex, MidiNoteEvent, Modules, OscillatorIndex, Parameters,
+    CurrentNote, EnvelopeIndex, LfoIndex, MidiNoteEvent, Modules, OscillatorIndex, Parameters,
 };
+use std::sync::atomic::Ordering::Relaxed;
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 pub fn action_midi_note_events(
@@ -45,7 +47,7 @@ pub fn process_midi_channel_pressure_message(
 
 pub fn process_midi_pitch_bend_message(
     modules_arc: &mut Arc<Mutex<Modules>>,
-    parameters_arc: &mut Arc<Mutex<Parameters>>,
+    current_note: &mut Arc<CurrentNote>,
     bend_amount: i16,
 ) {
     let mut modules = modules_arc
@@ -53,51 +55,50 @@ pub fn process_midi_pitch_bend_message(
         .unwrap_or_else(|poisoned| poisoned.into_inner());
     let oscillators = &mut modules.oscillators;
 
-    let parameters = parameters_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-    let midi_note = parameters.current_note.midi_note;
+    let midi_note = current_note.midi_note.load(Relaxed);
 
     update_current_note_from_midi_pitch_bend(bend_amount, oscillators);
     update_current_note_from_stored_parameters(midi_note, oscillators);
 }
 
-pub fn process_midi_note_off_message(midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>) {
-    let mut midi_events = midi_event_arc
+pub fn process_midi_note_off_message(modules_arc: &mut Arc<Mutex<Modules>>) {
+    let mut modules = modules_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    *midi_events = Some(MidiNoteEvent::NoteOff);
+    action_midi_note_events(MidiNoteEvent::NoteOff, &mut modules, false);
 }
 
 pub fn process_midi_note_on_message(
-    parameters_arc: &mut Arc<Mutex<Parameters>>,
-    midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
-    oscillators: &mut [Oscillator; 4],
+    modules_arc: &mut Arc<Mutex<Modules>>,
+    current_note: &mut Arc<CurrentNote>,
     midi_note: u8,
     velocity: u8,
 ) {
-    let mut parameters = parameters_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    parameters.current_note.velocity = continuously_variable_curve_mapping_from_midi_value(
-        parameters.current_note.velocity_curve,
+    let scaled_velocity = continuously_variable_curve_mapping_from_midi_value(
+        current_note.velocity_curve.load(Relaxed),
         velocity,
     );
 
-    parameters.current_note.midi_note = midi_note;
-    update_current_note_from_stored_parameters(midi_note, oscillators);
+    store_f32_as_atomic_u32(&current_note.velocity, scaled_velocity);
 
-    let mut midi_events = midi_event_arc
+    current_note.midi_note.store(midi_note, Relaxed);
+
+    let mut modules = modules_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    *midi_events = Some(MidiNoteEvent::NoteOn);
+    update_current_note_from_stored_parameters(midi_note, &mut modules.oscillators);
+    action_midi_note_events(
+        MidiNoteEvent::NoteOn,
+        &mut modules,
+        current_note.oscillator_key_sync_enabled.load(Relaxed),
+    );
 }
 
 pub fn process_midi_cc_values(
     cc_value: CC,
+    current_note: &mut Arc<CurrentNote>,
     parameters_arc: &mut Arc<Mutex<Parameters>>,
     midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
     modules_arc: &mut Arc<Mutex<Modules>>,
@@ -108,7 +109,7 @@ pub fn process_midi_cc_values(
             set_mod_wheel(parameters_arc, value);
         }
         CC::VelocityCurve(value) => {
-            set_velocity_curve(parameters_arc, value);
+            set_velocity_curve(current_note, value);
         }
         CC::Volume(value) => {
             set_output_volume(modules_arc, value);
@@ -144,7 +145,7 @@ pub fn process_midi_cc_values(
             set_oscillator_shape_parameter2(modules_arc, OscillatorIndex::Three, value);
         }
         CC::OscillatorKeySyncEnabled(value) => {
-            set_oscillator_key_sync(parameters_arc, value);
+            set_oscillator_key_sync(current_note, value);
         }
         CC::SubOscillatorShape(value) => {
             set_oscillator_wave_shape(modules_arc, OscillatorIndex::Sub, value);
@@ -163,56 +164,56 @@ pub fn process_midi_cc_values(
                 .lock()
                 .unwrap_or_else(|poisoned| poisoned.into_inner());
             let oscillators = &mut modules.oscillators;
-            set_oscillator_course_tune(parameters_arc, oscillators, OscillatorIndex::Sub, value);
+            set_oscillator_course_tune(current_note, oscillators, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1CourseTune(value) => {
             let mut modules = modules_arc
                 .lock()
                 .unwrap_or_else(|poisoned| poisoned.into_inner());
             let oscillators = &mut modules.oscillators;
-            set_oscillator_course_tune(parameters_arc, oscillators, OscillatorIndex::One, value);
+            set_oscillator_course_tune(current_note, oscillators, OscillatorIndex::One, value);
         }
         CC::Oscillator2CourseTune(value) => {
             let mut modules = modules_arc
                 .lock()
                 .unwrap_or_else(|poisoned| poisoned.into_inner());
             let oscillators = &mut modules.oscillators;
-            set_oscillator_course_tune(parameters_arc, oscillators, OscillatorIndex::Two, value);
+            set_oscillator_course_tune(current_note, oscillators, OscillatorIndex::Two, value);
         }
         CC::Oscillator3CourseTune(value) => {
             let mut modules = modules_arc
                 .lock()
                 .unwrap_or_else(|poisoned| poisoned.into_inner());
             let oscillators = &mut modules.oscillators;
-            set_oscillator_course_tune(parameters_arc, oscillators, OscillatorIndex::Three, value);
+            set_oscillator_course_tune(current_note, oscillators, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorFineTune(value) => {
             let mut modules = modules_arc
                 .lock()
                 .unwrap_or_else(|poisoned| poisoned.into_inner());
             let oscillators = &mut modules.oscillators;
-            set_oscillator_fine_tune(parameters_arc, oscillators, OscillatorIndex::Sub, value);
+            set_oscillator_fine_tune(current_note, oscillators, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1FineTune(value) => {
             let mut modules = modules_arc
                 .lock()
                 .unwrap_or_else(|poisoned| poisoned.into_inner());
             let oscillators = &mut modules.oscillators;
-            set_oscillator_fine_tune(parameters_arc, oscillators, OscillatorIndex::One, value);
+            set_oscillator_fine_tune(current_note, oscillators, OscillatorIndex::One, value);
         }
         CC::Oscillator2FineTune(value) => {
             let mut modules = modules_arc
                 .lock()
                 .unwrap_or_else(|poisoned| poisoned.into_inner());
             let oscillators = &mut modules.oscillators;
-            set_oscillator_fine_tune(parameters_arc, oscillators, OscillatorIndex::Two, value);
+            set_oscillator_fine_tune(current_note, oscillators, OscillatorIndex::Two, value);
         }
         CC::Oscillator3FineTune(value) => {
             let mut modules = modules_arc
                 .lock()
                 .unwrap_or_else(|poisoned| poisoned.into_inner());
             let oscillators = &mut modules.oscillators;
-            set_oscillator_fine_tune(parameters_arc, oscillators, OscillatorIndex::Three, value);
+            set_oscillator_fine_tune(current_note, oscillators, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorLevel(value) => {
             set_oscillator_level(modules_arc, OscillatorIndex::Sub, value);
@@ -586,12 +587,8 @@ fn set_output_volume(modules_arc: &mut Arc<Mutex<Modules>>, value: u8) {
     modules.mixer.set_output_level(output_level);
 }
 
-fn set_velocity_curve(parameters_arc: &mut Arc<Mutex<Parameters>>, value: u8) {
-    let mut parameters = parameters_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    parameters.current_note.velocity_curve = value;
+fn set_velocity_curve(current_note: &mut Arc<CurrentNote>, value: u8) {
+    current_note.velocity_curve.store(value, Relaxed);
 }
 
 fn set_mod_wheel(parameters_arc: &mut Arc<Mutex<Parameters>>, value: u8) {
@@ -627,12 +624,10 @@ fn set_oscillator_shape_parameter2(
     modules.oscillators[oscillator as usize].set_shape_parameter2(midi_value_to_f32_0_to_1(value));
 }
 
-fn set_oscillator_key_sync(parameters_arc: &mut Arc<Mutex<Parameters>>, value: u8) {
-    let mut parameters = parameters_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    parameters.oscillator_key_sync_enabled = midi_value_to_bool(value);
+fn set_oscillator_key_sync(current_note: &mut Arc<CurrentNote>, value: u8) {
+    current_note
+        .oscillator_key_sync_enabled
+        .store(midi_value_to_bool(value), Relaxed);
 }
 
 fn set_oscillator_balance(
@@ -684,23 +679,19 @@ fn set_oscillator_level(
 }
 
 fn set_oscillator_fine_tune(
-    parameters_arc: &mut Arc<Mutex<Parameters>>,
+    current_note: &mut Arc<CurrentNote>,
     oscillators: &mut [Oscillator; 4],
     oscillator: OscillatorIndex,
     value: u8,
 ) {
     oscillators[oscillator as usize].set_fine_tune(Some(midi_value_to_fine_tune_cents(value)));
 
-    let parameters = parameters_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    let midi_note = parameters.current_note.midi_note;
+    let midi_note = current_note.midi_note.load(Relaxed);
     update_current_note_from_stored_parameters(midi_note, oscillators);
 }
 
 fn set_oscillator_course_tune(
-    parameters_arc: &mut Arc<Mutex<Parameters>>,
+    current_note: &mut Arc<CurrentNote>,
     oscillators: &mut [Oscillator; 4],
     oscillator: OscillatorIndex,
     value: u8,
@@ -708,10 +699,7 @@ fn set_oscillator_course_tune(
     oscillators[oscillator as usize]
         .set_course_tune(Some(midi_value_to_course_tune_intervals(value)));
 
-    let parameters = parameters_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-    let midi_note = parameters.current_note.midi_note;
+    let midi_note = current_note.midi_note.load(Relaxed);
     update_current_note_from_stored_parameters(midi_note, oscillators);
 }
 
@@ -884,6 +872,14 @@ fn update_current_note_from_stored_parameters(midi_note: u8, oscillators: &mut [
     for oscillator in oscillators.iter_mut() {
         oscillator.tune(midi_note);
     }
+}
+
+pub fn store_f32_as_atomic_u32(atomic: &AtomicU32, value: f32) {
+    atomic.store(value.to_bits(), Ordering::SeqCst);
+}
+
+pub fn load_f32_from_atomic_u32(atomic: &AtomicU32) -> f32 {
+    f32::from_bits(atomic.load(Ordering::SeqCst))
 }
 
 #[cfg(test)]
