@@ -248,42 +248,35 @@ impl Synthesizer {
 
                 // Begin processing the audio buffer
 
-                let mut sub_oscillator_mixer_input = MixerInput {
-                    sample: 0.0,
-                    level: load_f32_from_atomic_u32(&parameters.oscillators[0].mixer_level),
-                    balance: load_f32_from_atomic_u32(&parameters.oscillators[0].mixer_balance),
-                    mute: parameters.oscillators[0].mixer_mute.load(Relaxed),
-                };
-
-                let mut oscillator1_mixer_input = MixerInput {
-                    sample: 0.0,
-                    level: load_f32_from_atomic_u32(&parameters.oscillators[1].mixer_level),
-                    balance: load_f32_from_atomic_u32(&parameters.oscillators[1].mixer_balance),
-                    mute: parameters.oscillators[1].mixer_mute.load(Relaxed),
-                };
-
-                let mut oscillator2_mixer_input = MixerInput {
-                    sample: 0.0,
-                    level: load_f32_from_atomic_u32(&parameters.oscillators[2].mixer_level),
-                    balance: load_f32_from_atomic_u32(&parameters.oscillators[2].mixer_balance),
-                    mute: parameters.oscillators[2].mixer_mute.load(Relaxed),
-                };
-
-                let mut oscillator3_mixer_input = MixerInput {
-                    sample: 0.0,
-                    level: load_f32_from_atomic_u32(&parameters.oscillators[3].mixer_level),
-                    balance: load_f32_from_atomic_u32(&parameters.oscillators[3].mixer_balance),
-                    mute: parameters.oscillators[3].mixer_mute.load(Relaxed),
-                };
+                let mut sub_oscillator_mixer_input = create_mixer_input_from_oscillator_parameters(
+                    &parameters,
+                    OscillatorIndex::Sub,
+                );
+                let mut oscillator1_mixer_input = create_mixer_input_from_oscillator_parameters(
+                    &parameters,
+                    OscillatorIndex::One,
+                );
+                let mut oscillator2_mixer_input = create_mixer_input_from_oscillator_parameters(
+                    &parameters,
+                    OscillatorIndex::Two,
+                );
+                let mut oscillator3_mixer_input = create_mixer_input_from_oscillator_parameters(
+                    &parameters,
+                    OscillatorIndex::Three,
+                );
 
                 // Split the buffer into frames
                 for frame in buffer.chunks_mut(number_of_channels) {
                     // Begin generating and processing the samples for the frame
 
-                    sub_oscillator_mixer_input.sample = modules.oscillators[0].generate(None);
-                    oscillator1_mixer_input.sample = modules.oscillators[1].generate(None);
-                    oscillator2_mixer_input.sample = modules.oscillators[2].generate(None);
-                    oscillator3_mixer_input.sample = modules.oscillators[3].generate(None);
+                    sub_oscillator_mixer_input.sample =
+                        modules.oscillators[OscillatorIndex::Sub as usize].generate(None);
+                    oscillator1_mixer_input.sample =
+                        modules.oscillators[OscillatorIndex::One as usize].generate(None);
+                    oscillator2_mixer_input.sample =
+                        modules.oscillators[OscillatorIndex::Two as usize].generate(None);
+                    oscillator3_mixer_input.sample =
+                        modules.oscillators[OscillatorIndex::Three as usize].generate(None);
 
                     // Any per-oscillator processing should happen before this stereo mix down
                     let (oscillator_mix_left, oscillator_mix_right) = quad_mix(
@@ -336,5 +329,21 @@ impl Synthesizer {
         log::info!("Synthesizer audio output stream was successfully created.");
 
         Ok(stream)
+    }
+}
+
+fn create_mixer_input_from_oscillator_parameters(
+    parameters: &Arc<Parameters>,
+    oscillator: OscillatorIndex,
+) -> MixerInput {
+    MixerInput {
+        sample: 0.0,
+        level: load_f32_from_atomic_u32(&parameters.oscillators[oscillator as usize].mixer_level),
+        balance: load_f32_from_atomic_u32(
+            &parameters.oscillators[oscillator as usize].mixer_balance,
+        ),
+        mute: parameters.oscillators[oscillator as usize]
+            .mixer_mute
+            .load(Relaxed),
     }
 }
