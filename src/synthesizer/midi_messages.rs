@@ -1,14 +1,12 @@
 use crate::midi::CC;
 use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS};
 use crate::modules::filter::FilterSlope;
-use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::synthesizer::constants::*;
 use crate::synthesizer::{
     CurrentNote, EnvelopeIndex, LfoIndex, MidiNoteEvent, Modules, OscillatorIndex, Parameters,
 };
-use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU32, Ordering::Relaxed};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 pub fn action_midi_note_events(
@@ -35,14 +33,9 @@ pub fn action_midi_note_events(
     }
 }
 
-pub fn process_midi_channel_pressure_message(
-    parameters_arc: &mut Arc<Mutex<Parameters>>,
-    pressure_value: u8,
-) {
-    let mut parameters = parameters_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-    parameters.aftertouch_amount = midi_value_to_f32_0_to_1(pressure_value);
+pub fn process_midi_channel_pressure_message(parameters: &mut Arc<Parameters>, pressure_value: u8) {
+    let aftertouch_amount = midi_value_to_f32_0_to_1(pressure_value);
+    store_f32_as_atomic_u32(&parameters.aftertouch_amount, aftertouch_amount);
 }
 
 pub fn process_midi_pitch_bend_message(
@@ -99,26 +92,23 @@ pub fn process_midi_note_on_message(
 pub fn process_midi_cc_values(
     cc_value: CC,
     current_note: &mut Arc<CurrentNote>,
-    parameters_arc: &mut Arc<Mutex<Parameters>>,
+    parameters: &mut Arc<Parameters>,
     midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
     modules_arc: &mut Arc<Mutex<Modules>>,
 ) {
     log::debug!("process_midi_cc_values(): CC received: {:?}", cc_value);
     match cc_value {
         CC::ModWheel(value) => {
-            set_mod_wheel(parameters_arc, value);
+            set_mod_wheel(parameters, value);
         }
         CC::VelocityCurve(value) => {
             set_velocity_curve(current_note, value);
         }
         CC::Volume(value) => {
-            set_output_volume(modules_arc, value);
+            set_output_volume(parameters, value);
         }
-        CC::ConstantLevel(value) => {
-            set_output_constant_level(modules_arc, value);
-        }
-        CC::Pan(value) => {
-            set_output_balance(modules_arc, value);
+        CC::Balance(value) => {
+            set_output_balance(parameters, value);
         }
         CC::SubOscillatorShapeParameter1(value) => {
             set_oscillator_shape_parameter1(modules_arc, OscillatorIndex::Sub, value);
@@ -216,40 +206,40 @@ pub fn process_midi_cc_values(
             set_oscillator_fine_tune(current_note, oscillators, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorLevel(value) => {
-            set_oscillator_level(modules_arc, OscillatorIndex::Sub, value);
+            set_oscillator_level(parameters, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1Level(value) => {
-            set_oscillator_level(modules_arc, OscillatorIndex::One, value);
+            set_oscillator_level(parameters, OscillatorIndex::One, value);
         }
         CC::Oscillator2Level(value) => {
-            set_oscillator_level(modules_arc, OscillatorIndex::Two, value);
+            set_oscillator_level(parameters, OscillatorIndex::Two, value);
         }
         CC::Oscillator3Level(value) => {
-            set_oscillator_level(modules_arc, OscillatorIndex::Three, value);
+            set_oscillator_level(parameters, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorMute(value) => {
-            set_oscillator_mute(modules_arc, OscillatorIndex::Sub, value);
+            set_oscillator_mute(parameters, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1Mute(value) => {
-            set_oscillator_mute(modules_arc, OscillatorIndex::One, value);
+            set_oscillator_mute(parameters, OscillatorIndex::One, value);
         }
         CC::Oscillator2Mute(value) => {
-            set_oscillator_mute(modules_arc, OscillatorIndex::Two, value);
+            set_oscillator_mute(parameters, OscillatorIndex::Two, value);
         }
         CC::Oscillator3Mute(value) => {
-            set_oscillator_mute(modules_arc, OscillatorIndex::Three, value);
+            set_oscillator_mute(parameters, OscillatorIndex::Three, value);
         }
-        CC::SubOscillatorPan(value) => {
-            set_oscillator_balance(modules_arc, OscillatorIndex::Sub, value);
+        CC::SubOscillatorBalance(value) => {
+            set_oscillator_balance(parameters, OscillatorIndex::Sub, value);
         }
-        CC::Oscillator1Pan(value) => {
-            set_oscillator_balance(modules_arc, OscillatorIndex::One, value);
+        CC::Oscillator1Balance(value) => {
+            set_oscillator_balance(parameters, OscillatorIndex::One, value);
         }
-        CC::Oscillator2Pan(value) => {
-            set_oscillator_balance(modules_arc, OscillatorIndex::Two, value);
+        CC::Oscillator2Balance(value) => {
+            set_oscillator_balance(parameters, OscillatorIndex::Two, value);
         }
-        CC::Oscillator3Pan(value) => {
-            set_oscillator_balance(modules_arc, OscillatorIndex::Three, value);
+        CC::Oscillator3Balance(value) => {
+            set_oscillator_balance(parameters, OscillatorIndex::Three, value);
         }
         CC::FilterPoles(value) => {
             set_filter_poles(modules_arc, value);
@@ -558,46 +548,23 @@ fn set_filter_poles(modules_arc: &mut Arc<Mutex<Modules>>, value: u8) {
         .set_filter_slope(midi_value_to_filter_slope(value));
 }
 
-fn set_output_balance(modules_arc: &mut Arc<Mutex<Modules>>, value: u8) {
+fn set_output_balance(parameters: &mut Arc<Parameters>, value: u8) {
     let output_balance = midi_value_to_f32_negative_1_to_1(value);
-
-    let mut modules = modules_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    modules.mixer.set_output_balance(output_balance);
+    store_f32_as_atomic_u32(&parameters.output_balance, output_balance);
 }
 
-fn set_output_constant_level(modules_arc: &mut Arc<Mutex<Modules>>, value: u8) {
-    let is_constant_level = midi_value_to_bool(value);
-    let mut modules = modules_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    modules.mixer.set_constant_level(is_constant_level)
-}
-
-fn set_output_volume(modules_arc: &mut Arc<Mutex<Modules>>, value: u8) {
+fn set_output_volume(parameters: &mut Arc<Parameters>, value: u8) {
     let output_level = exponential_curve_level_adjustment_from_midi_value(value);
-
-    let mut modules = modules_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    modules.mixer.set_output_level(output_level);
+    store_f32_as_atomic_u32(&parameters.output_level, output_level);
 }
 
 fn set_velocity_curve(current_note: &mut Arc<CurrentNote>, value: u8) {
     current_note.velocity_curve.store(value, Relaxed);
 }
 
-fn set_mod_wheel(parameters_arc: &mut Arc<Mutex<Parameters>>, value: u8) {
+fn set_mod_wheel(parameters: &mut Arc<Parameters>, value: u8) {
     let mod_wheel_amount = midi_value_to_f32_0_to_1(value);
-    let mut parameters = parameters_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    parameters.mod_wheel_amount = mod_wheel_amount;
+    store_f32_as_atomic_u32(&parameters.mod_wheel_amount, mod_wheel_amount);
 }
 
 fn set_oscillator_shape_parameter1(
@@ -631,51 +598,30 @@ fn set_oscillator_key_sync(current_note: &mut Arc<CurrentNote>, value: u8) {
 }
 
 fn set_oscillator_balance(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    parameters: &mut Arc<Parameters>,
     oscillator: OscillatorIndex,
     value: u8,
 ) {
     let balance = midi_value_to_f32_negative_1_to_1(value);
-
-    let mut modules = modules_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    modules
-        .mixer
-        .set_quad_balance(mixer_input_from_oscillator_and_value(oscillator, balance));
+    store_f32_as_atomic_u32(
+        &parameters.oscillators[oscillator as usize].mixer_balance,
+        balance,
+    );
 }
 
-fn set_oscillator_mute(
-    modules_arc: &mut Arc<Mutex<Modules>>,
-    oscillator: OscillatorIndex,
-    value: u8,
-) {
+fn set_oscillator_mute(parameters: &mut Arc<Parameters>, oscillator: OscillatorIndex, value: u8) {
     let mute = midi_value_to_bool(value);
-
-    let mut modules = modules_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    modules
-        .mixer
-        .set_quad_mute(mixer_input_from_oscillator_and_value(oscillator, mute));
+    parameters.oscillators[oscillator as usize]
+        .mixer_mute
+        .swap(mute, Relaxed);
 }
 
-fn set_oscillator_level(
-    modules_arc: &mut Arc<Mutex<Modules>>,
-    oscillator: OscillatorIndex,
-    value: u8,
-) {
+fn set_oscillator_level(parameters: &mut Arc<Parameters>, oscillator: OscillatorIndex, value: u8) {
     let level = exponential_curve_level_adjustment_from_midi_value(value);
-
-    let mut modules = modules_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    modules
-        .mixer
-        .set_quad_level(mixer_input_from_oscillator_and_value(oscillator, level));
+    store_f32_as_atomic_u32(
+        &parameters.oscillators[oscillator as usize].mixer_level,
+        level,
+    );
 }
 
 fn set_oscillator_fine_tune(
@@ -787,18 +733,6 @@ fn midi_value_to_oscillator_wave_shape(midi_value: u8) -> WaveShape {
     }
 }
 
-fn mixer_input_from_oscillator_and_value<T>(
-    oscillator: OscillatorIndex,
-    value: T,
-) -> MixerInput<T> {
-    match oscillator {
-        OscillatorIndex::Sub => MixerInput::One(value),
-        OscillatorIndex::One => MixerInput::Two(value),
-        OscillatorIndex::Two => MixerInput::Three(value),
-        OscillatorIndex::Three => MixerInput::Four(value),
-    }
-}
-
 fn exponential_curve_filter_cutoff_from_midi_value(midi_value: u8) -> f32 {
     if midi_value == 0 {
         return 0.0;
@@ -875,11 +809,11 @@ fn update_current_note_from_stored_parameters(midi_note: u8, oscillators: &mut [
 }
 
 pub fn store_f32_as_atomic_u32(atomic: &AtomicU32, value: f32) {
-    atomic.store(value.to_bits(), Ordering::SeqCst);
+    atomic.store(value.to_bits(), Relaxed);
 }
 
 pub fn load_f32_from_atomic_u32(atomic: &AtomicU32) -> f32 {
-    f32::from_bits(atomic.load(Ordering::SeqCst))
+    f32::from_bits(atomic.load(Relaxed))
 }
 
 #[cfg(test)]
