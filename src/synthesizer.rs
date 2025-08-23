@@ -17,7 +17,6 @@ use std::default::Default;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Instant;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum MidiNoteEvent {
@@ -94,7 +93,7 @@ impl Synthesizer {
             ..Default::default()
         };
 
-        let mut filter = Filter::new(sample_rate);
+        let filter = Filter::new(sample_rate);
 
         let amp_envelope = Envelope::new(sample_rate);
         let mut filter_envelope = Envelope::new(sample_rate);
