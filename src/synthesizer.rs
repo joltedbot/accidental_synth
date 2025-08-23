@@ -94,16 +94,16 @@ impl Synthesizer {
             ..Default::default()
         };
 
+        let mut filter = Filter::new(sample_rate);
+
         let amp_envelope = Envelope::new(sample_rate);
         let mut filter_envelope = Envelope::new(sample_rate);
-        filter_envelope.set_amount(1.0); //DEFAULT_FILTER_ENVELOPE_AMOUNT);
-        // ****  SET THE Filter envelope OFF AGAIN **** //
+        filter_envelope.set_amount(DEFAULT_FILTER_ENVELOPE_AMOUNT);
 
         let envelopes = [amp_envelope, filter_envelope];
 
         let mut filter_modulation_lfo = Lfo::new(sample_rate);
-        filter_modulation_lfo.set_range(1.0);
-        // ****  SET THE MOD LFO OFF AGAIN **** //
+        filter_modulation_lfo.set_range(0.0);
 
         let shared_lfo1 = Lfo::new(sample_rate);
         let lfos = [filter_modulation_lfo, shared_lfo1];
@@ -121,7 +121,7 @@ impl Synthesizer {
 
         let modules = Modules {
             envelopes,
-            filter: Filter::new(sample_rate),
+            filter,
             lfos,
             mixer,
             oscillators,
@@ -217,8 +217,6 @@ impl Synthesizer {
         let stream = output_device.build_output_stream(
             &default_device_stream_config,
             move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                let start = Instant::now();
-
                 let mut modules = modules_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -278,7 +276,6 @@ impl Synthesizer {
                     frame[0] = output_left;
                     frame[1] = output_right;
                 }
-                println!("{:?}", start.elapsed().as_nanos());
             },
             |err| {
                 log::error!("create_synthesizer(): Error in audio output stream: {err}");
