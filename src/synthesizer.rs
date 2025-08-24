@@ -79,11 +79,12 @@ impl Default for QuadMixerInput {
     }
 }
 
+#[derive(Clone)]
 pub struct Modules {
-    envelopes: [Envelope; 2],
-    filter: Filter,
-    lfos: [Lfo; 2],
-    oscillators: [Oscillator; 4],
+    envelopes: Arc<Mutex<[Envelope; 2]>>,
+    filter: Arc<Mutex<Filter>>,
+    lfos: Arc<Mutex<[Lfo; 2]>>,
+    oscillators: Arc<Mutex<[Oscillator; 4]>>,
 }
 
 pub struct Synthesizer {
@@ -92,7 +93,7 @@ pub struct Synthesizer {
     parameters: Arc<Parameters>,
     current_note: Arc<CurrentNote>,
     midi_note_events: Arc<Mutex<Option<MidiNoteEvent>>>,
-    modules: Arc<Mutex<Modules>>,
+    modules: Modules,
 }
 
 impl Synthesizer {
@@ -145,10 +146,10 @@ impl Synthesizer {
         oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
 
         let modules = Modules {
-            envelopes,
-            filter,
-            lfos,
-            oscillators,
+            oscillators: Arc::new(Mutex::new(oscillators)),
+            envelopes: Arc::new(Mutex::new(envelopes)),
+            filter: Arc::new(Mutex::new(filter)),
+            lfos: Arc::new(Mutex::new(lfos)),
         };
 
         Self {
@@ -157,7 +158,7 @@ impl Synthesizer {
             current_note: Arc::new(current_note),
             parameters: Arc::new(parameters),
             midi_note_events: Arc::new(Mutex::new(None)),
-            modules: Arc::new(Mutex::new(modules)),
+            modules,
         }
     }
 
@@ -175,8 +176,10 @@ impl Synthesizer {
     fn start_midi_event_listener(&mut self, midi_message_receiver: Receiver<MidiMessage>) {
         let mut parameters_arc = self.parameters.clone();
         let mut midi_event_arc = self.midi_note_events.clone();
-        let mut modules_arc = self.modules.clone();
+        let mut oscillators_arc = self.modules.oscillators.clone();
+        let mut envelopes_arc = self.modules.envelopes.clone();
         let mut current_note = self.current_note.clone();
+        let mut modules = self.modules.clone();
 
         thread::spawn(move || {
             log::debug!("run(): spawned thread to receive MIDI events");
@@ -185,18 +188,22 @@ impl Synthesizer {
                 match event {
                     MidiMessage::NoteOn(midi_note, velocity) => {
                         midi_messages::process_midi_note_on_message(
-                            &mut modules_arc,
+                            &mut oscillators_arc,
+                            &mut envelopes_arc,
                             &mut current_note,
                             midi_note,
                             velocity,
                         );
                     }
                     MidiMessage::NoteOff => {
-                        midi_messages::process_midi_note_off_message(&mut modules_arc);
+                        midi_messages::process_midi_note_off_message(
+                            &mut oscillators_arc,
+                            &mut envelopes_arc,
+                        );
                     }
                     MidiMessage::PitchBend(bend_amount) => {
                         midi_messages::process_midi_pitch_bend_message(
-                            &mut modules_arc,
+                            &mut oscillators_arc,
                             &mut current_note,
                             bend_amount,
                         );
@@ -213,7 +220,7 @@ impl Synthesizer {
                             &mut current_note,
                             &mut parameters_arc,
                             &mut midi_event_arc,
-                            &mut modules_arc,
+                            &mut modules,
                         );
                     }
                 }
@@ -224,9 +231,12 @@ impl Synthesizer {
     }
 
     fn create_synthesizer(&mut self, output_device: Device) -> Result<Stream> {
-        let modules_arc = self.modules.clone();
         let current_note_arc = self.current_note.clone();
         let parameters = self.parameters.clone();
+        let oscillators_arc = self.modules.oscillators.clone();
+        let envelopes_arc = self.modules.envelopes.clone();
+        let lfos_arc = self.modules.lfos.clone();
+        let filter_arc = self.modules.filter.clone();
 
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
@@ -242,7 +252,16 @@ impl Synthesizer {
         let stream = output_device.build_output_stream(
             &default_device_stream_config,
             move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                let mut modules = modules_arc
+                let mut oscillators = oscillators_arc
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                let mut envelopes = envelopes_arc
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                let mut lfos = lfos_arc
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                let mut filter = filter_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
 
@@ -270,13 +289,13 @@ impl Synthesizer {
                     // Begin generating and processing the samples for the frame
 
                     sub_oscillator_mixer_input.sample =
-                        modules.oscillators[OscillatorIndex::Sub as usize].generate(None);
+                        oscillators[OscillatorIndex::Sub as usize].generate(None);
                     oscillator1_mixer_input.sample =
-                        modules.oscillators[OscillatorIndex::One as usize].generate(None);
+                        oscillators[OscillatorIndex::One as usize].generate(None);
                     oscillator2_mixer_input.sample =
-                        modules.oscillators[OscillatorIndex::Two as usize].generate(None);
+                        oscillators[OscillatorIndex::Two as usize].generate(None);
                     oscillator3_mixer_input.sample =
-                        modules.oscillators[OscillatorIndex::Three as usize].generate(None);
+                        oscillators[OscillatorIndex::Three as usize].generate(None);
 
                     // Any per-oscillator processing should happen before this stereo mix down
                     let (oscillator_mix_left, oscillator_mix_right) = quad_mix(
@@ -287,7 +306,7 @@ impl Synthesizer {
                     );
 
                     let amp_envelope_value =
-                        Some(modules.envelopes[EnvelopeIndex::Amplifier as usize].generate());
+                        Some(envelopes[EnvelopeIndex::Amplifier as usize].generate());
 
                     let (left_envelope_sample, right_envelope_sample) = amplify_stereo(
                         oscillator_mix_left,
@@ -297,24 +316,20 @@ impl Synthesizer {
                     );
 
                     let filter_envelope_value =
-                        modules.envelopes[EnvelopeIndex::Filter as usize].generate();
+                        envelopes[EnvelopeIndex::Filter as usize].generate();
 
-                    let filter_lfo_value = modules.lfos[LfoIndex::Filter as usize].generate();
+                    let filter_lfo_value = lfos[LfoIndex::Filter as usize].generate();
 
-                    modules
-                        .filter
-                        .modulate_cutoff_frequency(filter_envelope_value + filter_lfo_value);
+                    filter.modulate_cutoff_frequency(filter_envelope_value + filter_lfo_value);
 
-                    let (filtered_left, filtered_right) = modules
-                        .filter
-                        .filter(left_envelope_sample, right_envelope_sample);
+                    let (filtered_left, filtered_right) =
+                        filter.filter(left_envelope_sample, right_envelope_sample);
 
                     let output_level = load_f32_from_atomic_u32(&parameters.output_level);
                     let output_balance = load_f32_from_atomic_u32(&parameters.output_balance);
                     // Final output level control
                     let (output_left, output_right) =
                         output_mix(filtered_left, filtered_right, output_level, output_balance);
-
                     // Hand back the processed samples to the frame to be sent to the audio device
                     frame[0] = output_left;
                     frame[1] = output_right;

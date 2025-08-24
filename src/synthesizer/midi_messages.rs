@@ -1,6 +1,7 @@
 use crate::midi::CC;
-use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS};
-use crate::modules::filter::FilterSlope;
+use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
+use crate::modules::filter::{Filter, FilterSlope};
+use crate::modules::lfo::Lfo;
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::synthesizer::constants::*;
 use crate::synthesizer::{
@@ -11,22 +12,23 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 pub fn action_midi_note_events(
     midi_events: MidiNoteEvent,
-    modules: &mut MutexGuard<Modules>,
+    oscillators: &mut MutexGuard<[Oscillator; 4]>,
+    envelopes: &mut MutexGuard<[Envelope; 2]>,
     oscillator_key_sync_enabled: bool,
 ) {
     match midi_events {
         MidiNoteEvent::NoteOn => {
-            for envelope in modules.envelopes.iter_mut() {
+            for envelope in envelopes.iter_mut() {
                 envelope.gate_on();
             }
             if oscillator_key_sync_enabled {
-                for oscillator in modules.oscillators.iter_mut() {
+                for oscillator in oscillators.iter_mut() {
                     oscillator.reset()
                 }
             }
         }
         MidiNoteEvent::NoteOff => {
-            for envelope in modules.envelopes.iter_mut() {
+            for envelope in envelopes.iter_mut() {
                 envelope.gate_off();
             }
         }
@@ -39,31 +41,43 @@ pub fn process_midi_channel_pressure_message(parameters: &mut Arc<Parameters>, p
 }
 
 pub fn process_midi_pitch_bend_message(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    oscillators_arc: &mut Arc<Mutex<[Oscillator; 4]>>,
     current_note: &mut Arc<CurrentNote>,
     bend_amount: i16,
 ) {
-    let mut modules = modules_arc
+    let mut oscillators = oscillators_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
-    let oscillators = &mut modules.oscillators;
 
     let midi_note = current_note.midi_note.load(Relaxed);
 
-    update_current_note_from_midi_pitch_bend(bend_amount, oscillators);
-    update_current_note_from_stored_parameters(midi_note, oscillators);
+    update_current_note_from_midi_pitch_bend(bend_amount, &mut oscillators);
+    update_current_note_from_stored_parameters(midi_note, &mut oscillators);
 }
 
-pub fn process_midi_note_off_message(modules_arc: &mut Arc<Mutex<Modules>>) {
-    let mut modules = modules_arc
+pub fn process_midi_note_off_message(
+    oscillators_arc: &mut Arc<Mutex<[Oscillator; 4]>>,
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
+) {
+    let mut oscillators = oscillators_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    action_midi_note_events(MidiNoteEvent::NoteOff, &mut modules, false);
+    let mut envelopes = envelopes_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    action_midi_note_events(
+        MidiNoteEvent::NoteOn,
+        &mut oscillators,
+        &mut envelopes,
+        false,
+    );
 }
 
 pub fn process_midi_note_on_message(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    oscillators_arc: &mut Arc<Mutex<[Oscillator; 4]>>,
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
     current_note: &mut Arc<CurrentNote>,
     midi_note: u8,
     velocity: u8,
@@ -77,14 +91,19 @@ pub fn process_midi_note_on_message(
 
     current_note.midi_note.store(midi_note, Relaxed);
 
-    let mut modules = modules_arc
+    let mut oscillators = oscillators_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    update_current_note_from_stored_parameters(midi_note, &mut modules.oscillators);
+    let mut envelopes = envelopes_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    update_current_note_from_stored_parameters(midi_note, &mut oscillators);
     action_midi_note_events(
         MidiNoteEvent::NoteOn,
-        &mut modules,
+        &mut oscillators,
+        &mut envelopes,
         current_note.oscillator_key_sync_enabled.load(Relaxed),
     );
 }
@@ -94,7 +113,7 @@ pub fn process_midi_cc_values(
     current_note: &mut Arc<CurrentNote>,
     parameters: &mut Arc<Parameters>,
     midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    modules: &mut Modules,
 ) {
     log::debug!("process_midi_cc_values(): CC received: {:?}", cc_value);
     match cc_value {
@@ -111,99 +130,115 @@ pub fn process_midi_cc_values(
             set_output_balance(parameters, value);
         }
         CC::SubOscillatorShapeParameter1(value) => {
-            set_oscillator_shape_parameter1(modules_arc, OscillatorIndex::Sub, value);
+            set_oscillator_shape_parameter1(&mut modules.oscillators, OscillatorIndex::Sub, value);
         }
         CC::SubOscillatorShapeParameter2(value) => {
-            set_oscillator_shape_parameter2(modules_arc, OscillatorIndex::Sub, value);
+            set_oscillator_shape_parameter2(&mut modules.oscillators, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1ShapeParameter1(value) => {
-            set_oscillator_shape_parameter1(modules_arc, OscillatorIndex::One, value);
+            set_oscillator_shape_parameter1(&mut modules.oscillators, OscillatorIndex::One, value);
         }
         CC::Oscillator1ShapeParameter2(value) => {
-            set_oscillator_shape_parameter2(modules_arc, OscillatorIndex::One, value);
+            set_oscillator_shape_parameter2(&mut modules.oscillators, OscillatorIndex::One, value);
         }
         CC::Oscillator2ShapeParameter1(value) => {
-            set_oscillator_shape_parameter1(modules_arc, OscillatorIndex::Two, value);
+            set_oscillator_shape_parameter1(&mut modules.oscillators, OscillatorIndex::Two, value);
         }
         CC::Oscillator2ShapeParameter2(value) => {
-            set_oscillator_shape_parameter2(modules_arc, OscillatorIndex::Two, value);
+            set_oscillator_shape_parameter2(&mut modules.oscillators, OscillatorIndex::Two, value);
         }
         CC::Oscillator3ShapeParameter1(value) => {
-            set_oscillator_shape_parameter1(modules_arc, OscillatorIndex::Three, value);
+            set_oscillator_shape_parameter1(
+                &mut modules.oscillators,
+                OscillatorIndex::Three,
+                value,
+            );
         }
         CC::Oscillator3ShapeParameter2(value) => {
-            set_oscillator_shape_parameter2(modules_arc, OscillatorIndex::Three, value);
+            set_oscillator_shape_parameter2(
+                &mut modules.oscillators,
+                OscillatorIndex::Three,
+                value,
+            );
         }
         CC::OscillatorKeySyncEnabled(value) => {
             set_oscillator_key_sync(current_note, value);
         }
         CC::SubOscillatorShape(value) => {
-            set_oscillator_wave_shape(modules_arc, OscillatorIndex::Sub, value);
+            set_oscillator_wave_shape(&mut modules.oscillators, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1Shape(value) => {
-            set_oscillator_wave_shape(modules_arc, OscillatorIndex::One, value);
+            set_oscillator_wave_shape(&mut modules.oscillators, OscillatorIndex::One, value);
         }
         CC::Oscillator2Shape(value) => {
-            set_oscillator_wave_shape(modules_arc, OscillatorIndex::Two, value);
+            set_oscillator_wave_shape(&mut modules.oscillators, OscillatorIndex::Two, value);
         }
         CC::Oscillator3Shape(value) => {
-            set_oscillator_wave_shape(modules_arc, OscillatorIndex::Three, value);
+            set_oscillator_wave_shape(&mut modules.oscillators, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorCourseTune(value) => {
-            let mut modules = modules_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-            let oscillators = &mut modules.oscillators;
-            set_oscillator_course_tune(current_note, oscillators, OscillatorIndex::Sub, value);
+            set_oscillator_course_tune(
+                current_note,
+                &mut modules.oscillators,
+                OscillatorIndex::Sub,
+                value,
+            );
         }
         CC::Oscillator1CourseTune(value) => {
-            let mut modules = modules_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-            let oscillators = &mut modules.oscillators;
-            set_oscillator_course_tune(current_note, oscillators, OscillatorIndex::One, value);
+            set_oscillator_course_tune(
+                current_note,
+                &mut modules.oscillators,
+                OscillatorIndex::One,
+                value,
+            );
         }
         CC::Oscillator2CourseTune(value) => {
-            let mut modules = modules_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-            let oscillators = &mut modules.oscillators;
-            set_oscillator_course_tune(current_note, oscillators, OscillatorIndex::Two, value);
+            set_oscillator_course_tune(
+                current_note,
+                &mut modules.oscillators,
+                OscillatorIndex::Two,
+                value,
+            );
         }
         CC::Oscillator3CourseTune(value) => {
-            let mut modules = modules_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-            let oscillators = &mut modules.oscillators;
-            set_oscillator_course_tune(current_note, oscillators, OscillatorIndex::Three, value);
+            set_oscillator_course_tune(
+                current_note,
+                &mut modules.oscillators,
+                OscillatorIndex::Three,
+                value,
+            );
         }
         CC::SubOscillatorFineTune(value) => {
-            let mut modules = modules_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-            let oscillators = &mut modules.oscillators;
-            set_oscillator_fine_tune(current_note, oscillators, OscillatorIndex::Sub, value);
+            set_oscillator_fine_tune(
+                current_note,
+                &mut modules.oscillators,
+                OscillatorIndex::Sub,
+                value,
+            );
         }
         CC::Oscillator1FineTune(value) => {
-            let mut modules = modules_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-            let oscillators = &mut modules.oscillators;
-            set_oscillator_fine_tune(current_note, oscillators, OscillatorIndex::One, value);
+            set_oscillator_fine_tune(
+                current_note,
+                &mut modules.oscillators,
+                OscillatorIndex::One,
+                value,
+            );
         }
         CC::Oscillator2FineTune(value) => {
-            let mut modules = modules_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-            let oscillators = &mut modules.oscillators;
-            set_oscillator_fine_tune(current_note, oscillators, OscillatorIndex::Two, value);
+            set_oscillator_fine_tune(
+                current_note,
+                &mut modules.oscillators,
+                OscillatorIndex::Two,
+                value,
+            );
         }
         CC::Oscillator3FineTune(value) => {
-            let mut modules = modules_arc
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-            let oscillators = &mut modules.oscillators;
-            set_oscillator_fine_tune(current_note, oscillators, OscillatorIndex::Three, value);
+            set_oscillator_fine_tune(
+                current_note,
+                &mut modules.oscillators,
+                OscillatorIndex::Three,
+                value,
+            );
         }
         CC::SubOscillatorLevel(value) => {
             set_oscillator_level(parameters, OscillatorIndex::Sub, value);
@@ -242,79 +277,79 @@ pub fn process_midi_cc_values(
             set_oscillator_balance(parameters, OscillatorIndex::Three, value);
         }
         CC::FilterPoles(value) => {
-            set_filter_poles(modules_arc, value);
+            set_filter_poles(&mut modules.filter, value);
         }
         CC::FilterResonance(value) => {
-            set_filter_resonance(modules_arc, value);
+            set_filter_resonance(&mut modules.filter, value);
         }
         CC::AmpEGReleaseTime(value) => {
-            set_amp_eg_release_time(modules_arc, EnvelopeIndex::Amplifier, value);
+            set_amp_eg_release_time(&mut modules.envelopes, EnvelopeIndex::Amplifier, value);
         }
         CC::AmpEGAttackTime(value) => {
-            set_amp_eg_attack_time(modules_arc, EnvelopeIndex::Amplifier, value);
+            set_amp_eg_attack_time(&mut modules.envelopes, EnvelopeIndex::Amplifier, value);
         }
         CC::FilterCutoff(value) => {
-            set_filter_cutoff(modules_arc, value);
+            set_filter_cutoff(&mut modules.filter, value);
         }
         CC::AmpEGDecayTime(value) => {
-            set_amp_eg_decay_time(modules_arc, EnvelopeIndex::Amplifier, value);
+            set_amp_eg_decay_time(&mut modules.envelopes, EnvelopeIndex::Amplifier, value);
         }
         CC::AmpEGSustainLevel(value) => {
-            set_amp_eq_sustain_level(modules_arc, EnvelopeIndex::Amplifier, value);
+            set_amp_eq_sustain_level(&mut modules.envelopes, EnvelopeIndex::Amplifier, value);
         }
         CC::AmpEGInverted(value) => {
-            set_amp_eg_inverted(modules_arc, EnvelopeIndex::Amplifier, value);
+            set_amp_eg_inverted(&mut modules.envelopes, EnvelopeIndex::Amplifier, value);
         }
         CC::FilterEGAttackTime(value) => {
-            set_filter_eg_attack_time(modules_arc, EnvelopeIndex::Filter, value);
+            set_filter_eg_attack_time(&mut modules.envelopes, EnvelopeIndex::Filter, value);
         }
         CC::FilterEGDecayTime(value) => {
-            set_filter_eq_decay_time(modules_arc, EnvelopeIndex::Filter, value);
+            set_filter_eq_decay_time(&mut modules.envelopes, EnvelopeIndex::Filter, value);
         }
         CC::FilterEGSustainLevel(value) => {
-            set_filter_eq_sustain_level(modules_arc, EnvelopeIndex::Filter, value);
+            set_filter_eq_sustain_level(&mut modules.envelopes, EnvelopeIndex::Filter, value);
         }
         CC::FilterEGReleaseTime(value) => {
-            set_filter_eq_release_time(modules_arc, EnvelopeIndex::Filter, value);
+            set_filter_eq_release_time(&mut modules.envelopes, EnvelopeIndex::Filter, value);
         }
         CC::FilterEGInverted(value) => {
-            set_filter_eq_inverted(modules_arc, EnvelopeIndex::Filter, value);
+            set_filter_eq_inverted(&mut modules.envelopes, EnvelopeIndex::Filter, value);
         }
         CC::FilterEGAmount(value) => {
-            set_filter_eg_amount(modules_arc, EnvelopeIndex::Filter, value);
+            set_filter_eg_amount(&mut modules.envelopes, EnvelopeIndex::Filter, value);
         }
         CC::LFO1Frequency(value) => {
-            set_lfo_frequency(modules_arc, LfoIndex::Lfo1, value);
+            set_lfo_frequency(&mut modules.lfos, LfoIndex::Lfo1, value);
         }
         CC::LFO1CenterValue(value) => {
-            set_lfo_center_value(modules_arc, LfoIndex::Lfo1, value);
+            set_lfo_center_value(&mut modules.lfos, LfoIndex::Lfo1, value);
         }
         CC::LFO1Range(value) => {
-            set_lfo_range(modules_arc, LfoIndex::Lfo1, value);
+            set_lfo_range(&mut modules.lfos, LfoIndex::Lfo1, value);
         }
         CC::LFO1WaveShape(value) => {
-            set_lfo_wave_shape(modules_arc, LfoIndex::Lfo1, value);
+            set_lfo_wave_shape(&mut modules.lfos, LfoIndex::Lfo1, value);
         }
         CC::LFO1Phase(value) => {
-            set_lfo_phase(modules_arc, LfoIndex::Lfo1, value);
+            set_lfo_phase(&mut modules.lfos, LfoIndex::Lfo1, value);
         }
         CC::LFO1Reset => {
-            lfo_reset(modules_arc, LfoIndex::Lfo1);
+            lfo_reset(&mut modules.lfos, LfoIndex::Lfo1);
         }
         CC::FilterModLFOFrequency(value) => {
-            set_lfo_frequency(modules_arc, LfoIndex::Filter, value);
+            set_lfo_frequency(&mut modules.lfos, LfoIndex::Filter, value);
         }
         CC::FilterModLFOAmount(value) => {
-            set_lfo_range(modules_arc, LfoIndex::Filter, value);
+            set_lfo_range(&mut modules.lfos, LfoIndex::Filter, value);
         }
         CC::FilterModLFOWaveShape(value) => {
-            set_lfo_wave_shape(modules_arc, LfoIndex::Filter, value);
+            set_lfo_wave_shape(&mut modules.lfos, LfoIndex::Filter, value);
         }
         CC::FilterModLFOPhase(value) => {
-            set_lfo_phase(modules_arc, LfoIndex::Filter, value);
+            set_lfo_phase(&mut modules.lfos, LfoIndex::Filter, value);
         }
         CC::FilterModLFOReset => {
-            lfo_reset(modules_arc, LfoIndex::Filter);
+            lfo_reset(&mut modules.lfos, LfoIndex::Filter);
         }
         CC::AllNotesOff => {
             set_all_note_off(midi_event_arc);
@@ -330,222 +365,224 @@ fn set_all_note_off(midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>) {
     *midi_events = Some(MidiNoteEvent::NoteOff);
 }
 
-fn set_lfo_frequency(modules_arc: &mut Arc<Mutex<Modules>>, lfo: LfoIndex, value: u8) {
-    let mut modules = modules_arc
+fn set_lfo_frequency(lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: LfoIndex, value: u8) {
+    let mut lfos = lfos_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.lfos[lfo as usize]
-        .set_frequency(exponential_curve_lfo_frequency_from_midi_value(value));
+    lfos[lfo as usize].set_frequency(exponential_curve_lfo_frequency_from_midi_value(value));
 }
 
-fn set_lfo_center_value(modules_arc: &mut Arc<Mutex<Modules>>, lfo: LfoIndex, value: u8) {
-    let mut modules = modules_arc
+fn set_lfo_center_value(lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: LfoIndex, value: u8) {
+    let mut lfos = lfos_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.lfos[lfo as usize].set_center_value(midi_value_to_f32_negative_1_to_1(value));
+    lfos[lfo as usize].set_center_value(midi_value_to_f32_negative_1_to_1(value));
 }
 
-fn set_lfo_range(modules_arc: &mut Arc<Mutex<Modules>>, lfo: LfoIndex, value: u8) {
+fn set_lfo_range(lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: LfoIndex, value: u8) {
     let lfo_range = if value == 0 {
         0.0
     } else {
         midi_value_to_f32_0_to_1(value)
     };
 
-    let mut modules = modules_arc
+    let mut lfos = lfos_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.lfos[lfo as usize].set_range(lfo_range);
+    lfos[lfo as usize].set_range(lfo_range);
 }
 
-fn set_lfo_wave_shape(modules_arc: &mut Arc<Mutex<Modules>>, lfo: LfoIndex, value: u8) {
-    let mut modules = modules_arc
+fn set_lfo_wave_shape(lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: LfoIndex, value: u8) {
+    let mut lfos = lfos_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.lfos[lfo as usize].set_wave_shape(midi_value_to_oscillator_wave_shape(value));
+    lfos[lfo as usize].set_wave_shape(midi_value_to_oscillator_wave_shape(value));
 }
 
-fn set_lfo_phase(modules_arc: &mut Arc<Mutex<Modules>>, lfo: LfoIndex, value: u8) {
-    let mut modules = modules_arc
+fn set_lfo_phase(lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: LfoIndex, value: u8) {
+    let mut lfos = lfos_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.lfos[lfo as usize].set_phase(midi_value_to_f32_0_to_1(value));
+    lfos[lfo as usize].set_phase(midi_value_to_f32_0_to_1(value));
 }
 
-fn lfo_reset(modules_arc: &mut Arc<Mutex<Modules>>, lfo: LfoIndex) {
-    let mut modules = modules_arc
+fn lfo_reset(lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: LfoIndex) {
+    let mut lfos = lfos_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.lfos[lfo as usize].reset()
+    lfos[lfo as usize].reset()
 }
 
-fn set_filter_eg_amount(modules_arc: &mut Arc<Mutex<Modules>>, envelope: EnvelopeIndex, value: u8) {
-    let mut modules = modules_arc
+fn set_filter_eg_amount(
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
+    envelope: EnvelopeIndex,
+    value: u8,
+) {
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
-    modules.envelopes[envelope as usize].set_amount(midi_value_to_f32_0_to_1(value));
+    envelopes[envelope as usize].set_amount(midi_value_to_f32_0_to_1(value));
 }
 
 fn set_filter_eq_inverted(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
     envelope: EnvelopeIndex,
     value: u8,
 ) {
-    let mut modules = modules_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
-    modules.envelopes[envelope as usize].set_is_inverted(midi_value_to_bool(value));
+    envelopes[envelope as usize].set_is_inverted(midi_value_to_bool(value));
 }
 
 fn set_filter_eq_release_time(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
     envelope: EnvelopeIndex,
     value: u8,
 ) {
     let time = midi_value_to_f32_range(value, ENVELOPE_MIN_MILLISECONDS, ENVELOPE_MAX_MILLISECONDS);
 
-    let mut modules = modules_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.envelopes[envelope as usize].set_release_milliseconds(time);
+    envelopes[envelope as usize].set_release_milliseconds(time);
 }
 
 fn set_filter_eq_sustain_level(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
     envelope: EnvelopeIndex,
     value: u8,
 ) {
-    let mut modules = modules_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.envelopes[envelope as usize].set_sustain_level(midi_value_to_f32_0_to_1(value));
+    envelopes[envelope as usize].set_sustain_level(midi_value_to_f32_0_to_1(value));
 }
 
 fn set_filter_eq_decay_time(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
     envelope: EnvelopeIndex,
     value: u8,
 ) {
     let time = midi_value_to_f32_range(value, ENVELOPE_MIN_MILLISECONDS, ENVELOPE_MAX_MILLISECONDS);
 
-    let mut modules = modules_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.envelopes[envelope as usize].set_decay_milliseconds(time);
+    envelopes[envelope as usize].set_decay_milliseconds(time);
 }
 
 fn set_filter_eg_attack_time(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
     envelope: EnvelopeIndex,
     value: u8,
 ) {
     let time = midi_value_to_f32_range(value, ENVELOPE_MIN_MILLISECONDS, ENVELOPE_MAX_MILLISECONDS);
 
-    let mut modules = modules_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.envelopes[envelope as usize].set_attack_milliseconds(time);
+    envelopes[envelope as usize].set_attack_milliseconds(time);
 }
 
-fn set_amp_eg_inverted(modules_arc: &mut Arc<Mutex<Modules>>, envelope: EnvelopeIndex, value: u8) {
-    let mut modules = modules_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-    modules.envelopes[envelope as usize].set_is_inverted(midi_value_to_bool(value));
-}
-
-fn set_amp_eq_sustain_level(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+fn set_amp_eg_inverted(
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
     envelope: EnvelopeIndex,
     value: u8,
 ) {
-    let mut modules = modules_arc
+    let mut envelopes = envelopes_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    envelopes[envelope as usize].set_is_inverted(midi_value_to_bool(value));
+}
+
+fn set_amp_eq_sustain_level(
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
+    envelope: EnvelopeIndex,
+    value: u8,
+) {
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.envelopes[envelope as usize]
+    envelopes[envelope as usize]
         .set_sustain_level(exponential_curve_level_adjustment_from_midi_value(value));
 }
 
 fn set_amp_eg_decay_time(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
     envelope: EnvelopeIndex,
     value: u8,
 ) {
     let time = midi_value_to_f32_range(value, ENVELOPE_MIN_MILLISECONDS, ENVELOPE_MAX_MILLISECONDS);
 
-    let mut modules = modules_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.envelopes[envelope as usize].set_decay_milliseconds(time);
+    envelopes[envelope as usize].set_decay_milliseconds(time);
 }
 
-fn set_filter_cutoff(modules_arc: &mut Arc<Mutex<Modules>>, value: u8) {
+fn set_filter_cutoff(filter_arc: &mut Arc<Mutex<Filter>>, value: u8) {
     let cutoff_frequency = exponential_curve_filter_cutoff_from_midi_value(value);
 
-    let mut modules = modules_arc
+    let mut filter = filter_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.filter.set_cutoff_frequency(cutoff_frequency);
+    filter.set_cutoff_frequency(cutoff_frequency);
 }
 
 fn set_amp_eg_attack_time(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
     envelope: EnvelopeIndex,
     value: u8,
 ) {
     let time = midi_value_to_f32_range(value, ENVELOPE_MIN_MILLISECONDS, ENVELOPE_MAX_MILLISECONDS);
 
-    let mut modules = modules_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.envelopes[envelope as usize].set_attack_milliseconds(time);
+    envelopes[envelope as usize].set_attack_milliseconds(time);
 }
 
 fn set_amp_eg_release_time(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
     envelope: EnvelopeIndex,
     value: u8,
 ) {
     let time = midi_value_to_f32_range(value, ENVELOPE_MIN_MILLISECONDS, ENVELOPE_MAX_MILLISECONDS);
-    let mut modules = modules_arc
+    let mut envelopes = envelopes_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.envelopes[envelope as usize].set_release_milliseconds(time);
+    envelopes[envelope as usize].set_release_milliseconds(time);
 }
 
-fn set_filter_resonance(modules_arc: &mut Arc<Mutex<Modules>>, value: u8) {
-    let mut modules = modules_arc
+fn set_filter_resonance(filter_arc: &mut Arc<Mutex<Filter>>, value: u8) {
+    let mut filter = filter_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules
-        .filter
-        .set_resonance(midi_value_to_f32_range(value, 0.0, 1.0));
+    filter.set_resonance(midi_value_to_f32_range(value, 0.0, 1.0));
 }
 
-fn set_filter_poles(modules_arc: &mut Arc<Mutex<Modules>>, value: u8) {
-    let mut modules = modules_arc
+fn set_filter_poles(filter_arc: &mut Arc<Mutex<Filter>>, value: u8) {
+    let mut filter = filter_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    modules
-        .filter
-        .set_filter_slope(midi_value_to_filter_slope(value));
+    filter.set_filter_slope(midi_value_to_filter_slope(value));
 }
 
 fn set_output_balance(parameters: &mut Arc<Parameters>, value: u8) {
@@ -568,27 +605,27 @@ fn set_mod_wheel(parameters: &mut Arc<Parameters>, value: u8) {
 }
 
 fn set_oscillator_shape_parameter1(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    oscillators_arc: &mut Arc<Mutex<[Oscillator; 4]>>,
     oscillator: OscillatorIndex,
     value: u8,
 ) {
-    let mut modules = modules_arc
+    let mut oscillators = oscillators_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.oscillators[oscillator as usize].set_shape_parameter1(midi_value_to_f32_0_to_1(value));
+    oscillators[oscillator as usize].set_shape_parameter1(midi_value_to_f32_0_to_1(value));
 }
 
 fn set_oscillator_shape_parameter2(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    oscillators_arc: &mut Arc<Mutex<[Oscillator; 4]>>,
     oscillator: OscillatorIndex,
     value: u8,
 ) {
-    let mut modules = modules_arc
+    let mut oscillators = oscillators_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.oscillators[oscillator as usize].set_shape_parameter2(midi_value_to_f32_0_to_1(value));
+    oscillators[oscillator as usize].set_shape_parameter2(midi_value_to_f32_0_to_1(value));
 }
 
 fn set_oscillator_key_sync(current_note: &mut Arc<CurrentNote>, value: u8) {
@@ -626,41 +663,49 @@ fn set_oscillator_level(parameters: &mut Arc<Parameters>, oscillator: Oscillator
 
 fn set_oscillator_fine_tune(
     current_note: &mut Arc<CurrentNote>,
-    oscillators: &mut [Oscillator; 4],
+    oscillators_arc: &mut Arc<Mutex<[Oscillator; 4]>>,
     oscillator: OscillatorIndex,
     value: u8,
 ) {
+    let mut oscillators = oscillators_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
     oscillators[oscillator as usize].set_fine_tune(Some(midi_value_to_fine_tune_cents(value)));
 
     let midi_note = current_note.midi_note.load(Relaxed);
-    update_current_note_from_stored_parameters(midi_note, oscillators);
+    update_current_note_from_stored_parameters(midi_note, &mut oscillators);
 }
 
 fn set_oscillator_course_tune(
     current_note: &mut Arc<CurrentNote>,
-    oscillators: &mut [Oscillator; 4],
+    oscillators_arc: &mut Arc<Mutex<[Oscillator; 4]>>,
     oscillator: OscillatorIndex,
     value: u8,
 ) {
+    let mut oscillators = oscillators_arc
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
     oscillators[oscillator as usize]
         .set_course_tune(Some(midi_value_to_course_tune_intervals(value)));
 
     let midi_note = current_note.midi_note.load(Relaxed);
-    update_current_note_from_stored_parameters(midi_note, oscillators);
+    update_current_note_from_stored_parameters(midi_note, &mut oscillators);
 }
 
 fn set_oscillator_wave_shape(
-    modules_arc: &mut Arc<Mutex<Modules>>,
+    oscillators_arc: &mut Arc<Mutex<[Oscillator; 4]>>,
     oscillator: OscillatorIndex,
     value: u8,
 ) {
     let wave_shape = midi_value_to_oscillator_wave_shape(value);
 
-    let mut modules = modules_arc
+    let mut oscillators = oscillators_arc
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    modules.oscillators[oscillator as usize].set_wave_shape(wave_shape);
+    oscillators[oscillator as usize].set_wave_shape(wave_shape);
 }
 
 pub fn midi_value_to_f32_range(midi_value: u8, minimum: f32, maximum: f32) -> f32 {
@@ -802,7 +847,10 @@ fn update_current_note_from_midi_pitch_bend(
     }
 }
 
-fn update_current_note_from_stored_parameters(midi_note: u8, oscillators: &mut [Oscillator; 4]) {
+fn update_current_note_from_stored_parameters(
+    midi_note: u8,
+    oscillators: &mut MutexGuard<[Oscillator; 4]>,
+) {
     for oscillator in oscillators.iter_mut() {
         oscillator.tune(midi_note);
     }
