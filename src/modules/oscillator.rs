@@ -201,6 +201,7 @@ mod tests {
         let sample_rate = 44100;
         let wave_shape = WaveShape::FM;
         let mut oscillator = Oscillator::new(sample_rate, wave_shape);
+        oscillator.set_frequency(100.0);
 
         let first_value = oscillator.generate(None);
         for _ in 0..5 {

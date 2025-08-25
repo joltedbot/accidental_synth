@@ -1,11 +1,11 @@
 use crate::midi::CC;
 use crate::modules::envelope::{ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, Envelope};
-use crate::modules::filter::{Filter, FilterSlope};
 use crate::modules::lfo::Lfo;
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::synthesizer::constants::*;
 use crate::synthesizer::{
-    CurrentNote, EnvelopeIndex, LfoIndex, MidiNoteEvent, Modules, OscillatorIndex, Parameters,
+    CurrentNote, EnvelopeIndex, FilterParameters, KeyboardParameters, LfoIndex, MidiNoteEvent,
+    MixerParameters, ModuleParameters, Modules, OscillatorIndex,
 };
 use std::sync::atomic::{AtomicU32, Ordering::Relaxed};
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -35,7 +35,7 @@ pub fn action_midi_note_events(
     }
 }
 
-pub fn process_midi_channel_pressure_message(parameters: &mut Arc<Parameters>, pressure_value: u8) {
+pub fn process_midi_channel_pressure_message(parameters: &KeyboardParameters, pressure_value: u8) {
     let aftertouch_amount = midi_value_to_f32_0_to_1(pressure_value);
     store_f32_as_atomic_u32(&parameters.aftertouch_amount, aftertouch_amount);
 }
@@ -68,7 +68,7 @@ pub fn process_midi_note_off_message(
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
     action_midi_note_events(
-        MidiNoteEvent::NoteOn,
+        MidiNoteEvent::NoteOff,
         &mut oscillators,
         &mut envelopes,
         false,
@@ -111,23 +111,23 @@ pub fn process_midi_note_on_message(
 pub fn process_midi_cc_values(
     cc_value: CC,
     current_note: &mut Arc<CurrentNote>,
-    parameters: &mut Arc<Parameters>,
+    module_parameters: &mut Arc<ModuleParameters>,
     midi_event_arc: &mut Arc<Mutex<Option<MidiNoteEvent>>>,
     modules: &mut Modules,
 ) {
     log::debug!("process_midi_cc_values(): CC received: {:?}", cc_value);
     match cc_value {
         CC::ModWheel(value) => {
-            set_mod_wheel(parameters, value);
+            set_mod_wheel(&module_parameters.keyboard, value);
         }
         CC::VelocityCurve(value) => {
             set_velocity_curve(current_note, value);
         }
         CC::Volume(value) => {
-            set_output_volume(parameters, value);
+            set_output_volume(&module_parameters.mixer, value);
         }
         CC::Balance(value) => {
-            set_output_balance(parameters, value);
+            set_output_balance(&module_parameters.mixer, value);
         }
         CC::SubOscillatorShapeParameter1(value) => {
             set_oscillator_shape_parameter1(&mut modules.oscillators, OscillatorIndex::Sub, value);
@@ -241,46 +241,46 @@ pub fn process_midi_cc_values(
             );
         }
         CC::SubOscillatorLevel(value) => {
-            set_oscillator_level(parameters, OscillatorIndex::Sub, value);
+            set_oscillator_level(&module_parameters.mixer, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1Level(value) => {
-            set_oscillator_level(parameters, OscillatorIndex::One, value);
+            set_oscillator_level(&module_parameters.mixer, OscillatorIndex::One, value);
         }
         CC::Oscillator2Level(value) => {
-            set_oscillator_level(parameters, OscillatorIndex::Two, value);
+            set_oscillator_level(&module_parameters.mixer, OscillatorIndex::Two, value);
         }
         CC::Oscillator3Level(value) => {
-            set_oscillator_level(parameters, OscillatorIndex::Three, value);
+            set_oscillator_level(&module_parameters.mixer, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorMute(value) => {
-            set_oscillator_mute(parameters, OscillatorIndex::Sub, value);
+            set_oscillator_mute(&module_parameters.mixer, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1Mute(value) => {
-            set_oscillator_mute(parameters, OscillatorIndex::One, value);
+            set_oscillator_mute(&module_parameters.mixer, OscillatorIndex::One, value);
         }
         CC::Oscillator2Mute(value) => {
-            set_oscillator_mute(parameters, OscillatorIndex::Two, value);
+            set_oscillator_mute(&module_parameters.mixer, OscillatorIndex::Two, value);
         }
         CC::Oscillator3Mute(value) => {
-            set_oscillator_mute(parameters, OscillatorIndex::Three, value);
+            set_oscillator_mute(&module_parameters.mixer, OscillatorIndex::Three, value);
         }
         CC::SubOscillatorBalance(value) => {
-            set_oscillator_balance(parameters, OscillatorIndex::Sub, value);
+            set_oscillator_balance(&module_parameters.mixer, OscillatorIndex::Sub, value);
         }
         CC::Oscillator1Balance(value) => {
-            set_oscillator_balance(parameters, OscillatorIndex::One, value);
+            set_oscillator_balance(&module_parameters.mixer, OscillatorIndex::One, value);
         }
         CC::Oscillator2Balance(value) => {
-            set_oscillator_balance(parameters, OscillatorIndex::Two, value);
+            set_oscillator_balance(&module_parameters.mixer, OscillatorIndex::Two, value);
         }
         CC::Oscillator3Balance(value) => {
-            set_oscillator_balance(parameters, OscillatorIndex::Three, value);
+            set_oscillator_balance(&module_parameters.mixer, OscillatorIndex::Three, value);
         }
         CC::FilterPoles(value) => {
-            set_filter_poles(&mut modules.filter, value);
+            set_filter_poles(&module_parameters.filter, value);
         }
         CC::FilterResonance(value) => {
-            set_filter_resonance(&mut modules.filter, value);
+            set_filter_resonance(&module_parameters.filter, value);
         }
         CC::AmpEGReleaseTime(value) => {
             set_amp_eg_release_time(&mut modules.envelopes, EnvelopeIndex::Amplifier, value);
@@ -289,7 +289,7 @@ pub fn process_midi_cc_values(
             set_amp_eg_attack_time(&mut modules.envelopes, EnvelopeIndex::Amplifier, value);
         }
         CC::FilterCutoff(value) => {
-            set_filter_cutoff(&mut modules.filter, value);
+            set_filter_cutoff(&module_parameters.filter, value);
         }
         CC::AmpEGDecayTime(value) => {
             set_amp_eg_decay_time(&mut modules.envelopes, EnvelopeIndex::Amplifier, value);
@@ -533,16 +533,6 @@ fn set_amp_eg_decay_time(
     envelopes[envelope as usize].set_decay_milliseconds(time);
 }
 
-fn set_filter_cutoff(filter_arc: &mut Arc<Mutex<Filter>>, value: u8) {
-    let cutoff_frequency = exponential_curve_filter_cutoff_from_midi_value(value);
-
-    let mut filter = filter_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    filter.set_cutoff_frequency(cutoff_frequency);
-}
-
 fn set_amp_eg_attack_time(
     envelopes_arc: &mut Arc<Mutex<[Envelope; 2]>>,
     envelope: EnvelopeIndex,
@@ -570,27 +560,27 @@ fn set_amp_eg_release_time(
     envelopes[envelope as usize].set_release_milliseconds(time);
 }
 
-fn set_filter_resonance(filter_arc: &mut Arc<Mutex<Filter>>, value: u8) {
-    let mut filter = filter_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    filter.set_resonance(midi_value_to_f32_range(value, 0.0, 1.0));
+fn set_filter_resonance(filter_parameters: &FilterParameters, value: u8) {
+    let resonance = midi_value_to_f32_range(value, MIN_FILTER_RESONANCE, MAX_FILTER_RESONANCE);
+    store_f32_as_atomic_u32(&filter_parameters.resonance, resonance);
 }
 
-fn set_filter_poles(filter_arc: &mut Arc<Mutex<Filter>>, value: u8) {
-    let mut filter = filter_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-    filter.set_filter_slope(midi_value_to_filter_slope(value));
+fn set_filter_poles(filter_parameters: &FilterParameters, value: u8) {
+    let filter_slope = midi_value_to_filter_slope(value);
+    filter_parameters.filter_slope.swap(filter_slope, Relaxed);
 }
 
-fn set_output_balance(parameters: &mut Arc<Parameters>, value: u8) {
+fn set_filter_cutoff(filter_parameters: &FilterParameters, value: u8) {
+    let cutoff_frequency = exponential_curve_filter_cutoff_from_midi_value(value);
+    store_f32_as_atomic_u32(&filter_parameters.cutoff_frequency, cutoff_frequency);
+}
+
+fn set_output_balance(parameters: &MixerParameters, value: u8) {
     let output_balance = midi_value_to_f32_negative_1_to_1(value);
     store_f32_as_atomic_u32(&parameters.output_balance, output_balance);
 }
 
-fn set_output_volume(parameters: &mut Arc<Parameters>, value: u8) {
+fn set_output_volume(parameters: &MixerParameters, value: u8) {
     let output_level = exponential_curve_level_adjustment_from_midi_value(value);
     store_f32_as_atomic_u32(&parameters.output_level, output_level);
 }
@@ -599,7 +589,7 @@ fn set_velocity_curve(current_note: &mut Arc<CurrentNote>, value: u8) {
     current_note.velocity_curve.store(value, Relaxed);
 }
 
-fn set_mod_wheel(parameters: &mut Arc<Parameters>, value: u8) {
+fn set_mod_wheel(parameters: &KeyboardParameters, value: u8) {
     let mod_wheel_amount = midi_value_to_f32_0_to_1(value);
     store_f32_as_atomic_u32(&parameters.mod_wheel_amount, mod_wheel_amount);
 }
@@ -634,29 +624,25 @@ fn set_oscillator_key_sync(current_note: &mut Arc<CurrentNote>, value: u8) {
         .store(midi_value_to_bool(value), Relaxed);
 }
 
-fn set_oscillator_balance(
-    parameters: &mut Arc<Parameters>,
-    oscillator: OscillatorIndex,
-    value: u8,
-) {
+fn set_oscillator_balance(parameters: &MixerParameters, oscillator: OscillatorIndex, value: u8) {
     let balance = midi_value_to_f32_negative_1_to_1(value);
     store_f32_as_atomic_u32(
-        &parameters.oscillators[oscillator as usize].mixer_balance,
+        &parameters.quad_mixer_inputs[oscillator as usize].mixer_balance,
         balance,
     );
 }
 
-fn set_oscillator_mute(parameters: &mut Arc<Parameters>, oscillator: OscillatorIndex, value: u8) {
+fn set_oscillator_mute(parameters: &MixerParameters, oscillator: OscillatorIndex, value: u8) {
     let mute = midi_value_to_bool(value);
-    parameters.oscillators[oscillator as usize]
+    parameters.quad_mixer_inputs[oscillator as usize]
         .mixer_mute
         .swap(mute, Relaxed);
 }
 
-fn set_oscillator_level(parameters: &mut Arc<Parameters>, oscillator: OscillatorIndex, value: u8) {
+fn set_oscillator_level(parameters: &MixerParameters, oscillator: OscillatorIndex, value: u8) {
     let level = exponential_curve_level_adjustment_from_midi_value(value);
     store_f32_as_atomic_u32(
-        &parameters.oscillators[oscillator as usize].mixer_level,
+        &parameters.quad_mixer_inputs[oscillator as usize].mixer_level,
         level,
     );
 }
@@ -742,15 +728,19 @@ fn midi_value_to_course_tune_intervals(midi_value: u8) -> i8 {
     ) as i8
 }
 
-fn midi_value_to_filter_slope(midi_value: u8) -> FilterSlope {
+fn midi_value_to_filter_slope(midi_value: u8) -> u8 {
     if midi_value < 32 {
-        FilterSlope::Db6
+        //FilterSlope::Db6
+        1
     } else if midi_value < 64 {
-        FilterSlope::Db12
+        //FilterSlope::Db12
+        2
     } else if midi_value < 96 {
-        FilterSlope::Db18
+        //FilterSlope::Db18
+        3
     } else {
-        FilterSlope::Db24
+        //FilterSlope::Db24
+        4
     }
 }
 
