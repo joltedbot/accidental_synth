@@ -296,6 +296,11 @@ impl Synthesizer {
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
 
+                // Process the module parameters per buffer
+                amp_envelope.set_parameters(&module_parameters.amp_envelope);
+                filter_envelope.set_parameters(&module_parameters.filter_envelope);
+                filter.set_parameters(&module_parameters.filter);
+
                 // Begin processing the audio buffer
 
                 let mut sub_oscillator_mixer_input = create_mixer_input_from_oscillator_parameters(
@@ -335,7 +340,6 @@ impl Synthesizer {
                         oscillator3_mixer_input,
                     );
 
-                    amp_envelope.set_parameters(&module_parameters.amp_envelope);
                     let amp_envelope_value = Some(amp_envelope.generate());
 
                     let (left_envelope_sample, right_envelope_sample) = amplify_stereo(
@@ -345,14 +349,15 @@ impl Synthesizer {
                         amp_envelope_value,
                     );
 
-                    filter_envelope.set_parameters(&module_parameters.filter_envelope);
                     let filter_envelope_value = filter_envelope.generate();
                     let filter_lfo_value = lfos[LfoIndex::Filter as usize].generate();
                     let filter_modulation = filter_envelope_value + filter_lfo_value;
-                    filter.set_parameters(&module_parameters.filter, Some(filter_modulation));
 
-                    let (filtered_left, filtered_right) =
-                        filter.process(left_envelope_sample, right_envelope_sample);
+                    let (filtered_left, filtered_right) = filter.process(
+                        left_envelope_sample,
+                        right_envelope_sample,
+                        Some(filter_modulation),
+                    );
 
                     // Final output level control
                     let output_level =

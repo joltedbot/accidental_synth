@@ -79,20 +79,12 @@ impl Filter {
         }
     }
 
-    pub fn set_parameters(
-        &mut self,
-        filter_parameters: &FilterParameters,
-        modulation: Option<f32>,
-    ) {
+    pub fn set_parameters(&mut self, filter_parameters: &FilterParameters) {
         let resonance_changed =
             filter_parameters.resonance.load(Relaxed) != self.resonance.load(Relaxed);
 
         let mut filter_changed =
             filter_parameters.cutoff_frequency.load(Relaxed) != self.cutoff_frequency.load(Relaxed);
-        if let Some(modulation) = modulation {
-            self.modulate_cutoff_frequency(modulation);
-            filter_changed = true;
-        }
 
         self.store_filter_parameters(&filter_parameters);
 
@@ -101,9 +93,18 @@ impl Filter {
         }
     }
 
-    pub fn process(&mut self, left_sample: f32, right_sample: f32) -> (f32, f32) {
+    pub fn process(
+        &mut self,
+        left_sample: f32,
+        right_sample: f32,
+        modulation: Option<f32>,
+    ) -> (f32, f32) {
         if left_sample == 0.0 && right_sample == 0.0 {
             return (0.0, 0.0);
+        }
+
+        if let Some(modulation) = modulation {
+            self.modulate_cutoff_frequency(modulation);
         }
 
         let left_output = self.ladder_filter(left_sample);
@@ -114,6 +115,9 @@ impl Filter {
 
     pub fn modulate_cutoff_frequency(&mut self, modulation: f32) {
         self.cutoff_modulation_amount = modulation * self.max_frequency;
+        let modulated_cutoff_frequency = self.calculate_filter_cutoff_frequency().to_bits();
+        self.cutoff_frequency
+            .store(modulated_cutoff_frequency, Relaxed)
     }
 
     fn calculate_coefficients(&mut self) {
