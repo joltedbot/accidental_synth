@@ -1,6 +1,5 @@
 // Derived from https://www.musicdsp.org/en/latest/Filters/253-perfect-lp4-filter.html
 
-use crate::synthesizer::FilterParameters;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicU8, AtomicU32};
 
@@ -8,6 +7,13 @@ const MAXIMUM_FILTER_CUTOFF: f32 = 20000.0;
 const DEFAULT_RESONANCE: f32 = 0.0;
 const NATURAL_LOG_OF_4: f32 = 1.3862943;
 const DENORMAL_GUARD: f32 = 1e-25_f32;
+
+#[derive(Default, Debug)]
+pub struct FilterParameters {
+    pub cutoff_frequency: AtomicU32, // Stores and f32 from bits
+    pub resonance: AtomicU32,        // Stores and f32 from bits
+    pub filter_slope: AtomicU8,
+}
 
 #[derive(Default, Copy, Clone, Debug, PartialEq)]
 struct Coefficients {
@@ -24,9 +30,9 @@ pub struct Filter {
     sample_rate: u32,
     max_frequency: f32,
     cutoff_frequency: AtomicU32,
-    cutoff_modulation_amount: f32,
     resonance: AtomicU32,
     filter_slope: AtomicU8,
+    cutoff_modulation_amount: f32,
     coefficients: Coefficients,
     stage1_output: f32,
     stage2_output: f32,
@@ -73,26 +79,41 @@ impl Filter {
         }
     }
 
-    pub fn filter(
+    pub fn set_parameters(
         &mut self,
-        left_sample: f32,
-        right_sample: f32,
         filter_parameters: &FilterParameters,
         modulation: Option<f32>,
-    ) -> (f32, f32) {
+    ) {
+        let resonance_changed =
+            filter_parameters.resonance.load(Relaxed) != self.resonance.load(Relaxed);
+
+        let mut filter_changed =
+            filter_parameters.cutoff_frequency.load(Relaxed) != self.cutoff_frequency.load(Relaxed);
+        if let Some(modulation) = modulation {
+            self.modulate_cutoff_frequency(modulation);
+            filter_changed = true;
+        }
+
         self.store_filter_parameters(&filter_parameters);
-        self.modulate_cutoff_frequency(modulation);
-        self.calculate_coefficients();
+
+        if filter_changed || resonance_changed {
+            self.calculate_coefficients();
+        }
+    }
+
+    pub fn process(&mut self, left_sample: f32, right_sample: f32) -> (f32, f32) {
+        if left_sample == 0.0 && right_sample == 0.0 {
+            return (0.0, 0.0);
+        }
 
         let left_output = self.ladder_filter(left_sample);
         let right_output = self.ladder_filter(right_sample);
+
         (left_output, right_output)
     }
 
-    pub fn modulate_cutoff_frequency(&mut self, cutoff_modulation: Option<f32>) {
-        if let Some(modulation) = cutoff_modulation {
-            self.cutoff_modulation_amount = modulation * self.max_frequency;
-        }
+    pub fn modulate_cutoff_frequency(&mut self, modulation: f32) {
+        self.cutoff_modulation_amount = modulation * self.max_frequency;
     }
 
     fn calculate_coefficients(&mut self) {
@@ -138,16 +159,12 @@ impl Filter {
         }
     }
     fn store_filter_parameters(&mut self, parameters: &FilterParameters) {
-        store_f32_as_atomic_u32(
-            &self.cutoff_frequency,
-            load_f32_from_atomic_u32(&parameters.cutoff_frequency),
-        );
-        store_f32_as_atomic_u32(
-            &self.resonance,
-            load_f32_from_atomic_u32(&parameters.resonance),
-        );
+        self.cutoff_frequency
+            .store(parameters.cutoff_frequency.load(Relaxed), Relaxed);
+        self.resonance
+            .store(parameters.resonance.load(Relaxed), Relaxed);
         self.filter_slope
-            .swap(parameters.filter_slope.load(Relaxed), Relaxed);
+            .store(parameters.filter_slope.load(Relaxed), Relaxed);
     }
 
     fn calculate_non_linear_saturation(&mut self) -> f32 {
@@ -210,10 +227,6 @@ fn calculate_feedback_gain(
 ) -> f32 {
     resonance * (adjusted_resonance_factor + 6.0 * resonance_factor)
         / (adjusted_resonance_factor - 6.0 * resonance_factor)
-}
-
-pub fn store_f32_as_atomic_u32(atomic: &AtomicU32, value: f32) {
-    atomic.store(value.to_bits(), Relaxed);
 }
 
 pub fn load_f32_from_atomic_u32(atomic: &AtomicU32) -> f32 {

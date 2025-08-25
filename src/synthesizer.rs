@@ -4,8 +4,8 @@ mod midi_messages;
 use self::constants::*;
 use crate::midi::MidiMessage;
 use crate::modules::amplifier::amplify_stereo;
-use crate::modules::envelope::Envelope;
-use crate::modules::filter::Filter;
+use crate::modules::envelope::{Envelope, EnvelopeParameters};
+use crate::modules::filter::{Filter, FilterParameters};
 use crate::modules::lfo::Lfo;
 use crate::modules::mixer::{MixerInput, output_mix, quad_mix};
 use crate::modules::oscillator::{Oscillator, WaveShape};
@@ -22,8 +22,16 @@ use std::thread;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum MidiNoteEvent {
-    NoteOn,
-    NoteOff,
+    NoteOn = 1,
+    NoteOff = 2,
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
+enum MidiGateEvent {
+    #[default]
+    Wait = 0,
+    GateOn = 1,
+    GateOff = 2,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -32,12 +40,6 @@ pub enum OscillatorIndex {
     One = 1,
     Two = 2,
     Three = 3,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum EnvelopeIndex {
-    Amplifier = 0,
-    Filter = 1,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -52,13 +54,6 @@ struct CurrentNote {
     velocity: AtomicU32,
     velocity_curve: AtomicU8,
     oscillator_key_sync_enabled: AtomicBool,
-}
-
-#[derive(Default, Debug)]
-pub struct FilterParameters {
-    pub cutoff_frequency: AtomicU32,
-    pub resonance: AtomicU32,
-    pub filter_slope: AtomicU8,
 }
 
 #[derive(Default, Debug)]
@@ -90,16 +85,31 @@ struct MixerParameters {
     quad_mixer_inputs: [QuadMixerInput; 4],
 }
 
+impl Default for EnvelopeParameters {
+    fn default() -> Self {
+        Self {
+            attack_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
+            decay_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
+            sustain_level: AtomicU32::new(DEFAULT_ENVELOPE_SUSTAIN_LEVEL.to_bits()),
+            release_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
+            amount: AtomicU32::new(DEFAULT_ENVELOPE_AMOUNT.to_bits()),
+            is_inverted: AtomicBool::new(false),
+            gate_flag: AtomicU8::new(0),
+        }
+    }
+}
+
 #[derive(Default, Debug)]
 pub struct ModuleParameters {
     filter: FilterParameters,
     mixer: MixerParameters,
+    amp_envelope: EnvelopeParameters,
+    filter_envelope: EnvelopeParameters,
     keyboard: KeyboardParameters,
 }
 
 #[derive(Clone)]
 pub struct Modules {
-    envelopes: Arc<Mutex<[Envelope; 2]>>,
     lfos: Arc<Mutex<[Lfo; 2]>>,
     oscillators: Arc<Mutex<[Oscillator; 4]>>,
 }
@@ -109,7 +119,6 @@ pub struct Synthesizer {
     audio_output_device: Device,
     output_stream: Option<Stream>,
     current_note: Arc<CurrentNote>,
-    midi_note_events: Arc<Mutex<Option<MidiNoteEvent>>>,
     module_parameters: Arc<ModuleParameters>,
     modules: Modules,
 }
@@ -147,12 +156,6 @@ impl Synthesizer {
             filter_slope: AtomicU8::new(4),
         };
 
-        let amp_envelope = Envelope::new(sample_rate);
-        let mut filter_envelope = Envelope::new(sample_rate);
-        filter_envelope.set_amount(DEFAULT_FILTER_ENVELOPE_AMOUNT);
-
-        let envelopes = [amp_envelope, filter_envelope];
-
         let mut filter_modulation_lfo = Lfo::new(sample_rate);
         filter_modulation_lfo.set_range(0.0);
 
@@ -167,15 +170,21 @@ impl Synthesizer {
         ];
         oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
 
+        let filter_envelope_parameters: EnvelopeParameters = Default::default();
+        filter_envelope_parameters
+            .amount
+            .store(DEFAULT_FILTER_ENVELOPE_AMOUNT.to_bits(), Relaxed);
+
         let module_parameters = ModuleParameters {
             filter: filter_parameters,
             mixer: mixer_parameters,
+            amp_envelope: Default::default(),
+            filter_envelope: filter_envelope_parameters,
             keyboard: Default::default(),
         };
 
         let modules = Modules {
             oscillators: Arc::new(Mutex::new(oscillators)),
-            envelopes: Arc::new(Mutex::new(envelopes)),
             lfos: Arc::new(Mutex::new(lfos)),
         };
 
@@ -184,7 +193,6 @@ impl Synthesizer {
             audio_output_device,
             output_stream: None,
             current_note: Arc::new(current_note),
-            midi_note_events: Arc::new(Mutex::new(None)),
             module_parameters: Arc::new(module_parameters),
             modules,
         }
@@ -202,9 +210,7 @@ impl Synthesizer {
     }
 
     fn start_midi_event_listener(&mut self, midi_message_receiver: Receiver<MidiMessage>) {
-        let mut midi_event_arc = self.midi_note_events.clone();
         let mut oscillators_arc = self.modules.oscillators.clone();
-        let mut envelopes_arc = self.modules.envelopes.clone();
         let mut current_note = self.current_note.clone();
         let mut modules = self.modules.clone();
         let mut module_parameters = self.module_parameters.clone();
@@ -217,7 +223,7 @@ impl Synthesizer {
                     MidiMessage::NoteOn(midi_note, velocity) => {
                         midi_messages::process_midi_note_on_message(
                             &mut oscillators_arc,
-                            &mut envelopes_arc,
+                            &mut module_parameters,
                             &mut current_note,
                             midi_note,
                             velocity,
@@ -226,7 +232,7 @@ impl Synthesizer {
                     MidiMessage::NoteOff => {
                         midi_messages::process_midi_note_off_message(
                             &mut oscillators_arc,
-                            &mut envelopes_arc,
+                            &mut module_parameters,
                         );
                     }
                     MidiMessage::PitchBend(bend_amount) => {
@@ -247,7 +253,6 @@ impl Synthesizer {
                             cc_value,
                             &mut current_note,
                             &mut module_parameters,
-                            &mut midi_event_arc,
                             &mut modules,
                         );
                     }
@@ -259,15 +264,16 @@ impl Synthesizer {
     }
 
     fn create_synthesizer(&mut self, output_device: Device) -> Result<Stream> {
-        let current_note_arc = self.current_note.clone();
+        let current_note = self.current_note.clone();
         let oscillators_arc = self.modules.oscillators.clone();
-        let envelopes_arc = self.modules.envelopes.clone();
         let lfos_arc = self.modules.lfos.clone();
 
         let module_parameters = self.module_parameters.clone();
 
         log::info!("Initializing the filter module");
         let mut filter = Filter::new(self.sample_rate);
+        let mut amp_envelope = Envelope::new(self.sample_rate);
+        let mut filter_envelope = Envelope::new(self.sample_rate);
 
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
@@ -284,9 +290,6 @@ impl Synthesizer {
             &default_device_stream_config,
             move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
                 let mut oscillators = oscillators_arc
-                    .lock()
-                    .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mut envelopes = envelopes_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
                 let mut lfos = lfos_arc
@@ -332,27 +335,24 @@ impl Synthesizer {
                         oscillator3_mixer_input,
                     );
 
-                    let amp_envelope_value =
-                        Some(envelopes[EnvelopeIndex::Amplifier as usize].generate());
+                    amp_envelope.set_parameters(&module_parameters.amp_envelope);
+                    let amp_envelope_value = Some(amp_envelope.generate());
 
                     let (left_envelope_sample, right_envelope_sample) = amplify_stereo(
                         oscillator_mix_left,
                         oscillator_mix_right,
-                        Some(load_f32_from_atomic_u32(&current_note_arc.velocity)),
+                        Some(load_f32_from_atomic_u32(&current_note.velocity)),
                         amp_envelope_value,
                     );
 
-                    let filter_envelope_value =
-                        envelopes[EnvelopeIndex::Filter as usize].generate();
+                    filter_envelope.set_parameters(&module_parameters.filter_envelope);
+                    let filter_envelope_value = filter_envelope.generate();
                     let filter_lfo_value = lfos[LfoIndex::Filter as usize].generate();
                     let filter_modulation = filter_envelope_value + filter_lfo_value;
+                    filter.set_parameters(&module_parameters.filter, Some(filter_modulation));
 
-                    let (filtered_left, filtered_right) = filter.filter(
-                        left_envelope_sample,
-                        right_envelope_sample,
-                        &module_parameters.filter,
-                        Some(filter_modulation),
-                    );
+                    let (filtered_left, filtered_right) =
+                        filter.process(left_envelope_sample, right_envelope_sample);
 
                     // Final output level control
                     let output_level =
