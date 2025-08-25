@@ -80,17 +80,8 @@ impl Filter {
     }
 
     pub fn set_parameters(&mut self, filter_parameters: &FilterParameters) {
-        let resonance_changed =
-            filter_parameters.resonance.load(Relaxed) != self.resonance.load(Relaxed);
-
-        let mut filter_changed =
-            filter_parameters.cutoff_frequency.load(Relaxed) != self.cutoff_frequency.load(Relaxed);
-
         self.store_filter_parameters(&filter_parameters);
-
-        if filter_changed || resonance_changed {
-            self.calculate_coefficients();
-        }
+        self.calculate_coefficients();
     }
 
     pub fn process(
