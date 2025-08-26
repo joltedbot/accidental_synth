@@ -21,6 +21,9 @@ use self::saw::Saw;
 use self::sine::Sine;
 use self::square::Square;
 use self::triangle::Triangle;
+use crate::modules::lfo::load_f32_from_atomic_u32;
+use std::sync::atomic::Ordering::Relaxed;
+use std::sync::atomic::{AtomicI8, AtomicI16, AtomicU8, AtomicU32};
 
 pub trait GenerateSamples {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32;
@@ -69,13 +72,24 @@ impl WaveShape {
     }
 }
 
+#[derive(Default, Debug)]
+pub struct OscillatorParameters {
+    pub fine_tune: AtomicI16,
+    pub course_tune: AtomicI8,
+    pub pitch_bend: AtomicI16,
+    pub shape_parameter1: AtomicU32,
+    pub shape_parameter2: AtomicU32,
+    pub wave_shape_index: AtomicU8,
+}
+
 pub struct Oscillator {
     sample_rate: u32,
     wave_generator: Box<dyn GenerateSamples + Send + Sync>,
     tone_frequency: f32,
-    pitch_bend: Option<i16>,
-    course_tune: Option<i8>,
-    fine_tune: Option<i16>,
+    wave_shape_index: u8,
+    pitch_bend: i16,
+    course_tune: i8,
+    fine_tune: i16,
     is_sub_oscillator: bool,
 }
 
@@ -88,11 +102,21 @@ impl Oscillator {
             sample_rate,
             wave_generator,
             tone_frequency: 0.0,
-            pitch_bend: None,
-            course_tune: None,
-            fine_tune: None,
+            wave_shape_index: WaveShape::Sine as u8,
+            pitch_bend: 0,
+            course_tune: 0,
+            fine_tune: 0,
             is_sub_oscillator: false,
         }
+    }
+
+    pub fn set_parameters(&mut self, parameters: &OscillatorParameters) {
+        self.set_shape_parameter1(load_f32_from_atomic_u32(&parameters.shape_parameter1));
+        self.set_shape_parameter2(load_f32_from_atomic_u32(&parameters.shape_parameter2));
+        self.set_wave_shape_index(parameters.wave_shape_index.load(Relaxed));
+        self.set_pitch_bend(parameters.pitch_bend.load(Relaxed));
+        self.set_course_tune(parameters.course_tune.load(Relaxed));
+        self.set_fine_tune(parameters.fine_tune.load(Relaxed));
     }
 
     pub fn generate(&mut self, modulation: Option<f32>) -> f32 {
@@ -109,19 +133,27 @@ impl Oscillator {
         self.wave_generator = get_wave_generator_from_wave_shape(self.sample_rate, wave_shape)
     }
 
+    pub fn set_wave_shape_index(&mut self, wave_shape_index: u8) {
+        if wave_shape_index != self.wave_shape_index {
+            let wave_shape = WaveShape::from_index(wave_shape_index);
+            self.set_wave_shape(wave_shape);
+            self.wave_shape_index = wave_shape_index;
+        }
+    }
+
     pub fn set_frequency(&mut self, tone_frequency: f32) {
         self.tone_frequency = tone_frequency;
     }
 
-    pub fn set_pitch_bend(&mut self, pitch_bend: Option<i16>) {
+    pub fn set_pitch_bend(&mut self, pitch_bend: i16) {
         self.pitch_bend = pitch_bend;
     }
 
-    pub fn set_course_tune(&mut self, course_tune: Option<i8>) {
+    pub fn set_course_tune(&mut self, course_tune: i8) {
         self.course_tune = course_tune;
     }
 
-    pub fn set_fine_tune(&mut self, fine_tune: Option<i16>) {
+    pub fn set_fine_tune(&mut self, fine_tune: i16) {
         self.fine_tune = fine_tune;
     }
 
@@ -146,9 +178,9 @@ impl Oscillator {
     }
 
     pub fn tune(&mut self, mut note_number: u8) {
-        if let Some(interval) = self.course_tune {
+        if self.course_tune != 0 {
             note_number = (note_number as i8)
-                .saturating_add(interval)
+                .saturating_add(self.course_tune)
                 .clamp(MIN_MIDI_NOTE_NUMBER, MAX_MIDI_NOTE_NUMBER) as u8;
         }
 
@@ -160,13 +192,13 @@ impl Oscillator {
 
         let mut note_frequency = midi_note_to_frequency(note_number);
 
-        if let Some(pitch_bend_cents) = self.pitch_bend {
-            note_frequency = frequency_from_cents(note_frequency, pitch_bend_cents)
+        if self.pitch_bend != 0 {
+            note_frequency = frequency_from_cents(note_frequency, self.pitch_bend)
                 .clamp(MIN_NOTE_FREQUENCY, MAX_NOTE_FREQUENCY);
         }
 
-        if let Some(cents) = self.fine_tune {
-            note_frequency = frequency_from_cents(note_frequency, cents);
+        if self.fine_tune != 0 {
+            note_frequency = frequency_from_cents(note_frequency, self.fine_tune);
         }
         self.tone_frequency = note_frequency
     }

@@ -8,16 +8,16 @@ use crate::modules::envelope::{Envelope, EnvelopeParameters};
 use crate::modules::filter::{Filter, FilterParameters};
 use crate::modules::lfo::{Lfo, LfoParameters};
 use crate::modules::mixer::{MixerInput, output_mix, quad_mix};
-use crate::modules::oscillator::{Oscillator, WaveShape};
+use crate::modules::oscillator::{Oscillator, OscillatorParameters, WaveShape};
 use crate::synthesizer::midi_messages::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
 use anyhow::Result;
 use cpal::traits::DeviceTrait;
 use cpal::{Device, Stream};
 use crossbeam_channel::Receiver;
 use std::default::Default;
+use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
-use std::sync::{Arc, Mutex};
 use std::thread;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -102,11 +102,7 @@ pub struct ModuleParameters {
     filter_lfo: LfoParameters,
     lfo1: LfoParameters,
     keyboard: KeyboardParameters,
-}
-
-#[derive(Clone)]
-pub struct Modules {
-    oscillators: Arc<Mutex<[Oscillator; 4]>>,
+    oscillators: [OscillatorParameters; 4],
 }
 
 pub struct Synthesizer {
@@ -115,7 +111,6 @@ pub struct Synthesizer {
     output_stream: Option<Stream>,
     current_note: Arc<CurrentNote>,
     module_parameters: Arc<ModuleParameters>,
-    modules: Modules,
 }
 
 impl Synthesizer {
@@ -132,16 +127,16 @@ impl Synthesizer {
             oscillator_key_sync_enabled: AtomicBool::new(true),
         };
 
-        let oscillators_parameters: [QuadMixerInput; 4] = Default::default();
+        let oscillator_mixer_parameters: [QuadMixerInput; 4] = Default::default();
         store_f32_as_atomic_u32(
-            &oscillators_parameters[0].mixer_level,
+            &oscillator_mixer_parameters[0].mixer_level,
             QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
         );
 
         let mixer_parameters = MixerParameters {
             output_level: AtomicU32::new(DEFAULT_OUTPUT_LEVEL.to_bits()),
             output_balance: AtomicU32::new(DEFAULT_OUTPUT_BALANCE.to_bits()),
-            quad_mixer_inputs: oscillators_parameters,
+            quad_mixer_inputs: oscillator_mixer_parameters,
         };
 
         let max_filter_frequency = (sample_rate as f32 * 0.35).min(20000.0);
@@ -150,14 +145,6 @@ impl Synthesizer {
             resonance: AtomicU32::new(0.0_f32.to_bits()),
             filter_slope: AtomicU8::new(4),
         };
-
-        let mut oscillators = [
-            Oscillator::new(sample_rate, WaveShape::Saw),
-            Oscillator::new(sample_rate, WaveShape::Saw),
-            Oscillator::new(sample_rate, WaveShape::Saw),
-            Oscillator::new(sample_rate, WaveShape::Saw),
-        ];
-        oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
 
         let filter_envelope_parameters: EnvelopeParameters = Default::default();
         filter_envelope_parameters
@@ -175,10 +162,7 @@ impl Synthesizer {
             filter_lfo: filter_lfo_parameters,
             lfo1: Default::default(),
             keyboard: Default::default(),
-        };
-
-        let modules = Modules {
-            oscillators: Arc::new(Mutex::new(oscillators)),
+            oscillators: Default::default(),
         };
 
         Self {
@@ -187,7 +171,6 @@ impl Synthesizer {
             output_stream: None,
             current_note: Arc::new(current_note),
             module_parameters: Arc::new(module_parameters),
-            modules,
         }
     }
 
@@ -203,9 +186,7 @@ impl Synthesizer {
     }
 
     fn start_midi_event_listener(&mut self, midi_message_receiver: Receiver<MidiMessage>) {
-        let mut oscillators_arc = self.modules.oscillators.clone();
         let mut current_note = self.current_note.clone();
-        let mut modules = self.modules.clone();
         let mut module_parameters = self.module_parameters.clone();
 
         thread::spawn(move || {
@@ -215,7 +196,6 @@ impl Synthesizer {
                 match event {
                     MidiMessage::NoteOn(midi_note, velocity) => {
                         midi_messages::process_midi_note_on_message(
-                            &mut oscillators_arc,
                             &mut module_parameters,
                             &mut current_note,
                             midi_note,
@@ -223,15 +203,11 @@ impl Synthesizer {
                         );
                     }
                     MidiMessage::NoteOff => {
-                        midi_messages::process_midi_note_off_message(
-                            &mut oscillators_arc,
-                            &mut module_parameters,
-                        );
+                        midi_messages::process_midi_note_off_message(&mut module_parameters);
                     }
                     MidiMessage::PitchBend(bend_amount) => {
                         midi_messages::process_midi_pitch_bend_message(
-                            &mut oscillators_arc,
-                            &mut current_note,
+                            &module_parameters.oscillators,
                             bend_amount,
                         );
                     }
@@ -246,7 +222,6 @@ impl Synthesizer {
                             cc_value,
                             &mut current_note,
                             &mut module_parameters,
-                            &mut modules,
                         );
                     }
                 }
@@ -257,8 +232,6 @@ impl Synthesizer {
     }
 
     fn create_synthesizer(&mut self, output_device: Device) -> Result<Stream> {
-        let oscillators_arc = self.modules.oscillators.clone();
-
         let current_note = self.current_note.clone();
         let module_parameters = self.module_parameters.clone();
 
@@ -267,6 +240,13 @@ impl Synthesizer {
         let mut amp_envelope = Envelope::new(self.sample_rate);
         let mut filter_envelope = Envelope::new(self.sample_rate);
         let mut filter_lfo = Lfo::new(self.sample_rate);
+        let mut oscillators = [
+            Oscillator::new(self.sample_rate, WaveShape::default()),
+            Oscillator::new(self.sample_rate, WaveShape::default()),
+            Oscillator::new(self.sample_rate, WaveShape::default()),
+            Oscillator::new(self.sample_rate, WaveShape::default()),
+        ];
+        oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
 
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
@@ -282,15 +262,16 @@ impl Synthesizer {
         let stream = output_device.build_output_stream(
             &default_device_stream_config,
             move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                let mut oscillators = oscillators_arc
-                    .lock()
-                    .unwrap_or_else(|poisoned| poisoned.into_inner());
-
                 // Process the module parameters per buffer
                 amp_envelope.set_parameters(&module_parameters.amp_envelope);
                 filter_envelope.set_parameters(&module_parameters.filter_envelope);
                 filter_lfo.set_parameters(&module_parameters.filter_lfo);
                 filter.set_parameters(&module_parameters.filter);
+
+                for (index, oscillator) in oscillators.iter_mut().enumerate() {
+                    oscillator.set_parameters(&module_parameters.oscillators[index]);
+                    oscillator.tune(current_note.midi_note.load(Relaxed));
+                }
 
                 // Begin processing the audio buffer
                 let mut sub_oscillator_mixer_input = create_mixer_input_from_oscillator_parameters(
