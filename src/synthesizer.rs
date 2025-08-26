@@ -6,7 +6,7 @@ use crate::midi::MidiMessage;
 use crate::modules::amplifier::amplify_stereo;
 use crate::modules::envelope::{Envelope, EnvelopeParameters};
 use crate::modules::filter::{Filter, FilterParameters};
-use crate::modules::lfo::Lfo;
+use crate::modules::lfo::{Lfo, LfoParameters};
 use crate::modules::mixer::{MixerInput, output_mix, quad_mix};
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use crate::synthesizer::midi_messages::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
@@ -40,12 +40,6 @@ pub enum OscillatorIndex {
     One = 1,
     Two = 2,
     Three = 3,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum LfoIndex {
-    Filter = 0,
-    Lfo1 = 1,
 }
 
 #[derive(Default, Debug)]
@@ -105,12 +99,13 @@ pub struct ModuleParameters {
     mixer: MixerParameters,
     amp_envelope: EnvelopeParameters,
     filter_envelope: EnvelopeParameters,
+    filter_lfo: LfoParameters,
+    lfo1: LfoParameters,
     keyboard: KeyboardParameters,
 }
 
 #[derive(Clone)]
 pub struct Modules {
-    lfos: Arc<Mutex<[Lfo; 2]>>,
     oscillators: Arc<Mutex<[Oscillator; 4]>>,
 }
 
@@ -156,12 +151,6 @@ impl Synthesizer {
             filter_slope: AtomicU8::new(4),
         };
 
-        let mut filter_modulation_lfo = Lfo::new(sample_rate);
-        filter_modulation_lfo.set_range(0.0);
-
-        let shared_lfo1 = Lfo::new(sample_rate);
-        let lfos = [filter_modulation_lfo, shared_lfo1];
-
         let mut oscillators = [
             Oscillator::new(sample_rate, WaveShape::Saw),
             Oscillator::new(sample_rate, WaveShape::Saw),
@@ -175,17 +164,21 @@ impl Synthesizer {
             .amount
             .store(DEFAULT_FILTER_ENVELOPE_AMOUNT.to_bits(), Relaxed);
 
+        let filter_lfo_parameters: LfoParameters = Default::default();
+        store_f32_as_atomic_u32(&filter_lfo_parameters.range, 0.0);
+
         let module_parameters = ModuleParameters {
             filter: filter_parameters,
             mixer: mixer_parameters,
             amp_envelope: Default::default(),
             filter_envelope: filter_envelope_parameters,
+            filter_lfo: filter_lfo_parameters,
+            lfo1: Default::default(),
             keyboard: Default::default(),
         };
 
         let modules = Modules {
             oscillators: Arc::new(Mutex::new(oscillators)),
-            lfos: Arc::new(Mutex::new(lfos)),
         };
 
         Self {
@@ -264,16 +257,16 @@ impl Synthesizer {
     }
 
     fn create_synthesizer(&mut self, output_device: Device) -> Result<Stream> {
-        let current_note = self.current_note.clone();
         let oscillators_arc = self.modules.oscillators.clone();
-        let lfos_arc = self.modules.lfos.clone();
 
+        let current_note = self.current_note.clone();
         let module_parameters = self.module_parameters.clone();
 
         log::info!("Initializing the filter module");
         let mut filter = Filter::new(self.sample_rate);
         let mut amp_envelope = Envelope::new(self.sample_rate);
         let mut filter_envelope = Envelope::new(self.sample_rate);
+        let mut filter_lfo = Lfo::new(self.sample_rate);
 
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
@@ -292,17 +285,14 @@ impl Synthesizer {
                 let mut oscillators = oscillators_arc
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
-                let mut lfos = lfos_arc
-                    .lock()
-                    .unwrap_or_else(|poisoned| poisoned.into_inner());
 
                 // Process the module parameters per buffer
                 amp_envelope.set_parameters(&module_parameters.amp_envelope);
                 filter_envelope.set_parameters(&module_parameters.filter_envelope);
+                filter_lfo.set_parameters(&module_parameters.filter_lfo);
                 filter.set_parameters(&module_parameters.filter);
 
                 // Begin processing the audio buffer
-
                 let mut sub_oscillator_mixer_input = create_mixer_input_from_oscillator_parameters(
                     &module_parameters.mixer,
                     OscillatorIndex::Sub,
@@ -350,7 +340,7 @@ impl Synthesizer {
                     );
 
                     let filter_envelope_value = filter_envelope.generate();
-                    let filter_lfo_value = lfos[LfoIndex::Filter as usize].generate();
+                    let filter_lfo_value = filter_lfo.generate();
                     let filter_modulation = filter_envelope_value + filter_lfo_value;
 
                     let (filtered_left, filtered_right) = filter.process(

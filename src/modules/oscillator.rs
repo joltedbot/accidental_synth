@@ -1,25 +1,25 @@
 pub mod am;
 mod constants;
 pub mod fm;
+pub mod gigasaw;
 pub mod noise;
 pub mod pulse;
 pub mod ramp;
 pub mod saw;
 pub mod sine;
 pub mod square;
-pub mod super_saw;
 pub mod triangle;
 
 use self::am::AM;
 use self::constants::*;
 use self::fm::FM;
+use self::gigasaw::GigaSaw;
 use self::noise::Noise;
 use self::pulse::Pulse;
 use self::ramp::Ramp;
 use self::saw::Saw;
 use self::sine::Sine;
 use self::square::Square;
-use self::super_saw::SuperSaw;
 use self::triangle::Triangle;
 
 pub trait GenerateSamples {
@@ -35,19 +35,38 @@ pub trait GenerateSamples {
     fn reset(&mut self);
 }
 
+pub const NUMBER_OF_WAVE_SHAPES: u8 = 10;
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WaveShape {
     #[default]
-    Sine,
+    Sine = 1,
     Triangle,
     Square,
     Saw,
     Pulse,
     Ramp,
-    SuperSaw,
+    GigaSaw,
     AM,
     FM,
     Noise,
+}
+
+impl WaveShape {
+    pub fn from_index(index: u8) -> Self {
+        match index {
+            1 => WaveShape::Sine,
+            2 => WaveShape::Triangle,
+            3 => WaveShape::Square,
+            4 => WaveShape::Saw,
+            5 => WaveShape::Pulse,
+            6 => WaveShape::Ramp,
+            7 => WaveShape::GigaSaw,
+            8 => WaveShape::AM,
+            9 => WaveShape::FM,
+            10 => WaveShape::Noise,
+            _ => Default::default(),
+        }
+    }
 }
 
 pub struct Oscillator {
@@ -164,7 +183,7 @@ fn get_wave_generator_from_wave_shape(
         WaveShape::Saw => Box::new(Saw::new(sample_rate)),
         WaveShape::Pulse => Box::new(Pulse::new(sample_rate)),
         WaveShape::Ramp => Box::new(Ramp::new(sample_rate)),
-        WaveShape::SuperSaw => Box::new(SuperSaw::new(sample_rate)),
+        WaveShape::GigaSaw => Box::new(GigaSaw::new(sample_rate)),
         WaveShape::AM => Box::new(AM::new(sample_rate)),
         WaveShape::FM => Box::new(FM::new(sample_rate)),
         WaveShape::Noise => Box::new(Noise::new()),
@@ -284,8 +303,8 @@ mod tests {
             WaveShape::Square
         );
         assert_eq!(
-            get_wave_generator_from_wave_shape(sample_rate, WaveShape::SuperSaw).shape(),
-            WaveShape::SuperSaw
+            get_wave_generator_from_wave_shape(sample_rate, WaveShape::GigaSaw).shape(),
+            WaveShape::GigaSaw
         );
         assert_eq!(
             get_wave_generator_from_wave_shape(sample_rate, WaveShape::Triangle).shape(),

@@ -1,6 +1,6 @@
 use super::{GenerateSamples, WaveShape};
 
-const SHAPE: WaveShape = WaveShape::SuperSaw;
+const SHAPE: WaveShape = WaveShape::GigaSaw;
 use std::f32::consts::PI;
 
 const DEFAULT_X_COORDINATE: f32 = 0.0;
@@ -8,16 +8,16 @@ const DEFAULT_X_INCREMENT: f32 = 1.0;
 const VOICE_FREQUENCY_SPREAD_CENTS: [i8; 7] = [-12, -7, -4, 0, 4, 7, 12];
 const VOICE_COUNT_OUTPUT_LEVEL_OFFSET: f32 = 0.3;
 
-pub struct SuperSaw {
+pub struct GigaSaw {
     shape: WaveShape,
     x_coordinate: f32,
     x_increment: f32,
     sample_rate: u32,
 }
 
-impl SuperSaw {
+impl GigaSaw {
     pub fn new(sample_rate: u32) -> Self {
-        log::info!("Constructing SuperSaw WaveShape Module");
+        log::info!("Constructing GigaSaw WaveShape Module");
         let x_coordinate = DEFAULT_X_COORDINATE;
         let x_increment = DEFAULT_X_INCREMENT;
 
@@ -30,7 +30,7 @@ impl SuperSaw {
     }
 }
 
-impl GenerateSamples for SuperSaw {
+impl GenerateSamples for GigaSaw {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         let mut voice_samples: Vec<f32> = vec![];
 
@@ -63,7 +63,7 @@ impl GenerateSamples for SuperSaw {
     }
 }
 
-impl SuperSaw {
+impl GigaSaw {
     fn single_saw_sample(
         &mut self,
         tone_frequency: f32,

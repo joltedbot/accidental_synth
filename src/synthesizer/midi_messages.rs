@@ -1,9 +1,9 @@
 use crate::midi::CC;
-use crate::modules::lfo::Lfo;
-use crate::modules::oscillator::{Oscillator, WaveShape};
+use crate::modules::lfo::LfoParameters;
+use crate::modules::oscillator::{NUMBER_OF_WAVE_SHAPES, Oscillator, WaveShape};
 use crate::synthesizer::constants::*;
 use crate::synthesizer::{
-    CurrentNote, EnvelopeParameters, FilterParameters, KeyboardParameters, LfoIndex, MidiGateEvent,
+    CurrentNote, EnvelopeParameters, FilterParameters, KeyboardParameters, MidiGateEvent,
     MidiNoteEvent, MixerParameters, ModuleParameters, Modules, OscillatorIndex,
 };
 use std::sync::atomic::{AtomicU32, Ordering::Relaxed};
@@ -320,37 +320,37 @@ pub fn process_midi_cc_values(
             set_envelope_amount(&module_parameters.filter_envelope, value);
         }
         CC::LFO1Frequency(value) => {
-            set_lfo_frequency(&mut modules.lfos, LfoIndex::Lfo1, value);
+            set_lfo_frequency(&module_parameters.lfo1, value);
         }
         CC::LFO1CenterValue(value) => {
-            set_lfo_center_value(&mut modules.lfos, LfoIndex::Lfo1, value);
+            set_lfo_center_value(&module_parameters.lfo1, value);
         }
         CC::LFO1Range(value) => {
-            set_lfo_range(&mut modules.lfos, LfoIndex::Lfo1, value);
+            set_lfo_range(&module_parameters.lfo1, value);
         }
         CC::LFO1WaveShape(value) => {
-            set_lfo_wave_shape(&mut modules.lfos, LfoIndex::Lfo1, value);
+            set_lfo_wave_shape(&module_parameters.lfo1, value);
         }
         CC::LFO1Phase(value) => {
-            set_lfo_phase(&mut modules.lfos, LfoIndex::Lfo1, value);
+            set_lfo_phase(&module_parameters.lfo1, value);
         }
         CC::LFO1Reset => {
-            lfo_reset(&mut modules.lfos, LfoIndex::Lfo1);
+            lfo_reset(&module_parameters.lfo1);
         }
         CC::FilterModLFOFrequency(value) => {
-            set_lfo_frequency(&mut modules.lfos, LfoIndex::Filter, value);
+            set_lfo_frequency(&module_parameters.filter_lfo, value);
         }
         CC::FilterModLFOAmount(value) => {
-            set_lfo_range(&mut modules.lfos, LfoIndex::Filter, value);
+            set_lfo_range(&module_parameters.filter_lfo, value);
         }
         CC::FilterModLFOWaveShape(value) => {
-            set_lfo_wave_shape(&mut modules.lfos, LfoIndex::Filter, value);
+            set_lfo_wave_shape(&module_parameters.filter_lfo, value);
         }
         CC::FilterModLFOPhase(value) => {
-            set_lfo_phase(&mut modules.lfos, LfoIndex::Filter, value);
+            set_lfo_phase(&module_parameters.filter_lfo, value);
         }
         CC::FilterModLFOReset => {
-            lfo_reset(&mut modules.lfos, LfoIndex::Filter);
+            lfo_reset(&module_parameters.filter_lfo);
         }
         CC::AllNotesOff => {
             process_midi_note_off_message(&mut modules.oscillators, module_parameters);
@@ -358,58 +358,38 @@ pub fn process_midi_cc_values(
     }
 }
 
-fn set_lfo_frequency(lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: LfoIndex, value: u8) {
-    let mut lfos = lfos_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    lfos[lfo as usize].set_frequency(exponential_curve_lfo_frequency_from_midi_value(value));
+fn set_lfo_frequency(parameters: &LfoParameters, value: u8) {
+    let frequency = exponential_curve_lfo_frequency_from_midi_value(value);
+    store_f32_as_atomic_u32(&parameters.frequency, frequency);
 }
 
-fn set_lfo_center_value(lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: LfoIndex, value: u8) {
-    let mut lfos = lfos_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    lfos[lfo as usize].set_center_value(midi_value_to_f32_negative_1_to_1(value));
+fn set_lfo_center_value(parameters: &LfoParameters, value: u8) {
+    let center_value = midi_value_to_f32_negative_1_to_1(value);
+    store_f32_as_atomic_u32(&parameters.center_value, center_value);
 }
 
-fn set_lfo_range(lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: LfoIndex, value: u8) {
+fn set_lfo_range(parameters: &LfoParameters, value: u8) {
     let lfo_range = if value == 0 {
         0.0
     } else {
         midi_value_to_f32_0_to_1(value)
     };
 
-    let mut lfos = lfos_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    lfos[lfo as usize].set_range(lfo_range);
+    store_f32_as_atomic_u32(&parameters.range, lfo_range);
 }
 
-fn set_lfo_wave_shape(lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: LfoIndex, value: u8) {
-    let mut lfos = lfos_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    lfos[lfo as usize].set_wave_shape(midi_value_to_oscillator_wave_shape(value));
+fn set_lfo_phase(parameters: &LfoParameters, value: u8) {
+    let phase = midi_value_to_f32_0_to_1(value);
+    store_f32_as_atomic_u32(&parameters.phase, phase);
 }
 
-fn set_lfo_phase(lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: LfoIndex, value: u8) {
-    let mut lfos = lfos_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    lfos[lfo as usize].set_phase(midi_value_to_f32_0_to_1(value));
+fn set_lfo_wave_shape(parameters: &LfoParameters, value: u8) {
+    let wave_shape_index = midi_value_to_wave_shape_index(value);
+    parameters.wave_shape.store(wave_shape_index, Relaxed);
 }
 
-fn lfo_reset(lfos_arc: &mut Arc<Mutex<[Lfo; 2]>>, lfo: LfoIndex) {
-    let mut lfos = lfos_arc
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-    lfos[lfo as usize].reset()
+fn lfo_reset(parameters: &LfoParameters) {
+    parameters.reset.store(true, Relaxed);
 }
 
 fn set_envelope_amount(envelope_parameters: &EnvelopeParameters, value: u8) {
@@ -596,8 +576,8 @@ pub fn midi_value_to_f32_range(midi_value: u8, minimum: f32, maximum: f32) -> f3
 
 pub fn midi_value_to_u32_range(midi_value: u8, minimum: u32, maximum: u32) -> u32 {
     let range = maximum - minimum;
-    let increment = range / MAX_MIDI_VALUE as u32;
-    minimum + (midi_value as u32 * increment)
+    let increment = range as f32 / MAX_MIDI_VALUE as f32;
+    minimum + (midi_value as f32 * increment).ceil() as u32
 }
 
 fn midi_value_to_f32_0_to_1(midi_value: u8) -> f32 {
@@ -652,6 +632,10 @@ fn midi_value_to_filter_slope(midi_value: u8) -> u8 {
     }
 }
 
+fn midi_value_to_wave_shape_index(midi_value: u8) -> u8 {
+    midi_value_to_u32_range(midi_value, 1, NUMBER_OF_WAVE_SHAPES as u32) as u8
+}
+
 fn midi_value_to_oscillator_wave_shape(midi_value: u8) -> WaveShape {
     if midi_value < 13 {
         WaveShape::Sine
@@ -666,7 +650,7 @@ fn midi_value_to_oscillator_wave_shape(midi_value: u8) -> WaveShape {
     } else if midi_value < 78 {
         WaveShape::Ramp
     } else if midi_value < 91 {
-        WaveShape::SuperSaw
+        WaveShape::GigaSaw
     } else if midi_value < 104 {
         WaveShape::AM
     } else if midi_value < 117 {
