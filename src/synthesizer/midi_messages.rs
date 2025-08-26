@@ -23,6 +23,9 @@ pub fn action_midi_note_events(
                 .filter_envelope
                 .gate_flag
                 .store(MidiGateEvent::GateOn as u8, Relaxed);
+            for oscillator in module_parameters.oscillators.iter() {
+                oscillator.gate_flag.store(true, Relaxed);
+            }
         }
         MidiNoteEvent::NoteOff => {
             module_parameters
@@ -135,7 +138,7 @@ pub fn process_midi_cc_values(
             );
         }
         CC::OscillatorKeySyncEnabled(value) => {
-            set_oscillator_key_sync(current_note, value);
+            set_oscillator_key_sync(&module_parameters.oscillators, value);
         }
         CC::SubOscillatorShape(value) => {
             set_oscillator_wave_shape(
@@ -446,10 +449,12 @@ fn set_oscillator_shape_parameter2(parameters: &OscillatorParameters, value: u8)
     store_f32_as_atomic_u32(&parameters.shape_parameter2, parameter2);
 }
 
-fn set_oscillator_key_sync(current_note: &mut Arc<CurrentNote>, value: u8) {
-    current_note
-        .oscillator_key_sync_enabled
-        .store(midi_value_to_bool(value), Relaxed);
+fn set_oscillator_key_sync(parameters: &[OscillatorParameters; 4], value: u8) {
+    for parameters in parameters {
+        parameters
+            .key_sync_enabled
+            .store(midi_value_to_bool(value), Relaxed);
+    }
 }
 
 fn set_oscillator_balance(parameters: &MixerParameters, oscillator: OscillatorIndex, value: u8) {

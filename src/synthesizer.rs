@@ -47,7 +47,6 @@ struct CurrentNote {
     midi_note: AtomicU8,
     velocity: AtomicU32,
     velocity_curve: AtomicU8,
-    oscillator_key_sync_enabled: AtomicBool,
 }
 
 #[derive(Default, Debug)]
@@ -77,20 +76,6 @@ struct MixerParameters {
     output_level: AtomicU32,
     output_balance: AtomicU32,
     quad_mixer_inputs: [QuadMixerInput; 4],
-}
-
-impl Default for EnvelopeParameters {
-    fn default() -> Self {
-        Self {
-            attack_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
-            decay_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
-            sustain_level: AtomicU32::new(DEFAULT_ENVELOPE_SUSTAIN_LEVEL.to_bits()),
-            release_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
-            amount: AtomicU32::new(DEFAULT_ENVELOPE_AMOUNT.to_bits()),
-            is_inverted: AtomicBool::new(false),
-            gate_flag: AtomicU8::new(0),
-        }
-    }
 }
 
 #[derive(Default, Debug)]
@@ -124,7 +109,6 @@ impl Synthesizer {
             midi_note: AtomicU8::new(0),
             velocity,
             velocity_curve: AtomicU8::new(DEFAULT_VELOCITY_CURVE_MIDI_VALUE),
-            oscillator_key_sync_enabled: AtomicBool::new(true),
         };
 
         let oscillator_mixer_parameters: [QuadMixerInput; 4] = Default::default();

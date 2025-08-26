@@ -11,6 +11,9 @@ pub const DEFAULT_DECAY_LEVEL_INCREMENT: f32 = 0.0001;
 pub const DEFAULT_DECAY_MILLISECONDS: f32 = 200.0;
 const DEFAULT_SUSTAIN_LEVEL: f32 = 0.8;
 pub const DEFAULT_RELEASE_LEVEL_INCREMENT: f32 = 0.0001;
+pub const DEFAULT_ENVELOPE_AMOUNT: f32 = 1.0;
+pub const DEFAULT_ENVELOPE_SUSTAIN_LEVEL: f32 = 0.8;
+pub const DEFAULT_ENVELOPE_STAGE_MILLISECONDS: u32 = 200;
 
 #[derive(Debug)]
 pub struct EnvelopeParameters {
@@ -21,6 +24,20 @@ pub struct EnvelopeParameters {
     pub amount: AtomicU32,        // Stores and f32 from bits
     pub is_inverted: AtomicBool,
     pub gate_flag: AtomicU8, // 0 - waiting, 1 - gate on, 2 - gate off
+}
+
+impl Default for EnvelopeParameters {
+    fn default() -> Self {
+        Self {
+            attack_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
+            decay_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
+            sustain_level: AtomicU32::new(DEFAULT_ENVELOPE_SUSTAIN_LEVEL.to_bits()),
+            release_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
+            amount: AtomicU32::new(DEFAULT_ENVELOPE_AMOUNT.to_bits()),
+            is_inverted: AtomicBool::new(false),
+            gate_flag: AtomicU8::new(0),
+        }
+    }
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]

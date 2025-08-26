@@ -5,6 +5,7 @@ pub const MAX_PHASE: f32 = 1.0;
 pub const DEFAULT_PHASE: f32 = 0.0;
 pub const DEFAULT_X_COORDINATE: f32 = 0.0;
 pub const DEFAULT_X_INCREMENT: f32 = 1.0;
+pub const DEFAULT_KEY_SYNC_ENABLED: bool = true;
 
 // Oscillator Shape Specific Constants
 pub const DEFAULT_AMPLITUDE_MODULATION_AMOUNT: f32 = 4.0;

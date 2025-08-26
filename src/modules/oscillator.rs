@@ -23,7 +23,7 @@ use self::square::Square;
 use self::triangle::Triangle;
 use crate::modules::lfo::load_f32_from_atomic_u32;
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::{AtomicI8, AtomicI16, AtomicU8, AtomicU32};
+use std::sync::atomic::{AtomicBool, AtomicI8, AtomicI16, AtomicU8, AtomicU32};
 
 pub trait GenerateSamples {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32;
@@ -39,6 +39,7 @@ pub trait GenerateSamples {
 }
 
 pub const NUMBER_OF_WAVE_SHAPES: u8 = 10;
+
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WaveShape {
     #[default]
@@ -72,7 +73,7 @@ impl WaveShape {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct OscillatorParameters {
     pub fine_tune: AtomicI16,
     pub course_tune: AtomicI8,
@@ -80,6 +81,23 @@ pub struct OscillatorParameters {
     pub shape_parameter1: AtomicU32,
     pub shape_parameter2: AtomicU32,
     pub wave_shape_index: AtomicU8,
+    pub gate_flag: AtomicBool,
+    pub key_sync_enabled: AtomicBool,
+}
+
+impl Default for OscillatorParameters {
+    fn default() -> Self {
+        Self {
+            fine_tune: AtomicI16::new(0),
+            course_tune: AtomicI8::new(0),
+            pitch_bend: AtomicI16::new(0),
+            shape_parameter1: AtomicU32::new(0),
+            shape_parameter2: AtomicU32::new(0),
+            wave_shape_index: AtomicU8::new(WaveShape::default() as u8),
+            gate_flag: AtomicBool::new(false),
+            key_sync_enabled: AtomicBool::new(DEFAULT_KEY_SYNC_ENABLED),
+        }
+    }
 }
 
 pub struct Oscillator {
@@ -91,6 +109,7 @@ pub struct Oscillator {
     course_tune: i8,
     fine_tune: i16,
     is_sub_oscillator: bool,
+    key_sync_enabled: bool,
 }
 
 impl Oscillator {
@@ -102,11 +121,12 @@ impl Oscillator {
             sample_rate,
             wave_generator,
             tone_frequency: 0.0,
-            wave_shape_index: WaveShape::Sine as u8,
+            wave_shape_index: WaveShape::default() as u8,
             pitch_bend: 0,
             course_tune: 0,
             fine_tune: 0,
             is_sub_oscillator: false,
+            key_sync_enabled: DEFAULT_KEY_SYNC_ENABLED,
         }
     }
 
@@ -117,6 +137,23 @@ impl Oscillator {
         self.set_pitch_bend(parameters.pitch_bend.load(Relaxed));
         self.set_course_tune(parameters.course_tune.load(Relaxed));
         self.set_fine_tune(parameters.fine_tune.load(Relaxed));
+        self.set_gate(&parameters.gate_flag);
+        self.set_key_sync_enabled(parameters.key_sync_enabled.load(Relaxed));
+    }
+
+    fn set_gate(&mut self, gate_flag: &AtomicBool) {
+        let gate_on = gate_flag.load(Relaxed);
+        if gate_on && self.key_sync_enabled {
+            self.reset();
+            gate_flag.store(false, Relaxed); // Reset the gate flag
+        }
+    }
+
+    fn set_key_sync_enabled(&mut self, key_sync_enabled: bool) {
+        if key_sync_enabled != self.key_sync_enabled {
+            println!("Key Sync Enabled: {}", self.key_sync_enabled);
+        }
+        self.key_sync_enabled = key_sync_enabled;
     }
 
     pub fn generate(&mut self, modulation: Option<f32>) -> f32 {
