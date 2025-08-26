@@ -1,20 +1,20 @@
 // Derived from https://www.musicdsp.org/en/latest/Filters/253-perfect-lp4-filter.html
 
+use std::sync::atomic::Ordering::Relaxed;
+use std::sync::atomic::{AtomicU8, AtomicU32};
+
 const MAXIMUM_FILTER_CUTOFF: f32 = 20000.0;
-const MIN_CUTOFF_FREQUENCY: f32 = 20.0;
-const MIN_RESONANCE: f32 = 0.0;
-const MAX_RESONANCE: f32 = 0.90;
+const DEFAULT_RESONANCE: f32 = 0.0;
 const NATURAL_LOG_OF_4: f32 = 1.3862943;
 const DENORMAL_GUARD: f32 = 1e-25_f32;
 
-#[derive(Default, Copy, Clone, Debug, PartialEq)]
-pub enum FilterSlope {
-    Db6,
-    Db12,
-    Db18,
-    #[default]
-    Db24,
+#[derive(Default, Debug)]
+pub struct FilterParameters {
+    pub cutoff_frequency: AtomicU32, // Stores and f32 from bits
+    pub resonance: AtomicU32,        // Stores and f32 from bits
+    pub filter_slope: AtomicU8,
 }
+
 #[derive(Default, Copy, Clone, Debug, PartialEq)]
 struct Coefficients {
     cutoff_coefficient: f32,
@@ -25,14 +25,14 @@ struct Coefficients {
     feedback_gain: f32,
 }
 
-#[derive(Default, Copy, Clone, Debug, PartialEq)]
+#[derive(Default, Debug)]
 pub struct Filter {
     sample_rate: u32,
     max_frequency: f32,
-    cutoff_frequency: f32,
+    cutoff_frequency: AtomicU32,
+    resonance: AtomicU32,
+    filter_slope: AtomicU8,
     cutoff_modulation_amount: f32,
-    resonance: f32,
-    filter_slope: FilterSlope,
     coefficients: Coefficients,
     stage1_output: f32,
     stage2_output: f32,
@@ -55,14 +55,18 @@ impl Filter {
         let pole_coefficient = calculate_pole_coefficient(gain_coefficient);
         let resonance_factor = calculate_resonance_factor(gain_coefficient);
         let adjusted_resonance_factor = calculate_adjusted_resonance_factor(resonance_factor);
-        let feedback_gain =
-            calculate_feedback_gain(MIN_RESONANCE, resonance_factor, adjusted_resonance_factor);
+        let feedback_gain = calculate_feedback_gain(
+            DEFAULT_RESONANCE,
+            resonance_factor,
+            adjusted_resonance_factor,
+        );
 
         Self {
             sample_rate,
-            cutoff_frequency: max_frequency,
+            cutoff_frequency: AtomicU32::new(max_frequency.to_bits()),
             max_frequency,
-            resonance: MIN_RESONANCE,
+            resonance: AtomicU32::new(DEFAULT_RESONANCE.to_bits()),
+            filter_slope: AtomicU8::new(4),
             coefficients: Coefficients {
                 cutoff_coefficient,
                 gain_coefficient,
@@ -75,42 +79,42 @@ impl Filter {
         }
     }
 
-    pub fn filter(&mut self, left_sample: f32, right_sample: f32) -> (f32, f32) {
+    pub fn set_parameters(&mut self, filter_parameters: &FilterParameters) {
+        self.store_filter_parameters(filter_parameters);
+        self.calculate_coefficients();
+    }
+
+    pub fn process(
+        &mut self,
+        left_sample: f32,
+        right_sample: f32,
+        modulation: Option<f32>,
+    ) -> (f32, f32) {
+        if left_sample == 0.0 && right_sample == 0.0 {
+            return (0.0, 0.0);
+        }
+
+        if let Some(modulation) = modulation {
+            self.modulate_cutoff_frequency(modulation);
+        }
+
         let left_output = self.ladder_filter(left_sample);
         let right_output = self.ladder_filter(right_sample);
+
         (left_output, right_output)
     }
 
-    pub fn set_cutoff_frequency(&mut self, cut_off_frequency: f32) {
-        self.cutoff_frequency = cut_off_frequency.min(self.max_frequency);
-        let frequency = (self.cutoff_frequency + self.cutoff_modulation_amount)
-            .clamp(MIN_CUTOFF_FREQUENCY, self.max_frequency);
-        self.calculate_coefficients_on_cutoff_update(frequency);
+    pub fn modulate_cutoff_frequency(&mut self, modulation: f32) {
+        self.cutoff_modulation_amount = modulation * self.max_frequency;
+        let modulated_cutoff_frequency = self.calculate_filter_cutoff_frequency().to_bits();
+        self.cutoff_frequency
+            .store(modulated_cutoff_frequency, Relaxed)
     }
 
-    pub fn modulate_cutoff_frequency(&mut self, cutoff_modulation: f32) {
-        self.cutoff_modulation_amount = cutoff_modulation * self.max_frequency;
-        let frequency =
-            (self.cutoff_frequency + self.cutoff_modulation_amount).clamp(0.0, self.max_frequency);
-        self.calculate_coefficients_on_cutoff_update(frequency);
-    }
-
-    pub fn set_resonance(&mut self, resonance: f32) {
-        self.resonance = resonance.clamp(MIN_RESONANCE, MAX_RESONANCE);
-        self.coefficients.feedback_gain = calculate_feedback_gain(
-            self.resonance,
-            self.coefficients.resonance_factor,
-            self.coefficients.adjusted_resonance_factor,
-        );
-    }
-
-    pub fn set_filter_slope(&mut self, slope: FilterSlope) {
-        self.filter_slope = slope;
-    }
-
-    fn calculate_coefficients_on_cutoff_update(&mut self, frequency: f32) {
+    fn calculate_coefficients(&mut self) {
+        let cutoff_frequency = self.calculate_filter_cutoff_frequency();
         self.coefficients.cutoff_coefficient =
-            calculate_cutoff_coefficient(frequency, self.sample_rate);
+            calculate_cutoff_coefficient(cutoff_frequency, self.sample_rate);
         self.coefficients.gain_coefficient =
             calculate_gain_coefficient(self.coefficients.cutoff_coefficient);
         self.coefficients.pole_coefficient =
@@ -120,7 +124,7 @@ impl Filter {
         self.coefficients.adjusted_resonance_factor =
             calculate_adjusted_resonance_factor(self.coefficients.resonance_factor);
         self.coefficients.feedback_gain = calculate_feedback_gain(
-            self.resonance,
+            load_f32_from_atomic_u32(&self.resonance),
             self.coefficients.resonance_factor,
             self.coefficients.adjusted_resonance_factor,
         );
@@ -141,12 +145,21 @@ impl Filter {
         self.stage2_unit_delay = self.stage2_output + DENORMAL_GUARD;
         self.stage3_unit_delay = self.stage3_output + DENORMAL_GUARD;
 
-        match self.filter_slope {
-            FilterSlope::Db6 => self.stage1_output,
-            FilterSlope::Db12 => self.stage2_output,
-            FilterSlope::Db18 => self.stage3_output,
-            FilterSlope::Db24 => self.stage4_output,
+        match self.filter_slope.load(Relaxed) {
+            1 => self.stage1_output,
+            2 => self.stage2_output,
+            3 => self.stage3_output,
+            4 => self.stage4_output,
+            _ => self.stage4_output,
         }
+    }
+    fn store_filter_parameters(&mut self, parameters: &FilterParameters) {
+        self.cutoff_frequency
+            .store(parameters.cutoff_frequency.load(Relaxed), Relaxed);
+        self.resonance
+            .store(parameters.resonance.load(Relaxed), Relaxed);
+        self.filter_slope
+            .store(parameters.filter_slope.load(Relaxed), Relaxed);
     }
 
     fn calculate_non_linear_saturation(&mut self) -> f32 {
@@ -175,6 +188,11 @@ impl Filter {
         input * self.coefficients.gain_coefficient
             + self.input_unit_delay * self.coefficients.gain_coefficient
             - self.coefficients.pole_coefficient * self.stage1_output
+    }
+
+    fn calculate_filter_cutoff_frequency(&mut self) -> f32 {
+        (load_f32_from_atomic_u32(&self.cutoff_frequency) + self.cutoff_modulation_amount)
+            .clamp(0.0, self.max_frequency)
     }
 }
 
@@ -206,6 +224,10 @@ fn calculate_feedback_gain(
         / (adjusted_resonance_factor - 6.0 * resonance_factor)
 }
 
+pub fn load_f32_from_atomic_u32(atomic: &AtomicU32) -> f32 {
+    f32::from_bits(atomic.load(Relaxed))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -221,9 +243,15 @@ mod tests {
         let filter = Filter::new(sample_rate);
 
         assert_eq!(filter.sample_rate, sample_rate);
-        assert_eq!(filter.cutoff_frequency, max_frequency);
-        assert_eq!(filter.resonance, MIN_RESONANCE);
-        assert_eq!(filter.filter_slope, FilterSlope::Db24);
+        assert_eq!(
+            load_f32_from_atomic_u32(&filter.cutoff_frequency),
+            max_frequency
+        );
+        assert_eq!(
+            load_f32_from_atomic_u32(&filter.resonance),
+            DEFAULT_RESONANCE
+        );
+        assert_eq!(filter.filter_slope.load(Relaxed), 4);
 
         assert_eq!(filter.stage1_output, 0.0);
         assert_eq!(filter.stage2_output, 0.0);

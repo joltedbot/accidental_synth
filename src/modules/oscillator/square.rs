@@ -1,4 +1,3 @@
-use super::constants::*;
 use super::{GenerateSamples, WaveShape};
 
 const SHAPE: WaveShape = WaveShape::Square;

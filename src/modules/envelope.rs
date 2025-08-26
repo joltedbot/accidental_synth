@@ -1,7 +1,8 @@
+use std::sync::atomic::Ordering::Relaxed;
+use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
+
 const ENVELOPE_MAX_LEVEL: f32 = 1.0;
 const ENVELOPE_MIN_LEVEL: f32 = 0.0;
-pub const ENVELOPE_MAX_MILLISECONDS: f32 = 10000.0;
-pub const ENVELOPE_MIN_MILLISECONDS: f32 = 0.05;
 const MIN_SUSTAIN_LEVEL: f32 = 0.0;
 const MAX_SUSTAIN_LEVEL: f32 = 1.0;
 const DEFAULT_EG_AMOUNT: f32 = 1.0;
@@ -10,6 +11,34 @@ pub const DEFAULT_DECAY_LEVEL_INCREMENT: f32 = 0.0001;
 pub const DEFAULT_DECAY_MILLISECONDS: f32 = 200.0;
 const DEFAULT_SUSTAIN_LEVEL: f32 = 0.8;
 pub const DEFAULT_RELEASE_LEVEL_INCREMENT: f32 = 0.0001;
+pub const DEFAULT_ENVELOPE_AMOUNT: f32 = 1.0;
+pub const DEFAULT_ENVELOPE_SUSTAIN_LEVEL: f32 = 0.8;
+pub const DEFAULT_ENVELOPE_STAGE_MILLISECONDS: u32 = 200;
+
+#[derive(Debug)]
+pub struct EnvelopeParameters {
+    pub attack_ms: AtomicU32,
+    pub decay_ms: AtomicU32,
+    pub release_ms: AtomicU32,
+    pub sustain_level: AtomicU32, // Stores and f32 from bits
+    pub amount: AtomicU32,        // Stores and f32 from bits
+    pub is_inverted: AtomicBool,
+    pub gate_flag: AtomicU8, // 0 - waiting, 1 - gate on, 2 - gate off
+}
+
+impl Default for EnvelopeParameters {
+    fn default() -> Self {
+        Self {
+            attack_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
+            decay_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
+            sustain_level: AtomicU32::new(DEFAULT_ENVELOPE_SUSTAIN_LEVEL.to_bits()),
+            release_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
+            amount: AtomicU32::new(DEFAULT_ENVELOPE_AMOUNT.to_bits()),
+            is_inverted: AtomicBool::new(false),
+            gate_flag: AtomicU8::new(0),
+        }
+    }
+}
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 enum Stage {
@@ -64,6 +93,17 @@ impl Envelope {
         }
     }
 
+    pub fn set_parameters(&mut self, parameters: &EnvelopeParameters) {
+        self.set_attack_milliseconds(parameters.attack_ms.load(Relaxed) as f32);
+        self.set_decay_milliseconds(parameters.decay_ms.load(Relaxed) as f32);
+        self.set_release_milliseconds(parameters.release_ms.load(Relaxed) as f32);
+        self.set_sustain_level(load_f32_from_atomic_u32(&parameters.sustain_level));
+        self.set_amount(load_f32_from_atomic_u32(&parameters.amount));
+        self.set_is_inverted(parameters.is_inverted.load(Relaxed));
+        self.set_gate(parameters.gate_flag.load(Relaxed));
+        parameters.gate_flag.store(0, Relaxed); // Reset the gate flag to waiting to clear the flag
+    }
+
     pub fn generate(&mut self) -> f32 {
         let mut envelope_output_value = self.next_value();
         if self.is_inverted {
@@ -72,15 +112,27 @@ impl Envelope {
         envelope_output_value * self.amount
     }
 
-    pub fn gate_on(&mut self) {
+    pub fn set_gate(&mut self, gate_active: u8) {
+        match gate_active {
+            1 => {
+                self.gate_on();
+            }
+            2 => {
+                self.gate_off();
+            }
+            _ => {}
+        }
+    }
+
+    fn gate_on(&mut self) {
         self.state_action(StageAction::Start);
     }
 
-    pub fn gate_off(&mut self) {
+    fn gate_off(&mut self) {
         self.state_action(StageAction::Stop);
     }
 
-    pub fn set_attack_milliseconds(&mut self, milliseconds: f32) {
+    fn set_attack_milliseconds(&mut self, milliseconds: f32) {
         let clamped_milliseconds = milliseconds.max(self.milliseconds_per_sample);
         self.attack_level_increment = self.level_increments_from_milliseconds(
             ENVELOPE_MIN_LEVEL,
@@ -89,7 +141,7 @@ impl Envelope {
         );
     }
 
-    pub fn set_decay_milliseconds(&mut self, milliseconds: f32) {
+    fn set_decay_milliseconds(&mut self, milliseconds: f32) {
         self.decay_milliseconds = milliseconds.max(self.milliseconds_per_sample);
 
         self.decay_level_increment = self.level_increments_from_milliseconds(
@@ -99,7 +151,7 @@ impl Envelope {
         );
     }
 
-    pub fn set_sustain_level(&mut self, level: f32) {
+    fn set_sustain_level(&mut self, level: f32) {
         if !(MIN_SUSTAIN_LEVEL..=MAX_SUSTAIN_LEVEL).contains(&level) {
             log::debug!(
                 "set_sustain_level: level exceeded range (0.0-1.0) but was clamped: level: {level}"
@@ -114,7 +166,7 @@ impl Envelope {
         );
     }
 
-    pub fn set_release_milliseconds(&mut self, milliseconds: f32) {
+    fn set_release_milliseconds(&mut self, milliseconds: f32) {
         let clamped_milliseconds = milliseconds.max(self.milliseconds_per_sample);
         self.release_level_increment = self.level_increments_from_milliseconds(
             ENVELOPE_MAX_LEVEL,
@@ -123,11 +175,11 @@ impl Envelope {
         );
     }
 
-    pub fn set_amount(&mut self, amount: f32) {
+    fn set_amount(&mut self, amount: f32) {
         self.amount = amount;
     }
 
-    pub fn set_is_inverted(&mut self, is_inverted: bool) {
+    fn set_is_inverted(&mut self, is_inverted: bool) {
         self.is_inverted = is_inverted
     }
 
@@ -222,6 +274,10 @@ impl Envelope {
 
         range / (milliseconds / self.milliseconds_per_sample)
     }
+}
+
+pub fn load_f32_from_atomic_u32(atomic: &AtomicU32) -> f32 {
+    f32::from_bits(atomic.load(Relaxed))
 }
 
 #[cfg(test)]

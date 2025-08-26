@@ -14,8 +14,8 @@ const MIDI_VELOCITY_BYTE_INDEX: usize = 2;
 const MIDI_CC_NUMBER_BYTE_INDEX: usize = 1;
 const MIDI_CC_VALUE_BYTE_INDEX: usize = 2;
 const MIDI_CHANNEL_PRESSURE_VALUE_BYTE_INDEX: usize = 2;
-const MIDI_PITCHBEND_MSB_BYTE_INDEX: usize = 2;
-const MIDI_PITCHBEND_LSB_BYTE_INDEX: usize = 1;
+const MIDI_PITCH_BEND_MSB_BYTE_INDEX: usize = 2;
+const MIDI_PITCH_BEND_LSB_BYTE_INDEX: usize = 1;
 
 const MIDI_MESSAGE_CHANNEL_CAPACITY: usize = 16;
 
@@ -27,8 +27,7 @@ pub enum CC {
     ModWheel(u8),
     VelocityCurve(u8),
     Volume(u8),
-    ConstantLevel(u8),
-    Pan(u8),
+    Balance(u8),
     SubOscillatorShapeParameter1(u8),
     SubOscillatorShapeParameter2(u8),
     Oscillator1ShapeParameter1(u8),
@@ -58,10 +57,10 @@ pub enum CC {
     Oscillator1Mute(u8),
     Oscillator2Mute(u8),
     Oscillator3Mute(u8),
-    SubOscillatorPan(u8),
-    Oscillator1Pan(u8),
-    Oscillator2Pan(u8),
-    Oscillator3Pan(u8),
+    SubOscillatorBalance(u8),
+    Oscillator1Balance(u8),
+    Oscillator2Balance(u8),
+    Oscillator3Balance(u8),
     FilterPoles(u8),
     FilterResonance(u8),
     FilterCutoff(u8),
@@ -81,12 +80,12 @@ pub enum CC {
     LFO1Range(u8),
     LFO1WaveShape(u8),
     LFO1Phase(u8),
-    LFO1Reset(u8),
+    LFO1Reset,
     FilterModLFOFrequency(u8),
     FilterModLFOAmount(u8),
     FilterModLFOWaveShape(u8),
     FilterModLFOPhase(u8),
-    FilterModLFOReset(u8),
+    FilterModLFOReset,
     AllNotesOff,
 }
 
@@ -209,14 +208,14 @@ fn create_midi_input_listener(
                         get_supported_cc_from_cc_number(cc_number, cc_value).map(MidiMessage::ControlChange)
                     }
                     MessageType::PitchBend => {
-                        let amount_msb = message[MIDI_PITCHBEND_MSB_BYTE_INDEX];
-                        let amount_lsb = message[MIDI_PITCHBEND_LSB_BYTE_INDEX];
+                        let amount_msb = message[MIDI_PITCH_BEND_MSB_BYTE_INDEX];
+                        let amount_lsb = message[MIDI_PITCH_BEND_LSB_BYTE_INDEX];
                         let pitch_bend_amount = (amount_msb as u16) << 7 | amount_lsb as u16;
                         Some(MidiMessage::PitchBend(pitch_bend_amount as i16))
                     }
                     MessageType::ChannelPressure => {
-                        let preasure_amount = message[MIDI_CHANNEL_PRESSURE_VALUE_BYTE_INDEX];
-                        Some(MidiMessage::ChannelPressure(preasure_amount))
+                        let pressure_amount = message[MIDI_CHANNEL_PRESSURE_VALUE_BYTE_INDEX];
+                        Some(MidiMessage::ChannelPressure(pressure_amount))
                     }
                     _ => None,
                 };
@@ -274,8 +273,7 @@ fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {
         1 => Some(CC::ModWheel(cc_value)),
         3 => Some(CC::VelocityCurve(cc_value)),
         7 => Some(CC::Volume(cc_value)),
-        9 => Some(CC::ConstantLevel(cc_value)),
-        10 => Some(CC::Pan(cc_value)),
+        10 => Some(CC::Balance(cc_value)),
         12 => Some(CC::SubOscillatorShapeParameter1(cc_value)),
         13 => Some(CC::SubOscillatorShapeParameter2(cc_value)),
         14 => Some(CC::Oscillator1ShapeParameter1(cc_value)),
@@ -305,10 +303,10 @@ fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {
         57 => Some(CC::Oscillator1Mute(cc_value)),
         58 => Some(CC::Oscillator2Mute(cc_value)),
         59 => Some(CC::Oscillator3Mute(cc_value)),
-        60 => Some(CC::SubOscillatorPan(cc_value)),
-        61 => Some(CC::Oscillator1Pan(cc_value)),
-        62 => Some(CC::Oscillator2Pan(cc_value)),
-        63 => Some(CC::Oscillator3Pan(cc_value)),
+        60 => Some(CC::SubOscillatorBalance(cc_value)),
+        61 => Some(CC::Oscillator1Balance(cc_value)),
+        62 => Some(CC::Oscillator2Balance(cc_value)),
+        63 => Some(CC::Oscillator3Balance(cc_value)),
         70 => Some(CC::FilterPoles(cc_value)),
         71 => Some(CC::FilterResonance(cc_value)),
         72 => Some(CC::AmpEGReleaseTime(cc_value)),
@@ -328,12 +326,12 @@ fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {
         104 => Some(CC::LFO1Range(cc_value)),
         105 => Some(CC::LFO1WaveShape(cc_value)),
         106 => Some(CC::LFO1Phase(cc_value)),
-        107 => Some(CC::LFO1Reset(cc_value)),
+        107 => Some(CC::LFO1Reset),
         108 => Some(CC::FilterModLFOFrequency(cc_value)),
         109 => Some(CC::FilterModLFOAmount(cc_value)),
         110 => Some(CC::FilterModLFOWaveShape(cc_value)),
         111 => Some(CC::FilterModLFOPhase(cc_value)),
-        112 => Some(CC::FilterModLFOReset(cc_value)),
+        112 => Some(CC::FilterModLFOReset),
         123 => Some(CC::AllNotesOff),
         _ => None,
     }

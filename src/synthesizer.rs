@@ -1,29 +1,37 @@
-#![allow(unused_variables)]
 mod constants;
 mod midi_messages;
-pub mod tuner;
 
 use self::constants::*;
 use crate::midi::MidiMessage;
 use crate::modules::amplifier::amplify_stereo;
-use crate::modules::envelope::Envelope;
-use crate::modules::filter::Filter;
-use crate::modules::mixer::{Mixer, MixerInput};
-use crate::modules::oscillator::{Oscillator, WaveShape};
-use std::default::Default;
-
-use crate::modules::lfo::Lfo;
+use crate::modules::envelope::{Envelope, EnvelopeParameters};
+use crate::modules::filter::{Filter, FilterParameters};
+use crate::modules::lfo::{Lfo, LfoParameters};
+use crate::modules::mixer::{MixerInput, output_mix, quad_mix};
+use crate::modules::oscillator::{Oscillator, OscillatorParameters, WaveShape};
+use crate::synthesizer::midi_messages::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
 use anyhow::Result;
 use cpal::traits::DeviceTrait;
 use cpal::{Device, Stream};
 use crossbeam_channel::Receiver;
-use std::sync::{Arc, Mutex};
+use std::default::Default;
+use std::sync::Arc;
+use std::sync::atomic::Ordering::Relaxed;
+use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::thread;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum MidiNoteEvent {
-    NoteOn,
-    NoteOff,
+    NoteOn = 1,
+    NoteOff = 2,
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
+enum MidiGateEvent {
+    #[default]
+    Wait = 0,
+    GateOn = 1,
+    GateOff = 2,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -34,114 +42,119 @@ pub enum OscillatorIndex {
     Three = 3,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum EnvelopeIndex {
-    Amplifier = 0,
-    Filter = 1,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum LfoIndex {
-    Filter = 0,
-    Lfo1 = 1,
-}
-
-#[derive(Default, Debug, Clone, Copy, PartialEq)]
-pub struct OscillatorParameters {
-    frequency: f32,
-    pitch_bend: Option<i16>,
-    course_tune: Option<i8>,
-    fine_tune: Option<i16>,
-    is_sub_oscillator: bool,
-}
-
-#[derive(Default, Debug, Clone, Copy, PartialEq)]
+#[derive(Default, Debug)]
 struct CurrentNote {
-    midi_note: u8,
-    velocity: f32,
-    velocity_curve: u8,
+    midi_note: AtomicU8,
+    velocity: AtomicU32,
+    velocity_curve: AtomicU8,
 }
 
-#[derive(Default, Debug, Clone, Copy, PartialEq)]
-struct Parameters {
-    is_fixed_velocity: bool,
-    current_note: CurrentNote,
-    mod_wheel_amount: f32,
-    aftertouch_amount: f32,
-    oscillator_key_sync_enabled: bool,
+#[derive(Default, Debug)]
+struct KeyboardParameters {
+    mod_wheel_amount: AtomicU32,
+    aftertouch_amount: AtomicU32,
+}
+#[derive(Debug)]
+struct QuadMixerInput {
+    mixer_level: AtomicU32,
+    mixer_balance: AtomicU32,
+    mixer_mute: AtomicBool,
+}
+
+impl Default for QuadMixerInput {
+    fn default() -> Self {
+        Self {
+            mixer_level: AtomicU32::new(QUAD_MIX_DEFAULT_INPUT_LEVEL.to_bits()),
+            mixer_balance: AtomicU32::new(QUAD_MIX_DEFAULT_BALANCE.to_bits()),
+            mixer_mute: AtomicBool::new(false),
+        }
+    }
+}
+
+#[derive(Default, Debug)]
+struct MixerParameters {
+    output_level: AtomicU32,
+    output_balance: AtomicU32,
+    quad_mixer_inputs: [QuadMixerInput; 4],
+}
+
+#[derive(Default, Debug)]
+pub struct ModuleParameters {
+    filter: FilterParameters,
+    mixer: MixerParameters,
+    amp_envelope: EnvelopeParameters,
+    filter_envelope: EnvelopeParameters,
+    filter_lfo: LfoParameters,
+    lfo1: LfoParameters,
+    keyboard: KeyboardParameters,
     oscillators: [OscillatorParameters; 4],
 }
 
-pub struct Modules {
-    envelopes: [Envelope; 2],
-    filter: Filter,
-    lfos: [Lfo; 2],
-    mixer: Mixer,
-    oscillators: [Oscillator; 4],
-}
-
 pub struct Synthesizer {
+    sample_rate: u32,
     audio_output_device: Device,
     output_stream: Option<Stream>,
-    parameters: Arc<Mutex<Parameters>>,
-    midi_note_events: Arc<Mutex<Option<MidiNoteEvent>>>,
-    modules: Arc<Mutex<Modules>>,
+    current_note: Arc<CurrentNote>,
+    module_parameters: Arc<ModuleParameters>,
 }
 
 impl Synthesizer {
     pub fn new(audio_output_device: Device, sample_rate: u32) -> Self {
         log::info!("Constructing Synthesizer Module");
 
-        let mut oscillator_parameters: [OscillatorParameters; 4] = Default::default();
-        oscillator_parameters[0].is_sub_oscillator = true;
+        let velocity = AtomicU32::new(0);
+        store_f32_as_atomic_u32(&velocity, MAX_MIDI_KEY_VELOCITY);
 
         let current_note = CurrentNote {
-            midi_note: 0,
-            velocity: MAX_MIDI_KEY_VELOCITY,
-            velocity_curve: DEFAULT_MIDI_KEY_VELOCITY_CURVE_MIDI_VALUE,
+            midi_note: AtomicU8::new(0),
+            velocity,
+            velocity_curve: AtomicU8::new(DEFAULT_VELOCITY_CURVE_MIDI_VALUE),
         };
 
-        let parameters = Parameters {
-            current_note,
-            oscillator_key_sync_enabled: true,
-            oscillators: oscillator_parameters,
-            ..Default::default()
+        let oscillator_mixer_parameters: [QuadMixerInput; 4] = Default::default();
+        store_f32_as_atomic_u32(
+            &oscillator_mixer_parameters[0].mixer_level,
+            QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
+        );
+
+        let mixer_parameters = MixerParameters {
+            output_level: AtomicU32::new(DEFAULT_OUTPUT_LEVEL.to_bits()),
+            output_balance: AtomicU32::new(DEFAULT_OUTPUT_BALANCE.to_bits()),
+            quad_mixer_inputs: oscillator_mixer_parameters,
         };
 
-        let amp_envelope = Envelope::new(sample_rate);
-        let mut filter_envelope = Envelope::new(sample_rate);
-        filter_envelope.set_amount(DEFAULT_FILTER_ENVELOPE_AMOUNT);
-        let envelopes = [amp_envelope, filter_envelope];
+        let max_filter_frequency = (sample_rate as f32 * 0.35).min(20000.0);
+        let filter_parameters = FilterParameters {
+            cutoff_frequency: AtomicU32::new(max_filter_frequency.to_bits()),
+            resonance: AtomicU32::new(0.0_f32.to_bits()),
+            filter_slope: AtomicU8::new(4),
+        };
 
-        let mut filter_modulation_lfo = Lfo::new(sample_rate);
-        filter_modulation_lfo.set_range(0.0);
-        let shared_lfo1 = Lfo::new(sample_rate);
-        let lfos = [filter_modulation_lfo, shared_lfo1];
+        let filter_envelope_parameters: EnvelopeParameters = Default::default();
+        filter_envelope_parameters
+            .amount
+            .store(DEFAULT_FILTER_ENVELOPE_AMOUNT.to_bits(), Relaxed);
 
-        let mut mixer = Mixer::new();
-        mixer.set_quad_level(MixerInput::One(0.0));
+        let filter_lfo_parameters: LfoParameters = Default::default();
+        store_f32_as_atomic_u32(&filter_lfo_parameters.range, 0.0);
 
-        let oscillators = [
-            Oscillator::new(sample_rate, WaveShape::Saw),
-            Oscillator::new(sample_rate, WaveShape::Saw),
-            Oscillator::new(sample_rate, WaveShape::Saw),
-            Oscillator::new(sample_rate, WaveShape::Saw),
-        ];
-
-        let modules = Modules {
-            envelopes,
-            filter: Filter::new(sample_rate),
-            lfos,
-            mixer,
-            oscillators,
+        let module_parameters = ModuleParameters {
+            filter: filter_parameters,
+            mixer: mixer_parameters,
+            amp_envelope: Default::default(),
+            filter_envelope: filter_envelope_parameters,
+            filter_lfo: filter_lfo_parameters,
+            lfo1: Default::default(),
+            keyboard: Default::default(),
+            oscillators: Default::default(),
         };
 
         Self {
+            sample_rate,
             audio_output_device,
             output_stream: None,
-            parameters: Arc::new(Mutex::new(parameters)),
-            midi_note_events: Arc::new(Mutex::new(None)),
-            modules: Arc::new(Mutex::new(modules)),
+            current_note: Arc::new(current_note),
+            module_parameters: Arc::new(module_parameters),
         }
     }
 
@@ -157,9 +170,8 @@ impl Synthesizer {
     }
 
     fn start_midi_event_listener(&mut self, midi_message_receiver: Receiver<MidiMessage>) {
-        let mut parameters_arc = self.parameters.clone();
-        let mut midi_event_arc = self.midi_note_events.clone();
-        let mut modules_arc = self.modules.clone();
+        let mut current_note = self.current_note.clone();
+        let mut module_parameters = self.module_parameters.clone();
 
         thread::spawn(move || {
             log::debug!("run(): spawned thread to receive MIDI events");
@@ -168,33 +180,32 @@ impl Synthesizer {
                 match event {
                     MidiMessage::NoteOn(midi_note, velocity) => {
                         midi_messages::process_midi_note_on_message(
-                            &mut parameters_arc,
-                            &mut midi_event_arc,
+                            &mut module_parameters,
+                            &mut current_note,
                             midi_note,
                             velocity,
                         );
                     }
                     MidiMessage::NoteOff => {
-                        midi_messages::process_midi_note_off_message(&mut midi_event_arc);
+                        midi_messages::process_midi_note_off_message(&mut module_parameters);
                     }
                     MidiMessage::PitchBend(bend_amount) => {
                         midi_messages::process_midi_pitch_bend_message(
-                            &mut parameters_arc,
+                            &module_parameters.oscillators,
                             bend_amount,
                         );
                     }
                     MidiMessage::ChannelPressure(pressure_value) => {
                         midi_messages::process_midi_channel_pressure_message(
-                            &mut parameters_arc,
+                            &module_parameters.keyboard,
                             pressure_value,
                         );
                     }
                     MidiMessage::ControlChange(cc_value) => {
                         midi_messages::process_midi_cc_values(
                             cc_value,
-                            &mut parameters_arc,
-                            &mut midi_event_arc,
-                            &mut modules_arc,
+                            &mut current_note,
+                            &mut module_parameters,
                         );
                     }
                 }
@@ -205,9 +216,21 @@ impl Synthesizer {
     }
 
     fn create_synthesizer(&mut self, output_device: Device) -> Result<Stream> {
-        let parameters_arc = self.parameters.clone();
-        let midi_note_events_arc = self.midi_note_events.clone();
-        let modules_arc = self.modules.clone();
+        let current_note = self.current_note.clone();
+        let module_parameters = self.module_parameters.clone();
+
+        log::info!("Initializing the filter module");
+        let mut filter = Filter::new(self.sample_rate);
+        let mut amp_envelope = Envelope::new(self.sample_rate);
+        let mut filter_envelope = Envelope::new(self.sample_rate);
+        let mut filter_lfo = Lfo::new(self.sample_rate);
+        let mut oscillators = [
+            Oscillator::new(self.sample_rate, WaveShape::default()),
+            Oscillator::new(self.sample_rate, WaveShape::default()),
+            Oscillator::new(self.sample_rate, WaveShape::default()),
+            Oscillator::new(self.sample_rate, WaveShape::default()),
+        ];
+        oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
 
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
@@ -223,84 +246,82 @@ impl Synthesizer {
         let stream = output_device.build_output_stream(
             &default_device_stream_config,
             move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                let parameters = {
-                    let parameter_mutex = parameters_arc
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner());
-                    parameter_mutex.to_owned()
-                };
+                // Process the module parameters per buffer
+                amp_envelope.set_parameters(&module_parameters.amp_envelope);
+                filter_envelope.set_parameters(&module_parameters.filter_envelope);
+                filter_lfo.set_parameters(&module_parameters.filter_lfo);
+                filter.set_parameters(&module_parameters.filter);
 
-                let mut modules = modules_arc
-                    .lock()
-                    .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-                let note_event = {
-                    let mut midi_note_events = midi_note_events_arc
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner());
-
-                    midi_note_events.take()
-                };
-
-                if let Some(event) = note_event {
-                    midi_messages::action_midi_note_events(
-                        event,
-                        &mut modules,
-                        parameters.oscillator_key_sync_enabled,
-                    );
+                for (index, oscillator) in oscillators.iter_mut().enumerate() {
+                    oscillator.set_parameters(&module_parameters.oscillators[index]);
+                    oscillator.tune(current_note.midi_note.load(Relaxed));
                 }
 
                 // Begin processing the audio buffer
+                let mut sub_oscillator_mixer_input = create_mixer_input_from_oscillator_parameters(
+                    &module_parameters.mixer,
+                    OscillatorIndex::Sub,
+                );
+                let mut oscillator1_mixer_input = create_mixer_input_from_oscillator_parameters(
+                    &module_parameters.mixer,
+                    OscillatorIndex::One,
+                );
+                let mut oscillator2_mixer_input = create_mixer_input_from_oscillator_parameters(
+                    &module_parameters.mixer,
+                    OscillatorIndex::Two,
+                );
+                let mut oscillator3_mixer_input = create_mixer_input_from_oscillator_parameters(
+                    &module_parameters.mixer,
+                    OscillatorIndex::Three,
+                );
 
                 // Split the buffer into frames
                 for frame in buffer.chunks_mut(number_of_channels) {
                     // Begin generating and processing the samples for the frame
-
-                    let sub_oscillator_sample =
-                        modules.oscillators[0].generate(parameters.oscillators[0].frequency, None);
-
-                    let oscillator1_sample =
-                        modules.oscillators[1].generate(parameters.oscillators[1].frequency, None);
-
-                    let oscillator2_sample =
-                        modules.oscillators[2].generate(parameters.oscillators[2].frequency, None);
-
-                    let oscillator3_sample =
-                        modules.oscillators[3].generate(parameters.oscillators[3].frequency, None);
+                    sub_oscillator_mixer_input.sample =
+                        oscillators[OscillatorIndex::Sub as usize].generate(None);
+                    oscillator1_mixer_input.sample =
+                        oscillators[OscillatorIndex::One as usize].generate(None);
+                    oscillator2_mixer_input.sample =
+                        oscillators[OscillatorIndex::Two as usize].generate(None);
+                    oscillator3_mixer_input.sample =
+                        oscillators[OscillatorIndex::Three as usize].generate(None);
 
                     // Any per-oscillator processing should happen before this stereo mix down
-                    let (oscillator_mix_left, oscillator_mix_right) = modules.mixer.quad_mix(
-                        sub_oscillator_sample,
-                        oscillator1_sample,
-                        oscillator2_sample,
-                        oscillator3_sample,
+                    let (oscillator_mix_left, oscillator_mix_right) = quad_mix(
+                        sub_oscillator_mixer_input,
+                        oscillator1_mixer_input,
+                        oscillator2_mixer_input,
+                        oscillator3_mixer_input,
                     );
 
-                    let amp_envelope_value =
-                        Some(modules.envelopes[EnvelopeIndex::Amplifier as usize].generate());
+                    let amp_envelope_value = Some(amp_envelope.generate());
 
                     let (left_envelope_sample, right_envelope_sample) = amplify_stereo(
                         oscillator_mix_left,
                         oscillator_mix_right,
-                        Some(parameters.current_note.velocity),
+                        Some(load_f32_from_atomic_u32(&current_note.velocity)),
                         amp_envelope_value,
                     );
 
-                    let filter_envelope_value =
-                        modules.envelopes[EnvelopeIndex::Filter as usize].generate();
+                    let filter_envelope_value = filter_envelope.generate();
+                    let filter_lfo_value = filter_lfo.generate();
+                    let filter_modulation = filter_envelope_value + filter_lfo_value;
 
-                    let filter_lfo_value = modules.lfos[LfoIndex::Filter as usize].generate();
-                    modules
-                        .filter
-                        .modulate_cutoff_frequency(filter_envelope_value + filter_lfo_value);
-
-                    let (filtered_left, filtered_right) = modules
-                        .filter
-                        .filter(left_envelope_sample, right_envelope_sample);
+                    let (filtered_left, filtered_right) = filter.process(
+                        left_envelope_sample,
+                        right_envelope_sample,
+                        Some(filter_modulation),
+                    );
 
                     // Final output level control
+                    let output_level =
+                        load_f32_from_atomic_u32(&module_parameters.mixer.output_level);
+                    let output_balance =
+                        load_f32_from_atomic_u32(&module_parameters.mixer.output_balance);
+
                     let (output_left, output_right) =
-                        modules.mixer.output_mix(filtered_left, filtered_right);
+                        output_mix(filtered_left, filtered_right, output_level, output_balance);
 
                     // Hand back the processed samples to the frame to be sent to the audio device
                     frame[0] = output_left;
@@ -316,5 +337,23 @@ impl Synthesizer {
         log::info!("Synthesizer audio output stream was successfully created.");
 
         Ok(stream)
+    }
+}
+
+fn create_mixer_input_from_oscillator_parameters(
+    parameters: &MixerParameters,
+    oscillator: OscillatorIndex,
+) -> MixerInput {
+    MixerInput {
+        sample: 0.0,
+        level: load_f32_from_atomic_u32(
+            &parameters.quad_mixer_inputs[oscillator as usize].mixer_level,
+        ),
+        balance: load_f32_from_atomic_u32(
+            &parameters.quad_mixer_inputs[oscillator as usize].mixer_balance,
+        ),
+        mute: parameters.quad_mixer_inputs[oscillator as usize]
+            .mixer_mute
+            .load(Relaxed),
     }
 }
