@@ -141,21 +141,6 @@ impl Oscillator {
         self.set_key_sync_enabled(parameters.key_sync_enabled.load(Relaxed));
     }
 
-    fn set_gate(&mut self, gate_flag: &AtomicBool) {
-        let gate_on = gate_flag.load(Relaxed);
-        if gate_on && self.key_sync_enabled {
-            self.reset();
-            gate_flag.store(false, Relaxed); // Reset the gate flag
-        }
-    }
-
-    fn set_key_sync_enabled(&mut self, key_sync_enabled: bool) {
-        if key_sync_enabled != self.key_sync_enabled {
-            println!("Key Sync Enabled: {}", self.key_sync_enabled);
-        }
-        self.key_sync_enabled = key_sync_enabled;
-    }
-
     pub fn generate(&mut self, modulation: Option<f32>) -> f32 {
         self.wave_generator
             .next_sample(self.tone_frequency, modulation)
@@ -166,7 +151,7 @@ impl Oscillator {
             return;
         }
 
-        log::info!("Setting Oscillator Shape to {wave_shape:?}");
+        log::info!("Setting Oscillator Shape to {:#?}", wave_shape);
         self.wave_generator = get_wave_generator_from_wave_shape(self.sample_rate, wave_shape)
     }
 
@@ -180,30 +165,6 @@ impl Oscillator {
 
     pub fn set_frequency(&mut self, tone_frequency: f32) {
         self.tone_frequency = tone_frequency;
-    }
-
-    pub fn set_pitch_bend(&mut self, pitch_bend: i16) {
-        self.pitch_bend = pitch_bend;
-    }
-
-    pub fn set_course_tune(&mut self, course_tune: i8) {
-        self.course_tune = course_tune;
-    }
-
-    pub fn set_fine_tune(&mut self, fine_tune: i16) {
-        self.fine_tune = fine_tune;
-    }
-
-    pub fn set_is_sub_oscillator(&mut self, is_sub_oscillator: bool) {
-        self.is_sub_oscillator = is_sub_oscillator;
-    }
-
-    pub fn set_shape_parameter1(&mut self, parameter: f32) {
-        self.wave_generator.set_shape_parameter1(parameter);
-    }
-
-    pub fn set_shape_parameter2(&mut self, parameter: f32) {
-        self.wave_generator.set_shape_parameter2(parameter);
     }
 
     pub fn set_phase(&mut self, phase: f32) {
@@ -238,6 +199,45 @@ impl Oscillator {
             note_frequency = frequency_from_cents(note_frequency, self.fine_tune);
         }
         self.tone_frequency = note_frequency
+    }
+
+    fn set_gate(&mut self, gate_flag: &AtomicBool) {
+        let gate_on = gate_flag.load(Relaxed);
+        if gate_on && self.key_sync_enabled {
+            self.reset();
+            gate_flag.store(false, Relaxed); // Reset the gate flag
+        }
+    }
+
+    fn set_key_sync_enabled(&mut self, key_sync_enabled: bool) {
+        if key_sync_enabled != self.key_sync_enabled {
+            println!("Key Sync Enabled: {}", self.key_sync_enabled);
+        }
+        self.key_sync_enabled = key_sync_enabled;
+    }
+
+    fn set_pitch_bend(&mut self, pitch_bend: i16) {
+        self.pitch_bend = pitch_bend;
+    }
+
+    fn set_course_tune(&mut self, course_tune: i8) {
+        self.course_tune = course_tune;
+    }
+
+    fn set_fine_tune(&mut self, fine_tune: i16) {
+        self.fine_tune = fine_tune;
+    }
+
+    pub fn set_is_sub_oscillator(&mut self, is_sub_oscillator: bool) {
+        self.is_sub_oscillator = is_sub_oscillator;
+    }
+
+    fn set_shape_parameter1(&mut self, parameter: f32) {
+        self.wave_generator.set_shape_parameter1(parameter);
+    }
+
+    fn set_shape_parameter2(&mut self, parameter: f32) {
+        self.wave_generator.set_shape_parameter2(parameter);
     }
 }
 

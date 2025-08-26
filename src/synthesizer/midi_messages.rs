@@ -46,7 +46,7 @@ pub fn process_midi_channel_pressure_message(parameters: &KeyboardParameters, pr
 }
 
 pub fn process_midi_pitch_bend_message(oscillators: &[OscillatorParameters; 4], bend_amount: i16) {
-    update_current_note_from_midi_pitch_bend(bend_amount, &oscillators);
+    update_current_note_from_midi_pitch_bend(bend_amount, oscillators);
 }
 
 pub fn process_midi_note_off_message(module_paramters: &mut Arc<ModuleParameters>) {
@@ -590,7 +590,7 @@ fn exponential_curve_from_midi_value_and_coefficient(
     midi_value: u8,
     exponential_coefficient: f32,
 ) -> f32 {
-    // exponential_coefficient is the log of the magnitude for the linear range you want to map to exponential range
+    // exponential_coefficient is the log of the effective range for the linear scale you want to map to exponential range
     // If the range max is 1000x then min, then the exponential_coefficient is log(1000) = 6.908
     (exponential_coefficient * (midi_value as f32 / MAX_MIDI_VALUE as f32)).exp()
 }

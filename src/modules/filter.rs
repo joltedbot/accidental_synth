@@ -80,7 +80,7 @@ impl Filter {
     }
 
     pub fn set_parameters(&mut self, filter_parameters: &FilterParameters) {
-        self.store_filter_parameters(&filter_parameters);
+        self.store_filter_parameters(filter_parameters);
         self.calculate_coefficients();
     }
 
