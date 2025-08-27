@@ -9,6 +9,7 @@ pub const DEFAULT_KEY_SYNC_ENABLED: bool = true;
 
 // Oscillator Shape Specific Constants
 pub const DEFAULT_AMPLITUDE_MODULATION_AMOUNT: f32 = 4.0;
+pub const DEFAULT_AM_TONE_AMOUNT: f32 = 1.0;
 pub const DEFAULT_PULSE_WIDTH_ADJUSTMENT: f32 = 0.5;
 pub const OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR: f32 = 0.5;
 

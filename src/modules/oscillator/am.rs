@@ -8,6 +8,7 @@ pub struct AM {
     carrier: Box<dyn GenerateSamples + Send + Sync>,
     modulator: Box<dyn GenerateSamples + Send + Sync>,
     modulation_amount: f32,
+    am_tone_amount: f32, // 0.0 is ring modulation, 1.0 is proper AM
 }
 
 impl AM {
@@ -18,6 +19,7 @@ impl AM {
             carrier: Box::new(Sine::new(sample_rate)),
             modulator: Box::new(Sine::new(sample_rate)),
             modulation_amount: DEFAULT_AMPLITUDE_MODULATION_AMOUNT,
+            am_tone_amount: DEFAULT_AM_TONE_AMOUNT,
         }
     }
 }
@@ -27,14 +29,19 @@ impl GenerateSamples for AM {
         let modulator = self
             .modulator
             .next_sample(tone_frequency * self.modulation_amount, None);
-        self.carrier.next_sample(tone_frequency, modulation) * modulator
+
+        let am_tone_adjusted_modulator = modulator + (1.0 * self.am_tone_amount);
+
+        self.carrier.next_sample(tone_frequency, modulation) * am_tone_adjusted_modulator
     }
 
     fn set_shape_parameter1(&mut self, parameter: f32) {
         self.modulation_amount = parameter;
     }
 
-    fn set_shape_parameter2(&mut self, _parameter: f32) {}
+    fn set_shape_parameter2(&mut self, parameter: f32) {
+        self.am_tone_amount = parameter * 0.5;
+    }
 
     fn set_phase(&mut self, phase: f32) {
         self.carrier.set_phase(phase.clamp(MIN_PHASE, MAX_PHASE));
