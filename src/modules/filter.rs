@@ -25,6 +25,18 @@ struct Coefficients {
     feedback_gain: f32,
 }
 
+#[derive(Default, Copy, Clone, Debug, PartialEq)]
+struct LadderState {
+    stage1_output: f32,
+    stage2_output: f32,
+    stage3_output: f32,
+    stage4_output: f32,
+    input_unit_delay: f32,
+    stage1_unit_delay: f32,
+    stage2_unit_delay: f32,
+    stage3_unit_delay: f32,
+}
+
 #[derive(Default, Debug)]
 pub struct Filter {
     sample_rate: u32,
@@ -34,14 +46,8 @@ pub struct Filter {
     filter_slope: AtomicU8,
     cutoff_modulation_amount: f32,
     coefficients: Coefficients,
-    stage1_output: f32,
-    stage2_output: f32,
-    stage3_output: f32,
-    stage4_output: f32,
-    input_unit_delay: f32,
-    stage1_unit_delay: f32,
-    stage2_unit_delay: f32,
-    stage3_unit_delay: f32,
+    left_ladder_state: LadderState,
+    right_ladder_state: LadderState,
 }
 
 impl Filter {
@@ -94,21 +100,21 @@ impl Filter {
             return (0.0, 0.0);
         }
 
-        if let Some(modulation) = modulation {
-            self.modulate_cutoff_frequency(modulation);
-        }
+        self.modulate_cutoff_frequency(modulation);
 
-        let left_output = self.ladder_filter(left_sample);
-        let right_output = self.ladder_filter(right_sample);
+        let left_output = self.left_ladder_filter(left_sample);
+        let right_output = self.right_ladder_filter(right_sample);
 
         (left_output, right_output)
     }
 
-    pub fn modulate_cutoff_frequency(&mut self, modulation: f32) {
-        self.cutoff_modulation_amount = modulation * self.max_frequency;
-        let modulated_cutoff_frequency = self.calculate_filter_cutoff_frequency().to_bits();
-        self.cutoff_frequency
-            .store(modulated_cutoff_frequency, Relaxed)
+    pub fn modulate_cutoff_frequency(&mut self, modulation: Option<f32>) {
+        if let Some(modulation) = modulation {
+            self.cutoff_modulation_amount = modulation * self.max_frequency;
+            let modulated_cutoff_frequency = self.calculate_filter_cutoff_frequency().to_bits();
+            self.cutoff_frequency
+                .store(modulated_cutoff_frequency, Relaxed)
+        }
     }
 
     fn calculate_coefficients(&mut self) {
@@ -130,29 +136,68 @@ impl Filter {
         );
     }
 
-    fn ladder_filter(&mut self, sample: f32) -> f32 {
-        let input = sample - self.coefficients.feedback_gain * self.stage4_output;
+    fn left_ladder_filter(&mut self, sample: f32) -> f32 {
+        let input = sample - self.coefficients.feedback_gain * self.left_ladder_state.stage4_output;
 
-        self.stage1_output = self.calculate_ladder_stage1(input);
-        self.stage2_output = self.calculate_ladder_stage2();
-        self.stage3_output = self.calculate_ladder_stage3();
-        self.stage4_output = self.calculate_ladder_stage4();
+        self.left_ladder_state.stage1_output =
+            self.calculate_ladder_stage1(input, self.left_ladder_state);
+        self.left_ladder_state.stage2_output = self.calculate_ladder_stage2(self.left_ladder_state);
+        self.left_ladder_state.stage3_output = self.calculate_ladder_stage3(self.left_ladder_state);
+        self.left_ladder_state.stage4_output = self.calculate_ladder_stage4(self.left_ladder_state);
 
-        self.stage4_output = self.calculate_non_linear_saturation();
+        self.left_ladder_state.stage4_output =
+            calculate_non_linear_saturation(self.left_ladder_state.stage4_output);
 
-        self.input_unit_delay = input;
-        self.stage1_unit_delay = self.stage1_output + DENORMAL_GUARD;
-        self.stage2_unit_delay = self.stage2_output + DENORMAL_GUARD;
-        self.stage3_unit_delay = self.stage3_output + DENORMAL_GUARD;
+        self.left_ladder_state.input_unit_delay = input;
+        self.left_ladder_state.stage1_unit_delay =
+            self.left_ladder_state.stage1_output + DENORMAL_GUARD;
+        self.left_ladder_state.stage2_unit_delay =
+            self.left_ladder_state.stage2_output + DENORMAL_GUARD;
+        self.left_ladder_state.stage3_unit_delay =
+            self.left_ladder_state.stage3_output + DENORMAL_GUARD;
 
         match self.filter_slope.load(Relaxed) {
-            1 => self.stage1_output,
-            2 => self.stage2_output,
-            3 => self.stage3_output,
-            4 => self.stage4_output,
-            _ => self.stage4_output,
+            1 => self.left_ladder_state.stage1_output,
+            2 => self.left_ladder_state.stage2_output,
+            3 => self.left_ladder_state.stage3_output,
+            4 => self.left_ladder_state.stage4_output,
+            _ => self.left_ladder_state.stage4_output,
         }
     }
+
+    fn right_ladder_filter(&mut self, sample: f32) -> f32 {
+        let input =
+            sample - self.coefficients.feedback_gain * self.right_ladder_state.stage4_output;
+
+        self.right_ladder_state.stage1_output =
+            self.calculate_ladder_stage1(input, self.right_ladder_state);
+        self.right_ladder_state.stage2_output =
+            self.calculate_ladder_stage2(self.right_ladder_state);
+        self.right_ladder_state.stage3_output =
+            self.calculate_ladder_stage3(self.right_ladder_state);
+        self.right_ladder_state.stage4_output =
+            self.calculate_ladder_stage4(self.right_ladder_state);
+
+        self.right_ladder_state.stage4_output =
+            calculate_non_linear_saturation(self.right_ladder_state.stage4_output);
+
+        self.right_ladder_state.input_unit_delay = input;
+        self.right_ladder_state.stage1_unit_delay =
+            self.right_ladder_state.stage1_output + DENORMAL_GUARD;
+        self.right_ladder_state.stage2_unit_delay =
+            self.right_ladder_state.stage2_output + DENORMAL_GUARD;
+        self.right_ladder_state.stage3_unit_delay =
+            self.right_ladder_state.stage3_output + DENORMAL_GUARD;
+
+        match self.filter_slope.load(Relaxed) {
+            1 => self.right_ladder_state.stage1_output,
+            2 => self.right_ladder_state.stage2_output,
+            3 => self.right_ladder_state.stage3_output,
+            4 => self.right_ladder_state.stage4_output,
+            _ => self.right_ladder_state.stage4_output,
+        }
+    }
+
     fn store_filter_parameters(&mut self, parameters: &FilterParameters) {
         self.cutoff_frequency
             .store(parameters.cutoff_frequency.load(Relaxed), Relaxed);
@@ -162,38 +207,38 @@ impl Filter {
             .store(parameters.filter_slope.load(Relaxed), Relaxed);
     }
 
-    fn calculate_non_linear_saturation(&mut self) -> f32 {
-        self.stage4_output - (self.stage4_output * self.stage4_output * self.stage4_output / 6.0)
+    fn calculate_ladder_stage4(&mut self, ladder_state: LadderState) -> f32 {
+        ladder_state.stage3_output * self.coefficients.gain_coefficient
+            + ladder_state.stage3_unit_delay * self.coefficients.gain_coefficient
+            - self.coefficients.pole_coefficient * ladder_state.stage4_output
     }
 
-    fn calculate_ladder_stage4(&mut self) -> f32 {
-        self.stage3_output * self.coefficients.gain_coefficient
-            + self.stage3_unit_delay * self.coefficients.gain_coefficient
-            - self.coefficients.pole_coefficient * self.stage4_output
+    fn calculate_ladder_stage3(&mut self, ladder_state: LadderState) -> f32 {
+        ladder_state.stage2_output * self.coefficients.gain_coefficient
+            + ladder_state.stage2_unit_delay * self.coefficients.gain_coefficient
+            - self.coefficients.pole_coefficient * ladder_state.stage3_output
     }
 
-    fn calculate_ladder_stage3(&mut self) -> f32 {
-        self.stage2_output * self.coefficients.gain_coefficient
-            + self.stage2_unit_delay * self.coefficients.gain_coefficient
-            - self.coefficients.pole_coefficient * self.stage3_output
+    fn calculate_ladder_stage2(&mut self, ladder_state: LadderState) -> f32 {
+        ladder_state.stage1_output * self.coefficients.gain_coefficient
+            + ladder_state.stage1_unit_delay * self.coefficients.gain_coefficient
+            - self.coefficients.pole_coefficient * ladder_state.stage2_output
     }
 
-    fn calculate_ladder_stage2(&mut self) -> f32 {
-        self.stage1_output * self.coefficients.gain_coefficient
-            + self.stage1_unit_delay * self.coefficients.gain_coefficient
-            - self.coefficients.pole_coefficient * self.stage2_output
-    }
-
-    fn calculate_ladder_stage1(&mut self, input: f32) -> f32 {
+    fn calculate_ladder_stage1(&mut self, input: f32, ladder_state: LadderState) -> f32 {
         input * self.coefficients.gain_coefficient
-            + self.input_unit_delay * self.coefficients.gain_coefficient
-            - self.coefficients.pole_coefficient * self.stage1_output
+            + ladder_state.input_unit_delay * self.coefficients.gain_coefficient
+            - self.coefficients.pole_coefficient * ladder_state.stage1_output
     }
 
     fn calculate_filter_cutoff_frequency(&mut self) -> f32 {
-        (load_f32_from_atomic_u32(&self.cutoff_frequency) + self.cutoff_modulation_amount)
-            .clamp(0.0, self.max_frequency)
+        let f = load_f32_from_atomic_u32(&self.cutoff_frequency);
+        (f + self.cutoff_modulation_amount).clamp(0.0, self.max_frequency)
     }
+}
+
+fn calculate_non_linear_saturation(stage4_output: f32) -> f32 {
+    stage4_output - (stage4_output * stage4_output * stage4_output / 6.0)
 }
 
 fn calculate_cutoff_coefficient(frequency: f32, sample_rate: u32) -> f32 {
@@ -253,14 +298,23 @@ mod tests {
         );
         assert_eq!(filter.filter_slope.load(Relaxed), 4);
 
-        assert_eq!(filter.stage1_output, 0.0);
-        assert_eq!(filter.stage2_output, 0.0);
-        assert_eq!(filter.stage3_output, 0.0);
-        assert_eq!(filter.stage4_output, 0.0);
-        assert_eq!(filter.input_unit_delay, 0.0);
-        assert_eq!(filter.stage1_unit_delay, 0.0);
-        assert_eq!(filter.stage2_unit_delay, 0.0);
-        assert_eq!(filter.stage3_unit_delay, 0.0);
+        assert_eq!(filter.left_ladder_state.stage1_output, 0.0);
+        assert_eq!(filter.left_ladder_state.stage2_output, 0.0);
+        assert_eq!(filter.left_ladder_state.stage3_output, 0.0);
+        assert_eq!(filter.left_ladder_state.stage4_output, 0.0);
+        assert_eq!(filter.left_ladder_state.input_unit_delay, 0.0);
+        assert_eq!(filter.left_ladder_state.stage1_unit_delay, 0.0);
+        assert_eq!(filter.left_ladder_state.stage2_unit_delay, 0.0);
+        assert_eq!(filter.left_ladder_state.stage3_unit_delay, 0.0);
+
+        assert_eq!(filter.right_ladder_state.stage1_output, 0.0);
+        assert_eq!(filter.right_ladder_state.stage2_output, 0.0);
+        assert_eq!(filter.right_ladder_state.stage3_output, 0.0);
+        assert_eq!(filter.right_ladder_state.stage4_output, 0.0);
+        assert_eq!(filter.right_ladder_state.input_unit_delay, 0.0);
+        assert_eq!(filter.right_ladder_state.stage1_unit_delay, 0.0);
+        assert_eq!(filter.right_ladder_state.stage2_unit_delay, 0.0);
+        assert_eq!(filter.right_ladder_state.stage3_unit_delay, 0.0);
 
         let expected_cutoff = 0.7;
         let expected_gain = 0.868;
@@ -383,12 +437,13 @@ mod tests {
         let mut filter = Filter::new(48000);
         filter.coefficients.gain_coefficient = 0.5;
         filter.coefficients.pole_coefficient = -0.2;
-        filter.input_unit_delay = 0.3;
-        filter.stage1_output = -0.4;
+        let mut state = LadderState::default();
+        state.input_unit_delay = 0.3;
+        state.stage1_output = -0.4;
 
         let input = 0.8;
         let expected_result = 0.47;
-        let result = filter.calculate_ladder_stage1(input);
+        let result = filter.calculate_ladder_stage1(input, state);
         assert!(f32_value_equality(result, expected_result));
     }
 
@@ -397,12 +452,13 @@ mod tests {
         let mut filter = Filter::new(48000);
         filter.coefficients.gain_coefficient = 0.6;
         filter.coefficients.pole_coefficient = 0.1;
-        filter.stage1_output = -0.25;
-        filter.stage1_unit_delay = 0.15;
-        filter.stage2_output = 0.05;
+        let mut state = LadderState::default();
+        state.stage1_output = -0.25;
+        state.stage1_unit_delay = 0.15;
+        state.stage2_output = 0.05;
 
         let expected_result = -0.065;
-        let result = filter.calculate_ladder_stage2();
+        let result = filter.calculate_ladder_stage2(state);
         assert!(f32_value_equality(result, expected_result));
     }
 
@@ -411,12 +467,13 @@ mod tests {
         let mut filter = Filter::new(48000);
         filter.coefficients.gain_coefficient = 0.7;
         filter.coefficients.pole_coefficient = -0.3;
-        filter.stage2_output = 0.2;
-        filter.stage2_unit_delay = -0.1;
-        filter.stage3_output = 0.05;
+        let mut state = LadderState::default();
+        state.stage2_output = 0.2;
+        state.stage2_unit_delay = -0.1;
+        state.stage3_output = 0.05;
 
         let expected_result = 0.085;
-        let result = filter.calculate_ladder_stage3();
+        let result = filter.calculate_ladder_stage3(state);
         assert!(f32_value_equality(result, expected_result));
     }
 
@@ -425,32 +482,28 @@ mod tests {
         let mut filter = Filter::new(48000);
         filter.coefficients.gain_coefficient = 0.4;
         filter.coefficients.pole_coefficient = 0.25;
-        filter.stage3_output = -0.35;
-        filter.stage3_unit_delay = 0.22;
-        filter.stage4_output = -0.12;
+        let mut state = LadderState::default();
+        state.stage3_output = -0.35;
+        state.stage3_unit_delay = 0.22;
+        state.stage4_output = -0.12;
 
         let expected_result = -0.022;
-        let result = filter.calculate_ladder_stage4();
+        let result = filter.calculate_ladder_stage4(state);
         assert!(f32_value_equality(result, expected_result));
     }
 
     #[test]
     fn calculate_non_linear_saturation_returns_expected_values() {
-        let mut filter = Filter::new(48000);
-
-        filter.stage4_output = 0.0;
         let expected_result = 0.0;
-        let result = filter.calculate_non_linear_saturation();
+        let result = calculate_non_linear_saturation(0.0);
         assert!(f32_value_equality(result, expected_result));
 
-        filter.stage4_output = 0.9;
         let expected_result = 0.7785;
-        let result = filter.calculate_non_linear_saturation();
+        let result = calculate_non_linear_saturation(0.9);
         assert!(f32_value_equality(result, expected_result));
 
-        filter.stage4_output = -0.5;
         let expected_result = -0.4791666;
-        let result = filter.calculate_non_linear_saturation();
+        let result = calculate_non_linear_saturation(-0.5);
         assert!(f32_value_equality(result, expected_result));
     }
 }
