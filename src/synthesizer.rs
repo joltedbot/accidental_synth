@@ -138,13 +138,24 @@ impl Synthesizer {
         let filter_lfo_parameters: LfoParameters = Default::default();
         store_f32_as_atomic_u32(&filter_lfo_parameters.range, 0.0);
 
+        let lfo1_parameters = LfoParameters::default();
+        lfo1_parameters
+            .frequency
+            .store(DEFAULT_VIBRATO_LFO_RATE.to_bits(), Relaxed);
+        lfo1_parameters
+            .center_value
+            .store(DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY.to_bits(), Relaxed);
+        lfo1_parameters
+            .range
+            .store(DEFAULT_VIBRATO_LFO_DEPTH.to_bits(), Relaxed);
+
         let module_parameters = ModuleParameters {
             filter: filter_parameters,
             mixer: mixer_parameters,
             amp_envelope: Default::default(),
             filter_envelope: filter_envelope_parameters,
             filter_lfo: filter_lfo_parameters,
-            lfo1: Default::default(),
+            lfo1: lfo1_parameters,
             keyboard: Default::default(),
             oscillators: Default::default(),
         };
@@ -224,6 +235,8 @@ impl Synthesizer {
         let mut amp_envelope = Envelope::new(self.sample_rate);
         let mut filter_envelope = Envelope::new(self.sample_rate);
         let mut filter_lfo = Lfo::new(self.sample_rate);
+        let mut lfo1 = Lfo::new(self.sample_rate);
+
         let mut oscillators = [
             Oscillator::new(self.sample_rate, WaveShape::default()),
             Oscillator::new(self.sample_rate, WaveShape::default()),
@@ -251,6 +264,7 @@ impl Synthesizer {
                 filter_envelope.set_parameters(&module_parameters.filter_envelope);
                 filter_lfo.set_parameters(&module_parameters.filter_lfo);
                 filter.set_parameters(&module_parameters.filter);
+                lfo1.set_parameters(&module_parameters.lfo1);
 
                 for (index, oscillator) in oscillators.iter_mut().enumerate() {
                     oscillator.set_parameters(&module_parameters.oscillators[index]);
@@ -275,17 +289,22 @@ impl Synthesizer {
                     OscillatorIndex::Three,
                 );
 
+                let vibrato_amount =
+                    load_f32_from_atomic_u32(&module_parameters.keyboard.mod_wheel_amount);
+                lfo1.set_range(vibrato_amount / 4.0);
+
                 // Split the buffer into frames
                 for frame in buffer.chunks_mut(number_of_channels) {
+                    let vibrato_value = lfo1.generate(None);
                     // Begin generating and processing the samples for the frame
                     sub_oscillator_mixer_input.sample =
-                        oscillators[OscillatorIndex::Sub as usize].generate(None);
+                        oscillators[OscillatorIndex::Sub as usize].generate(Some(vibrato_value));
                     oscillator1_mixer_input.sample =
-                        oscillators[OscillatorIndex::One as usize].generate(None);
+                        oscillators[OscillatorIndex::One as usize].generate(Some(vibrato_value));
                     oscillator2_mixer_input.sample =
-                        oscillators[OscillatorIndex::Two as usize].generate(None);
+                        oscillators[OscillatorIndex::Two as usize].generate(Some(vibrato_value));
                     oscillator3_mixer_input.sample =
-                        oscillators[OscillatorIndex::Three as usize].generate(None);
+                        oscillators[OscillatorIndex::Three as usize].generate(Some(vibrato_value));
 
                     // Any per-oscillator processing should happen before this stereo mix down
                     let (oscillator_mix_left, oscillator_mix_right) = quad_mix(
@@ -305,7 +324,7 @@ impl Synthesizer {
                     );
 
                     let filter_envelope_value = filter_envelope.generate();
-                    let filter_lfo_value = filter_lfo.generate();
+                    let filter_lfo_value = filter_lfo.generate(None);
                     let filter_modulation = filter_envelope_value + filter_lfo_value;
 
                     let (filtered_left, filtered_right) = filter.process(

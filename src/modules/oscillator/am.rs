@@ -28,11 +28,11 @@ impl GenerateSamples for AM {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         let modulator = self
             .modulator
-            .next_sample(tone_frequency * self.modulation_amount, None);
+            .next_sample(tone_frequency * self.modulation_amount, modulation);
 
         let am_tone_adjusted_modulator = modulator + (1.0 * self.am_tone_amount);
 
-        self.carrier.next_sample(tone_frequency, modulation) * am_tone_adjusted_modulator
+        self.carrier.next_sample(tone_frequency, None) * am_tone_adjusted_modulator
     }
 
     fn set_shape_parameter1(&mut self, parameter: f32) {

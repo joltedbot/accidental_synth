@@ -141,7 +141,10 @@ impl Oscillator {
         self.set_key_sync_enabled(parameters.key_sync_enabled.load(Relaxed));
     }
 
-    pub fn generate(&mut self, modulation: Option<f32>) -> f32 {
+    pub fn generate(&mut self, mut modulation: Option<f32>) -> f32 {
+        if modulation == Some(0.0) {
+            modulation = None;
+        }
         self.wave_generator
             .next_sample(self.tone_frequency, modulation)
     }
@@ -210,9 +213,6 @@ impl Oscillator {
     }
 
     fn set_key_sync_enabled(&mut self, key_sync_enabled: bool) {
-        if key_sync_enabled != self.key_sync_enabled {
-            println!("Key Sync Enabled: {}", self.key_sync_enabled);
-        }
         self.key_sync_enabled = key_sync_enabled;
     }
 

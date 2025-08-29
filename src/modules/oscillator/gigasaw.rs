@@ -38,11 +38,10 @@ impl GenerateSamples for GigaSaw {
             voice_samples.push(self.single_saw_sample(
                 frequency_from_cents(tone_frequency, frequency_offset),
                 self.x_coordinate,
-                modulation,
             ));
         }
 
-        self.x_coordinate += self.x_increment;
+        self.x_coordinate += self.x_increment * modulation.unwrap_or(1.0);
 
         voice_samples.iter().sum::<f32>() * VOICE_COUNT_OUTPUT_LEVEL_OFFSET
     }
@@ -64,13 +63,8 @@ impl GenerateSamples for GigaSaw {
 }
 
 impl GigaSaw {
-    fn single_saw_sample(
-        &mut self,
-        tone_frequency: f32,
-        x_coordinate: f32,
-        modulation: Option<f32>,
-    ) -> f32 {
-        let new_frequency = tone_frequency * modulation.unwrap_or(1.0);
+    fn single_saw_sample(&mut self, tone_frequency: f32, x_coordinate: f32) -> f32 {
+        let new_frequency = tone_frequency;
 
         let y_coordinate: f32 = (-2.0 / PI)
             * (1.0f32 / (new_frequency * PI * (x_coordinate / self.sample_rate as f32)).tan())
