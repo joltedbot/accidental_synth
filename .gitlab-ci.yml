@@ -15,8 +15,9 @@ rust-validation:
       - ~/.cargo/registry/
       - ~/.cargo/git/
   script:
-    - rustup component add clippy pants
-    - cargo pants --dev
+    - rustup component add clippy
+    - cargo install pants
+    - cargo pants --devg
     - cargo clippy -- -D warnings
   allow_failure: true
 
