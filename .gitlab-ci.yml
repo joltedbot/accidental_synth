@@ -1,27 +1,42 @@
 stages:
+- validate
 - test
-- secret-detection
-- semgrep
-- sonarcloud
+- security
+- quality
+
+
+rust-validation:
+  stage: validate
+  image: rust:latest
+  cache:
+    key: rust-cache-$CI_COMMIT_REF_SLUG
+    paths:
+      - target/
+      - ~/.cargo/registry/
+      - ~/.cargo/git/
+  script:
+    - rustup component add clippy pants
+    - cargo pants --dev
+    - cargo clippy -- -D warnings
+  allow_failure: true
+
 
 sast:
   stage: test
 include:
 - template: Security/SAST.gitlab-ci.yml
 - template: Security/Secret-Detection.gitlab-ci.yml
-
-secret_detection:
-  stage: secret-detection
+- template: Security/Dependency-Scanning.gitlab-ci.yml
 
 semgrep:
-  stage: semgrep
+  stage: security
   image: semgrep/semgrep
   script: semgrep ci --code
   variables:
     SEMGREP_APP_TOKEN: "$SEMGREP_APP_TOKEN"
 
 sonarcloud:
-  stage: sonarcloud
+  stage: quality
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
