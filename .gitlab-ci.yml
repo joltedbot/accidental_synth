@@ -1,24 +1,7 @@
 stages:
-- validate
 - test
 - security
 - quality
-
-
-rust-validation:
-  stage: validate
-  image: rust:latest
-  cache:
-    key: rust-cache-$CI_COMMIT_REF_SLUG
-    paths:
-      - target/
-      - ~/.cargo/registry/
-      - ~/.cargo/git/
-  script:
-    - rustup component add clippy
-    - cargo clippy -- -D warnings
-  allow_failure: true
-
 
 sast:
   stage: test
