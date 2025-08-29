@@ -71,24 +71,24 @@ impl Lfo {
         }
     }
 
-    pub fn generate(&mut self) -> f32 {
+    pub fn generate(&mut self, modulation: Option<f32>) -> f32 {
         if self.range == 0.0 || self.frequency == 0.0 {
             return 0.0;
         }
-        let wave_sample = self.oscillator.generate(None);
+        let wave_sample = self.oscillator.generate(modulation);
         self.center_value + (wave_sample * (self.range / 2.0))
     }
 
-    fn set_frequency(&mut self, frequency: f32) {
+    pub fn set_frequency(&mut self, frequency: f32) {
         self.frequency = frequency.clamp(MIN_LFO_FREQUENCY, MAX_LFO_FREQUENCY);
         self.oscillator.set_frequency(self.frequency);
     }
 
-    fn set_center_value(&mut self, center_value: f32) {
+    pub fn set_center_value(&mut self, center_value: f32) {
         self.center_value = center_value.clamp(MIN_CENTER_VALUE, MAX_CENTER_VALUE);
     }
 
-    fn set_range(&mut self, range: f32) {
+    pub fn set_range(&mut self, range: f32) {
         self.range = if range == 0.0 {
             0.0
         } else {
@@ -96,7 +96,7 @@ impl Lfo {
         }
     }
 
-    fn set_wave_shape(&mut self, wave_shape_index: u8) {
+    pub fn set_wave_shape(&mut self, wave_shape_index: u8) {
         if wave_shape_index != self.wave_shape_index {
             let wave_shape = WaveShape::from_index(wave_shape_index);
             self.oscillator.set_wave_shape(wave_shape);
@@ -104,7 +104,7 @@ impl Lfo {
         }
     }
 
-    fn set_phase(&mut self, phase: f32) {
+    pub fn set_phase(&mut self, phase: f32) {
         if self.phase != phase {
             self.oscillator.set_phase(phase);
             self.phase = phase;

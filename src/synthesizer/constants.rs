@@ -32,3 +32,8 @@ pub const QUAD_MIX_DEFAULT_BALANCE: f32 = 0.0;
 // Filter Constants
 pub const MIN_FILTER_RESONANCE: f32 = 0.0;
 pub const MAX_FILTER_RESONANCE: f32 = 0.90;
+
+// LFO Constants
+pub const DEFAULT_VIBRATO_LFO_RATE: f32 = 10.0;
+pub const DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY: f32 = 1.0;
+pub const DEFAULT_VIBRATO_LFO_DEPTH: f32 = 0.0;

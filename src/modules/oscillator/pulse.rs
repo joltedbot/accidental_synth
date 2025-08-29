@@ -25,13 +25,13 @@ impl Pulse {
 
 impl GenerateSamples for Pulse {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
-        let duty_cycle = if tone_frequency == 0.0 {
-            0.0
-        } else {
-            match modulation {
-                Some(modulation) => modulation - OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR,
-                None => self.pulse_width,
-            }
+        if tone_frequency == 0.0 {
+            return 0.0;
+        }
+
+        let duty_cycle = match modulation {
+            Some(modulation) => modulation - OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR,
+            None => self.pulse_width,
         };
 
         let mut y_coordinate: f32 =
