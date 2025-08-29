@@ -1,5 +1,6 @@
 // Derived from https://www.musicdsp.org/en/latest/Filters/253-perfect-lp4-filter.html
 
+use crate::math::load_f32_from_atomic_u32;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicU8, AtomicU32};
 
@@ -12,7 +13,7 @@ const DENORMAL_GUARD: f32 = 1e-25_f32;
 pub struct FilterParameters {
     pub cutoff_frequency: AtomicU32, // Stores and f32 from bits
     pub resonance: AtomicU32,        // Stores and f32 from bits
-    pub filter_slope: AtomicU8,
+    pub filter_poles: AtomicU8,
 }
 
 #[derive(Default, Copy, Clone, Debug, PartialEq)]
@@ -43,7 +44,7 @@ pub struct Filter {
     max_frequency: f32,
     cutoff_frequency: AtomicU32,
     resonance: AtomicU32,
-    filter_slope: AtomicU8,
+    filter_poles: AtomicU8,
     cutoff_modulation_amount: f32,
     coefficients: Coefficients,
     left_ladder_state: LadderState,
@@ -72,7 +73,7 @@ impl Filter {
             cutoff_frequency: AtomicU32::new(max_frequency.to_bits()),
             max_frequency,
             resonance: AtomicU32::new(DEFAULT_RESONANCE.to_bits()),
-            filter_slope: AtomicU8::new(4),
+            filter_poles: AtomicU8::new(4),
             coefficients: Coefficients {
                 cutoff_coefficient,
                 gain_coefficient,
@@ -156,7 +157,7 @@ impl Filter {
         self.left_ladder_state.stage3_unit_delay =
             self.left_ladder_state.stage3_output + DENORMAL_GUARD;
 
-        match self.filter_slope.load(Relaxed) {
+        match self.filter_poles.load(Relaxed) {
             1 => self.left_ladder_state.stage1_output,
             2 => self.left_ladder_state.stage2_output,
             3 => self.left_ladder_state.stage3_output,
@@ -189,7 +190,7 @@ impl Filter {
         self.right_ladder_state.stage3_unit_delay =
             self.right_ladder_state.stage3_output + DENORMAL_GUARD;
 
-        match self.filter_slope.load(Relaxed) {
+        match self.filter_poles.load(Relaxed) {
             1 => self.right_ladder_state.stage1_output,
             2 => self.right_ladder_state.stage2_output,
             3 => self.right_ladder_state.stage3_output,
@@ -203,8 +204,8 @@ impl Filter {
             .store(parameters.cutoff_frequency.load(Relaxed), Relaxed);
         self.resonance
             .store(parameters.resonance.load(Relaxed), Relaxed);
-        self.filter_slope
-            .store(parameters.filter_slope.load(Relaxed), Relaxed);
+        self.filter_poles
+            .store(parameters.filter_poles.load(Relaxed), Relaxed);
     }
 
     fn calculate_ladder_stage4(&mut self, ladder_state: LadderState) -> f32 {
@@ -269,17 +270,10 @@ fn calculate_feedback_gain(
         / (adjusted_resonance_factor - 6.0 * resonance_factor)
 }
 
-pub fn load_f32_from_atomic_u32(atomic: &AtomicU32) -> f32 {
-    f32::from_bits(atomic.load(Relaxed))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn f32_value_equality(value_1: f32, value_2: f32) -> bool {
-        (value_1 - value_2).abs() <= f32::EPSILON
-    }
+    use crate::math::f32_value_equality;
 
     #[test]
     fn new_returns_filter_with_correct_default_values() {
@@ -296,7 +290,7 @@ mod tests {
             load_f32_from_atomic_u32(&filter.resonance),
             DEFAULT_RESONANCE
         );
-        assert_eq!(filter.filter_slope.load(Relaxed), 4);
+        assert_eq!(filter.filter_poles.load(Relaxed), 4);
 
         assert_eq!(filter.left_ladder_state.stage1_output, 0.0);
         assert_eq!(filter.left_ladder_state.stage2_output, 0.0);

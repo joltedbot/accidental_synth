@@ -1,3 +1,4 @@
+use crate::math::load_f32_from_atomic_u32;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 
@@ -276,17 +277,10 @@ impl Envelope {
     }
 }
 
-pub fn load_f32_from_atomic_u32(atomic: &AtomicU32) -> f32 {
-    f32::from_bits(atomic.load(Relaxed))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn f32_value_equality(value_1: f32, value_2: f32) -> bool {
-        (value_1 - value_2).abs() <= f32::EPSILON
-    }
+    use crate::math::f32_value_equality;
 
     #[test]
     fn new_returns_envelope_with_correct_default_values() {

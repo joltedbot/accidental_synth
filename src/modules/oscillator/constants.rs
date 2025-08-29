@@ -18,7 +18,6 @@ pub const MAX_MIDI_NOTE_NUMBER: i8 = 127;
 pub const MIN_MIDI_NOTE_NUMBER: i8 = 0;
 pub const MAX_NOTE_FREQUENCY: f32 = 12543.854;
 pub const MIN_NOTE_FREQUENCY: f32 = 8.175;
-pub const CENTS_PER_OCTAVE: f32 = 1200.0;
 pub const MIDI_NOTE_FREQUENCIES: [(f32, &str); 128] = [
     (8.175, "C-1"),
     (8.662, "C#-1/Db-1"),

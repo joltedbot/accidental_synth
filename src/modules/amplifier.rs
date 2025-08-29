@@ -26,10 +26,7 @@ pub fn amplify_stereo(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn f32_value_equality(value_1: f32, value_2: f32) -> bool {
-        (value_1 - value_2).abs() <= f32::EPSILON
-    }
+    use crate::math::f32_value_equality;
 
     #[test]
     fn vca_returns_correct_value_from_valid_input() {

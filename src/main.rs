@@ -1,4 +1,5 @@
 mod audio;
+mod math;
 mod midi;
 mod modules;
 mod synthesizer;

@@ -21,7 +21,8 @@ use self::saw::Saw;
 use self::sine::Sine;
 use self::square::Square;
 use self::triangle::Triangle;
-use crate::modules::lfo::load_f32_from_atomic_u32;
+use crate::math;
+use crate::math::load_f32_from_atomic_u32;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicI8, AtomicI16, AtomicU8, AtomicU32};
 
@@ -194,12 +195,12 @@ impl Oscillator {
         let mut note_frequency = midi_note_to_frequency(note_number);
 
         if self.pitch_bend != 0 {
-            note_frequency = frequency_from_cents(note_frequency, self.pitch_bend)
+            note_frequency = math::frequency_from_cents(note_frequency, self.pitch_bend)
                 .clamp(MIN_NOTE_FREQUENCY, MAX_NOTE_FREQUENCY);
         }
 
         if self.fine_tune != 0 {
-            note_frequency = frequency_from_cents(note_frequency, self.fine_tune);
+            note_frequency = math::frequency_from_cents(note_frequency, self.fine_tune);
         }
         self.tone_frequency = note_frequency
     }
@@ -263,17 +264,10 @@ fn midi_note_to_frequency(note_number: u8) -> f32 {
     MIDI_NOTE_FREQUENCIES[note_number as usize].0
 }
 
-fn frequency_from_cents(frequency: f32, cents: i16) -> f32 {
-    frequency * (2.0f32.powf(cents as f32 / CENTS_PER_OCTAVE))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn f32_value_equality(value_1: f32, value_2: f32) -> bool {
-        (value_1 - value_2).abs() <= f32::EPSILON
-    }
+    use crate::math::{f32_value_equality, frequency_from_cents};
 
     #[test]
     fn new_returns_oscillator_with_correct_default_values() {

@@ -1,3 +1,4 @@
+use crate::math::load_f32_from_atomic_u32;
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use std::default::Default;
 use std::sync::atomic::Ordering::Relaxed;
@@ -114,8 +115,4 @@ impl Lfo {
     fn reset(&mut self) {
         self.oscillator.reset();
     }
-}
-
-pub fn load_f32_from_atomic_u32(atomic: &AtomicU32) -> f32 {
-    f32::from_bits(atomic.load(Relaxed))
 }
