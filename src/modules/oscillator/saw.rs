@@ -10,7 +10,6 @@ pub struct Saw {
     shape: WaveShape,
     x_coordinate: f32,
     sample_rate: u32,
-    phase: f32,
 }
 
 impl Saw {
@@ -23,7 +22,6 @@ impl Saw {
             shape: SHAPE,
             x_coordinate,
             sample_rate,
-            phase: DEFAULT_PHASE,
         }
     }
 }
@@ -31,7 +29,6 @@ impl Saw {
 impl GenerateSamples for Saw {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         let y_coordinate: f32 = (-2.0 / PI)
-            * self.phase.clamp(MIN_PHASE, MAX_PHASE)
             * (1.0f32
                 / (tone_frequency * PI * (self.x_coordinate / self.sample_rate as f32)).tan())
             .atan();
@@ -44,9 +41,7 @@ impl GenerateSamples for Saw {
 
     fn set_shape_parameter2(&mut self, _parameters: f32) {}
 
-    fn set_phase(&mut self, phase: f32) {
-        self.phase = phase;
-    }
+    fn set_phase(&mut self, _phase: f32) {}
 
     fn shape(&self) -> WaveShape {
         self.shape
@@ -54,6 +49,5 @@ impl GenerateSamples for Saw {
 
     fn reset(&mut self) {
         self.x_coordinate = DEFAULT_X_COORDINATE;
-        self.phase = DEFAULT_PHASE;
     }
 }
