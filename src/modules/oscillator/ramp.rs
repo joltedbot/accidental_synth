@@ -6,7 +6,6 @@ pub struct Ramp {
     shape: WaveShape,
     x_coordinate: f32,
     sample_rate: u32,
-    phase: f32,
 }
 
 impl Ramp {
@@ -18,7 +17,6 @@ impl Ramp {
             shape: WaveShape::Ramp,
             x_coordinate,
             sample_rate,
-            phase: DEFAULT_PHASE,
         }
     }
 }
@@ -28,7 +26,6 @@ impl GenerateSamples for Ramp {
         let new_frequency = tone_frequency * modulation.unwrap_or(1.0);
 
         let y_coordinate: f32 = (2.0 / PI)
-            * self.phase.clamp(MIN_PHASE, MAX_PHASE)
             * (1.0f32 / (new_frequency * PI * (self.x_coordinate / self.sample_rate as f32)).tan())
                 .atan();
 
@@ -40,9 +37,7 @@ impl GenerateSamples for Ramp {
 
     fn set_shape_parameter2(&mut self, _parameter: f32) {}
 
-    fn set_phase(&mut self, phase: f32) {
-        self.phase = phase;
-    }
+    fn set_phase(&mut self, _phase: f32) {}
 
     fn shape(&self) -> WaveShape {
         self.shape
