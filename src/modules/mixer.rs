@@ -8,24 +8,16 @@ pub struct MixerInput {
     pub mute: bool,
 }
 
-pub fn quad_mix(
-    input1: MixerInput,
-    input2: MixerInput,
-    input3: MixerInput,
-    input4: MixerInput,
-) -> (f32, f32) {
-    let leveled_input1 = apply_quad_level(&input1);
-    let leveled_input2 = apply_quad_level(&input2);
-    let leveled_input3 = apply_quad_level(&input3);
-    let leveled_input4 = apply_quad_level(&input4);
-
-    let (input1_left, input1_right) = apply_quad_balance(leveled_input1, input1.balance);
-    let (input2_left, input2_right) = apply_quad_balance(leveled_input2, input2.balance);
-    let (input3_left, input3_right) = apply_quad_balance(leveled_input3, input3.balance);
-    let (input4_left, input4_right) = apply_quad_balance(leveled_input4, input4.balance);
-
-    let mut left_input_sum = input1_left + input2_left + input3_left + input4_left;
-    let mut right_input_sum = input1_right + input2_right + input3_right + input4_right;
+pub fn quad_mix(inputs: [MixerInput; 4]) -> (f32, f32) {
+    let (mut left_input_sum, mut right_input_sum): (f32, f32) = inputs
+        .iter()
+        .map(|input| apply_quad_balance(apply_quad_level(input), input.balance))
+        .fold(
+            (0.0, 0.0),
+            |(left_sum, right_sum), (left_input, right_input)| {
+                (left_sum + left_input, right_sum + right_input)
+            },
+        );
 
     left_input_sum /= QUAD_MIX_DEFAULT_LEVEL_SUM;
     right_input_sum /= QUAD_MIX_DEFAULT_LEVEL_SUM;

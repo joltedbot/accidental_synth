@@ -1,11 +1,14 @@
-use crate::math;
+use crate::math::store_f32_as_atomic_u32;
 use crate::midi::CC;
 use crate::modules::lfo::LfoParameters;
 use crate::modules::oscillator::OscillatorParameters;
+use crate::synthesizer::constants::{
+    ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, MAX_FILTER_RESONANCE,
+    MIN_FILTER_RESONANCE,
+};
 use crate::synthesizer::{
     CurrentNote, EnvelopeParameters, FilterParameters, KeyboardParameters, MidiGateEvent,
-    MidiNoteEvent, MixerParameters, ModuleParameters, OscillatorIndex, constants::*,
-    midi_value_converters,
+    MidiNoteEvent, MixerParameters, ModuleParameters, OscillatorIndex, midi_value_converters,
 };
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
@@ -24,7 +27,7 @@ pub fn action_midi_note_events(
                 .filter_envelope
                 .gate_flag
                 .store(MidiGateEvent::GateOn as u8, Relaxed);
-            for oscillator in module_parameters.oscillators.iter() {
+            for oscillator in &module_parameters.oscillators {
                 oscillator.gate_flag.store(true, Relaxed);
             }
         }
@@ -43,19 +46,19 @@ pub fn action_midi_note_events(
 
 pub fn process_midi_channel_pressure_message(parameters: &KeyboardParameters, pressure_value: u8) {
     let aftertouch_amount = midi_value_converters::midi_value_to_f32_0_to_1(pressure_value);
-    math::store_f32_as_atomic_u32(&parameters.aftertouch_amount, aftertouch_amount);
+    store_f32_as_atomic_u32(&parameters.aftertouch_amount, aftertouch_amount);
 }
 
 pub fn process_midi_pitch_bend_message(oscillators: &[OscillatorParameters; 4], bend_amount: i16) {
     midi_value_converters::update_current_note_from_midi_pitch_bend(bend_amount, oscillators);
 }
 
-pub fn process_midi_note_off_message(module_paramters: &mut Arc<ModuleParameters>) {
-    action_midi_note_events(MidiNoteEvent::NoteOff, module_paramters);
+pub fn process_midi_note_off_message(module_parameters: &mut Arc<ModuleParameters>) {
+    action_midi_note_events(MidiNoteEvent::NoteOff, module_parameters);
 }
 
 pub fn process_midi_note_on_message(
-    module_paramters: &mut Arc<ModuleParameters>,
+    module_parameters: &mut Arc<ModuleParameters>,
     current_note: &mut Arc<CurrentNote>,
     midi_note: u8,
     velocity: u8,
@@ -66,18 +69,20 @@ pub fn process_midi_note_on_message(
             velocity,
         );
 
-    math::store_f32_as_atomic_u32(&current_note.velocity, scaled_velocity);
+    store_f32_as_atomic_u32(&current_note.velocity, scaled_velocity);
     current_note.midi_note.store(midi_note, Relaxed);
 
-    action_midi_note_events(MidiNoteEvent::NoteOn, module_paramters);
+    action_midi_note_events(MidiNoteEvent::NoteOn, module_parameters);
 }
 
+// This function has to match every CC value, so it is going to be very long.
+#[allow(clippy::too_many_lines)]
 pub fn process_midi_cc_values(
     cc_value: CC,
     current_note: &mut Arc<CurrentNote>,
     module_parameters: &mut Arc<ModuleParameters>,
 ) {
-    log::debug!("process_midi_cc_values(): CC received: {:?}", cc_value);
+    log::debug!("process_midi_cc_values(): CC received: {cc_value:?}");
     match cc_value {
         CC::ModWheel(value) => {
             set_mod_wheel(&module_parameters.keyboard, value);
@@ -333,12 +338,12 @@ pub fn process_midi_cc_values(
 
 fn set_lfo_frequency(parameters: &LfoParameters, value: u8) {
     let frequency = midi_value_converters::exponential_curve_lfo_frequency_from_midi_value(value);
-    math::store_f32_as_atomic_u32(&parameters.frequency, frequency);
+    store_f32_as_atomic_u32(&parameters.frequency, frequency);
 }
 
 fn set_lfo_center_value(parameters: &LfoParameters, value: u8) {
     let center_value = midi_value_converters::midi_value_to_f32_negative_1_to_1(value);
-    math::store_f32_as_atomic_u32(&parameters.center_value, center_value);
+    store_f32_as_atomic_u32(&parameters.center_value, center_value);
 }
 
 fn set_lfo_range(parameters: &LfoParameters, value: u8) {
@@ -348,12 +353,12 @@ fn set_lfo_range(parameters: &LfoParameters, value: u8) {
         midi_value_converters::midi_value_to_f32_0_to_1(value)
     };
 
-    math::store_f32_as_atomic_u32(&parameters.range, lfo_range);
+    store_f32_as_atomic_u32(&parameters.range, lfo_range);
 }
 
 fn set_lfo_phase(parameters: &LfoParameters, value: u8) {
     let phase = midi_value_converters::midi_value_to_f32_0_to_1(value);
-    math::store_f32_as_atomic_u32(&parameters.phase, phase);
+    store_f32_as_atomic_u32(&parameters.phase, phase);
 }
 
 fn set_lfo_wave_shape(parameters: &LfoParameters, value: u8) {
@@ -367,28 +372,28 @@ fn lfo_reset(parameters: &LfoParameters) {
 
 fn set_envelope_amount(envelope_parameters: &EnvelopeParameters, value: u8) {
     let amount = midi_value_converters::midi_value_to_f32_0_to_1(value);
-    math::store_f32_as_atomic_u32(&envelope_parameters.amount, amount);
+    store_f32_as_atomic_u32(&envelope_parameters.amount, amount);
 }
 
 fn set_envelope_release_time(envelope_parameters: &EnvelopeParameters, value: u8) {
     let milliseconds = midi_value_converters::midi_value_to_envelope_milliseconds(value);
-    envelope_parameters.release_ms.store(milliseconds, Relaxed);
+    store_f32_as_atomic_u32(&envelope_parameters.release_ms, milliseconds);
 }
 
 fn set_envelope_sustain_level(envelope_parameters: &EnvelopeParameters, value: u8) {
     let sustain_level =
         midi_value_converters::exponential_curve_level_adjustment_from_midi_value(value);
-    math::store_f32_as_atomic_u32(&envelope_parameters.sustain_level, sustain_level);
+    store_f32_as_atomic_u32(&envelope_parameters.sustain_level, sustain_level);
 }
 
 fn set_envelope_decay_time(envelope_parameters: &EnvelopeParameters, value: u8) {
     let milliseconds = midi_value_converters::midi_value_to_envelope_milliseconds(value);
-    envelope_parameters.decay_ms.store(milliseconds, Relaxed);
+    store_f32_as_atomic_u32(&envelope_parameters.decay_ms, milliseconds);
 }
 
 fn set_envelope_attack_time(envelope_parameters: &EnvelopeParameters, value: u8) {
     let milliseconds = midi_value_converters::midi_value_to_envelope_milliseconds(value);
-    envelope_parameters.attack_ms.store(milliseconds, Relaxed);
+    store_f32_as_atomic_u32(&envelope_parameters.attack_ms, milliseconds);
 }
 
 fn set_envelope_inverted(envelope_parameters: &EnvelopeParameters, value: u8) {
@@ -397,21 +402,21 @@ fn set_envelope_inverted(envelope_parameters: &EnvelopeParameters, value: u8) {
 }
 
 fn set_amp_eg_attack_time(envelope_parameters: &EnvelopeParameters, value: u8) {
-    let milliseconds = midi_value_converters::midi_value_to_u32_range(
+    let milliseconds = midi_value_converters::midi_value_to_f32_range(
         value,
         ENVELOPE_MIN_MILLISECONDS,
         ENVELOPE_MAX_MILLISECONDS,
     );
-    envelope_parameters.attack_ms.store(milliseconds, Relaxed);
+    store_f32_as_atomic_u32(&envelope_parameters.attack_ms, milliseconds);
 }
 
 fn set_amp_eg_release_time(envelope_parameters: &EnvelopeParameters, value: u8) {
-    let milliseconds = midi_value_converters::midi_value_to_u32_range(
+    let milliseconds = midi_value_converters::midi_value_to_f32_range(
         value,
         ENVELOPE_MIN_MILLISECONDS,
         ENVELOPE_MAX_MILLISECONDS,
     );
-    envelope_parameters.release_ms.store(milliseconds, Relaxed);
+    store_f32_as_atomic_u32(&envelope_parameters.release_ms, milliseconds);
 }
 
 fn set_filter_resonance(filter_parameters: &FilterParameters, value: u8) {
@@ -420,7 +425,7 @@ fn set_filter_resonance(filter_parameters: &FilterParameters, value: u8) {
         MIN_FILTER_RESONANCE,
         MAX_FILTER_RESONANCE,
     );
-    math::store_f32_as_atomic_u32(&filter_parameters.resonance, resonance);
+    store_f32_as_atomic_u32(&filter_parameters.resonance, resonance);
 }
 
 fn set_filter_poles(filter_parameters: &FilterParameters, value: u8) {
@@ -431,18 +436,18 @@ fn set_filter_poles(filter_parameters: &FilterParameters, value: u8) {
 fn set_filter_cutoff(filter_parameters: &FilterParameters, value: u8) {
     let cutoff_frequency =
         midi_value_converters::exponential_curve_filter_cutoff_from_midi_value(value);
-    math::store_f32_as_atomic_u32(&filter_parameters.cutoff_frequency, cutoff_frequency);
+    store_f32_as_atomic_u32(&filter_parameters.cutoff_frequency, cutoff_frequency);
 }
 
 fn set_output_balance(parameters: &MixerParameters, value: u8) {
     let output_balance = midi_value_converters::midi_value_to_f32_negative_1_to_1(value);
-    math::store_f32_as_atomic_u32(&parameters.output_balance, output_balance);
+    store_f32_as_atomic_u32(&parameters.output_balance, output_balance);
 }
 
 fn set_output_volume(parameters: &MixerParameters, value: u8) {
     let output_level =
         midi_value_converters::exponential_curve_level_adjustment_from_midi_value(value);
-    math::store_f32_as_atomic_u32(&parameters.output_level, output_level);
+    store_f32_as_atomic_u32(&parameters.output_level, output_level);
 }
 
 fn set_velocity_curve(current_note: &mut Arc<CurrentNote>, value: u8) {
@@ -451,17 +456,17 @@ fn set_velocity_curve(current_note: &mut Arc<CurrentNote>, value: u8) {
 
 fn set_mod_wheel(parameters: &KeyboardParameters, value: u8) {
     let mod_wheel_amount = midi_value_converters::midi_value_to_f32_0_to_1(value);
-    math::store_f32_as_atomic_u32(&parameters.mod_wheel_amount, mod_wheel_amount);
+    store_f32_as_atomic_u32(&parameters.mod_wheel_amount, mod_wheel_amount);
 }
 
 fn set_oscillator_shape_parameter1(parameters: &OscillatorParameters, value: u8) {
-    let parameter1 = midi_value_converters::midi_value_to_f32_0_to_1(value);
-    math::store_f32_as_atomic_u32(&parameters.shape_parameter1, parameter1);
+    let shape_parameter1 = midi_value_converters::midi_value_to_f32_0_to_1(value);
+    store_f32_as_atomic_u32(&parameters.shape_parameter1, shape_parameter1);
 }
 
 fn set_oscillator_shape_parameter2(parameters: &OscillatorParameters, value: u8) {
-    let parameter2 = midi_value_converters::midi_value_to_f32_0_to_1(value);
-    math::store_f32_as_atomic_u32(&parameters.shape_parameter2, parameter2);
+    let shape_parameter2 = midi_value_converters::midi_value_to_f32_0_to_1(value);
+    store_f32_as_atomic_u32(&parameters.shape_parameter2, shape_parameter2);
 }
 
 fn set_oscillator_key_sync(parameters: &[OscillatorParameters; 4], value: u8) {
@@ -474,8 +479,8 @@ fn set_oscillator_key_sync(parameters: &[OscillatorParameters; 4], value: u8) {
 
 fn set_oscillator_balance(parameters: &MixerParameters, oscillator: OscillatorIndex, value: u8) {
     let balance = midi_value_converters::midi_value_to_f32_negative_1_to_1(value);
-    math::store_f32_as_atomic_u32(
-        &parameters.quad_mixer_inputs[oscillator as usize].mixer_balance,
+    store_f32_as_atomic_u32(
+        &parameters.quad_mixer_inputs[oscillator as usize].balance,
         balance,
     );
 }
@@ -483,14 +488,14 @@ fn set_oscillator_balance(parameters: &MixerParameters, oscillator: OscillatorIn
 fn set_oscillator_mute(parameters: &MixerParameters, oscillator: OscillatorIndex, value: u8) {
     let mute = midi_value_converters::midi_value_to_bool(value);
     parameters.quad_mixer_inputs[oscillator as usize]
-        .mixer_mute
+        .mute
         .swap(mute, Relaxed);
 }
 
 fn set_oscillator_level(parameters: &MixerParameters, oscillator: OscillatorIndex, value: u8) {
     let level = midi_value_converters::exponential_curve_level_adjustment_from_midi_value(value);
-    math::store_f32_as_atomic_u32(
-        &parameters.quad_mixer_inputs[oscillator as usize].mixer_level,
+    store_f32_as_atomic_u32(
+        &parameters.quad_mixer_inputs[oscillator as usize].level,
         level,
     );
 }

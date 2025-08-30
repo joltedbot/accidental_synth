@@ -1,4 +1,4 @@
-use crate::math::load_f32_from_atomic_u32;
+use crate::math::{f32s_are_equal, load_f32_from_atomic_u32};
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use std::default::Default;
 use std::sync::atomic::Ordering::Relaxed;
@@ -106,7 +106,7 @@ impl Lfo {
     }
 
     pub fn set_phase(&mut self, phase: f32) {
-        if self.phase != phase {
+        if f32s_are_equal(self.phase, phase) {
             self.oscillator.set_phase(phase);
             self.phase = phase;
         }

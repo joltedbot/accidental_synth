@@ -1,4 +1,7 @@
-use super::constants::*;
+use super::constants::{
+    DEFAULT_PULSE_WIDTH_ADJUSTMENT, DEFAULT_X_COORDINATE, DEFAULT_X_INCREMENT,
+    OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR,
+};
 use super::{GenerateSamples, WaveShape};
 use std::f32::consts::PI;
 
@@ -6,7 +9,7 @@ pub struct Pulse {
     shape: WaveShape,
     x_coordinate: f32,
     sample_rate: u32,
-    pulse_width: f32,
+    width: f32,
 }
 
 impl Pulse {
@@ -18,7 +21,7 @@ impl Pulse {
             shape: WaveShape::Pulse,
             x_coordinate,
             sample_rate,
-            pulse_width: DEFAULT_PULSE_WIDTH_ADJUSTMENT,
+            width: DEFAULT_PULSE_WIDTH_ADJUSTMENT,
         }
     }
 }
@@ -31,7 +34,7 @@ impl GenerateSamples for Pulse {
 
         let duty_cycle = match modulation {
             Some(modulation) => modulation - OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR,
-            None => self.pulse_width,
+            None => self.width,
         };
 
         let mut y_coordinate: f32 =
@@ -48,7 +51,7 @@ impl GenerateSamples for Pulse {
     }
 
     fn set_shape_parameter1(&mut self, parameter: f32) {
-        self.pulse_width = parameter;
+        self.width = parameter;
     }
 
     fn set_shape_parameter2(&mut self, _parameter: f32) {}

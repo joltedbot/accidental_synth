@@ -26,16 +26,16 @@ pub fn amplify_stereo(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::math::f32_value_equality;
+    use crate::math::f32s_are_equal;
 
     #[test]
     fn vca_returns_correct_value_from_valid_input() {
         let sample = 0.9;
         let manual_value = Some(0.8);
         let control_value = Some(0.03);
-        let expected_result = 0.0215999;
+        let expected_result = 0.021_599_9;
         let result = amplify_mono(sample, manual_value, control_value);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
     }
 
     #[test]
@@ -43,9 +43,9 @@ mod tests {
         let sample = 0.9;
         let manual_value = None;
         let control_value = Some(0.03);
-        let expected_result = 0.0269999;
+        let expected_result = 0.026_999_9;
         let result = amplify_mono(sample, manual_value, control_value);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
     }
 
     #[test]
@@ -55,7 +55,7 @@ mod tests {
         let control_value = None;
         let expected_result = 0.225;
         let result = amplify_mono(sample, manual_value, control_value);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
     }
 
     #[test]
@@ -65,7 +65,7 @@ mod tests {
         let control_value = None;
         let expected_result = 0.9;
         let result = amplify_mono(sample, manual_value, control_value);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
     }
 
     #[test]
@@ -75,7 +75,7 @@ mod tests {
         let control_value = None;
         let expected_result = 0.0;
         let result = amplify_mono(sample, manual_value, control_value);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
     }
 
     #[test]
@@ -85,7 +85,7 @@ mod tests {
         let control_value = Some(f32::MAX);
         let expected_result = 1.0;
         let result = amplify_mono(sample, manual_value, control_value);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
     }
 
     #[test]
@@ -95,7 +95,7 @@ mod tests {
         let control_value = Some(f32::MIN);
         let expected_result = -0.0;
         let result = amplify_mono(sample, manual_value, control_value);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
     }
 
     #[test]

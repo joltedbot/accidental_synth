@@ -112,8 +112,8 @@ pub enum MidiMessage {
 
 pub struct Midi {
     input_listener: Option<MidiInputConnection<()>>,
-    midi_message_sender: Sender<MidiMessage>,
-    midi_message_receiver: Receiver<MidiMessage>,
+    message_sender: Sender<MidiMessage>,
+    message_receiver: Receiver<MidiMessage>,
     current_note: Arc<Mutex<Option<u8>>>,
 }
 
@@ -126,14 +126,14 @@ impl Midi {
 
         Self {
             input_listener: None,
-            midi_message_sender,
-            midi_message_receiver,
-            current_note: Default::default(),
+            message_sender: midi_message_sender,
+            message_receiver: midi_message_receiver,
+            current_note: Arc::default(),
         }
     }
 
     pub fn get_midi_message_receiver(&self) -> Receiver<MidiMessage> {
-        self.midi_message_receiver.clone()
+        self.message_receiver.clone()
     }
 
     pub fn run(&mut self) -> Result<()> {
@@ -144,8 +144,8 @@ impl Midi {
         match default_midi_input_port {
             Some((name, port)) => {
                 self.input_listener = Some(create_midi_input_listener(
-                    port,
-                    self.midi_message_sender.clone(),
+                    &port,
+                    self.message_sender.clone(),
                     self.current_note.clone(),
                 )?);
                 log::info!(
@@ -164,23 +164,23 @@ impl Midi {
 }
 
 fn create_midi_input_listener(
-    midi_input_port: MidiInputPort,
+    midi_input_port: &MidiInputPort,
     midi_message_sender: Sender<MidiMessage>,
     current_note_arc: Arc<Mutex<Option<u8>>>,
 ) -> Result<MidiInputConnection<()>> {
     let midi_input = MidiInput::new(MIDI_INPUT_CLIENT_NAME)?;
 
     midi_input.connect(
-        &midi_input_port,
+        midi_input_port,
         MIDI_INPUT_CONNECTION_NAME,
-        move |_, message, _| {
+        move |_, message, ()| {
             let update_message_to_send =
-                match message_type_from_status_byte(&message[MIDI_STATUS_BYTE_INDEX]) {
+                match message_type_from_status_byte(message[MIDI_STATUS_BYTE_INDEX]) {
                     MessageType::NoteOn => {
                         let midi_note = message[MIDI_NOTE_NUMBER_BYTE_INDEX];
                         let midi_velocity = message[MIDI_VELOCITY_BYTE_INDEX];
 
-                        let mut current_note = current_note_arc.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+                        let mut current_note = current_note_arc.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
                         *current_note = Some(midi_note);
 
                         if midi_velocity == 0 {
@@ -192,7 +192,7 @@ fn create_midi_input_listener(
                     MessageType::NoteOff => {
                         let midi_note = message[MIDI_NOTE_NUMBER_BYTE_INDEX];
 
-                        let mut current_note = current_note_arc.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+                        let mut current_note = current_note_arc.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
                         match *current_note {
                             Some(note) if note == midi_note => {
                                 *current_note = None;
@@ -208,9 +208,9 @@ fn create_midi_input_listener(
                         get_supported_cc_from_cc_number(cc_number, cc_value).map(MidiMessage::ControlChange)
                     }
                     MessageType::PitchBend => {
-                        let amount_msb = message[MIDI_PITCH_BEND_MSB_BYTE_INDEX];
-                        let amount_lsb = message[MIDI_PITCH_BEND_LSB_BYTE_INDEX];
-                        let pitch_bend_amount = (amount_msb as u16) << 7 | amount_lsb as u16;
+                        let amount_most_significant_byte = message[MIDI_PITCH_BEND_MSB_BYTE_INDEX];
+                        let amount_least_significant_byte = message[MIDI_PITCH_BEND_LSB_BYTE_INDEX];
+                        let pitch_bend_amount = u16::from(amount_most_significant_byte) << 7 | u16::from(amount_least_significant_byte);
                         Some(MidiMessage::PitchBend(pitch_bend_amount as i16))
                     }
                     MessageType::ChannelPressure => {
@@ -254,7 +254,7 @@ fn get_default_midi_device() -> Result<Option<(String, MidiInputPort)>> {
     }
 }
 
-fn message_type_from_status_byte(status: &u8) -> MessageType {
+fn message_type_from_status_byte(status: u8) -> MessageType {
     let status_type = status & 0xF0;
     match status_type {
         0x80 => MessageType::NoteOff,
@@ -347,15 +347,15 @@ mod tests {
         let midi = Midi::new();
 
         assert!(midi.input_listener.is_none());
-        assert!(midi.midi_message_sender.is_ready());
+        assert!(midi.message_sender.is_ready());
         assert_eq!(
-            midi.midi_message_receiver.capacity(),
+            midi.message_receiver.capacity(),
             Some(MIDI_MESSAGE_CHANNEL_CAPACITY)
         );
         assert!(
             midi.current_note
                 .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner())
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
                 .is_none()
         );
     }
@@ -364,7 +364,7 @@ mod tests {
     fn message_type_from_status_byte_returns_correct_status_for_note_on_0_channel() {
         let status_byte = 0x90;
         let expected_result = MessageType::NoteOn;
-        let result = message_type_from_status_byte(&status_byte);
+        let result = message_type_from_status_byte(status_byte);
         assert_eq!(result, expected_result);
     }
 
@@ -372,7 +372,7 @@ mod tests {
     fn message_type_from_status_byte_returns_correct_status_for_note_on_with_a_channel() {
         let status_byte = 0x9A;
         let expected_result = MessageType::NoteOn;
-        let result = message_type_from_status_byte(&status_byte);
+        let result = message_type_from_status_byte(status_byte);
         assert_eq!(result, expected_result);
     }
 
@@ -380,7 +380,7 @@ mod tests {
     fn message_type_from_status_byte_returns_correct_status_for_control_change() {
         let status_byte = 0xB3;
         let expected_result = MessageType::ControlChange;
-        let result = message_type_from_status_byte(&status_byte);
+        let result = message_type_from_status_byte(status_byte);
         assert_eq!(result, expected_result);
     }
 
@@ -388,7 +388,7 @@ mod tests {
     fn message_type_from_status_byte_returns_correct_status_for_unknown() {
         let status_byte = 0x70; // Unknown/invalid status byte
         let expected_result = MessageType::Unknown;
-        let result = message_type_from_status_byte(&status_byte);
+        let result = message_type_from_status_byte(status_byte);
         assert_eq!(result, expected_result);
     }
 
@@ -396,7 +396,7 @@ mod tests {
     fn message_type_from_status_byte_correctly_returns_unknown_from_zero_status_byte() {
         let status_byte = 0x00;
         let expected_result = MessageType::Unknown;
-        let result = message_type_from_status_byte(&status_byte);
+        let result = message_type_from_status_byte(status_byte);
         assert_eq!(result, expected_result);
     }
 
@@ -404,7 +404,7 @@ mod tests {
     fn message_type_from_status_byte_correctly_returns_unknown_from_max_status_byte() {
         let status_byte = 0xFF;
         let expected_result = MessageType::Unknown;
-        let result = message_type_from_status_byte(&status_byte);
+        let result = message_type_from_status_byte(status_byte);
         assert_eq!(result, expected_result);
     }
 }

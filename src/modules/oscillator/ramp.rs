@@ -1,4 +1,4 @@
-use super::constants::*;
+use super::constants::{DEFAULT_X_COORDINATE, DEFAULT_X_INCREMENT};
 use super::{GenerateSamples, WaveShape};
 use std::f32::consts::PI;
 

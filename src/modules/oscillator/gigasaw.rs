@@ -74,5 +74,5 @@ impl GigaSaw {
 }
 
 fn frequency_from_cents(frequency: f32, cents: i8) -> f32 {
-    frequency * (2.0f32.powf(cents as f32 / 1200.0))
+    frequency * (2.0f32.powf(f32::from(cents) / 1200.0))
 }

@@ -6,7 +6,7 @@ use std::sync::atomic::{AtomicU8, AtomicU32};
 
 const MAXIMUM_FILTER_CUTOFF: f32 = 20000.0;
 const DEFAULT_RESONANCE: f32 = 0.0;
-const NATURAL_LOG_OF_4: f32 = 1.3862943;
+const NATURAL_LOG_OF_4: f32 = 1.386_294_3;
 const DENORMAL_GUARD: f32 = 1e-25_f32;
 
 #[derive(Default, Debug)]
@@ -44,7 +44,7 @@ pub struct Filter {
     max_frequency: f32,
     cutoff_frequency: AtomicU32,
     resonance: AtomicU32,
-    filter_poles: AtomicU8,
+    poles: AtomicU8,
     cutoff_modulation_amount: f32,
     coefficients: Coefficients,
     left_ladder_state: LadderState,
@@ -73,7 +73,7 @@ impl Filter {
             cutoff_frequency: AtomicU32::new(max_frequency.to_bits()),
             max_frequency,
             resonance: AtomicU32::new(DEFAULT_RESONANCE.to_bits()),
-            filter_poles: AtomicU8::new(4),
+            poles: AtomicU8::new(4),
             coefficients: Coefficients {
                 cutoff_coefficient,
                 gain_coefficient,
@@ -114,7 +114,7 @@ impl Filter {
             self.cutoff_modulation_amount = modulation * self.max_frequency;
             let modulated_cutoff_frequency = self.calculate_filter_cutoff_frequency().to_bits();
             self.cutoff_frequency
-                .store(modulated_cutoff_frequency, Relaxed)
+                .store(modulated_cutoff_frequency, Relaxed);
         }
     }
 
@@ -157,11 +157,10 @@ impl Filter {
         self.left_ladder_state.stage3_unit_delay =
             self.left_ladder_state.stage3_output + DENORMAL_GUARD;
 
-        match self.filter_poles.load(Relaxed) {
+        match self.poles.load(Relaxed) {
             1 => self.left_ladder_state.stage1_output,
             2 => self.left_ladder_state.stage2_output,
             3 => self.left_ladder_state.stage3_output,
-            4 => self.left_ladder_state.stage4_output,
             _ => self.left_ladder_state.stage4_output,
         }
     }
@@ -190,11 +189,10 @@ impl Filter {
         self.right_ladder_state.stage3_unit_delay =
             self.right_ladder_state.stage3_output + DENORMAL_GUARD;
 
-        match self.filter_poles.load(Relaxed) {
+        match self.poles.load(Relaxed) {
             1 => self.right_ladder_state.stage1_output,
             2 => self.right_ladder_state.stage2_output,
             3 => self.right_ladder_state.stage3_output,
-            4 => self.right_ladder_state.stage4_output,
             _ => self.right_ladder_state.stage4_output,
         }
     }
@@ -204,7 +202,7 @@ impl Filter {
             .store(parameters.cutoff_frequency.load(Relaxed), Relaxed);
         self.resonance
             .store(parameters.resonance.load(Relaxed), Relaxed);
-        self.filter_poles
+        self.poles
             .store(parameters.filter_poles.load(Relaxed), Relaxed);
     }
 
@@ -273,7 +271,7 @@ fn calculate_feedback_gain(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::math::f32_value_equality;
+    use crate::math::f32s_are_equal;
 
     #[test]
     fn new_returns_filter_with_correct_default_values() {
@@ -282,62 +280,85 @@ mod tests {
         let filter = Filter::new(sample_rate);
 
         assert_eq!(filter.sample_rate, sample_rate);
-        assert_eq!(
+        assert!(f32s_are_equal(
             load_f32_from_atomic_u32(&filter.cutoff_frequency),
             max_frequency
-        );
-        assert_eq!(
+        ));
+        assert!(f32s_are_equal(
             load_f32_from_atomic_u32(&filter.resonance),
             DEFAULT_RESONANCE
-        );
-        assert_eq!(filter.filter_poles.load(Relaxed), 4);
+        ));
+        assert_eq!(filter.poles.load(Relaxed), 4);
 
-        assert_eq!(filter.left_ladder_state.stage1_output, 0.0);
-        assert_eq!(filter.left_ladder_state.stage2_output, 0.0);
-        assert_eq!(filter.left_ladder_state.stage3_output, 0.0);
-        assert_eq!(filter.left_ladder_state.stage4_output, 0.0);
-        assert_eq!(filter.left_ladder_state.input_unit_delay, 0.0);
-        assert_eq!(filter.left_ladder_state.stage1_unit_delay, 0.0);
-        assert_eq!(filter.left_ladder_state.stage2_unit_delay, 0.0);
-        assert_eq!(filter.left_ladder_state.stage3_unit_delay, 0.0);
-
-        assert_eq!(filter.right_ladder_state.stage1_output, 0.0);
-        assert_eq!(filter.right_ladder_state.stage2_output, 0.0);
-        assert_eq!(filter.right_ladder_state.stage3_output, 0.0);
-        assert_eq!(filter.right_ladder_state.stage4_output, 0.0);
-        assert_eq!(filter.right_ladder_state.input_unit_delay, 0.0);
-        assert_eq!(filter.right_ladder_state.stage1_unit_delay, 0.0);
-        assert_eq!(filter.right_ladder_state.stage2_unit_delay, 0.0);
-        assert_eq!(filter.right_ladder_state.stage3_unit_delay, 0.0);
+        assert!(f32s_are_equal(filter.left_ladder_state.stage1_output, 0.0));
+        assert!(f32s_are_equal(filter.left_ladder_state.stage2_output, 0.0));
+        assert!(f32s_are_equal(filter.left_ladder_state.stage3_output, 0.0));
+        assert!(f32s_are_equal(filter.left_ladder_state.stage4_output, 0.0));
+        assert!(f32s_are_equal(
+            filter.left_ladder_state.input_unit_delay,
+            0.0
+        ));
+        assert!(f32s_are_equal(
+            filter.left_ladder_state.stage1_unit_delay,
+            0.0
+        ));
+        assert!(f32s_are_equal(
+            filter.left_ladder_state.stage2_unit_delay,
+            0.0
+        ));
+        assert!(f32s_are_equal(
+            filter.left_ladder_state.stage3_unit_delay,
+            0.0
+        ));
+        assert!(f32s_are_equal(filter.right_ladder_state.stage1_output, 0.0));
+        assert!(f32s_are_equal(filter.right_ladder_state.stage2_output, 0.0));
+        assert!(f32s_are_equal(filter.right_ladder_state.stage3_output, 0.0));
+        assert!(f32s_are_equal(filter.right_ladder_state.stage4_output, 0.0));
+        assert!(f32s_are_equal(
+            filter.right_ladder_state.input_unit_delay,
+            0.0
+        ));
+        assert!(f32s_are_equal(
+            filter.right_ladder_state.stage1_unit_delay,
+            0.0
+        ));
+        assert!(f32s_are_equal(
+            filter.right_ladder_state.stage2_unit_delay,
+            0.0
+        ));
+        assert!(f32s_are_equal(
+            filter.right_ladder_state.stage3_unit_delay,
+            0.0
+        ));
 
         let expected_cutoff = 0.7;
         let expected_gain = 0.868;
-        let expected_pole = 0.7359999;
-        let expected_res_factor = 0.18299088;
-        let expected_adj_res_factor = 12.033485;
+        let expected_pole = 0.735_999_9;
+        let expected_res_factor = 0.182_990_88;
+        let expected_adj_res_factor = 12.033_485;
         let expected_feedback = 0.0;
 
-        assert!(f32_value_equality(
+        assert!(f32s_are_equal(
             filter.coefficients.cutoff_coefficient,
             expected_cutoff
         ));
-        assert!(f32_value_equality(
+        assert!(f32s_are_equal(
             filter.coefficients.gain_coefficient,
             expected_gain
         ));
-        assert!(f32_value_equality(
+        assert!(f32s_are_equal(
             filter.coefficients.pole_coefficient,
             expected_pole
         ));
-        assert!(f32_value_equality(
+        assert!(f32s_are_equal(
             filter.coefficients.resonance_factor,
             expected_res_factor
         ));
-        assert!(f32_value_equality(
+        assert!(f32s_are_equal(
             filter.coefficients.adjusted_resonance_factor,
             expected_adj_res_factor
         ));
-        assert!(f32_value_equality(
+        assert!(f32s_are_equal(
             filter.coefficients.feedback_gain,
             expected_feedback
         ));
@@ -346,38 +367,38 @@ mod tests {
     #[test]
     fn calculate_cutoff_coefficient_returns_expected_values() {
         let result = calculate_cutoff_coefficient(24000.0, 48000);
-        assert_eq!(result, 1.0);
+        assert!(f32s_are_equal(result, 1.0));
 
         let result_zero = calculate_cutoff_coefficient(0.0, 48000);
-        assert_eq!(result_zero, 0.0);
+        assert!(f32s_are_equal(result_zero, 0.0));
 
-        let expected_result = 0.8333333;
+        let expected_result = 0.833_333_3;
         let result_common = calculate_cutoff_coefficient(20000.0, 48000);
-        assert!(f32_value_equality(result_common, expected_result));
+        assert!(f32s_are_equal(result_common, expected_result));
     }
 
     #[test]
     fn calculate_gain_coefficient_returns_expected_values() {
         let result = calculate_gain_coefficient(1.0);
-        assert!(f32_value_equality(result, 1.0));
+        assert!(f32s_are_equal(result, 1.0));
 
         let result_zero = calculate_gain_coefficient(0.0);
-        assert_eq!(result_zero, 0.0);
+        assert!(f32s_are_equal(result_zero, 0.0));
 
-        let cutoff = 0.8333333;
-        let expected_result = 0.9444444;
+        let cutoff = 0.833_333_3;
+        let expected_result = 0.944_444_4;
         let result_common = calculate_gain_coefficient(cutoff);
-        assert!(f32_value_equality(result_common, expected_result));
+        assert!(f32s_are_equal(result_common, expected_result));
     }
 
     #[test]
     fn calculate_pole_coefficient_returns_expected_values() {
-        assert_eq!(calculate_pole_coefficient(1.0), 1.0);
-        assert_eq!(calculate_pole_coefficient(0.0), -1.0);
+        assert!(f32s_are_equal(calculate_pole_coefficient(1.0), 1.0));
+        assert!(f32s_are_equal(calculate_pole_coefficient(0.0), -1.0));
 
-        let gain = 0.9444444;
-        let expected_result = 0.8888887;
-        assert!(f32_value_equality(
+        let gain = 0.944_444_4;
+        let expected_result = 0.888_888_7;
+        assert!(f32s_are_equal(
             calculate_pole_coefficient(gain),
             expected_result
         ));
@@ -385,16 +406,16 @@ mod tests {
 
     #[test]
     fn calculate_resonance_factor_returns_expected_values() {
-        assert_eq!(calculate_resonance_factor(1.0), 0.0);
+        assert!(f32s_are_equal(calculate_resonance_factor(1.0), 0.0));
 
-        assert!(f32_value_equality(
+        assert!(f32s_are_equal(
             calculate_resonance_factor(0.0),
             NATURAL_LOG_OF_4
         ));
 
-        let gain = 0.9444444;
-        let expected_result = 0.07701639;
-        assert!(f32_value_equality(
+        let gain = 0.944_444_4;
+        let expected_result = 0.077_016_39;
+        assert!(f32s_are_equal(
             calculate_resonance_factor(gain),
             expected_result
         ));
@@ -402,28 +423,31 @@ mod tests {
 
     #[test]
     fn calculate_adjusted_resonance_factor_returns_expected_values() {
-        assert_eq!(calculate_adjusted_resonance_factor(0.0), 12.0);
+        assert!(f32s_are_equal(
+            calculate_adjusted_resonance_factor(0.0),
+            12.0
+        ));
 
         let rf = NATURAL_LOG_OF_4;
         let result = calculate_adjusted_resonance_factor(rf);
-        let expected_result = 13.921812;
-        assert!(f32_value_equality(result, expected_result));
+        let expected_result = 13.921_812;
+        assert!(f32s_are_equal(result, expected_result));
     }
 
     #[test]
     fn calculate_feedback_gain_returns_expected_values() {
         let any = std::f32::consts::PI;
-        assert_eq!(calculate_feedback_gain(0.0, any, any), 0.0);
+        assert!(f32s_are_equal(calculate_feedback_gain(0.0, any, any), 0.0));
 
         let result = calculate_feedback_gain(0.5, 0.0, 12.0);
-        assert_eq!(result, 0.5);
+        assert!(f32s_are_equal(result, 0.5));
 
         let resonance = 0.7;
         let rf = 0.05;
         let arf = 12.0025;
-        let expected_result = 0.7358897;
+        let expected_result = 0.735_889_7;
         let result = calculate_feedback_gain(resonance, rf, arf);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
     }
 
     #[test]
@@ -431,14 +455,16 @@ mod tests {
         let mut filter = Filter::new(48000);
         filter.coefficients.gain_coefficient = 0.5;
         filter.coefficients.pole_coefficient = -0.2;
-        let mut state = LadderState::default();
-        state.input_unit_delay = 0.3;
-        state.stage1_output = -0.4;
+        let state = LadderState {
+            input_unit_delay: 0.3,
+            stage1_output: -0.4,
+            ..LadderState::default()
+        };
 
         let input = 0.8;
         let expected_result = 0.47;
         let result = filter.calculate_ladder_stage1(input, state);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
     }
 
     #[test]
@@ -446,14 +472,16 @@ mod tests {
         let mut filter = Filter::new(48000);
         filter.coefficients.gain_coefficient = 0.6;
         filter.coefficients.pole_coefficient = 0.1;
-        let mut state = LadderState::default();
-        state.stage1_output = -0.25;
-        state.stage1_unit_delay = 0.15;
-        state.stage2_output = 0.05;
+        let state = LadderState {
+            stage1_output: -0.25,
+            stage1_unit_delay: 0.15,
+            stage2_output: 0.05,
+            ..LadderState::default()
+        };
 
         let expected_result = -0.065;
         let result = filter.calculate_ladder_stage2(state);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
     }
 
     #[test]
@@ -461,14 +489,16 @@ mod tests {
         let mut filter = Filter::new(48000);
         filter.coefficients.gain_coefficient = 0.7;
         filter.coefficients.pole_coefficient = -0.3;
-        let mut state = LadderState::default();
-        state.stage2_output = 0.2;
-        state.stage2_unit_delay = -0.1;
-        state.stage3_output = 0.05;
+        let state = LadderState {
+            stage2_output: 0.2,
+            stage2_unit_delay: -0.1,
+            stage3_output: 0.05,
+            ..LadderState::default()
+        };
 
         let expected_result = 0.085;
         let result = filter.calculate_ladder_stage3(state);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
     }
 
     #[test]
@@ -476,28 +506,30 @@ mod tests {
         let mut filter = Filter::new(48000);
         filter.coefficients.gain_coefficient = 0.4;
         filter.coefficients.pole_coefficient = 0.25;
-        let mut state = LadderState::default();
-        state.stage3_output = -0.35;
-        state.stage3_unit_delay = 0.22;
-        state.stage4_output = -0.12;
+        let state = LadderState {
+            stage3_output: -0.35,
+            stage3_unit_delay: 0.22,
+            stage4_output: -0.12,
+            ..LadderState::default()
+        };
 
         let expected_result = -0.022;
         let result = filter.calculate_ladder_stage4(state);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
     }
 
     #[test]
     fn calculate_non_linear_saturation_returns_expected_values() {
         let expected_result = 0.0;
         let result = calculate_non_linear_saturation(0.0);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
 
         let expected_result = 0.7785;
         let result = calculate_non_linear_saturation(0.9);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
 
-        let expected_result = -0.4791666;
+        let expected_result = -0.479_166_6;
         let result = calculate_non_linear_saturation(-0.5);
-        assert!(f32_value_equality(result, expected_result));
+        assert!(f32s_are_equal(result, expected_result));
     }
 }

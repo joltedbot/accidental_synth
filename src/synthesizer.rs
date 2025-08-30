@@ -2,7 +2,12 @@ mod constants;
 mod midi_messages;
 mod midi_value_converters;
 
-use self::constants::*;
+use self::constants::{
+    DEFAULT_FILTER_ENVELOPE_AMOUNT, DEFAULT_OUTPUT_BALANCE, DEFAULT_OUTPUT_LEVEL,
+    DEFAULT_VELOCITY_CURVE_MIDI_VALUE, DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY,
+    DEFAULT_VIBRATO_LFO_DEPTH, DEFAULT_VIBRATO_LFO_RATE, MAX_MIDI_KEY_VELOCITY,
+    QUAD_MIX_DEFAULT_BALANCE, QUAD_MIX_DEFAULT_INPUT_LEVEL, QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
+};
 use crate::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
 use crate::midi::MidiMessage;
 use crate::modules::amplifier::amplify_stereo;
@@ -57,17 +62,17 @@ struct KeyboardParameters {
 }
 #[derive(Debug)]
 struct QuadMixerInput {
-    mixer_level: AtomicU32,
-    mixer_balance: AtomicU32,
-    mixer_mute: AtomicBool,
+    level: AtomicU32,
+    balance: AtomicU32,
+    mute: AtomicBool,
 }
 
 impl Default for QuadMixerInput {
     fn default() -> Self {
         Self {
-            mixer_level: AtomicU32::new(QUAD_MIX_DEFAULT_INPUT_LEVEL.to_bits()),
-            mixer_balance: AtomicU32::new(QUAD_MIX_DEFAULT_BALANCE.to_bits()),
-            mixer_mute: AtomicBool::new(false),
+            level: AtomicU32::new(QUAD_MIX_DEFAULT_INPUT_LEVEL.to_bits()),
+            balance: AtomicU32::new(QUAD_MIX_DEFAULT_BALANCE.to_bits()),
+            mute: AtomicBool::new(false),
         }
     }
 }
@@ -114,7 +119,7 @@ impl Synthesizer {
 
         let oscillator_mixer_parameters: [QuadMixerInput; 4] = Default::default();
         store_f32_as_atomic_u32(
-            &oscillator_mixer_parameters[0].mixer_level,
+            &oscillator_mixer_parameters[0].level,
             QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
         );
 
@@ -131,12 +136,12 @@ impl Synthesizer {
             filter_poles: AtomicU8::new(4),
         };
 
-        let filter_envelope_parameters: EnvelopeParameters = Default::default();
+        let filter_envelope_parameters: EnvelopeParameters = EnvelopeParameters::default();
         filter_envelope_parameters
             .amount
             .store(DEFAULT_FILTER_ENVELOPE_AMOUNT.to_bits(), Relaxed);
 
-        let filter_lfo_parameters: LfoParameters = Default::default();
+        let filter_lfo_parameters: LfoParameters = LfoParameters::default();
         store_f32_as_atomic_u32(&filter_lfo_parameters.range, 0.0);
 
         let lfo1_parameters = LfoParameters::default();
@@ -153,11 +158,11 @@ impl Synthesizer {
         let module_parameters = ModuleParameters {
             filter: filter_parameters,
             mixer: mixer_parameters,
-            amp_envelope: Default::default(),
+            amp_envelope: EnvelopeParameters::default(),
             filter_envelope: filter_envelope_parameters,
             filter_lfo: filter_lfo_parameters,
             lfo1: lfo1_parameters,
-            keyboard: Default::default(),
+            keyboard: KeyboardParameters::default(),
             oscillators: Default::default(),
         };
 
@@ -172,7 +177,7 @@ impl Synthesizer {
 
     pub fn run(&mut self, midi_message_receiver: Receiver<MidiMessage>) -> Result<()> {
         log::info!("Creating the synthesizer audio stream");
-        self.output_stream = Some(self.create_synthesizer(self.audio_output_device.clone())?);
+        self.output_stream = Some(self.create_synthesizer()?);
         log::debug!("run(): The synthesizer audio stream has been created");
 
         log::debug!("run(): Start the midi event listener thread");
@@ -227,7 +232,8 @@ impl Synthesizer {
         });
     }
 
-    fn create_synthesizer(&mut self, output_device: Device) -> Result<Stream> {
+    fn create_synthesizer(&mut self) -> Result<Stream> {
+        let output_device = self.audio_output_device.clone();
         let current_note = self.current_note.clone();
         let module_parameters = self.module_parameters.clone();
 
@@ -273,22 +279,8 @@ impl Synthesizer {
                 }
 
                 // Begin processing the audio buffer
-                let mut sub_oscillator_mixer_input = create_mixer_input_from_oscillator_parameters(
-                    &module_parameters.mixer,
-                    OscillatorIndex::Sub,
-                );
-                let mut oscillator1_mixer_input = create_mixer_input_from_oscillator_parameters(
-                    &module_parameters.mixer,
-                    OscillatorIndex::One,
-                );
-                let mut oscillator2_mixer_input = create_mixer_input_from_oscillator_parameters(
-                    &module_parameters.mixer,
-                    OscillatorIndex::Two,
-                );
-                let mut oscillator3_mixer_input = create_mixer_input_from_oscillator_parameters(
-                    &module_parameters.mixer,
-                    OscillatorIndex::Three,
-                );
+                let mut quad_mixer_inputs: [MixerInput; 4] =
+                    create_quad_mixer_inputs(&module_parameters);
 
                 let vibrato_amount =
                     load_f32_from_atomic_u32(&module_parameters.keyboard.mod_wheel_amount);
@@ -296,24 +288,14 @@ impl Synthesizer {
 
                 // Split the buffer into frames
                 for frame in buffer.chunks_mut(number_of_channels) {
-                    let vibrato_value = lfo1.generate(None);
                     // Begin generating and processing the samples for the frame
-                    sub_oscillator_mixer_input.sample =
-                        oscillators[OscillatorIndex::Sub as usize].generate(Some(vibrato_value));
-                    oscillator1_mixer_input.sample =
-                        oscillators[OscillatorIndex::One as usize].generate(Some(vibrato_value));
-                    oscillator2_mixer_input.sample =
-                        oscillators[OscillatorIndex::Two as usize].generate(Some(vibrato_value));
-                    oscillator3_mixer_input.sample =
-                        oscillators[OscillatorIndex::Three as usize].generate(Some(vibrato_value));
+                    let vibrato_value = lfo1.generate(None);
+                    for (index, input) in quad_mixer_inputs.iter_mut().enumerate() {
+                        input.sample = oscillators[index].generate(Some(vibrato_value));
+                    }
 
                     // Any per-oscillator processing should happen before this stereo mix down
-                    let (oscillator_mix_left, oscillator_mix_right) = quad_mix(
-                        sub_oscillator_mixer_input,
-                        oscillator1_mixer_input,
-                        oscillator2_mixer_input,
-                        oscillator3_mixer_input,
-                    );
+                    let (oscillator_mix_left, oscillator_mix_right) = quad_mix(quad_mixer_inputs);
 
                     let amp_envelope_value = Some(amp_envelope.generate());
 
@@ -360,20 +342,43 @@ impl Synthesizer {
     }
 }
 
+fn create_quad_mixer_inputs(module_parameters: &Arc<ModuleParameters>) -> [MixerInput; 4] {
+    let sub_oscillator_mixer_input = create_mixer_input_from_oscillator_parameters(
+        &module_parameters.mixer,
+        OscillatorIndex::Sub,
+    );
+    let oscillator1_mixer_input = create_mixer_input_from_oscillator_parameters(
+        &module_parameters.mixer,
+        OscillatorIndex::One,
+    );
+    let oscillator2_mixer_input = create_mixer_input_from_oscillator_parameters(
+        &module_parameters.mixer,
+        OscillatorIndex::Two,
+    );
+    let oscillator3_mixer_input = create_mixer_input_from_oscillator_parameters(
+        &module_parameters.mixer,
+        OscillatorIndex::Three,
+    );
+    [
+        sub_oscillator_mixer_input,
+        oscillator1_mixer_input,
+        oscillator2_mixer_input,
+        oscillator3_mixer_input,
+    ]
+}
+
 fn create_mixer_input_from_oscillator_parameters(
     parameters: &MixerParameters,
     oscillator: OscillatorIndex,
 ) -> MixerInput {
     MixerInput {
         sample: 0.0,
-        level: load_f32_from_atomic_u32(
-            &parameters.quad_mixer_inputs[oscillator as usize].mixer_level,
-        ),
+        level: load_f32_from_atomic_u32(&parameters.quad_mixer_inputs[oscillator as usize].level),
         balance: load_f32_from_atomic_u32(
-            &parameters.quad_mixer_inputs[oscillator as usize].mixer_balance,
+            &parameters.quad_mixer_inputs[oscillator as usize].balance,
         ),
         mute: parameters.quad_mixer_inputs[oscillator as usize]
-            .mixer_mute
+            .mute
             .load(Relaxed),
     }
 }

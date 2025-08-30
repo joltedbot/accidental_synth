@@ -1,12 +1,13 @@
 // MIDI Constants
 pub const MAX_MIDI_VALUE: u8 = 127;
+pub const MIDI_CENTER_VALUE: u8 = 64;
 pub const MIDI_SWITCH_MAX_OFF_VALUE: u8 = 63;
 pub const PITCH_BEND_AMOUNT_ZERO_POINT: i16 = 8192;
 pub const PITCH_BEND_AMOUNT_MAX_VALUE: i16 = 16383;
 pub const PITCH_BEND_AMOUNT_CENTS: i16 = 1200;
 pub const MAX_MIDI_KEY_VELOCITY: f32 = 1.0;
 pub const DEFAULT_VELOCITY_CURVE_MIDI_VALUE: u8 = 80;
-pub const EXPONENTIAL_FILTER_COEFFICIENT: f32 = 9.903487; // filter range 20,000hz so log(20000) = 9.903487
+pub const EXPONENTIAL_FILTER_COEFFICIENT: f32 = 9.903_487; // filter range 20,000hz so log(20000) = 9.903487
 pub const EXPONENTIAL_LEVEL_COEFFICIENT: f32 = 6.908; // Level linear range is 1000x so log(1000) = 6.908
 pub const EXPONENTIAL_LFO_COEFFICIENT: f32 = 13.81551; // log(100_000) = 13.81551
 pub const LEVEL_CURVE_LINEAR_RANGE: f32 = 1000.0; // Level range is -60 to 0 = 60dbfs so 10^(60/20) = 1000x
@@ -19,8 +20,8 @@ pub const OSCILLATOR_COURSE_TUNE_MIN_INTERVAL: i8 = -12;
 
 // Envelope Constants
 pub const DEFAULT_FILTER_ENVELOPE_AMOUNT: f32 = 0.0;
-pub const ENVELOPE_MAX_MILLISECONDS: u32 = 10000;
-pub const ENVELOPE_MIN_MILLISECONDS: u32 = 1;
+pub const ENVELOPE_MAX_MILLISECONDS: f32 = 10000.0;
+pub const ENVELOPE_MIN_MILLISECONDS: f32 = 1.0;
 
 // Mixer Constants
 pub const DEFAULT_OUTPUT_LEVEL: f32 = 0.5;

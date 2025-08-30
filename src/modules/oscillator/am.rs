@@ -1,4 +1,4 @@
-use super::constants::*;
+use super::constants::{DEFAULT_AM_TONE_AMOUNT, DEFAULT_AMPLITUDE_MODULATION_AMOUNT};
 use super::sine::Sine;
 use super::{GenerateSamples, WaveShape};
 use crate::modules::oscillator::constants::{MAX_PHASE, MIN_PHASE};

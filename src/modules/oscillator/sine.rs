@@ -1,4 +1,4 @@
-use super::constants::*;
+use super::constants::{DEFAULT_PHASE, RADS_PER_CYCLE, MIN_PHASE, MAX_PHASE};
 use super::{GenerateSamples, WaveShape};
 use std::f32::consts::PI;
 

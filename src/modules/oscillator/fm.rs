@@ -1,4 +1,4 @@
-use super::constants::*;
+use super::constants::{MAX_PHASE, MIN_PHASE};
 use super::{GenerateSamples, WaveShape};
 use crate::modules::oscillator::sine::Sine;
 

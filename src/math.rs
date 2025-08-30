@@ -19,7 +19,7 @@ pub fn sample_to_dbfs(sample: f32) -> f32 {
 }
 
 // Determine if 2 f32 values are equal to within standard floating point precision
-pub fn f32_value_equality(value_1: f32, value_2: f32) -> bool {
+pub fn f32s_are_equal(value_1: f32, value_2: f32) -> bool {
     (value_1 - value_2).abs() <= ALTERNATE_EPSILON
 }
 
@@ -34,7 +34,7 @@ pub fn load_f32_from_atomic_u32(atomic: &AtomicU32) -> f32 {
 
 pub fn frequency_from_cents(frequency: f32, cents: i16) -> f32 {
     let cents_per_octave = 1200.0;
-    frequency * (2.0f32.powf(cents as f32 / cents_per_octave))
+    frequency * (2.0f32.powf(f32::from(cents) / cents_per_octave))
 }
 
 // The exponential function using natural log, output normalized to the range [0, 1]
@@ -48,21 +48,5 @@ fn exponential_function_natural_log(
     let b = (output_scale_max.ln() - output_scale_min.ln()) / (input_scale_max - input_scale_min);
     let a = output_scale_min / (b * input_scale_min).exp();
     let result = a * (b * input_value).exp();
-    (result - output_scale_min) / (output_scale_max - output_scale_min)
-}
-
-// The exponential function using base 10 log, output normalized to the range [0, 1]
-// The dbfs_to_sample() method is a simplified version of this tailored specifically to dbfs
-fn exponential_function_log10(
-    input_value: f32,
-    input_scale_min: f32,
-    input_scale_max: f32,
-    output_scale_min: f32,
-    output_scale_max: f32,
-) -> f32 {
-    let b =
-        (output_scale_max.log10() - output_scale_min.log10()) / (input_scale_max - input_scale_min);
-    let a = output_scale_min / (10_f32).powf(b * input_scale_min);
-    let result = a * (10_f32).powf(b * input_value);
     (result - output_scale_min) / (output_scale_max - output_scale_min)
 }

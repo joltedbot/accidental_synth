@@ -1,4 +1,4 @@
-use super::constants::*;
+pub use super::constants::*;
 use super::{GenerateSamples, WaveShape};
 use std::f32::consts::PI;
 
