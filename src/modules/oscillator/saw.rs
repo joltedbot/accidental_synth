@@ -1,4 +1,5 @@
-use super::{GenerateSamples, WaveShape};
+use super::WaveShape;
+use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use std::f32::consts::PI;
 
 const SHAPE: WaveShape = WaveShape::Saw;
@@ -25,7 +26,7 @@ impl Saw {
     }
 }
 
-impl GenerateSamples for Saw {
+impl GenerateWave for Saw {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         let y_coordinate: f32 = (-2.0 / PI)
             * (1.0f32

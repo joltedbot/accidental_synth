@@ -1,5 +1,6 @@
+use super::WaveShape;
 use super::constants::{MAX_PHASE, MIN_PHASE};
-use super::{GenerateSamples, WaveShape};
+use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use crate::modules::oscillator::sine::Sine;
 
 const SHAPE: WaveShape = WaveShape::FM;
@@ -12,8 +13,8 @@ const RATIO_PARAMETER_CENTER_POINT: f32 = 0.5;
 
 pub struct FM {
     shape: WaveShape,
-    carrier: Box<dyn GenerateSamples + Send + Sync>,
-    modulator: Box<dyn GenerateSamples + Send + Sync>,
+    carrier: Box<dyn GenerateWave + Send + Sync>,
+    modulator: Box<dyn GenerateWave + Send + Sync>,
     modulation_amount: f32,
     modulation_ratio: f32,
 }
@@ -31,7 +32,7 @@ impl FM {
     }
 }
 
-impl GenerateSamples for FM {
+impl GenerateWave for FM {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         let modulator = self
             .modulator

@@ -1,5 +1,6 @@
+use super::WaveShape;
 pub use super::constants::*;
-use super::{GenerateSamples, WaveShape};
+use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use std::f32::consts::PI;
 
 pub struct Triangle {
@@ -21,7 +22,7 @@ impl Triangle {
     }
 }
 
-impl GenerateSamples for Triangle {
+impl GenerateWave for Triangle {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         let new_frequency = tone_frequency;
 

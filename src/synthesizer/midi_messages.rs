@@ -2,16 +2,20 @@ use crate::math::store_f32_as_atomic_u32;
 use crate::midi::CC;
 use crate::modules::lfo::LfoParameters;
 use crate::modules::oscillator::OscillatorParameters;
+use crate::modules::oscillator::triangle::{
+    MAX_PORTAMENTO_SPEED_IN_BUFFERS, MIN_PORTAMENTO_SPEED_IN_BUFFERS,
+};
 use crate::synthesizer::constants::{
     ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, MAX_FILTER_RESONANCE,
-    MIN_FILTER_RESONANCE,
+    MIN_FILTER_RESONANCE, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL, OSCILLATOR_COURSE_TUNE_MIN_INTERVAL,
+    OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS,
 };
 use crate::synthesizer::{
     CurrentNote, EnvelopeParameters, FilterParameters, KeyboardParameters, MidiGateEvent,
     MidiNoteEvent, MixerParameters, ModuleParameters, OscillatorIndex, midi_value_converters,
 };
 use std::sync::Arc;
-use std::sync::atomic::Ordering::Relaxed;
+use std::sync::atomic::Ordering::{Relaxed, Release};
 
 pub fn action_midi_note_events(
     midi_events: MidiNoteEvent,
@@ -28,7 +32,7 @@ pub fn action_midi_note_events(
                 .gate_flag
                 .store(MidiGateEvent::GateOn as u8, Relaxed);
             for oscillator in &module_parameters.oscillators {
-                oscillator.gate_flag.store(true, Relaxed);
+                oscillator.gate_flag.store(true, Release);
             }
         }
         MidiNoteEvent::NoteOff => {
@@ -147,6 +151,9 @@ pub fn process_midi_cc_values(
         CC::OscillatorKeySyncEnabled(value) => {
             set_oscillator_key_sync(&module_parameters.oscillators, value);
         }
+        CC::PortamentoTime(value) => {
+            set_portamento_time(&module_parameters.oscillators, value);
+        }
         CC::SubOscillatorShape(value) => {
             set_oscillator_wave_shape(
                 &module_parameters.oscillators[OscillatorIndex::Sub as usize],
@@ -254,6 +261,9 @@ pub fn process_midi_cc_values(
         }
         CC::Oscillator3Balance(value) => {
             set_oscillator_balance(&module_parameters.mixer, OscillatorIndex::Three, value);
+        }
+        CC::PortamentoEnabled(value) => {
+            set_portamento_enabled(&module_parameters.oscillators, value);
         }
         CC::FilterPoles(value) => {
             set_filter_poles(&module_parameters.filter, value);
@@ -388,7 +398,9 @@ fn set_envelope_sustain_level(envelope_parameters: &EnvelopeParameters, value: u
 
 fn set_envelope_decay_time(envelope_parameters: &EnvelopeParameters, value: u8) {
     let milliseconds = midi_value_converters::midi_value_to_envelope_milliseconds(value);
-    store_f32_as_atomic_u32(&envelope_parameters.decay_ms, milliseconds);
+    envelope_parameters
+        .decay_ms
+        .store(milliseconds.round() as u32, Relaxed);
 }
 
 fn set_envelope_attack_time(envelope_parameters: &EnvelopeParameters, value: u8) {
@@ -407,7 +419,9 @@ fn set_amp_eg_attack_time(envelope_parameters: &EnvelopeParameters, value: u8) {
         ENVELOPE_MIN_MILLISECONDS,
         ENVELOPE_MAX_MILLISECONDS,
     );
-    store_f32_as_atomic_u32(&envelope_parameters.attack_ms, milliseconds);
+    envelope_parameters
+        .attack_ms
+        .store(milliseconds.round() as u32, Relaxed);
 }
 
 fn set_amp_eg_release_time(envelope_parameters: &EnvelopeParameters, value: u8) {
@@ -416,7 +430,9 @@ fn set_amp_eg_release_time(envelope_parameters: &EnvelopeParameters, value: u8) 
         ENVELOPE_MIN_MILLISECONDS,
         ENVELOPE_MAX_MILLISECONDS,
     );
-    store_f32_as_atomic_u32(&envelope_parameters.release_ms, milliseconds);
+    envelope_parameters
+        .release_ms
+        .store(milliseconds.round() as u32, Relaxed);
 }
 
 fn set_filter_resonance(filter_parameters: &FilterParameters, value: u8) {
@@ -477,6 +493,26 @@ fn set_oscillator_key_sync(parameters: &[OscillatorParameters; 4], value: u8) {
     }
 }
 
+fn set_portamento_time(parameters: &[OscillatorParameters; 4], value: u8) {
+    let speed = midi_value_converters::midi_value_to_u16_range(
+        value,
+        MIN_PORTAMENTO_SPEED_IN_BUFFERS,
+        MAX_PORTAMENTO_SPEED_IN_BUFFERS,
+    );
+
+    for parameters in parameters {
+        parameters.portamento_speed.store(speed, Relaxed);
+    }
+}
+
+fn set_portamento_enabled(parameters: &[OscillatorParameters; 4], value: u8) {
+    for parameters in parameters {
+        parameters
+            .portamento_is_enabled
+            .store(midi_value_converters::midi_value_to_bool(value), Relaxed);
+    }
+}
+
 fn set_oscillator_balance(parameters: &MixerParameters, oscillator: OscillatorIndex, value: u8) {
     let balance = midi_value_converters::midi_value_to_f32_negative_1_to_1(value);
     store_f32_as_atomic_u32(
@@ -501,12 +537,22 @@ fn set_oscillator_level(parameters: &MixerParameters, oscillator: OscillatorInde
 }
 
 fn set_oscillator_fine_tune(parameters: &OscillatorParameters, value: u8) {
-    let cents = midi_value_converters::midi_value_to_fine_tune_cents(value);
+    let cents = midi_value_converters::midi_value_to_f32_range(
+        value,
+        f32::from(OSCILLATOR_FINE_TUNE_MIN_CENTS),
+        f32::from(OSCILLATOR_FINE_TUNE_MAX_CENTS),
+    ) as i16;
+
     parameters.fine_tune.store(cents, Relaxed);
 }
 
 fn set_oscillator_course_tune(parameters: &OscillatorParameters, value: u8) {
-    let interval = midi_value_converters::midi_value_to_course_tune_intervals(value);
+    let interval = midi_value_converters::midi_value_to_f32_range(
+        value,
+        f32::from(OSCILLATOR_COURSE_TUNE_MIN_INTERVAL),
+        f32::from(OSCILLATOR_COURSE_TUNE_MAX_INTERVAL),
+    ) as i8;
+
     parameters.course_tune.store(interval, Relaxed);
 }
 

@@ -1,5 +1,6 @@
+use super::WaveShape;
 use super::constants::{DEFAULT_X_COORDINATE, DEFAULT_X_INCREMENT};
-use super::{GenerateSamples, WaveShape};
+use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use std::f32::consts::PI;
 
 pub struct Ramp {
@@ -21,7 +22,7 @@ impl Ramp {
     }
 }
 
-impl GenerateSamples for Ramp {
+impl GenerateWave for Ramp {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         let new_frequency = tone_frequency * modulation.unwrap_or(1.0);
 

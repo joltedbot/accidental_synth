@@ -2,9 +2,7 @@ use crate::modules::oscillator::{NUMBER_OF_WAVE_SHAPES, OscillatorParameters};
 use crate::synthesizer::constants::{
     ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, EXPONENTIAL_FILTER_COEFFICIENT,
     EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT, LEVEL_CURVE_LINEAR_RANGE,
-    MAX_MIDI_VALUE, MIDI_CENTER_VALUE, MIDI_SWITCH_MAX_OFF_VALUE,
-    OSCILLATOR_COURSE_TUNE_MAX_INTERVAL, OSCILLATOR_COURSE_TUNE_MIN_INTERVAL,
-    OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS, PITCH_BEND_AMOUNT_CENTS,
+    MAX_MIDI_VALUE, MIDI_CENTER_VALUE, MIDI_SWITCH_MAX_OFF_VALUE, PITCH_BEND_AMOUNT_CENTS,
     PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT,
 };
 use std::cmp::Ordering;
@@ -22,6 +20,12 @@ pub fn midi_value_to_u32_range(midi_value: u8, minimum: u32, maximum: u32) -> u3
     minimum + (f32::from(midi_value) * increment).ceil() as u32
 }
 
+pub fn midi_value_to_u16_range(midi_value: u8, minimum: u16, maximum: u16) -> u16 {
+    let range = maximum - minimum;
+    let increment = range as f32 / f32::from(MAX_MIDI_VALUE);
+    minimum + (f32::from(midi_value) * increment).ceil() as u16
+}
+
 pub fn midi_value_to_f32_0_to_1(midi_value: u8) -> f32 {
     midi_value_to_f32_range(midi_value, 0.0, 1.0)
 }
@@ -32,22 +36,6 @@ pub fn midi_value_to_f32_negative_1_to_1(midi_value: u8) -> f32 {
 
 pub fn midi_value_to_bool(midi_value: u8) -> bool {
     midi_value > MIDI_SWITCH_MAX_OFF_VALUE
-}
-
-pub fn midi_value_to_fine_tune_cents(midi_value: u8) -> i16 {
-    midi_value_to_f32_range(
-        midi_value,
-        f32::from(OSCILLATOR_FINE_TUNE_MIN_CENTS),
-        f32::from(OSCILLATOR_FINE_TUNE_MAX_CENTS),
-    ) as i16
-}
-
-pub fn midi_value_to_course_tune_intervals(midi_value: u8) -> i8 {
-    midi_value_to_f32_range(
-        midi_value,
-        f32::from(OSCILLATOR_COURSE_TUNE_MIN_INTERVAL),
-        f32::from(OSCILLATOR_COURSE_TUNE_MAX_INTERVAL),
-    ) as i8
 }
 
 pub fn midi_value_to_envelope_milliseconds(midi_value: u8) -> f32 {

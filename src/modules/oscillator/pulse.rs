@@ -1,8 +1,9 @@
+use super::WaveShape;
 use super::constants::{
     DEFAULT_PULSE_WIDTH_ADJUSTMENT, DEFAULT_X_COORDINATE, DEFAULT_X_INCREMENT,
     OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR,
 };
-use super::{GenerateSamples, WaveShape};
+use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use std::f32::consts::PI;
 
 pub struct Pulse {
@@ -26,7 +27,7 @@ impl Pulse {
     }
 }
 
-impl GenerateSamples for Pulse {
+impl GenerateWave for Pulse {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         if tone_frequency == 0.0 {
             return 0.0;

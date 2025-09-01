@@ -112,7 +112,7 @@ impl Synthesizer {
         store_f32_as_atomic_u32(&velocity, MAX_MIDI_KEY_VELOCITY);
 
         let current_note = CurrentNote {
-            midi_note: AtomicU8::new(0),
+            midi_note: AtomicU8::new(60),
             velocity,
             velocity_curve: AtomicU8::new(DEFAULT_VELOCITY_CURVE_MIDI_VALUE),
         };

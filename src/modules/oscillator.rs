@@ -1,6 +1,7 @@
 pub mod am;
 mod constants;
 pub mod fm;
+mod generate_wave_trait;
 pub mod gigasaw;
 pub mod noise;
 pub mod pulse;
@@ -12,8 +13,9 @@ pub mod triangle;
 
 use self::am::AM;
 use self::constants::{
-    DEFAULT_KEY_SYNC_ENABLED, MAX_MIDI_NOTE_NUMBER, MAX_NOTE_FREQUENCY, MIDI_NOTE_FREQUENCIES,
-    MIN_MIDI_NOTE_NUMBER, MIN_NOTE_FREQUENCY,
+    DEFAULT_KEY_SYNC_ENABLED, DEFAULT_NOTE_FREQUENCY, DEFAULT_PORTAMENTO_SPEED_IN_BUFFERS,
+    MAX_MIDI_NOTE_NUMBER, MAX_NOTE_FREQUENCY, MIDI_NOTE_FREQUENCIES, MIN_MIDI_NOTE_NUMBER,
+    MIN_NOTE_FREQUENCY,
 };
 use self::fm::FM;
 use self::gigasaw::GigaSaw;
@@ -25,25 +27,12 @@ use self::sine::Sine;
 use self::square::Square;
 use self::triangle::Triangle;
 use crate::math;
-use crate::math::load_f32_from_atomic_u32;
-use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::{AtomicBool, AtomicI8, AtomicI16, AtomicU8, AtomicU32};
-
-pub trait GenerateSamples {
-    fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32;
-
-    fn set_shape_parameter1(&mut self, parameter: f32);
-    fn set_shape_parameter2(&mut self, parameter: f32);
-
-    fn set_phase(&mut self, phase: f32);
-
-    fn shape(&self) -> WaveShape;
-
-    fn reset(&mut self);
-}
+use crate::math::{f32s_are_equal, load_f32_from_atomic_u32};
+use generate_wave_trait::GenerateWave;
+use std::sync::atomic::Ordering::{Acquire, Relaxed};
+use std::sync::atomic::{AtomicBool, AtomicI8, AtomicI16, AtomicU8, AtomicU16, AtomicU32};
 
 pub const NUMBER_OF_WAVE_SHAPES: u8 = 10;
-
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WaveShape {
     #[default]
@@ -87,6 +76,8 @@ pub struct OscillatorParameters {
     pub wave_shape_index: AtomicU8,
     pub gate_flag: AtomicBool,
     pub key_sync_enabled: AtomicBool,
+    pub portamento_is_enabled: AtomicBool,
+    pub portamento_speed: AtomicU16,
 }
 
 impl Default for OscillatorParameters {
@@ -100,13 +91,24 @@ impl Default for OscillatorParameters {
             wave_shape_index: AtomicU8::new(WaveShape::default() as u8),
             gate_flag: AtomicBool::new(false),
             key_sync_enabled: AtomicBool::new(DEFAULT_KEY_SYNC_ENABLED),
+            portamento_is_enabled: AtomicBool::new(false),
+            portamento_speed: AtomicU16::new(DEFAULT_PORTAMENTO_SPEED_IN_BUFFERS),
         }
     }
 }
 
+#[derive(Default, Debug, Copy, Clone)]
+struct Portamento {
+    is_enabled: bool,
+    speed: u16,
+    target_frequency: f32,
+    increment: f32,
+    recalculate_increment: bool,
+}
+
 pub struct Oscillator {
     sample_rate: u32,
-    wave_generator: Box<dyn GenerateSamples + Send + Sync>,
+    wave_generator: Box<dyn GenerateWave + Send + Sync>,
     tone_frequency: f32,
     wave_shape_index: u8,
     pitch_bend: i16,
@@ -114,6 +116,7 @@ pub struct Oscillator {
     fine_tune: i16,
     is_sub: bool,
     key_sync_enabled: bool,
+    portamento: Portamento,
 }
 
 impl Oscillator {
@@ -121,16 +124,25 @@ impl Oscillator {
         log::info!("Constructing Oscillator Module");
         let wave_generator = get_wave_generator_from_wave_shape(sample_rate, wave_shape);
 
+        let portamento = Portamento {
+            is_enabled: true,
+            target_frequency: DEFAULT_NOTE_FREQUENCY,
+            speed: DEFAULT_PORTAMENTO_SPEED_IN_BUFFERS,
+            recalculate_increment: true,
+            ..Portamento::default()
+        };
+
         Self {
             sample_rate,
             wave_generator,
-            tone_frequency: 0.0,
+            tone_frequency: DEFAULT_NOTE_FREQUENCY,
             wave_shape_index: WaveShape::default() as u8,
             pitch_bend: 0,
             course_tune: 0,
             fine_tune: 0,
             is_sub: false,
             key_sync_enabled: DEFAULT_KEY_SYNC_ENABLED,
+            portamento,
         }
     }
 
@@ -141,8 +153,12 @@ impl Oscillator {
         self.set_pitch_bend(parameters.pitch_bend.load(Relaxed));
         self.set_course_tune(parameters.course_tune.load(Relaxed));
         self.set_fine_tune(parameters.fine_tune.load(Relaxed));
-        self.set_gate(&parameters.gate_flag);
         self.set_key_sync_enabled(parameters.key_sync_enabled.load(Relaxed));
+        self.set_portamento(
+            parameters.portamento_is_enabled.load(Relaxed),
+            parameters.portamento_speed.load(Relaxed),
+        );
+        self.set_gate(&parameters.gate_flag);
     }
 
     pub fn generate(&mut self, mut modulation: Option<f32>) -> f32 {
@@ -197,23 +213,64 @@ impl Oscillator {
 
         let mut note_frequency = midi_note_to_frequency(note_number);
 
+        if self.fine_tune != 0 {
+            note_frequency = math::frequency_from_cents(note_frequency, self.fine_tune);
+        }
+
+        if self.portamento.is_enabled {
+            if self.portamento.recalculate_increment {
+                self.recalculate_portamento_increment(note_frequency);
+            }
+            note_frequency = self.run_portamento(note_frequency);
+        }
+
         if self.pitch_bend != 0 {
             note_frequency = math::frequency_from_cents(note_frequency, self.pitch_bend)
                 .clamp(MIN_NOTE_FREQUENCY, MAX_NOTE_FREQUENCY);
         }
-
-        if self.fine_tune != 0 {
-            note_frequency = math::frequency_from_cents(note_frequency, self.fine_tune);
-        }
         self.tone_frequency = note_frequency;
     }
 
-    fn set_gate(&mut self, gate_flag: &AtomicBool) {
-        let gate_on = gate_flag.load(Relaxed);
-        if gate_on && self.key_sync_enabled {
-            self.reset();
-            gate_flag.store(false, Relaxed); // Reset the gate flag
+    fn run_portamento(&mut self, frequency: f32) -> f32 {
+        if f32s_are_equal(frequency, self.tone_frequency) {
+            return frequency;
         }
+
+        let new_frequency = if (self.tone_frequency - self.portamento.target_frequency).abs()
+            < self.portamento.increment.abs()
+        {
+            self.portamento.target_frequency
+        } else {
+            self.tone_frequency + self.portamento.increment
+        };
+
+        new_frequency.clamp(MIN_NOTE_FREQUENCY, MAX_NOTE_FREQUENCY)
+    }
+
+    fn recalculate_portamento_increment(&mut self, new_frequency: f32) {
+        let increment = (new_frequency - self.tone_frequency) / f32::from(self.portamento.speed);
+
+        self.portamento.increment = increment;
+        self.portamento.target_frequency = new_frequency;
+        self.portamento.recalculate_increment = false;
+    }
+
+    fn set_gate(&mut self, gate_flag: &AtomicBool) {
+        let gate_on = gate_flag.swap(false, Acquire);
+        if !gate_on {
+            return;
+        }
+
+        self.portamento.recalculate_increment = true;
+
+        if self.key_sync_enabled {
+            self.reset();
+        }
+    }
+
+    fn set_portamento(&mut self, is_enabled: bool, speed: u16) {
+        self.portamento.is_enabled = is_enabled;
+        self.portamento.speed = speed;
     }
 
     fn set_key_sync_enabled(&mut self, key_sync_enabled: bool) {
@@ -248,7 +305,7 @@ impl Oscillator {
 fn get_wave_generator_from_wave_shape(
     sample_rate: u32,
     wave_shape: WaveShape,
-) -> Box<dyn GenerateSamples + Send + Sync> {
+) -> Box<dyn GenerateWave + Send + Sync> {
     match wave_shape {
         WaveShape::Sine => Box::new(Sine::new(sample_rate)),
         WaveShape::Triangle => Box::new(Triangle::new(sample_rate)),

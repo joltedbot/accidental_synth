@@ -1,6 +1,7 @@
-use super::{GenerateSamples, WaveShape};
+use super::WaveShape;
 
 const SHAPE: WaveShape = WaveShape::Square;
+use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use std::f32::consts::PI;
 
 const DEFAULT_X_COORDINATE: f32 = 0.0;
@@ -25,7 +26,7 @@ impl Square {
     }
 }
 
-impl GenerateSamples for Square {
+impl GenerateWave for Square {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         let new_frequency = tone_frequency;
 

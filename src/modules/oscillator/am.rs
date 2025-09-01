@@ -1,12 +1,13 @@
+use super::WaveShape;
 use super::constants::{DEFAULT_AM_TONE_AMOUNT, DEFAULT_AMPLITUDE_MODULATION_AMOUNT};
 use super::sine::Sine;
-use super::{GenerateSamples, WaveShape};
 use crate::modules::oscillator::constants::{MAX_PHASE, MIN_PHASE};
+use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 
 pub struct AM {
     shape: WaveShape,
-    carrier: Box<dyn GenerateSamples + Send + Sync>,
-    modulator: Box<dyn GenerateSamples + Send + Sync>,
+    carrier: Box<dyn GenerateWave + Send + Sync>,
+    modulator: Box<dyn GenerateWave + Send + Sync>,
     modulation_amount: f32,
     am_tone_amount: f32, // 0.0 is ring modulation, 1.0 is proper AM
 }
@@ -24,7 +25,7 @@ impl AM {
     }
 }
 
-impl GenerateSamples for AM {
+impl GenerateWave for AM {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         let modulator = self
             .modulator
