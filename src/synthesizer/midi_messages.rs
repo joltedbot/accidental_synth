@@ -537,21 +537,21 @@ fn set_oscillator_level(parameters: &MixerParameters, oscillator: OscillatorInde
 }
 
 fn set_oscillator_fine_tune(parameters: &OscillatorParameters, value: u8) {
-    let cents = midi_value_converters::midi_value_to_f32_range(
+    let cents = midi_value_converters::midi_value_to_i8_range(
         value,
-        f32::from(OSCILLATOR_FINE_TUNE_MIN_CENTS),
-        f32::from(OSCILLATOR_FINE_TUNE_MAX_CENTS),
-    ) as i16;
+        OSCILLATOR_FINE_TUNE_MIN_CENTS,
+        OSCILLATOR_FINE_TUNE_MAX_CENTS,
+    );
 
     parameters.fine_tune.store(cents, Relaxed);
 }
 
 fn set_oscillator_course_tune(parameters: &OscillatorParameters, value: u8) {
-    let interval = midi_value_converters::midi_value_to_f32_range(
+    let interval = midi_value_converters::midi_value_to_i8_range(
         value,
-        f32::from(OSCILLATOR_COURSE_TUNE_MIN_INTERVAL),
-        f32::from(OSCILLATOR_COURSE_TUNE_MAX_INTERVAL),
-    ) as i8;
+        OSCILLATOR_COURSE_TUNE_MIN_INTERVAL,
+        OSCILLATOR_COURSE_TUNE_MAX_INTERVAL,
+    );
 
     parameters.course_tune.store(interval, Relaxed);
 }

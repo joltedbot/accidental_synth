@@ -68,7 +68,7 @@ impl WaveShape {
 
 #[derive(Debug)]
 pub struct OscillatorParameters {
-    pub fine_tune: AtomicI16,
+    pub fine_tune: AtomicI8,
     pub course_tune: AtomicI8,
     pub pitch_bend: AtomicI16,
     pub shape_parameter1: AtomicU32,
@@ -83,7 +83,7 @@ pub struct OscillatorParameters {
 impl Default for OscillatorParameters {
     fn default() -> Self {
         Self {
-            fine_tune: AtomicI16::new(0),
+            fine_tune: AtomicI8::new(0),
             course_tune: AtomicI8::new(0),
             pitch_bend: AtomicI16::new(0),
             shape_parameter1: AtomicU32::new(0),
@@ -113,7 +113,7 @@ pub struct Oscillator {
     wave_shape_index: u8,
     pitch_bend: i16,
     course_tune: i8,
-    fine_tune: i16,
+    fine_tune: i8,
     is_sub: bool,
     key_sync_enabled: bool,
     portamento: Portamento,
@@ -200,13 +200,13 @@ impl Oscillator {
 
     pub fn tune(&mut self, mut note_number: u8) {
         if self.course_tune != 0 {
-            note_number = (note_number as i8)
-                .saturating_add(self.course_tune)
+            note_number = (note_number as i16)
+                .saturating_add(self.course_tune as i16)
                 .clamp(MIN_MIDI_NOTE_NUMBER, MAX_MIDI_NOTE_NUMBER) as u8;
         }
 
         if self.is_sub {
-            note_number = (note_number as i8)
+            note_number = (note_number as i16)
                 .saturating_sub(12)
                 .clamp(MIN_MIDI_NOTE_NUMBER, MAX_MIDI_NOTE_NUMBER) as u8;
         }
@@ -214,7 +214,7 @@ impl Oscillator {
         let mut note_frequency = midi_note_to_frequency(note_number);
 
         if self.fine_tune != 0 {
-            note_frequency = math::frequency_from_cents(note_frequency, self.fine_tune);
+            note_frequency = math::frequency_from_cents(note_frequency, i16::from(self.fine_tune));
         }
 
         if self.portamento.is_enabled {
@@ -285,7 +285,7 @@ impl Oscillator {
         self.course_tune = course_tune;
     }
 
-    fn set_fine_tune(&mut self, fine_tune: i16) {
+    fn set_fine_tune(&mut self, fine_tune: i8) {
         self.fine_tune = fine_tune;
     }
 

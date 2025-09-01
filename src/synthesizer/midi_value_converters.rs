@@ -2,7 +2,7 @@ use crate::modules::oscillator::{NUMBER_OF_WAVE_SHAPES, OscillatorParameters};
 use crate::synthesizer::constants::{
     ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, EXPONENTIAL_FILTER_COEFFICIENT,
     EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT, LEVEL_CURVE_LINEAR_RANGE,
-    MAX_MIDI_VALUE, MIDI_CENTER_VALUE, MIDI_SWITCH_MAX_OFF_VALUE, PITCH_BEND_AMOUNT_CENTS,
+    MIDI_VALUE_RANGE, MIDI_CENTER_VALUE, MIDI_SWITCH_MAX_OFF_VALUE, PITCH_BEND_AMOUNT_CENTS,
     PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT,
 };
 use std::cmp::Ordering;
@@ -10,20 +10,26 @@ use std::sync::atomic::Ordering::Relaxed;
 
 pub fn midi_value_to_f32_range(midi_value: u8, minimum: f32, maximum: f32) -> f32 {
     let range = maximum - minimum;
-    let increment = range / f32::from(MAX_MIDI_VALUE);
+    let increment = range / f32::from(MIDI_VALUE_RANGE);
     minimum + (f32::from(midi_value) * increment)
 }
 
 pub fn midi_value_to_u32_range(midi_value: u8, minimum: u32, maximum: u32) -> u32 {
     let range = maximum - minimum;
-    let increment = range as f32 / f32::from(MAX_MIDI_VALUE);
+    let increment = range as f32 / f32::from(MIDI_VALUE_RANGE);
     minimum + (f32::from(midi_value) * increment).ceil() as u32
 }
 
 pub fn midi_value_to_u16_range(midi_value: u8, minimum: u16, maximum: u16) -> u16 {
     let range = maximum - minimum;
-    let increment = range as f32 / f32::from(MAX_MIDI_VALUE);
-    minimum + (f32::from(midi_value) * increment).ceil() as u16
+    let increment = range as f32 / f32::from(MIDI_VALUE_RANGE);
+    minimum + (f32::from(midi_value) * increment).round() as u16
+}
+
+pub fn midi_value_to_i8_range(midi_value: u8, minimum: i8, maximum: i8) -> i8 {
+    let range = maximum - minimum;
+    let increment = range as f32 / f32::from(MIDI_VALUE_RANGE);
+    minimum + (f32::from(midi_value) * increment).round() as i8
 }
 
 pub fn midi_value_to_f32_0_to_1(midi_value: u8) -> f32 {
@@ -91,7 +97,7 @@ fn exponential_curve_from_midi_value_and_coefficient(
 ) -> f32 {
     // exponential_coefficient is the log of the effective range for the linear scale you want to map to exponential range
     // If the range max is 1000x then min, then the exponential_coefficient is log(1000) = 6.908
-    (exponential_coefficient * (f32::from(midi_value) / f32::from(MAX_MIDI_VALUE))).exp()
+    (exponential_coefficient * (f32::from(midi_value) / f32::from(MIDI_VALUE_RANGE))).exp()
 }
 
 pub fn continuously_variable_curve_mapping_from_midi_value(
@@ -109,7 +115,7 @@ pub fn continuously_variable_curve_mapping_from_midi_value(
     };
 
     f32::from(input_midi_value).powf(curve_exponent)
-        / f32::from(MAX_MIDI_VALUE).powf(curve_exponent)
+        / f32::from(MIDI_VALUE_RANGE).powf(curve_exponent)
 }
 
 pub fn update_current_note_from_midi_pitch_bend(

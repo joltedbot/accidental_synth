@@ -1,5 +1,5 @@
 // MIDI Constants
-pub const MAX_MIDI_VALUE: u8 = 127;
+pub const MIDI_VALUE_RANGE: u8 = 128;
 pub const MIDI_CENTER_VALUE: u8 = 64;
 pub const MIDI_SWITCH_MAX_OFF_VALUE: u8 = 63;
 pub const PITCH_BEND_AMOUNT_ZERO_POINT: i16 = 8192;
@@ -13,8 +13,8 @@ pub const EXPONENTIAL_LFO_COEFFICIENT: f32 = 13.81551; // log(100_000) = 13.8155
 pub const LEVEL_CURVE_LINEAR_RANGE: f32 = 1000.0; // Level range is -60 to 0 = 60dbfs so 10^(60/20) = 1000x
 
 // Tuner Constants
-pub const OSCILLATOR_FINE_TUNE_MAX_CENTS: i8 = 99;
-pub const OSCILLATOR_FINE_TUNE_MIN_CENTS: i8 = -99;
+pub const OSCILLATOR_FINE_TUNE_MAX_CENTS: i8 = 63;
+pub const OSCILLATOR_FINE_TUNE_MIN_CENTS: i8 = -63;
 pub const OSCILLATOR_COURSE_TUNE_MAX_INTERVAL: i8 = 12;
 pub const OSCILLATOR_COURSE_TUNE_MIN_INTERVAL: i8 = -12;
 

@@ -14,8 +14,8 @@ pub const DEFAULT_PULSE_WIDTH_ADJUSTMENT: f32 = 0.5;
 pub const OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR: f32 = 0.5;
 
 // Oscillator Tuning Constants
-pub const MAX_MIDI_NOTE_NUMBER: i8 = 127;
-pub const MIN_MIDI_NOTE_NUMBER: i8 = 0;
+pub const MAX_MIDI_NOTE_NUMBER: i16 = 127;
+pub const MIN_MIDI_NOTE_NUMBER: i16 = 0;
 pub const MAX_NOTE_FREQUENCY: f32 = 12543.854;
 pub const MIN_NOTE_FREQUENCY: f32 = 8.175;
 pub const DEFAULT_NOTE_FREQUENCY: f32 = 261.625;
