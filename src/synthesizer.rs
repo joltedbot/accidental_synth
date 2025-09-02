@@ -160,7 +160,7 @@ impl Synthesizer {
             pitch_bend_range: AtomicU8::new(12),
             ..KeyboardParameters::default()
         };
-g
+
         let module_parameters = ModuleParameters {
             filter: filter_parameters,
             mixer: mixer_parameters,
