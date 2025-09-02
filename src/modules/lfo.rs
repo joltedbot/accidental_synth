@@ -106,7 +106,7 @@ impl Lfo {
     }
 
     pub fn set_phase(&mut self, phase: f32) {
-        if f32s_are_equal(self.phase, phase) {
+        if !f32s_are_equal(self.phase, phase) {
             self.oscillator.set_phase(phase);
             self.phase = phase;
         }

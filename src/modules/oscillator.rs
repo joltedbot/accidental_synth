@@ -126,10 +126,10 @@ impl Oscillator {
         let wave_generator = get_wave_generator_from_wave_shape(sample_rate, wave_shape);
 
         let portamento = Portamento {
-            is_enabled: true,
+            is_enabled: false,
             target_frequency: DEFAULT_NOTE_FREQUENCY,
             speed: DEFAULT_PORTAMENTO_SPEED_IN_BUFFERS,
-            recalculate_increment: true,
+            recalculate_increment: false,
             ..Portamento::default()
         };
 
