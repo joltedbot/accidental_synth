@@ -2,8 +2,8 @@ use crate::modules::oscillator::{NUMBER_OF_WAVE_SHAPES, OscillatorParameters};
 use crate::synthesizer::constants::{
     ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, EXPONENTIAL_FILTER_COEFFICIENT,
     EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT, LEVEL_CURVE_LINEAR_RANGE,
-    MIDI_VALUE_RANGE, MIDI_CENTER_VALUE, MIDI_SWITCH_MAX_OFF_VALUE, PITCH_BEND_AMOUNT_CENTS,
-    PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT,
+    MIDI_VALUE_RANGE, MIDI_CENTER_VALUE, MIDI_SWITCH_MAX_OFF_VALUE,
+    PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT, CENTS_PER_SEMITONE
 };
 use std::cmp::Ordering;
 use std::sync::atomic::Ordering::Relaxed;
@@ -22,13 +22,20 @@ pub fn midi_value_to_u32_range(midi_value: u8, minimum: u32, maximum: u32) -> u3
 
 pub fn midi_value_to_u16_range(midi_value: u8, minimum: u16, maximum: u16) -> u16 {
     let range = maximum - minimum;
-    let increment = range as f32 / f32::from(MIDI_VALUE_RANGE);
+    let increment = f32::from(range) / f32::from(MIDI_VALUE_RANGE);
     minimum + (f32::from(midi_value) * increment).round() as u16
 }
 
+pub fn midi_value_to_u8_range(midi_value: u8, minimum: u8, maximum: u8) -> u8 {
+    let range = maximum - minimum;
+    let increment = f32::from(range) / f32::from(MIDI_VALUE_RANGE);
+    minimum + (f32::from(midi_value) * increment).round() as u8
+}
+
+
 pub fn midi_value_to_i8_range(midi_value: u8, minimum: i8, maximum: i8) -> i8 {
     let range = maximum - minimum;
-    let increment = range as f32 / f32::from(MIDI_VALUE_RANGE);
+    let increment = f32::from(range) / f32::from(MIDI_VALUE_RANGE);
     minimum + (f32::from(midi_value) * increment).round() as i8
 }
 
@@ -119,20 +126,22 @@ pub fn continuously_variable_curve_mapping_from_midi_value(
 }
 
 pub fn update_current_note_from_midi_pitch_bend(
-    pitch_bend_amount: i16,
+    pitch_bend_amount: u16,
+    range_in_semitones: u8,
     oscillators: &[OscillatorParameters; 4],
 ) {
+    let max_bend_in_cents = i16::from(range_in_semitones) * CENTS_PER_SEMITONE;
     for oscillator in oscillators {
         if pitch_bend_amount == PITCH_BEND_AMOUNT_ZERO_POINT {
             oscillator.pitch_bend.store(0, Relaxed);
         } else if pitch_bend_amount == PITCH_BEND_AMOUNT_MAX_VALUE {
             oscillator
                 .pitch_bend
-                .store(PITCH_BEND_AMOUNT_CENTS, Relaxed);
+                .store(max_bend_in_cents, Relaxed);
         } else {
-            let pitch_bend_in_cents = f32::from(pitch_bend_amount - PITCH_BEND_AMOUNT_ZERO_POINT)
+            let pitch_bend_in_cents = (f32::from(pitch_bend_amount) - f32::from(PITCH_BEND_AMOUNT_ZERO_POINT))
                 / f32::from(PITCH_BEND_AMOUNT_ZERO_POINT)
-                * f32::from(PITCH_BEND_AMOUNT_CENTS);
+                * f32::from(max_bend_in_cents);
             oscillator
                 .pitch_bend
                 .store(pitch_bend_in_cents as i16, Relaxed);

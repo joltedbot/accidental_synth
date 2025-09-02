@@ -59,6 +59,7 @@ struct CurrentNote {
 struct KeyboardParameters {
     mod_wheel_amount: AtomicU32,
     aftertouch_amount: AtomicU32,
+    pitch_bend_range: AtomicU8,
 }
 #[derive(Debug)]
 struct QuadMixerInput {
@@ -155,6 +156,11 @@ impl Synthesizer {
             .range
             .store(DEFAULT_VIBRATO_LFO_DEPTH.to_bits(), Relaxed);
 
+        let keyboard_parameters = KeyboardParameters {
+            pitch_bend_range: AtomicU8::new(12),
+            ..KeyboardParameters::default()
+        };
+g
         let module_parameters = ModuleParameters {
             filter: filter_parameters,
             mixer: mixer_parameters,
@@ -162,7 +168,7 @@ impl Synthesizer {
             filter_envelope: filter_envelope_parameters,
             filter_lfo: filter_lfo_parameters,
             lfo1: lfo1_parameters,
-            keyboard: KeyboardParameters::default(),
+            keyboard: keyboard_parameters,
             oscillators: Default::default(),
         };
 
@@ -209,6 +215,7 @@ impl Synthesizer {
                     MidiMessage::PitchBend(bend_amount) => {
                         midi_messages::process_midi_pitch_bend_message(
                             &module_parameters.oscillators,
+                            module_parameters.keyboard.pitch_bend_range.load(Relaxed),
                             bend_amount,
                         );
                     }

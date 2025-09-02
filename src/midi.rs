@@ -26,6 +26,7 @@ const MIDI_MESSAGE_IGNORE_VALUE: Ignore = Ignore::SysexAndTime;
 pub enum CC {
     ModWheel(u8),
     VelocityCurve(u8),
+    PitchBendRange(u8),
     Volume(u8),
     Balance(u8),
     SubOscillatorShapeParameter1(u8),
@@ -108,7 +109,7 @@ pub enum MidiMessage {
     NoteOn(u8, u8),
     NoteOff,
     ControlChange(CC),
-    PitchBend(i16),
+    PitchBend(u16),
     ChannelPressure(u8),
 }
 
@@ -213,7 +214,7 @@ fn create_midi_input_listener(
                         let amount_most_significant_byte = message[MIDI_PITCH_BEND_MSB_BYTE_INDEX];
                         let amount_least_significant_byte = message[MIDI_PITCH_BEND_LSB_BYTE_INDEX];
                         let pitch_bend_amount = u16::from(amount_most_significant_byte) << 7 | u16::from(amount_least_significant_byte);
-                        Some(MidiMessage::PitchBend(pitch_bend_amount as i16))
+                        Some(MidiMessage::PitchBend(pitch_bend_amount))
                     }
                     MessageType::ChannelPressure => {
                         let pressure_amount = message[MIDI_CHANNEL_PRESSURE_VALUE_BYTE_INDEX];
@@ -274,6 +275,7 @@ fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {
     match cc_number {
         1 => Some(CC::ModWheel(cc_value)),
         3 => Some(CC::VelocityCurve(cc_value)),
+        5 => Some(CC::PitchBendRange(cc_value)),
         7 => Some(CC::Volume(cc_value)),
         10 => Some(CC::Balance(cc_value)),
         12 => Some(CC::SubOscillatorShapeParameter1(cc_value)),

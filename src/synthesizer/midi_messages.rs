@@ -8,7 +8,7 @@ use crate::modules::oscillator::triangle::{
 use crate::synthesizer::constants::{
     ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, MAX_FILTER_RESONANCE,
     MIN_FILTER_RESONANCE, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL, OSCILLATOR_COURSE_TUNE_MIN_INTERVAL,
-    OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS,
+    OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS, MIN_PITCH_BEND_RANGE, MAX_PITCH_BEND_RANGE
 };
 use crate::synthesizer::{
     CurrentNote, EnvelopeParameters, FilterParameters, KeyboardParameters, MidiGateEvent,
@@ -53,8 +53,8 @@ pub fn process_midi_channel_pressure_message(parameters: &KeyboardParameters, pr
     store_f32_as_atomic_u32(&parameters.aftertouch_amount, aftertouch_amount);
 }
 
-pub fn process_midi_pitch_bend_message(oscillators: &[OscillatorParameters; 4], bend_amount: i16) {
-    midi_value_converters::update_current_note_from_midi_pitch_bend(bend_amount, oscillators);
+pub fn process_midi_pitch_bend_message(oscillators: &[OscillatorParameters; 4], range: u8, bend_amount: u16) {
+    midi_value_converters::update_current_note_from_midi_pitch_bend(bend_amount, range, oscillators);
 }
 
 pub fn process_midi_note_off_message(module_parameters: &mut Arc<ModuleParameters>) {
@@ -93,6 +93,9 @@ pub fn process_midi_cc_values(
         }
         CC::VelocityCurve(value) => {
             set_velocity_curve(current_note, value);
+        }
+        CC::PitchBendRange(value) => {
+            set_pitch_bend_range(&module_parameters.keyboard, value);
         }
         CC::Volume(value) => {
             set_output_volume(&module_parameters.mixer, value);
@@ -468,6 +471,11 @@ fn set_output_volume(parameters: &MixerParameters, value: u8) {
 
 fn set_velocity_curve(current_note: &mut Arc<CurrentNote>, value: u8) {
     current_note.velocity_curve.store(value, Relaxed);
+}
+
+fn set_pitch_bend_range(parameters: &KeyboardParameters, value: u8) {
+    let range = midi_value_converters::midi_value_to_u8_range(value, MIN_PITCH_BEND_RANGE, MAX_PITCH_BEND_RANGE);
+    parameters.pitch_bend_range.store(range, Relaxed);
 }
 
 fn set_mod_wheel(parameters: &KeyboardParameters, value: u8) {
