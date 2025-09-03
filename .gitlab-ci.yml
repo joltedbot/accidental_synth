@@ -1,17 +1,17 @@
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Code-Quality.gitlab-ci.yml
+
+
 stages:
 - test
-- secret-detection
+- security
+- quality
 - semgrep
-- sonarcloud
+- sonar
 
-sast:
-  stage: test
-include:
-- template: Security/SAST.gitlab-ci.yml
-- template: Security/Secret-Detection.gitlab-ci.yml
-
-secret_detection:
-  stage: secret-detection
 
 semgrep:
   stage: semgrep
@@ -21,7 +21,7 @@ semgrep:
     SEMGREP_APP_TOKEN: "$SEMGREP_APP_TOKEN"
 
 sonarcloud:
-  stage: sonarcloud
+  stage: sonar
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
