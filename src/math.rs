@@ -2,7 +2,7 @@
 use std::sync::atomic::AtomicU32;
 use std::sync::atomic::Ordering::Relaxed;
 
-const ALTERNATE_EPSILON: f32 = 1e-6; // try 1e-7 if there are precision issues
+const ALTERNATE_EPSILON: f32 = 1e-7; // try 1e-7 if there are precision issues
 
 // Convert a dbfs value to an f32 value that can be used to adjust the level of audio samples
 pub fn dbfs_to_sample(dbfs: f32) -> f32 {

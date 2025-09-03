@@ -6,7 +6,7 @@ use crate::modules::oscillator::triangle::{
     MAX_PORTAMENTO_SPEED_IN_BUFFERS, MIN_PORTAMENTO_SPEED_IN_BUFFERS,
 };
 use crate::synthesizer::constants::{
-    ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, MAX_FILTER_RESONANCE,
+    MAX_FILTER_RESONANCE,
     MIN_FILTER_RESONANCE, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL, OSCILLATOR_COURSE_TUNE_MIN_INTERVAL,
     OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS, MIN_PITCH_BEND_RANGE, MAX_PITCH_BEND_RANGE
 };
@@ -275,10 +275,10 @@ pub fn process_midi_cc_values(
             set_filter_resonance(&module_parameters.filter, value);
         }
         CC::AmpEGReleaseTime(value) => {
-            set_amp_eg_release_time(&module_parameters.amp_envelope, value);
+            set_envelope_release_time(&module_parameters.amp_envelope, value);
         }
         CC::AmpEGAttackTime(value) => {
-            set_amp_eg_attack_time(&module_parameters.amp_envelope, value);
+            set_envelope_attack_time(&module_parameters.amp_envelope, value);
         }
         CC::FilterCutoff(value) => {
             set_filter_cutoff(&module_parameters.filter, value);
@@ -390,7 +390,7 @@ fn set_envelope_amount(envelope_parameters: &EnvelopeParameters, value: u8) {
 
 fn set_envelope_release_time(envelope_parameters: &EnvelopeParameters, value: u8) {
     let milliseconds = midi_value_converters::midi_value_to_envelope_milliseconds(value);
-    store_f32_as_atomic_u32(&envelope_parameters.release_ms, milliseconds);
+    envelope_parameters.release_ms.store(milliseconds, Relaxed);
 }
 
 fn set_envelope_sustain_level(envelope_parameters: &EnvelopeParameters, value: u8) {
@@ -403,39 +403,17 @@ fn set_envelope_decay_time(envelope_parameters: &EnvelopeParameters, value: u8) 
     let milliseconds = midi_value_converters::midi_value_to_envelope_milliseconds(value);
     envelope_parameters
         .decay_ms
-        .store(milliseconds.round() as u32, Relaxed);
+        .store(milliseconds, Relaxed);
 }
 
 fn set_envelope_attack_time(envelope_parameters: &EnvelopeParameters, value: u8) {
     let milliseconds = midi_value_converters::midi_value_to_envelope_milliseconds(value);
-    store_f32_as_atomic_u32(&envelope_parameters.attack_ms, milliseconds);
+    envelope_parameters.attack_ms.store(milliseconds, Relaxed);
 }
 
 fn set_envelope_inverted(envelope_parameters: &EnvelopeParameters, value: u8) {
     let is_inverted = midi_value_converters::midi_value_to_bool(value);
     envelope_parameters.is_inverted.store(is_inverted, Relaxed);
-}
-
-fn set_amp_eg_attack_time(envelope_parameters: &EnvelopeParameters, value: u8) {
-    let milliseconds = midi_value_converters::midi_value_to_f32_range(
-        value,
-        ENVELOPE_MIN_MILLISECONDS,
-        ENVELOPE_MAX_MILLISECONDS,
-    );
-    envelope_parameters
-        .attack_ms
-        .store(milliseconds.round() as u32, Relaxed);
-}
-
-fn set_amp_eg_release_time(envelope_parameters: &EnvelopeParameters, value: u8) {
-    let milliseconds = midi_value_converters::midi_value_to_f32_range(
-        value,
-        ENVELOPE_MIN_MILLISECONDS,
-        ENVELOPE_MAX_MILLISECONDS,
-    );
-    envelope_parameters
-        .release_ms
-        .store(milliseconds.round() as u32, Relaxed);
 }
 
 fn set_filter_resonance(filter_parameters: &FilterParameters, value: u8) {
@@ -504,8 +482,8 @@ fn set_oscillator_key_sync(parameters: &[OscillatorParameters; 4], value: u8) {
 fn set_portamento_time(parameters: &[OscillatorParameters; 4], value: u8) {
     let speed = midi_value_converters::midi_value_to_u16_range(
         value,
-        MIN_PORTAMENTO_SPEED_IN_BUFFERS,
-        MAX_PORTAMENTO_SPEED_IN_BUFFERS,
+       MIN_PORTAMENTO_SPEED_IN_BUFFERS,
+       MAX_PORTAMENTO_SPEED_IN_BUFFERS,
     );
 
     for parameters in parameters {

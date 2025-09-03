@@ -1,10 +1,10 @@
 // MIDI Constants
-pub const MIDI_VALUE_RANGE: u8 = 128;
+pub const MIDI_VALUE_RANGE: u8 = 127;
 pub const MIDI_CENTER_VALUE: u8 = 64;
 pub const MIDI_SWITCH_MAX_OFF_VALUE: u8 = 63;
 pub const PITCH_BEND_AMOUNT_ZERO_POINT: u16 = 8192;
 pub const PITCH_BEND_AMOUNT_MAX_VALUE: u16 = 16383;
-pub const CENTS_PER_SEMITONE: i16 = 100;
+pub const CENTS_PER_SEMITONE: u16 = 100;
 pub const MIN_PITCH_BEND_RANGE: u8 = 2;
 pub const MAX_PITCH_BEND_RANGE: u8 = 12;
 
@@ -23,8 +23,8 @@ pub const OSCILLATOR_COURSE_TUNE_MIN_INTERVAL: i8 = -12;
 
 // Envelope Constants
 pub const DEFAULT_FILTER_ENVELOPE_AMOUNT: f32 = 0.0;
-pub const ENVELOPE_MAX_MILLISECONDS: f32 = 10000.0;
-pub const ENVELOPE_MIN_MILLISECONDS: f32 = 1.0;
+pub const ENVELOPE_MAX_MILLISECONDS: u32 = 10000;
+pub const ENVELOPE_MIN_MILLISECONDS: u32 = 1;
 
 // Mixer Constants
 pub const DEFAULT_OUTPUT_LEVEL: f32 = 0.5;
