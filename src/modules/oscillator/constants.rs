@@ -1,5 +1,5 @@
 // SHARED CONSTANTS
-pub const RADS_PER_CYCLE: f32 = 2.0 * std::f32::consts::PI;
+pub const RADS_PER_CYCLE: f32 = std::f32::consts::TAU;
 pub const MIN_PHASE: f32 = 0.0;
 pub const MAX_PHASE: f32 = 1.0;
 pub const DEFAULT_PHASE: f32 = 0.0;

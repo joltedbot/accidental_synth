@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow};
 use crossbeam_channel::{Receiver, Sender};
 use midir::{Ignore, MidiInput, MidiInputConnection, MidiInputPort};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, PoisonError};
 
 const PANIC_MESSAGE_MIDI_SENDER_FAILURE: &str =
     "Could not send MIDI message to the synthesizer engine.";
@@ -183,7 +183,7 @@ fn create_midi_input_listener(
                         let midi_note = message[MIDI_NOTE_NUMBER_BYTE_INDEX];
                         let midi_velocity = message[MIDI_VELOCITY_BYTE_INDEX];
 
-                        let mut current_note = current_note_arc.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+                        let mut current_note = current_note_arc.lock().unwrap_or_else(PoisonError::into_inner);
                         *current_note = Some(midi_note);
 
                         if midi_velocity == 0 {
@@ -194,8 +194,7 @@ fn create_midi_input_listener(
                     }
                     MessageType::NoteOff => {
                         let midi_note = message[MIDI_NOTE_NUMBER_BYTE_INDEX];
-
-                        let mut current_note = current_note_arc.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+                        let mut current_note = current_note_arc.lock().unwrap_or_else(PoisonError::into_inner);
                         match *current_note {
                             Some(note) if note == midi_note => {
                                 *current_note = None;
@@ -361,7 +360,7 @@ mod tests {
         assert!(
             midi.current_note
                 .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .unwrap_or_else(PoisonError::into_inner)
                 .is_none()
         );
     }

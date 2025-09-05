@@ -1,16 +1,17 @@
 use super::WaveShape;
 use super::constants::{
     DEFAULT_PULSE_WIDTH_ADJUSTMENT, DEFAULT_X_COORDINATE, DEFAULT_X_INCREMENT,
-    OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR,
+    OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR,RADS_PER_CYCLE
 };
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
-use std::f32::consts::PI;
+
 
 pub struct Pulse {
     shape: WaveShape,
     x_coordinate: f32,
     sample_rate: u32,
     width: f32,
+    phase: Option<f32>,  
 }
 
 impl Pulse {
@@ -23,6 +24,7 @@ impl Pulse {
             x_coordinate,
             sample_rate,
             width: DEFAULT_PULSE_WIDTH_ADJUSTMENT,
+            phase: None,      
         }
     }
 }
@@ -38,8 +40,13 @@ impl GenerateWave for Pulse {
             None => self.width,
         };
 
+        if let Some(phase) = self.phase {
+            self.x_coordinate = (phase / RADS_PER_CYCLE) * (self.sample_rate as f32 / tone_frequency);
+            self.phase = None;
+        }
+
         let mut y_coordinate: f32 =
-            (tone_frequency * (2.0 * PI) * (self.x_coordinate / self.sample_rate as f32)).sin();
+            (tone_frequency * RADS_PER_CYCLE * (self.x_coordinate / self.sample_rate as f32)).sin();
 
         if y_coordinate >= 0.0 + duty_cycle {
             y_coordinate = 1.0;
@@ -57,7 +64,9 @@ impl GenerateWave for Pulse {
 
     fn set_shape_parameter2(&mut self, _parameter: f32) {}
 
-    fn set_phase(&mut self, _phase: f32) {}
+    fn set_phase(&mut self, phase: f32) {
+        self.phase = Some(phase);
+    }
 
     fn shape(&self) -> WaveShape {
         self.shape
