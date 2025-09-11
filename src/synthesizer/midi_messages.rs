@@ -6,9 +6,9 @@ use crate::modules::oscillator::triangle::{
     MAX_PORTAMENTO_SPEED_IN_BUFFERS, MIN_PORTAMENTO_SPEED_IN_BUFFERS,
 };
 use crate::synthesizer::constants::{
-    MAX_FILTER_RESONANCE,
-    MIN_FILTER_RESONANCE, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL, OSCILLATOR_COURSE_TUNE_MIN_INTERVAL,
-    OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS, MIN_PITCH_BEND_RANGE, MAX_PITCH_BEND_RANGE
+    MAX_FILTER_RESONANCE, MAX_PITCH_BEND_RANGE, MIN_FILTER_RESONANCE, MIN_PITCH_BEND_RANGE,
+    OSCILLATOR_COURSE_TUNE_MAX_INTERVAL, OSCILLATOR_COURSE_TUNE_MIN_INTERVAL,
+    OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS,
 };
 use crate::synthesizer::{
     CurrentNote, EnvelopeParameters, FilterParameters, KeyboardParameters, MidiGateEvent,
@@ -53,8 +53,16 @@ pub fn process_midi_channel_pressure_message(parameters: &KeyboardParameters, pr
     store_f32_as_atomic_u32(&parameters.aftertouch_amount, aftertouch_amount);
 }
 
-pub fn process_midi_pitch_bend_message(oscillators: &[OscillatorParameters; 4], range: u8, bend_amount: u16) {
-    midi_value_converters::update_current_note_from_midi_pitch_bend(bend_amount, range, oscillators);
+pub fn process_midi_pitch_bend_message(
+    oscillators: &[OscillatorParameters; 4],
+    range: u8,
+    bend_amount: u16,
+) {
+    midi_value_converters::update_current_note_from_midi_pitch_bend(
+        bend_amount,
+        range,
+        oscillators,
+    );
 }
 
 pub fn process_midi_note_off_message(module_parameters: &mut Arc<ModuleParameters>) {
@@ -75,6 +83,11 @@ pub fn process_midi_note_on_message(
 
     store_f32_as_atomic_u32(&current_note.velocity, scaled_velocity);
     current_note.midi_note.store(midi_note, Relaxed);
+
+    module_parameters
+        .filter
+        .current_note_number
+        .store(midi_note, Relaxed);
 
     action_midi_note_events(MidiNoteEvent::NoteOn, module_parameters);
 }
@@ -310,6 +323,9 @@ pub fn process_midi_cc_values(
         CC::FilterEGAmount(value) => {
             set_envelope_amount(&module_parameters.filter_envelope, value);
         }
+        CC::KeyTrackingAmount(value) => {
+            set_key_tracking_amount(&module_parameters.filter, value);
+        }
         CC::LFO1Frequency(value) => {
             set_lfo_frequency(&module_parameters.lfo1, value);
         }
@@ -383,6 +399,11 @@ fn lfo_reset(parameters: &LfoParameters) {
     parameters.reset.store(true, Relaxed);
 }
 
+fn set_key_tracking_amount(filter_parameters: &FilterParameters, value: u8) {
+    let amount = midi_value_converters::midi_value_to_f32_range(value, 0.0, 2.0);
+    store_f32_as_atomic_u32(&filter_parameters.key_tracking_amount, amount);
+}
+
 fn set_envelope_amount(envelope_parameters: &EnvelopeParameters, value: u8) {
     let amount = midi_value_converters::midi_value_to_f32_0_to_1(value);
     store_f32_as_atomic_u32(&envelope_parameters.amount, amount);
@@ -401,9 +422,7 @@ fn set_envelope_sustain_level(envelope_parameters: &EnvelopeParameters, value: u
 
 fn set_envelope_decay_time(envelope_parameters: &EnvelopeParameters, value: u8) {
     let milliseconds = midi_value_converters::midi_value_to_envelope_milliseconds(value);
-    envelope_parameters
-        .decay_ms
-        .store(milliseconds, Relaxed);
+    envelope_parameters.decay_ms.store(milliseconds, Relaxed);
 }
 
 fn set_envelope_attack_time(envelope_parameters: &EnvelopeParameters, value: u8) {
@@ -452,7 +471,11 @@ fn set_velocity_curve(current_note: &mut Arc<CurrentNote>, value: u8) {
 }
 
 fn set_pitch_bend_range(parameters: &KeyboardParameters, value: u8) {
-    let range = midi_value_converters::midi_value_to_u8_range(value, MIN_PITCH_BEND_RANGE, MAX_PITCH_BEND_RANGE);
+    let range = midi_value_converters::midi_value_to_u8_range(
+        value,
+        MIN_PITCH_BEND_RANGE,
+        MAX_PITCH_BEND_RANGE,
+    );
     parameters.pitch_bend_range.store(range, Relaxed);
 }
 
@@ -482,8 +505,8 @@ fn set_oscillator_key_sync(parameters: &[OscillatorParameters; 4], value: u8) {
 fn set_portamento_time(parameters: &[OscillatorParameters; 4], value: u8) {
     let speed = midi_value_converters::midi_value_to_u16_range(
         value,
-       MIN_PORTAMENTO_SPEED_IN_BUFFERS,
-       MAX_PORTAMENTO_SPEED_IN_BUFFERS,
+        MIN_PORTAMENTO_SPEED_IN_BUFFERS,
+        MAX_PORTAMENTO_SPEED_IN_BUFFERS,
     );
 
     for parameters in parameters {

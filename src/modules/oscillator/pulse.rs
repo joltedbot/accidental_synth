@@ -1,17 +1,16 @@
 use super::WaveShape;
 use super::constants::{
     DEFAULT_PULSE_WIDTH_ADJUSTMENT, DEFAULT_X_COORDINATE, DEFAULT_X_INCREMENT,
-    OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR,RADS_PER_CYCLE
+    OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR, RADS_PER_CYCLE,
 };
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
-
 
 pub struct Pulse {
     shape: WaveShape,
     x_coordinate: f32,
     sample_rate: u32,
     width: f32,
-    phase: Option<f32>,  
+    phase: Option<f32>,
 }
 
 impl Pulse {
@@ -24,7 +23,7 @@ impl Pulse {
             x_coordinate,
             sample_rate,
             width: DEFAULT_PULSE_WIDTH_ADJUSTMENT,
-            phase: None,      
+            phase: None,
         }
     }
 }
@@ -41,7 +40,8 @@ impl GenerateWave for Pulse {
         };
 
         if let Some(phase) = self.phase {
-            self.x_coordinate = (phase / RADS_PER_CYCLE) * (self.sample_rate as f32 / tone_frequency);
+            self.x_coordinate =
+                (phase / RADS_PER_CYCLE) * (self.sample_rate as f32 / tone_frequency);
             self.phase = None;
         }
 

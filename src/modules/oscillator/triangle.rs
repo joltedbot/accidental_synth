@@ -29,7 +29,8 @@ impl GenerateWave for Triangle {
         let new_frequency = tone_frequency;
 
         if let Some(phase) = self.phase {
-            self.x_coordinate = (phase / RADS_PER_CYCLE) * (self.sample_rate as f32 / new_frequency);
+            self.x_coordinate =
+                (phase / RADS_PER_CYCLE) * (self.sample_rate as f32 / new_frequency);
             self.phase = None;
         }
 

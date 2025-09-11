@@ -78,7 +78,6 @@ pub struct OscillatorParameters {
     pub key_sync_enabled: AtomicBool,
     pub portamento_is_enabled: AtomicBool,
     pub portamento_speed: AtomicU16,
-
 }
 
 impl Default for OscillatorParameters {

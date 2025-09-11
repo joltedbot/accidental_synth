@@ -12,7 +12,7 @@ use crate::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
 use crate::midi::MidiMessage;
 use crate::modules::amplifier::amplify_stereo;
 use crate::modules::envelope::{Envelope, EnvelopeParameters};
-use crate::modules::filter::{Filter, FilterParameters};
+use crate::modules::filter::{DEFAULT_KEY_TRACKING_AMOUNT, Filter, FilterParameters};
 use crate::modules::lfo::{Lfo, LfoParameters};
 use crate::modules::mixer::{MixerInput, output_mix, quad_mix};
 use crate::modules::oscillator::{Oscillator, OscillatorParameters, WaveShape};
@@ -135,6 +135,8 @@ impl Synthesizer {
             cutoff_frequency: AtomicU32::new(max_filter_frequency.to_bits()),
             resonance: AtomicU32::new(0.0_f32.to_bits()),
             filter_poles: AtomicU8::new(4),
+            key_tracking_amount: AtomicU32::new(DEFAULT_KEY_TRACKING_AMOUNT.to_bits()),
+            current_note_number: AtomicU8::new(0),
         };
 
         let filter_envelope_parameters: EnvelopeParameters = EnvelopeParameters::default();

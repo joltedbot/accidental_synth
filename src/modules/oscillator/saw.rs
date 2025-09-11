@@ -30,7 +30,6 @@ impl Saw {
 
 impl GenerateWave for Saw {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
-
         if let Some(phase) = self.phase {
             self.x_coordinate = (phase / PI) * (self.sample_rate as f32 / tone_frequency);
             self.phase = None;

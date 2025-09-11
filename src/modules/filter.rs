@@ -8,12 +8,19 @@ const MAXIMUM_FILTER_CUTOFF: f32 = 20000.0;
 const DEFAULT_RESONANCE: f32 = 0.0;
 const NATURAL_LOG_OF_4: f32 = 1.386_294_3;
 const DENORMAL_GUARD: f32 = 1e-25_f32;
+const MIDI_CENTER_NOTE_NUMBER: u8 = 64;
+pub const DEFAULT_KEY_TRACKING_AMOUNT: f32 = 0.5;
+pub const DEFAULT_KEY_TRACKING_FREQUENCY_OFFSET: f32 = 1.0;
+const DEFAULT_FILTER_POLES: u8 = 4;
+const MAX_FILTER_PERCENT_OF_NYQUIST: f32 = 0.35;
 
 #[derive(Default, Debug)]
 pub struct FilterParameters {
     pub cutoff_frequency: AtomicU32,
     pub resonance: AtomicU32,
     pub filter_poles: AtomicU8,
+    pub key_tracking_amount: AtomicU32,
+    pub current_note_number: AtomicU8,
 }
 
 #[derive(Default, Copy, Clone, Debug, PartialEq)]
@@ -42,9 +49,11 @@ struct LadderState {
 pub struct Filter {
     sample_rate: u32,
     max_frequency: f32,
-    cutoff_frequency: AtomicU32,
-    resonance: AtomicU32,
-    poles: AtomicU8,
+    cutoff_frequency: f32,
+    resonance: f32,
+    poles: u8,
+    key_tracking_amount: f32,
+    key_tracking_frequency_offset: f32,
     cutoff_modulation_amount: f32,
     coefficients: Coefficients,
     left_ladder_state: LadderState,
@@ -55,7 +64,8 @@ impl Filter {
     pub fn new(sample_rate: u32) -> Self {
         log::info!("Constructing Filter Module");
 
-        let max_frequency = (sample_rate as f32 * 0.35).min(MAXIMUM_FILTER_CUTOFF);
+        let max_frequency =
+            (sample_rate as f32 * MAX_FILTER_PERCENT_OF_NYQUIST).min(MAXIMUM_FILTER_CUTOFF);
 
         let cutoff_coefficient = calculate_cutoff_coefficient(max_frequency, sample_rate);
         let gain_coefficient = calculate_gain_coefficient(cutoff_coefficient);
@@ -70,10 +80,12 @@ impl Filter {
 
         Self {
             sample_rate,
-            cutoff_frequency: AtomicU32::new(max_frequency.to_bits()),
+            cutoff_frequency: max_frequency,
             max_frequency,
-            resonance: AtomicU32::new(DEFAULT_RESONANCE.to_bits()),
-            poles: AtomicU8::new(4),
+            resonance: DEFAULT_RESONANCE,
+            poles: DEFAULT_FILTER_POLES,
+            key_tracking_amount: DEFAULT_KEY_TRACKING_AMOUNT,
+            key_tracking_frequency_offset: DEFAULT_KEY_TRACKING_FREQUENCY_OFFSET,
             coefficients: Coefficients {
                 cutoff_coefficient,
                 gain_coefficient,
@@ -97,9 +109,9 @@ impl Filter {
         right_sample: f32,
         modulation: Option<f32>,
     ) -> (f32, f32) {
-        if let Some(modulation) = modulation {
-            self.modulate_cutoff_frequency(modulation);
-        }
+        let modulation_amount = modulation.unwrap_or(0.0);
+        self.modulate_cutoff_frequency(modulation_amount);
+        self.cutoff_frequency = self.calculate_filter_cutoff_frequency();
 
         let left_output = self.left_ladder_filter(left_sample);
         let right_output = self.right_ladder_filter(right_sample);
@@ -112,9 +124,6 @@ impl Filter {
             return;
         }
         self.cutoff_modulation_amount = modulation * self.max_frequency;
-        let modulated_cutoff_frequency = self.calculate_filter_cutoff_frequency().to_bits();
-        self.cutoff_frequency
-            .store(modulated_cutoff_frequency, Relaxed);
     }
 
     fn calculate_coefficients(&mut self) {
@@ -130,7 +139,7 @@ impl Filter {
         self.coefficients.adjusted_resonance_factor =
             calculate_adjusted_resonance_factor(self.coefficients.resonance_factor);
         self.coefficients.feedback_gain = calculate_feedback_gain(
-            load_f32_from_atomic_u32(&self.resonance),
+            self.resonance,
             self.coefficients.resonance_factor,
             self.coefficients.adjusted_resonance_factor,
         );
@@ -156,7 +165,7 @@ impl Filter {
         self.left_ladder_state.stage3_unit_delay =
             self.left_ladder_state.stage3_output + DENORMAL_GUARD;
 
-        match self.poles.load(Relaxed) {
+        match self.poles {
             1 => self.left_ladder_state.stage1_output,
             2 => self.left_ladder_state.stage2_output,
             3 => self.left_ladder_state.stage3_output,
@@ -188,7 +197,7 @@ impl Filter {
         self.right_ladder_state.stage3_unit_delay =
             self.right_ladder_state.stage3_output + DENORMAL_GUARD;
 
-        match self.poles.load(Relaxed) {
+        match self.poles {
             1 => self.right_ladder_state.stage1_output,
             2 => self.right_ladder_state.stage2_output,
             3 => self.right_ladder_state.stage3_output,
@@ -197,12 +206,14 @@ impl Filter {
     }
 
     fn store_filter_parameters(&mut self, parameters: &FilterParameters) {
-        self.cutoff_frequency
-            .store(parameters.cutoff_frequency.load(Relaxed), Relaxed);
-        self.resonance
-            .store(parameters.resonance.load(Relaxed), Relaxed);
-        self.poles
-            .store(parameters.filter_poles.load(Relaxed), Relaxed);
+        self.cutoff_frequency = load_f32_from_atomic_u32(&parameters.cutoff_frequency);
+        self.resonance = load_f32_from_atomic_u32(&parameters.resonance);
+        self.poles = parameters.filter_poles.load(Relaxed);
+        self.key_tracking_amount = load_f32_from_atomic_u32(&parameters.key_tracking_amount);
+        self.key_tracking_frequency_offset = get_tracking_offset_from_midi_note_number(
+            parameters.current_note_number.load(Relaxed),
+            self.key_tracking_amount,
+        );
     }
 
     fn calculate_ladder_stage4(&mut self, ladder_state: LadderState) -> f32 {
@@ -230,9 +241,14 @@ impl Filter {
     }
 
     fn calculate_filter_cutoff_frequency(&mut self) -> f32 {
-        let f = load_f32_from_atomic_u32(&self.cutoff_frequency);
-        (f + self.cutoff_modulation_amount).clamp(0.0, self.max_frequency)
+        ((self.cutoff_frequency * self.key_tracking_frequency_offset)
+            + self.cutoff_modulation_amount)
+            .clamp(0.0, self.max_frequency)
     }
+}
+
+fn get_tracking_offset_from_midi_note_number(midi_note: u8, amount: f32) -> f32 {
+    (2.0_f32 * amount).powf((f32::from(midi_note) - f32::from(MIDI_CENTER_NOTE_NUMBER)) / 12.0)
 }
 
 fn calculate_non_linear_saturation(stage4_output: f32) -> f32 {
@@ -279,16 +295,9 @@ mod tests {
         let filter = Filter::new(sample_rate);
 
         assert_eq!(filter.sample_rate, sample_rate);
-        assert!(f32s_are_equal(
-            load_f32_from_atomic_u32(&filter.cutoff_frequency),
-            max_frequency
-        ));
-        assert!(f32s_are_equal(
-            load_f32_from_atomic_u32(&filter.resonance),
-            DEFAULT_RESONANCE
-        ));
-        assert_eq!(filter.poles.load(Relaxed), 4);
-
+        assert!(f32s_are_equal(filter.cutoff_frequency, max_frequency));
+        assert!(f32s_are_equal(filter.resonance, DEFAULT_RESONANCE));
+        assert_eq!(filter.poles, 4);
         assert!(f32s_are_equal(filter.left_ladder_state.stage1_output, 0.0));
         assert!(f32s_are_equal(filter.left_ladder_state.stage2_output, 0.0));
         assert!(f32s_are_equal(filter.left_ladder_state.stage3_output, 0.0));
@@ -435,8 +444,11 @@ mod tests {
 
     #[test]
     fn calculate_feedback_gain_returns_expected_values() {
-        let any = std::f32::consts::PI;
-        assert!(f32s_are_equal(calculate_feedback_gain(0.0, any, any), 0.0));
+        let resonance = std::f32::consts::PI;
+        assert!(f32s_are_equal(
+            calculate_feedback_gain(0.0, resonance, resonance),
+            0.0
+        ));
 
         let result = calculate_feedback_gain(0.5, 0.0, 12.0);
         assert!(f32s_are_equal(result, 0.5));
