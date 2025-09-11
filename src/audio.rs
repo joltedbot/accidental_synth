@@ -51,3 +51,23 @@ fn default_audio_output_device() -> Result<Device> {
         Err(anyhow!(AudioError::NoAudioOutputDevices))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_returns_audio_with_correct_default_values() {
+        let audio = Audio::new().unwrap();
+
+        assert_ne!(audio.sample_rate, 0);
+        assert_ne!(audio.default_output_device.name().unwrap_or("Unknown".to_string()), "Unknown");
+    }
+
+    #[test]
+    fn default_output_device_returns_default_audio_output_device() {
+        if let Err(err) = default_audio_output_device() {
+            panic!("default_output_device(): {err}");
+        }
+    }
+}

@@ -414,4 +414,26 @@ mod tests {
         let result = message_type_from_status_byte(status_byte);
         assert_eq!(result, expected_result);
     }
+
+    #[test]
+    fn get_supported_cc_returns_some_for_known_ccs() {
+        assert_eq!(
+            get_supported_cc_from_cc_number(1, 64),
+            Some(CC::ModWheel(64))
+        );
+        assert_eq!(
+            get_supported_cc_from_cc_number(74, 100),
+            Some(CC::FilterCutoff(100))
+        );
+        assert_eq!(get_supported_cc_from_cc_number(107, 0), Some(CC::LFO1Reset));
+        assert_eq!(
+            get_supported_cc_from_cc_number(123, 0),
+            Some(CC::AllNotesOff)
+        );
+    }
+
+    #[test]
+    fn get_supported_cc_returns_none_for_out_of_range_cc_number() {
+        assert_eq!(get_supported_cc_from_cc_number(200, 127), None);
+    }
 }
