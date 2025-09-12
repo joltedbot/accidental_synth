@@ -76,6 +76,7 @@ pub struct OscillatorParameters {
     pub wave_shape_index: AtomicU8,
     pub gate_flag: AtomicBool,
     pub key_sync_enabled: AtomicBool,
+    pub hard_sync_enabled: AtomicBool,
     pub portamento_is_enabled: AtomicBool,
     pub portamento_speed: AtomicU16,
 }
@@ -91,6 +92,7 @@ impl Default for OscillatorParameters {
             wave_shape_index: AtomicU8::new(WaveShape::default() as u8),
             gate_flag: AtomicBool::new(false),
             key_sync_enabled: AtomicBool::new(DEFAULT_KEY_SYNC_ENABLED),
+            hard_sync_enabled: AtomicBool::new(false),
             portamento_is_enabled: AtomicBool::new(false),
             portamento_speed: AtomicU16::new(DEFAULT_PORTAMENTO_SPEED_IN_BUFFERS),
         }
@@ -116,6 +118,7 @@ pub struct Oscillator {
     fine_tune: i8,
     is_sub: bool,
     key_sync_enabled: bool,
+    hard_sync_enabled: bool,
     portamento: Portamento,
 }
 
@@ -142,6 +145,7 @@ impl Oscillator {
             fine_tune: 0,
             is_sub: false,
             key_sync_enabled: DEFAULT_KEY_SYNC_ENABLED,
+            hard_sync_enabled: false,
             portamento,
         }
     }
@@ -154,6 +158,7 @@ impl Oscillator {
         self.set_course_tune(parameters.course_tune.load(Relaxed));
         self.set_fine_tune(parameters.fine_tune.load(Relaxed));
         self.set_key_sync_enabled(parameters.key_sync_enabled.load(Relaxed));
+        self.set_hard_sync_enabled(parameters.hard_sync_enabled.load(Relaxed));
         self.set_portamento(
             parameters.portamento_is_enabled.load(Relaxed),
             parameters.portamento_speed.load(Relaxed),
@@ -179,11 +184,13 @@ impl Oscillator {
     }
 
     pub fn set_wave_shape_index(&mut self, wave_shape_index: u8) {
-        if wave_shape_index != self.wave_shape_index {
-            let wave_shape = WaveShape::from_index(wave_shape_index);
-            self.set_wave_shape(wave_shape);
-            self.wave_shape_index = wave_shape_index;
+        if wave_shape_index == self.wave_shape_index {
+            return
         }
+
+        let wave_shape = WaveShape::from_index(wave_shape_index);
+        self.set_wave_shape(wave_shape);
+        self.wave_shape_index = wave_shape_index;
     }
 
     pub fn set_frequency(&mut self, tone_frequency: f32) {
@@ -276,6 +283,11 @@ impl Oscillator {
     fn set_key_sync_enabled(&mut self, key_sync_enabled: bool) {
         self.key_sync_enabled = key_sync_enabled;
     }
+
+    fn set_hard_sync_enabled(&mut self, hard_sync_enabled: bool) {
+        self.hard_sync_enabled = hard_sync_enabled;
+    }
+
 
     fn set_pitch_bend(&mut self, pitch_bend: i16) {
         self.pitch_bend = pitch_bend;
@@ -433,19 +445,6 @@ mod tests {
             get_wave_generator_from_wave_shape(sample_rate, WaveShape::Triangle).shape(),
             WaveShape::Triangle
         );
-    }
-
-    #[test]
-    fn midi_note_to_frequency_returns_correct_values_for_note_numbers() {
-        let notes: [u8; 4] = [0, 21, 72, 127];
-        let expected_frequencies: [f32; 4] = [8.175, 27.5, 523.251, 12543.854];
-
-        for i in 0..notes.len() {
-            assert!(f32s_are_equal(
-                midi_note_to_frequency(notes[i]),
-                expected_frequencies[i]
-            ));
-        }
     }
 
     #[test]

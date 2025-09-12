@@ -170,6 +170,9 @@ pub fn process_midi_cc_values(
         CC::PortamentoTime(value) => {
             set_portamento_time(&module_parameters.oscillators, value);
         }
+        CC::OscillatorHardSync(value) => {
+            set_oscillator_hard_sync(&module_parameters.oscillators, value);
+        }
         CC::SubOscillatorShape(value) => {
             set_oscillator_wave_shape(
                 &module_parameters.oscillators[OscillatorIndex::Sub as usize],
@@ -502,6 +505,14 @@ fn set_oscillator_key_sync(parameters: &[OscillatorParameters; 4], value: u8) {
     }
 }
 
+fn set_oscillator_hard_sync(parameters: &[OscillatorParameters; 4], value: u8) {
+    for parameters in parameters {
+        parameters
+            .hard_sync_enabled
+            .store(midi_value_converters::midi_value_to_bool(value), Relaxed);
+    }
+}
+
 fn set_portamento_time(parameters: &[OscillatorParameters; 4], value: u8) {
     let speed = midi_value_converters::midi_value_to_u16_range(
         value,
@@ -513,6 +524,7 @@ fn set_portamento_time(parameters: &[OscillatorParameters; 4], value: u8) {
         parameters.portamento_speed.store(speed, Relaxed);
     }
 }
+
 
 fn set_portamento_enabled(parameters: &[OscillatorParameters; 4], value: u8) {
     for parameters in parameters {
