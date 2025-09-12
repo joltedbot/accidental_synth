@@ -61,7 +61,13 @@ mod tests {
         let audio = Audio::new().unwrap();
 
         assert_ne!(audio.sample_rate, 0);
-        assert_ne!(audio.default_output_device.name().unwrap_or("Unknown".to_string()), "Unknown");
+        assert_ne!(
+            audio
+                .default_output_device
+                .name()
+                .unwrap_or("Unknown".to_string()),
+            "Unknown"
+        );
     }
 
     #[test]

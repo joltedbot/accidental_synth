@@ -16,7 +16,7 @@ pub fn dbfs_to_f32_sample(dbfs: f32) -> f32 {
 
 pub fn f32_sample_to_dbfs(sample: f32) -> f32 {
     if sample.is_nan() || sample == f32::NEG_INFINITY {
-        return f32::NEG_INFINITY
+        return f32::NEG_INFINITY;
     }
 
     let sample_absolute_value = sample.abs();
@@ -46,7 +46,7 @@ pub fn load_f32_from_atomic_u32(atomic: &AtomicU32) -> f32 {
 }
 
 pub fn frequency_from_cents(frequency: f32, cents: i16) -> f32 {
-    if !frequency.is_finite() {
+    if !frequency.is_finite() || frequency.is_nan() {
         return 0.0;
     }
 
@@ -58,12 +58,11 @@ fn map_value_from_linear_to_exponential_scale(
     mut input_range: (f32, f32),
     mut output_range: (f32, f32),
 ) -> f32 {
-
-    if f32s_are_equal(input_value, input_range.0)  {
+    if f32s_are_equal(input_value, input_range.0) {
         return output_range.0;
     }
 
-    if f32s_are_equal(input_value, input_range.1)  {
+    if f32s_are_equal(input_value, input_range.1) {
         return output_range.1;
     }
 
@@ -86,7 +85,6 @@ fn map_value_from_linear_to_exponential_scale(
     if output_range.0 <= 0.0 {
         output_range.0 = ALTERNATE_EPSILON;
     }
-
 
     input_value = input_value.clamp(input_range.0, input_range.1);
 
@@ -145,14 +143,7 @@ mod tests {
 
     #[test]
     fn f32_sample_to_dbfs_returns_correct_values_for_valid_input() {
-        let sample_values: [f32; 6] = [
-            -1.0,
-            -0.5,
-            -0.000_123_1,
-            0.0,
-            0.5,
-            1.0,
-        ];
+        let sample_values: [f32; 6] = [-1.0, -0.5, -0.000_123_1, 0.0, 0.5, 1.0];
         let expected_dbfs: [f32; 6] = [
             0.0,
             -6.020_600_3,
@@ -172,12 +163,7 @@ mod tests {
 
     #[test]
     fn f32_sample_to_dbfs_returns_correct_values_for_outof_range_input() {
-        let sample_values: [f32; 4] = [
-            f32::NAN,
-            f32::NEG_INFINITY,
-            f32::EPSILON,
-            f32::INFINITY,
-        ];
+        let sample_values: [f32; 4] = [f32::NAN, f32::NEG_INFINITY, f32::EPSILON, f32::INFINITY];
         let expected_dbfs: [f32; 4] = [
             f32::NEG_INFINITY,
             f32::NEG_INFINITY,
@@ -193,11 +179,57 @@ mod tests {
         }
     }
 
+    #[test]
+    fn f32s_are_equal_returns_true_for_valid_equal_values() {
+        let values = [
+            1.0,
+            -1.0,
+            0.0,
+            f32::MAX,
+            f32::MIN,
+            f32::EPSILON,
+            f32::NEG_INFINITY,
+            f32::INFINITY,
+            f32::NAN,
+        ];
+        for value in values {
+            assert!(
+                f32s_are_equal(value, value),
+                "For: {value:?} & {value:?}, Expected: true, got: false"
+            );
+        }
+    }
 
     #[test]
-    fn f32s_are_equal_returns_true_for_identical_values() {
-        let equal_number = 1.0;
-        assert!(f32s_are_equal(equal_number, equal_number));
+    fn f32s_are_equal_returns_false_for_valid_unequal_values() {
+        let values1 = [
+            1.0,
+            -1.0,
+            0.0,
+            f32::MAX,
+            f32::MIN,
+            f32::EPSILON,
+            f32::NEG_INFINITY,
+            f32::INFINITY,
+            f32::NAN,
+        ];
+        let values2 = [
+            0.0,
+            1.0,
+            -1.0,
+            f32::MIN,
+            f32::MAX,
+            f32::INFINITY,
+            f32::NAN,
+            f32::EPSILON,
+            f32::NEG_INFINITY,
+        ];
+        for (value1, value2) in values1.iter().zip(values2.iter()) {
+            assert!(
+                !f32s_are_equal(*value1, *value2),
+                "For: {value1:?} & {value1:?}, Expected: false, got: true"
+            );
+        }
     }
 
     #[test]
@@ -248,13 +280,42 @@ mod tests {
     }
 
     #[test]
+    fn frequency_from_cents_returns_clamped_values_from_out_of_range_cents() {
+        let frequency = 440.0;
+        let test_cents = [i16::MAX, i16::MIN];
+        let expected_results = [73_000_810_000.0, 2.650_493_3e-6];
+
+        for (cents, expected_result) in test_cents.iter().zip(expected_results.iter()) {
+            let result = frequency_from_cents(frequency, *cents);
+            assert!(
+                f32s_are_equal(result, *expected_result),
+                "For: {:?}, Expected: {:?} but got {result:?}",
+                *cents,
+                *expected_result
+            );
+        }
+    }
+
+    #[test]
     fn frequency_from_cents_returns_lower_frequency_for_negative_cents() {
         assert!(f32s_are_equal(frequency_from_cents(440.0, -1200), 220.0));
     }
 
     #[test]
-    fn frequency_from_cents_returns_returns_result_for_absolute_value_of_negaitve_frequency() {
+    fn frequency_from_cents_returns_returns_result_for_absolute_value_of_negative_frequency() {
         assert!(f32s_are_equal(frequency_from_cents(-440.0, 1200), 880.0));
+    }
+
+    #[test]
+    fn frequency_from_cents_returns_returns_zero_for_infinite_frequency() {
+        assert!(f32s_are_equal(
+            frequency_from_cents(f32::INFINITY, 1200),
+            0.0
+        ));
+        assert!(f32s_are_equal(
+            frequency_from_cents(f32::NEG_INFINITY, 1200),
+            0.0
+        ));
     }
 
     #[test]
@@ -275,7 +336,10 @@ mod tests {
         let expected_result = 0.240_253_06;
 
         let result = map_value_from_linear_to_exponential_scale(value, input_range, output_range);
-        assert!(f32s_are_equal(result, expected_result), "For: {value}, Expected: {expected_result}, got: {result}");
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "For: {value}, Expected: {expected_result}, got: {result}"
+        );
     }
 
     #[test]
@@ -287,7 +351,10 @@ mod tests {
         let expected_result = 0.000_099_9;
 
         let result = map_value_from_linear_to_exponential_scale(value, input_range, output_range);
-        assert!(f32s_are_equal(result, expected_result), "For: {value}, Expected: {expected_result}, got: {result}");
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "For: {value}, Expected: {expected_result}, got: {result}"
+        );
     }
 
     #[test]
@@ -298,7 +365,10 @@ mod tests {
         let expected_result = 10.0;
 
         let result = map_value_from_linear_to_exponential_scale(value, input_range, output_range);
-        assert!(f32s_are_equal(result, expected_result), "For: {value}, Expected: {expected_result}, got: {result}");
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "For: {value}, Expected: {expected_result}, got: {result}"
+        );
     }
 
     #[test]
@@ -313,21 +383,45 @@ mod tests {
 
         let result_min =
             map_value_from_linear_to_exponential_scale(min_input, input_range, output_range);
-        assert!(f32s_are_equal(result_min, min_output), "For: {min_input}, Expected: {min_output}, got: {result_min}");
+        assert!(
+            f32s_are_equal(result_min, min_output),
+            "For: {min_input}, Expected: {min_output}, got: {result_min}"
+        );
 
         let result_max =
             map_value_from_linear_to_exponential_scale(max_input, input_range, output_range);
-        assert!(f32s_are_equal(result_max, max_output), "For: {result_max}, Expected: {max_output}, got: {result_max}");
+        assert!(
+            f32s_are_equal(result_max, max_output),
+            "For: {result_max}, Expected: {max_output}, got: {result_max}"
+        );
     }
 
     #[test]
-    fn map_value_from_linear_to_exponential_scale_returns_correct_result_from_reversed_ranges() {
+    fn map_value_from_linear_to_exponential_scale_returns_correct_result_from_reversed_input_range()
+    {
+        let value = 5.0;
+        let input_range = (10.0, 0.0);
+        let output_range = (10.0, 100.0);
+        let expected_result = 0.240_253;
+        let result = map_value_from_linear_to_exponential_scale(value, input_range, output_range);
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "For: {value}, Expected: {expected_result}, got: {result}"
+        );
+    }
+
+    #[test]
+    fn map_value_from_linear_to_exponential_scale_returns_correct_result_from_reversed_output_range()
+     {
         let value = 5.0;
         let input_range = (0.0, 10.0);
         let output_range = (100.0, 10.0);
         let expected_result = 0.240_253;
         let result = map_value_from_linear_to_exponential_scale(value, input_range, output_range);
-        assert!(f32s_are_equal(result, expected_result), "For: {value}, Expected: {expected_result}, got: {result}");
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "For: {value}, Expected: {expected_result}, got: {result}"
+        );
     }
 
     #[test]
@@ -337,7 +431,10 @@ mod tests {
         let output_range = (10.0, 100.0);
         let expected_result = 10.0;
         let result = map_value_from_linear_to_exponential_scale(value, input_range, output_range);
-        assert!(f32s_are_equal(result, expected_result), "For: {value}, Expected: {expected_result}, got: {result}");
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "For: {value}, Expected: {expected_result}, got: {result}"
+        );
     }
 
     #[test]
@@ -347,7 +444,10 @@ mod tests {
         let output_range = (100.0, 100.0);
         let expected_result = 100.0;
         let result = map_value_from_linear_to_exponential_scale(value, input_range, output_range);
-        assert!(f32s_are_equal(result, expected_result), "For: {value}, Expected: {expected_result}, got: {result}");
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "For: {value}, Expected: {expected_result}, got: {result}"
+        );
     }
 
     #[test]
@@ -358,7 +458,10 @@ mod tests {
         let output_range = (0.0, 100.0);
         let expected_result = 0.000_099_9;
         let result = map_value_from_linear_to_exponential_scale(value, input_range, output_range);
-        assert!(f32s_are_equal(result, expected_result), "For: {value}, Expected: {expected_result}, got: {result}");
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "For: {value}, Expected: {expected_result}, got: {result}"
+        );
     }
 
     #[test]
@@ -369,7 +472,10 @@ mod tests {
         let output_range = (10.0, 100.0);
         let expected_result = 1.0;
         let result = map_value_from_linear_to_exponential_scale(value, input_range, output_range);
-        assert!(f32s_are_equal(result, expected_result), "For: {value}, Expected: {expected_result}, got: {result}");
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "For: {value}, Expected: {expected_result}, got: {result}"
+        );
     }
 
     #[test]
