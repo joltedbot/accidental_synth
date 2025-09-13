@@ -14,12 +14,8 @@ semgrep:
   image: semgrep/semgrep
   script:
     - semgrep ci --code
-    - semgrep ci --gitlab-sast --gitlab-sast-output=./gl-sast-report.json
   variables:
     SEMGREP_APP_TOKEN: "$SEMGREP_APP_TOKEN"
-  artifacts:
-    paths:
-      - gl-sast-report.json
 
 sonarcloud:
   stage: sonar
