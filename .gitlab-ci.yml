@@ -4,11 +4,11 @@ include:
 
 variables:
   GITLAB_ADVANCED_SAST_ENABLED: 'true'
+  SAST_STAGE: security
 
 stages:
 - test
 - security
-- quality
 - semgrep
 - sonar
 
@@ -24,6 +24,7 @@ semgrep:
   artifacts:
     paths:
       - gl-sast-report.json
+
 sonarcloud:
   stage: sonar
   image:
