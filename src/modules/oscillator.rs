@@ -11,6 +11,7 @@ pub mod sine;
 pub mod square;
 pub mod triangle;
 
+use std::sync::Arc;
 use self::am::AM;
 use self::constants::{
     DEFAULT_KEY_SYNC_ENABLED, DEFAULT_NOTE_FREQUENCY, DEFAULT_PORTAMENTO_SPEED_IN_BUFFERS,
@@ -52,8 +53,8 @@ pub enum WaveShape {
 pub enum HardSyncRole {
     #[default]
     None,
-    Source(AtomicBool),
-    Synced(AtomicBool),
+    Source(Arc<AtomicBool>),
+    Synced(Arc<AtomicBool>),
 }
 
 impl WaveShape {
@@ -180,6 +181,9 @@ impl Oscillator {
         if modulation == Some(0.0) {
             modulation = None;
         }
+        
+        
+        
         self.wave_generator
             .next_sample(self.tone_frequency, modulation)
     }
@@ -463,13 +467,12 @@ mod tests {
     }
 
     #[test]
-    fn set_synced_buffer_correctly_sets_sync_role_to_synced() {
+    fn set_synced_buffer_correctly_sets_sync_role() {
         let mut oscillator = Oscillator::new(44100, WaveShape::Sine);
         assert!(matches!(oscillator.sync_role, HardSyncRole::None));
-        oscillator.set_hard_sync_role(HardSyncRole::Synced(AtomicBool::new(false)));
+        oscillator.set_hard_sync_role(HardSyncRole::Synced(Arc::new(AtomicBool::new(false))));
         assert!(matches!(oscillator.sync_role, HardSyncRole::Synced(_)));
     }
-
-
+    
 
 }

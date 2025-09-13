@@ -15,7 +15,7 @@ use crate::modules::envelope::{Envelope, EnvelopeParameters};
 use crate::modules::filter::{DEFAULT_KEY_TRACKING_AMOUNT, Filter, FilterParameters};
 use crate::modules::lfo::{Lfo, LfoParameters};
 use crate::modules::mixer::{MixerInput, output_mix, quad_mix};
-use crate::modules::oscillator::{Oscillator, OscillatorParameters, WaveShape};
+use crate::modules::oscillator::{HardSyncRole, Oscillator, OscillatorParameters, WaveShape};
 use anyhow::Result;
 use cpal::traits::DeviceTrait;
 use cpal::{Device, Stream};
@@ -260,6 +260,12 @@ impl Synthesizer {
             Oscillator::new(self.sample_rate, WaveShape::default()),
         ];
         oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
+
+        let oscillator_hard_sync_buffer = Arc::new(AtomicBool::new(false));
+        oscillators[OscillatorIndex::One as usize].set_hard_sync_role(HardSyncRole::Source
+            (oscillator_hard_sync_buffer.clone()));
+        oscillators[OscillatorIndex::Two as usize].set_hard_sync_role(HardSyncRole::Synced
+            (oscillator_hard_sync_buffer.clone()));
 
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
