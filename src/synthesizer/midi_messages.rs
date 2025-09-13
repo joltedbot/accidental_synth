@@ -525,7 +525,6 @@ fn set_portamento_time(parameters: &[OscillatorParameters; 4], value: u8) {
     }
 }
 
-
 fn set_portamento_enabled(parameters: &[OscillatorParameters; 4], value: u8) {
     for parameters in parameters {
         parameters

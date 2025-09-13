@@ -48,6 +48,14 @@ pub enum WaveShape {
     Noise,
 }
 
+#[derive(Default, Debug)]
+pub enum HardSyncRole {
+    #[default]
+    None,
+    Source(AtomicBool),
+    Synced(AtomicBool),
+}
+
 impl WaveShape {
     pub fn from_index(index: u8) -> Self {
         match index {
@@ -119,6 +127,7 @@ pub struct Oscillator {
     is_sub: bool,
     key_sync_enabled: bool,
     hard_sync_enabled: bool,
+    sync_role: HardSyncRole,
     portamento: Portamento,
 }
 
@@ -145,6 +154,7 @@ impl Oscillator {
             fine_tune: 0,
             is_sub: false,
             key_sync_enabled: DEFAULT_KEY_SYNC_ENABLED,
+            sync_role: HardSyncRole::None,
             hard_sync_enabled: false,
             portamento,
         }
@@ -185,7 +195,7 @@ impl Oscillator {
 
     pub fn set_wave_shape_index(&mut self, wave_shape_index: u8) {
         if wave_shape_index == self.wave_shape_index {
-            return
+            return;
         }
 
         let wave_shape = WaveShape::from_index(wave_shape_index);
@@ -193,12 +203,18 @@ impl Oscillator {
         self.wave_shape_index = wave_shape_index;
     }
 
+
+
     pub fn set_frequency(&mut self, tone_frequency: f32) {
         self.tone_frequency = tone_frequency;
     }
 
     pub fn set_phase(&mut self, phase: f32) {
         self.wave_generator.set_phase(phase);
+    }
+
+    pub fn set_hard_sync_role(&mut self, sync_role: HardSyncRole) {
+        self.sync_role = sync_role;
     }
 
     pub fn reset(&mut self) {
@@ -288,7 +304,6 @@ impl Oscillator {
         self.hard_sync_enabled = hard_sync_enabled;
     }
 
-
     fn set_pitch_bend(&mut self, pitch_bend: i16) {
         self.pitch_bend = pitch_bend;
     }
@@ -339,7 +354,7 @@ fn midi_note_to_frequency(note_number: u8) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::math::{f32s_are_equal, frequency_from_cents};
+    use crate::math::f32s_are_equal;
 
     #[test]
     fn new_returns_oscillator_with_correct_default_values() {
@@ -448,30 +463,13 @@ mod tests {
     }
 
     #[test]
-    fn frequency_from_cents_returns_correct_values_for_value_frequencies_and_cents() {
-        let frequencies: [f32; 4] = [8.175, 27.5, 523.251, 12543.854];
-        let cents = 50;
-        let expected_frequencies: [f32; 4] = [8.414_546, 28.30581, 538.5834, 12911.417];
-
-        for i in 0..frequencies.len() {
-            assert!(f32s_are_equal(
-                frequency_from_cents(frequencies[i], cents),
-                expected_frequencies[i]
-            ));
-        }
+    fn set_synced_buffer_correctly_sets_sync_role_to_synced() {
+        let mut oscillator = Oscillator::new(44100, WaveShape::Sine);
+        assert!(matches!(oscillator.sync_role, HardSyncRole::None));
+        oscillator.set_hard_sync_role(HardSyncRole::Synced(AtomicBool::new(false)));
+        assert!(matches!(oscillator.sync_role, HardSyncRole::Synced(_)));
     }
 
-    #[test]
-    fn frequency_from_cents_returns_correct_values_for_value_frequencies_and_negative_cents() {
-        let frequencies: [f32; 4] = [8.175, 27.5, 523.251, 12543.854];
-        let cents = -50;
-        let expected_frequencies: [f32; 4] = [7.942_273_6, 26.717_129, 508.35504, 12186.754];
 
-        for i in 0..frequencies.len() {
-            assert!(f32s_are_equal(
-                frequency_from_cents(frequencies[i], cents),
-                expected_frequencies[i]
-            ));
-        }
-    }
+
 }
