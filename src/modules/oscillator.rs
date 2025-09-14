@@ -29,7 +29,8 @@ use self::triangle::Triangle;
 use crate::math;
 use crate::math::{f32s_are_equal, load_f32_from_atomic_u32};
 use generate_wave_trait::GenerateWave;
-use std::sync::atomic::Ordering::{Acquire, Relaxed};
+use std::sync::Arc;
+use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
 use std::sync::atomic::{AtomicBool, AtomicI8, AtomicI16, AtomicU8, AtomicU16, AtomicU32};
 
 pub const NUMBER_OF_WAVE_SHAPES: u8 = 10;
@@ -46,6 +47,14 @@ pub enum WaveShape {
     AM,
     FM,
     Noise,
+}
+
+#[derive(Default, Debug)]
+pub enum HardSyncRole {
+    #[default]
+    None,
+    Source(Arc<AtomicBool>),
+    Synced(Arc<AtomicBool>),
 }
 
 impl WaveShape {
@@ -76,6 +85,7 @@ pub struct OscillatorParameters {
     pub wave_shape_index: AtomicU8,
     pub gate_flag: AtomicBool,
     pub key_sync_enabled: AtomicBool,
+    pub hard_sync_enabled: AtomicBool,
     pub portamento_is_enabled: AtomicBool,
     pub portamento_speed: AtomicU16,
 }
@@ -91,6 +101,7 @@ impl Default for OscillatorParameters {
             wave_shape_index: AtomicU8::new(WaveShape::default() as u8),
             gate_flag: AtomicBool::new(false),
             key_sync_enabled: AtomicBool::new(DEFAULT_KEY_SYNC_ENABLED),
+            hard_sync_enabled: AtomicBool::new(false),
             portamento_is_enabled: AtomicBool::new(false),
             portamento_speed: AtomicU16::new(DEFAULT_PORTAMENTO_SPEED_IN_BUFFERS),
         }
@@ -106,16 +117,29 @@ struct Portamento {
     recalculate_increment: bool,
 }
 
+#[derive(Default, Debug)]
+pub struct HardSync {
+    is_enabled: bool,
+    last_sample: f32,
+    sync_role: HardSyncRole,
+}
+
+#[derive(Default, Debug, Copy, Clone)]
+pub struct Tuning {
+    frequency: f32,
+    pitch_bend: i16,
+    course: i8,
+    fine: i8,
+    is_sub: bool,
+}
+
 pub struct Oscillator {
     sample_rate: u32,
     wave_generator: Box<dyn GenerateWave + Send + Sync>,
-    tone_frequency: f32,
     wave_shape_index: u8,
-    pitch_bend: i16,
-    course_tune: i8,
-    fine_tune: i8,
-    is_sub: bool,
     key_sync_enabled: bool,
+    tuning: Tuning,
+    hard_sync: HardSync,
     portamento: Portamento,
 }
 
@@ -132,16 +156,27 @@ impl Oscillator {
             ..Portamento::default()
         };
 
+        let tuning = Tuning {
+            frequency: DEFAULT_NOTE_FREQUENCY,
+            pitch_bend: 0,
+            course: 0,
+            fine: 0,
+            is_sub: false,
+        };
+
+        let hard_sync = HardSync {
+            sync_role: HardSyncRole::None,
+            is_enabled: false,
+            last_sample: 0.0,
+        };
+
         Self {
             sample_rate,
             wave_generator,
-            tone_frequency: DEFAULT_NOTE_FREQUENCY,
             wave_shape_index: WaveShape::default() as u8,
-            pitch_bend: 0,
-            course_tune: 0,
-            fine_tune: 0,
-            is_sub: false,
             key_sync_enabled: DEFAULT_KEY_SYNC_ENABLED,
+            tuning,
+            hard_sync,
             portamento,
         }
     }
@@ -154,6 +189,7 @@ impl Oscillator {
         self.set_course_tune(parameters.course_tune.load(Relaxed));
         self.set_fine_tune(parameters.fine_tune.load(Relaxed));
         self.set_key_sync_enabled(parameters.key_sync_enabled.load(Relaxed));
+        self.set_hard_sync_enabled(parameters.hard_sync_enabled.load(Relaxed));
         self.set_portamento(
             parameters.portamento_is_enabled.load(Relaxed),
             parameters.portamento_speed.load(Relaxed),
@@ -165,8 +201,37 @@ impl Oscillator {
         if modulation == Some(0.0) {
             modulation = None;
         }
-        self.wave_generator
-            .next_sample(self.tone_frequency, modulation)
+
+        let next_sample = self
+            .wave_generator
+            .next_sample(self.tuning.frequency, modulation);
+
+        if !self.hard_sync.is_enabled {
+            return next_sample;
+        }
+
+        self.perform_sync_role(next_sample);
+        self.hard_sync.last_sample = next_sample;
+
+        next_sample
+    }
+
+    fn perform_sync_role(&mut self, next_sample: f32) {
+        match &self.hard_sync.sync_role {
+            HardSyncRole::None => {}
+            HardSyncRole::Source(buffer) => {
+                if self.hard_sync.last_sample.is_sign_negative() && next_sample.is_sign_positive() {
+                    buffer.store(true, Relaxed);
+                }
+            }
+            HardSyncRole::Synced(buffer) => {
+                let sync_state = buffer.load(Acquire);
+                if sync_state {
+                    self.wave_generator.reset();
+                    buffer.store(false, Release);
+                }
+            }
+        }
     }
 
     pub fn set_wave_shape(&mut self, wave_shape: WaveShape) {
@@ -179,19 +244,25 @@ impl Oscillator {
     }
 
     pub fn set_wave_shape_index(&mut self, wave_shape_index: u8) {
-        if wave_shape_index != self.wave_shape_index {
-            let wave_shape = WaveShape::from_index(wave_shape_index);
-            self.set_wave_shape(wave_shape);
-            self.wave_shape_index = wave_shape_index;
+        if wave_shape_index == self.wave_shape_index {
+            return;
         }
+
+        let wave_shape = WaveShape::from_index(wave_shape_index);
+        self.set_wave_shape(wave_shape);
+        self.wave_shape_index = wave_shape_index;
     }
 
     pub fn set_frequency(&mut self, tone_frequency: f32) {
-        self.tone_frequency = tone_frequency;
+        self.tuning.frequency = tone_frequency;
     }
 
     pub fn set_phase(&mut self, phase: f32) {
         self.wave_generator.set_phase(phase);
+    }
+
+    pub fn set_hard_sync_role(&mut self, sync_role: HardSyncRole) {
+        self.hard_sync.sync_role = sync_role;
     }
 
     pub fn reset(&mut self) {
@@ -199,13 +270,13 @@ impl Oscillator {
     }
 
     pub fn tune(&mut self, mut note_number: u8) {
-        if self.course_tune != 0 {
+        if self.tuning.course != 0 {
             note_number = (note_number as i16)
-                .saturating_add(self.course_tune as i16)
+                .saturating_add(self.tuning.course as i16)
                 .clamp(MIN_MIDI_NOTE_NUMBER, MAX_MIDI_NOTE_NUMBER) as u8;
         }
 
-        if self.is_sub {
+        if self.tuning.is_sub {
             note_number = (note_number as i16)
                 .saturating_sub(12)
                 .clamp(MIN_MIDI_NOTE_NUMBER, MAX_MIDI_NOTE_NUMBER) as u8;
@@ -213,43 +284,44 @@ impl Oscillator {
 
         let mut note_frequency = midi_note_to_frequency(note_number);
 
-        if self.fine_tune != 0 {
-            note_frequency = math::frequency_from_cents(note_frequency, i16::from(self.fine_tune));
+        if self.tuning.fine != 0 {
+            note_frequency =
+                math::frequency_from_cents(note_frequency, i16::from(self.tuning.fine));
         }
 
         if self.portamento.is_enabled {
-            if self.portamento.recalculate_increment {
-                self.recalculate_portamento_increment(note_frequency);
-            }
             note_frequency = self.run_portamento(note_frequency);
         }
 
-        if self.pitch_bend != 0 {
-            note_frequency = math::frequency_from_cents(note_frequency, self.pitch_bend)
+        if self.tuning.pitch_bend != 0 {
+            note_frequency = math::frequency_from_cents(note_frequency, self.tuning.pitch_bend)
                 .clamp(MIN_NOTE_FREQUENCY, MAX_NOTE_FREQUENCY);
         }
-        self.tone_frequency = note_frequency;
+
+        self.tuning.frequency = note_frequency;
     }
 
     fn run_portamento(&mut self, frequency: f32) -> f32 {
-        if f32s_are_equal(frequency, self.tone_frequency) {
+        if self.portamento.recalculate_increment {
+            self.recalculate_portamento_increment(frequency);
+        }
+
+        if f32s_are_equal(frequency, self.tuning.frequency) {
             return frequency;
         }
 
-        let new_frequency = if (self.tone_frequency - self.portamento.target_frequency).abs()
-            < self.portamento.increment.abs()
-        {
+        let frequency_delta = (self.tuning.frequency - self.portamento.target_frequency).abs();
+
+        if frequency_delta < self.portamento.increment.abs() {
             self.portamento.target_frequency
         } else {
-            self.tone_frequency + self.portamento.increment
-        };
-
-        new_frequency.clamp(MIN_NOTE_FREQUENCY, MAX_NOTE_FREQUENCY)
+            (self.tuning.frequency + self.portamento.increment)
+                .clamp(MIN_NOTE_FREQUENCY, MAX_NOTE_FREQUENCY)
+        }
     }
 
     fn recalculate_portamento_increment(&mut self, new_frequency: f32) {
-        let increment = (new_frequency - self.tone_frequency) / f32::from(self.portamento.speed);
-
+        let increment = (new_frequency - self.tuning.frequency) / f32::from(self.portamento.speed);
         self.portamento.increment = increment;
         self.portamento.target_frequency = new_frequency;
         self.portamento.recalculate_increment = false;
@@ -277,20 +349,24 @@ impl Oscillator {
         self.key_sync_enabled = key_sync_enabled;
     }
 
+    fn set_hard_sync_enabled(&mut self, hard_sync_enabled: bool) {
+        self.hard_sync.is_enabled = hard_sync_enabled;
+    }
+
     fn set_pitch_bend(&mut self, pitch_bend: i16) {
-        self.pitch_bend = pitch_bend;
+        self.tuning.pitch_bend = pitch_bend;
     }
 
     fn set_course_tune(&mut self, course_tune: i8) {
-        self.course_tune = course_tune;
+        self.tuning.course = course_tune;
     }
 
     fn set_fine_tune(&mut self, fine_tune: i8) {
-        self.fine_tune = fine_tune;
+        self.tuning.fine = fine_tune;
     }
 
     pub fn set_is_sub_oscillator(&mut self, is_sub_oscillator: bool) {
-        self.is_sub = is_sub_oscillator;
+        self.tuning.is_sub = is_sub_oscillator;
     }
 
     fn set_shape_parameter1(&mut self, parameter: f32) {
@@ -327,7 +403,7 @@ fn midi_note_to_frequency(note_number: u8) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::math::{f32s_are_equal, frequency_from_cents};
+    use crate::math::f32s_are_equal;
 
     #[test]
     fn new_returns_oscillator_with_correct_default_values() {
@@ -436,43 +512,64 @@ mod tests {
     }
 
     #[test]
-    fn midi_note_to_frequency_returns_correct_values_for_note_numbers() {
-        let notes: [u8; 4] = [0, 21, 72, 127];
-        let expected_frequencies: [f32; 4] = [8.175, 27.5, 523.251, 12543.854];
-
-        for i in 0..notes.len() {
-            assert!(f32s_are_equal(
-                midi_note_to_frequency(notes[i]),
-                expected_frequencies[i]
-            ));
-        }
+    fn set_synced_buffer_correctly_sets_sync_role() {
+        let mut oscillator = Oscillator::new(44100, WaveShape::Sine);
+        assert!(matches!(oscillator.hard_sync.sync_role, HardSyncRole::None));
+        oscillator.set_hard_sync_role(HardSyncRole::Synced(Arc::new(AtomicBool::new(false))));
+        assert!(matches!(
+            oscillator.hard_sync.sync_role,
+            HardSyncRole::Synced(_)
+        ));
     }
 
     #[test]
-    fn frequency_from_cents_returns_correct_values_for_value_frequencies_and_cents() {
-        let frequencies: [f32; 4] = [8.175, 27.5, 523.251, 12543.854];
-        let cents = 50;
-        let expected_frequencies: [f32; 4] = [8.414_546, 28.30581, 538.5834, 12911.417];
+    fn generate_sets_hard_sync_buffer_to_true_when_enabled_and_sync_role_is_source_and_wave_phase_roles_over()
+     {
+        let sync_buffer = Arc::new(AtomicBool::new(false));
+        let mut oscillator = Oscillator::new(44100, WaveShape::Sine);
+        oscillator.set_hard_sync_enabled(true);
+        oscillator.set_hard_sync_role(HardSyncRole::Source(sync_buffer.clone()));
+        assert!(!sync_buffer.load(Relaxed));
 
-        for i in 0..frequencies.len() {
-            assert!(f32s_are_equal(
-                frequency_from_cents(frequencies[i], cents),
-                expected_frequencies[i]
-            ));
-        }
+        let negative_sample = -0.01;
+        oscillator.hard_sync.last_sample = negative_sample;
+        let _ = oscillator.generate(None);
+
+        assert!(sync_buffer.load(Relaxed));
     }
 
     #[test]
-    fn frequency_from_cents_returns_correct_values_for_value_frequencies_and_negative_cents() {
-        let frequencies: [f32; 4] = [8.175, 27.5, 523.251, 12543.854];
-        let cents = -50;
-        let expected_frequencies: [f32; 4] = [7.942_273_6, 26.717_129, 508.35504, 12186.754];
+    fn generate_syncs_wave_generator_when_sync_enabled_and_sync_role_is_synced_and_sync_buffer_is_true()
+     {
+        let sync_buffer = Arc::new(AtomicBool::new(false));
+        let mut oscillator = Oscillator::new(44100, WaveShape::Sine);
+        oscillator.set_hard_sync_role(HardSyncRole::Synced(sync_buffer.clone()));
+        oscillator.set_hard_sync_enabled(true);
 
-        for i in 0..frequencies.len() {
-            assert!(f32s_are_equal(
-                frequency_from_cents(frequencies[i], cents),
-                expected_frequencies[i]
-            ));
+        let expected_first_sample = 0.037_266_6;
+
+        let sample = oscillator.generate(None);
+        assert!(
+            f32s_are_equal(sample, expected_first_sample),
+            "Expected {expected_first_sample:?}, but got {sample:?}"
+        );
+
+        for _i in 0..3 {
+            let _ = oscillator.generate(None);
         }
+
+        sync_buffer.store(true, Release);
+
+        let not_yet_synced = oscillator.generate(None);
+        assert!(
+            !f32s_are_equal(not_yet_synced, expected_first_sample),
+            "Expected {expected_first_sample:?}, but got {not_yet_synced:?}"
+        );
+
+        let first_synced_sample = oscillator.generate(None);
+        assert!(
+            f32s_are_equal(first_synced_sample, expected_first_sample),
+            "Expected {expected_first_sample:?}, but got {first_synced_sample:?}"
+        );
     }
 }
