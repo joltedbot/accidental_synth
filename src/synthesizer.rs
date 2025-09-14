@@ -262,10 +262,10 @@ impl Synthesizer {
         oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
 
         let oscillator_hard_sync_buffer = Arc::new(AtomicBool::new(false));
-        oscillators[OscillatorIndex::One as usize].set_hard_sync_role(HardSyncRole::Source
-            (oscillator_hard_sync_buffer.clone()));
-        oscillators[OscillatorIndex::Two as usize].set_hard_sync_role(HardSyncRole::Synced
-            (oscillator_hard_sync_buffer.clone()));
+        oscillators[OscillatorIndex::One as usize]
+            .set_hard_sync_role(HardSyncRole::Source(oscillator_hard_sync_buffer.clone()));
+        oscillators[OscillatorIndex::Two as usize]
+            .set_hard_sync_role(HardSyncRole::Synced(oscillator_hard_sync_buffer.clone()));
 
         let default_device_stream_config = output_device.default_output_config()?.config();
         let sample_rate = default_device_stream_config.sample_rate.0;
