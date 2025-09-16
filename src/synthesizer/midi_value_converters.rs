@@ -8,32 +8,50 @@ use crate::synthesizer::constants::{
 use std::cmp::Ordering;
 use std::sync::atomic::Ordering::Relaxed;
 
+
 pub fn midi_value_to_f32_range(midi_value: u8, minimum: f32, maximum: f32) -> f32 {
     let range = maximum - minimum;
-    let increment = range / f32::from(MIDI_VALUE_RANGE);
-    minimum + (f32::from(midi_value) * increment)
+    minimum + (f32::from(midi_value) * range / f32::from(MIDI_VALUE_RANGE))
 }
 
-pub fn midi_value_to_u8_range(midi_value: u8, minimum: u8, maximum: u8) -> u8 {
-    minimum
-        + (u16::from(midi_value) * u16::from(maximum - minimum) / u16::from(MIDI_VALUE_RANGE)) as u8
+pub fn midi_value_to_u8_range(midi_value: u8, mut minimum: u8, mut maximum: u8) -> u8 {
+    if maximum < minimum {
+        core::mem::swap(&mut minimum, &mut maximum);
+    }
+
+    let target_range = u16::from(maximum - minimum);
+    let output_range_value = u16::from(midi_value.min(MIDI_VALUE_RANGE)) * target_range / u16::from(MIDI_VALUE_RANGE);
+    minimum + output_range_value as u8
 }
 
-pub fn midi_value_to_i8_range(midi_value: u8, minimum: i8, maximum: i8) -> i8 {
-    minimum
-        + (i16::from(midi_value) * i16::from(maximum - minimum) / i16::from(MIDI_VALUE_RANGE)) as i8
+pub fn midi_value_to_i8_range(midi_value: u8, mut minimum: i8, mut maximum: i8) -> i8 {
+    if maximum < minimum {
+        core::mem::swap(&mut minimum, &mut maximum);
+    }
+
+    let target_range = i16::from(maximum - minimum);
+    let output_range_value = i16::from(midi_value) * target_range / i16::from(MIDI_VALUE_RANGE);
+    minimum + output_range_value as i8
 }
 
-pub fn midi_value_to_u16_range(midi_value: u8, minimum: u16, maximum: u16) -> u16 {
-    minimum
-        + (u32::from(midi_value) * u32::from(maximum - minimum) / u32::from(MIDI_VALUE_RANGE))
-            as u16
+pub fn midi_value_to_u16_range(midi_value: u8, mut minimum: u16, mut maximum: u16) -> u16 {
+    if maximum < minimum {
+        core::mem::swap(&mut minimum, &mut maximum);
+    }
+
+    let target_range = u32::from(maximum - minimum);
+    let output_range_value = u32::from(midi_value) * target_range / u32::from(MIDI_VALUE_RANGE);
+    minimum + output_range_value as u16
 }
 
-pub fn midi_value_to_u32_range(midi_value: u8, minimum: u32, maximum: u32) -> u32 {
-    minimum
-        + (u64::from(midi_value) * u64::from(maximum - minimum) / u64::from(MIDI_VALUE_RANGE))
-            as u32
+pub fn midi_value_to_u32_range(midi_value: u8, mut minimum: u32, mut maximum: u32) -> u32 {
+    if maximum < minimum {
+        core::mem::swap(&mut minimum, &mut maximum);
+    }
+
+    let target_range = u64::from(maximum - minimum);
+    let output_range_value = u64::from(midi_value) * target_range / u64::from(MIDI_VALUE_RANGE);
+    minimum + output_range_value as u32
 }
 
 pub fn midi_value_to_f32_0_to_1(midi_value: u8) -> f32 {
@@ -131,7 +149,7 @@ pub fn update_current_note_from_midi_pitch_bend(
     for oscillator in oscillators {
         if pitch_bend_amount == PITCH_BEND_AMOUNT_ZERO_POINT {
             oscillator.pitch_bend.store(0, Relaxed);
-        } else if pitch_bend_amount == PITCH_BEND_AMOUNT_MAX_VALUE {
+        } else if pitch_bend_amount >= PITCH_BEND_AMOUNT_MAX_VALUE {
             oscillator
                 .pitch_bend
                 .store(max_bend_in_cents as i16, Relaxed);
@@ -156,10 +174,71 @@ mod tests {
 
     #[test]
     fn midi_value_to_f32_range_correctly_maps_edge_values() {
-        assert!(f32s_are_equal(midi_value_to_f32_range(0, 0.0, 1.0), 0.0));
-        assert!(f32s_are_equal(midi_value_to_f32_range(127, 0.0, 1.0), 1.0));
-        assert!(f32s_are_equal(midi_value_to_f32_range(0, -1.0, 1.0), -1.0));
-        assert!(f32s_are_equal(midi_value_to_f32_range(127, -1.0, 1.0), 1.0));
+        let value_zero = midi_value_to_f32_range(0, 0.0, 1.0);
+        let expected_result = 0.0;
+        assert!(f32s_are_equal(value_zero, expected_result), "Expected: {expected_result} but got {value_zero}");
+
+        let value_max = midi_value_to_f32_range(127, 0.0, 1.0);
+        let expected_result = 1.0;
+        assert!(f32s_are_equal(value_max, 1.0), "Expected: {expected_result} but got {value_max}");
+
+        let value_zero_negative_range = midi_value_to_f32_range(0, -1.0, 1.0);
+        let expected_result = 1.0;
+        assert!(f32s_are_equal(value_zero_negative_range, -1.0), "Expected: {expected_result} but got {value_zero_negative_range}");
+
+        let value_max_negative_range = midi_value_to_f32_range(127, -1.0, 1.0);
+        let expected_result = 1.0;
+        assert!(f32s_are_equal(value_max_negative_range, 1.0), "Expected: {expected_result} but got {value_max_negative_range}");
+    }
+
+    #[test]
+    fn midi_value_to_u16_range_returns_correct_value_for_valid_input() {
+        let test_value = 64;
+        let test_minimum = 100;
+        let test_maximum = 200;
+        let expected_output = 150;
+        let output = midi_value_to_u16_range(test_value, test_minimum, test_maximum);
+        assert_eq!(output, expected_output);
+    }
+
+    #[test]
+    fn midi_value_to_i8_range_returns_correct_value_for_valid_input() {
+        let test_value = 127;
+        let test_minimum = -10;
+        let test_maximum = 100;
+        let expected_output = 100;
+        let output = midi_value_to_i8_range(test_value, test_minimum, test_maximum);
+        assert_eq!(output, expected_output);
+    }
+
+    #[test]
+    fn midi_value_to_u8_range_returns_correct_value_for_valid_input() {
+        let test_value = 127;
+        let test_minimum = 10;
+        let test_maximum = 100;
+        let expected_output = 100;
+        let output = midi_value_to_u8_range(test_value, test_minimum, test_maximum);
+        assert_eq!(output, expected_output);
+    }
+
+    #[test]
+    fn midi_value_to_u32_range_returns_correct_value_for_valid_input() {
+        let test_value = 64;
+        let test_minimum = 100;
+        let test_maximum = 200;
+        let expected_output = 150;
+        let output = midi_value_to_u32_range(test_value, test_minimum, test_maximum);
+        assert_eq!(output, expected_output);
+    }
+
+    #[test]
+    fn midi_value_to_u32_range_returns_correct_value_for_valid_but_reversed_min_max_inputs() {
+        let test_value = 64;
+        let test_minimum = 200;
+        let test_maximum = 100;
+        let expected_output = 150;
+        let output = midi_value_to_u32_range(test_value, test_minimum, test_maximum);
+        assert_eq!(output, expected_output);
     }
 
     #[test]
