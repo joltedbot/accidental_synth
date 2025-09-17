@@ -1,5 +1,5 @@
 use crate::math::store_f32_as_atomic_u32;
-use crate::midi::CC;
+use crate::midi::control_change::CC;
 use crate::modules::lfo::LfoParameters;
 use crate::modules::oscillator::OscillatorParameters;
 use crate::modules::oscillator::triangle::{
