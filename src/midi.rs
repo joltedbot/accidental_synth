@@ -89,19 +89,20 @@ impl Midi {
         self.input_ports = midi_input_ports()?;
         log::debug!("run(): Found MIDI input ports: {:?}", self.input_ports);
 
-        self.current_input = default_midi_device()?;
+        let input_port = midi_port_from_id(None)?;
+        self.current_input = input_device_from_port(input_port)?;
 
         if let Some(input) = &self.current_input {
             self.input_listener = Some(create_midi_input_listener(
-                    &input.port,
-                    self.message_sender.clone(),
-                    self.current_note.clone(),
-                )?);
+                &input.port,
+                self.message_sender.clone(),
+                self.current_note.clone(),
+            )?);
 
-                log::info!(
-                    "create_midi_input_listener(): The MIDI input connection listener has been created for {}.",
-                    input.name
-                );
+            log::info!(
+                "create_midi_input_listener(): The MIDI input connection listener has been created for {}.",
+                input.name
+            );
         };
 
         Ok(())
@@ -115,93 +116,129 @@ fn create_midi_input_listener(
 ) -> Result<MidiInputConnection<()>> {
     let midi_input = new_midi_input()?;
 
-    midi_input.connect(
-        midi_input_port,
-        MIDI_INPUT_CONNECTION_NAME,
-        move |_, message, ()| {
-            process_midi_message(message, &midi_message_sender, &current_note_arc);
-        },
+    midi_input
+        .connect(
+            midi_input_port,
+            MIDI_INPUT_CONNECTION_NAME,
+            move |_, message, ()| {
+                process_midi_message(message, &midi_message_sender, &current_note_arc);
+            },
             (),
-    ).map_err(|err| anyhow!(err))
+        )
+        .map_err(|err| anyhow!(err))
 }
 
-fn process_midi_message(message: &[u8], midi_message_sender: &Sender<MidiMessage>, current_note_arc: &Arc<Mutex<Option<u8>>>) {
-
+fn process_midi_message(
+    message: &[u8],
+    midi_message_sender: &Sender<MidiMessage>,
+    current_note_arc: &Arc<Mutex<Option<u8>>>,
+) {
     let message_type = midi_message_type_from_message_byte(message, current_note_arc);
 
     if let Some(message) = message_type {
         midi_message_sender.send(message).unwrap_or_else(|err| {
-            log::error!("create_midi_input_listener(): FATAL ERROR: midi message channel send failure. \
-                Exiting. Error: {err}.");
+            log::error!(
+                "create_midi_input_listener(): FATAL ERROR: midi message channel send failure. \
+                Exiting. Error: {err}."
+            );
             panic!("{PANIC_MESSAGE_MIDI_SENDER_FAILURE}");
         });
     }
 }
 
-fn midi_message_type_from_message_byte(message: &[u8], current_note_arc: &Arc<Mutex<Option<u8>>>) -> Option<MidiMessage> {
+fn midi_message_type_from_message_byte(
+    message: &[u8],
+    current_note_arc: &Arc<Mutex<Option<u8>>>,
+) -> Option<MidiMessage> {
+    match message_type_from_status_byte(message[MIDI_STATUS_BYTE_INDEX]) {
+        MessageType::NoteOn => {
+            let midi_note = message[MIDI_NOTE_NUMBER_BYTE_INDEX];
+            let midi_velocity = message[MIDI_VELOCITY_BYTE_INDEX];
 
-        match message_type_from_status_byte(message[MIDI_STATUS_BYTE_INDEX]) {
-            MessageType::NoteOn => {
-                let midi_note = message[MIDI_NOTE_NUMBER_BYTE_INDEX];
-                let midi_velocity = message[MIDI_VELOCITY_BYTE_INDEX];
+            let mut current_note = current_note_arc
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
+            *current_note = Some(midi_note);
 
-                let mut current_note = current_note_arc.lock().unwrap_or_else(PoisonError::into_inner);
-                *current_note = Some(midi_note);
-
-                if midi_velocity == 0 {
-                    Some(MidiMessage::NoteOff)
-                } else {
-                    Some(MidiMessage::NoteOn(midi_note, midi_velocity))
-                }
+            if midi_velocity == 0 {
+                Some(MidiMessage::NoteOff)
+            } else {
+                Some(MidiMessage::NoteOn(midi_note, midi_velocity))
             }
-            MessageType::NoteOff => {
-                let midi_note = message[MIDI_NOTE_NUMBER_BYTE_INDEX];
-                let mut current_note = current_note_arc.lock().unwrap_or_else(PoisonError::into_inner);
-                match *current_note {
-                    Some(note) if note == midi_note => {
-                        *current_note = None;
-                        Some(MidiMessage::NoteOff)
-                    },
-                    _ => None,
-                }
-            }
-            MessageType::ControlChange => {
-                let cc_number = message[MIDI_CC_NUMBER_BYTE_INDEX];
-                let cc_value = message[MIDI_CC_VALUE_BYTE_INDEX];
-                control_change::get_supported_cc_from_cc_number(cc_number, cc_value).map(MidiMessage::ControlChange)
-            }
-            MessageType::PitchBend => {
-                let amount_most_significant_byte = message[MIDI_PITCH_BEND_MSB_BYTE_INDEX];
-                let amount_least_significant_byte = message[MIDI_PITCH_BEND_LSB_BYTE_INDEX];
-                let pitch_bend_amount = u16::from(amount_most_significant_byte) << 7 | u16::from(amount_least_significant_byte);
-                Some(MidiMessage::PitchBend(pitch_bend_amount))
-            }
-            MessageType::ChannelPressure => {
-                let pressure_amount = message[MIDI_CHANNEL_PRESSURE_VALUE_BYTE_INDEX];
-                Some(MidiMessage::ChannelPressure(pressure_amount))
-            }
-            _ => None,
         }
+        MessageType::NoteOff => {
+            let midi_note = message[MIDI_NOTE_NUMBER_BYTE_INDEX];
+            let mut current_note = current_note_arc
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
+            match *current_note {
+                Some(note) if note == midi_note => {
+                    *current_note = None;
+                    Some(MidiMessage::NoteOff)
+                }
+                _ => None,
+            }
+        }
+        MessageType::ControlChange => {
+            let cc_number = message[MIDI_CC_NUMBER_BYTE_INDEX];
+            let cc_value = message[MIDI_CC_VALUE_BYTE_INDEX];
+            control_change::get_supported_cc_from_cc_number(cc_number, cc_value)
+                .map(MidiMessage::ControlChange)
+        }
+        MessageType::PitchBend => {
+            let amount_most_significant_byte = message[MIDI_PITCH_BEND_MSB_BYTE_INDEX];
+            let amount_least_significant_byte = message[MIDI_PITCH_BEND_LSB_BYTE_INDEX];
+            let pitch_bend_amount = u16::from(amount_most_significant_byte) << 7
+                | u16::from(amount_least_significant_byte);
+            Some(MidiMessage::PitchBend(pitch_bend_amount))
+        }
+        MessageType::ChannelPressure => {
+            let pressure_amount = message[MIDI_CHANNEL_PRESSURE_VALUE_BYTE_INDEX];
+            Some(MidiMessage::ChannelPressure(pressure_amount))
+        }
+        _ => None,
+    }
 }
 
-fn default_midi_device() -> Result<Option<InputPort>> {
-    let mut midi_input = new_midi_input()?;
+fn input_device_from_port(input_port: Option<MidiInputPort>) -> Result<Option<InputPort>> {
+    let midi_input = new_midi_input()?;
 
-    midi_input.ignore(MIDI_MESSAGE_IGNORE_LIST);
-
-    match midi_input.ports().get(DEFAULT_MIDI_PORT_INDEX).cloned() {
+    match input_port {
         Some(port) => {
             let id = port.id();
             let name = midi_input
                 .port_name(&port)
                 .unwrap_or(DEFAULT_NAME_FOR_UNNAMED_MIDI_PORTS.to_string());
+
+            log::info!("input_device_from_port(): Using MIDI input port {name}");
+
             Ok(Some(InputPort { id, name, port }))
         }
         None => {
-            log::warn!("default_midi_device(): Could not find a default MIDI input port. Continuing without MIDI input.");
+            log::warn!("input_device_from_port(): Could not find a default MIDI input port. Continuing without MIDI input.");
             Ok(None)
         }
     }
+}
+
+
+fn midi_port_from_id(id: Option<String>) -> Result<Option<MidiInputPort>> {
+    let mut midi_input = new_midi_input()?;
+    midi_input.ignore(MIDI_MESSAGE_IGNORE_LIST);
+
+    let input_port = match id {
+        None => {
+            log::info!(
+                "midi_port_from_id(): No id provided, falling back to default MIDI input port.",
+            );
+            midi_input.ports().get(DEFAULT_MIDI_PORT_INDEX).cloned()
+        },
+        Some(id) => {
+            midi_input.find_port_by_id(id)
+        }
+    };
+
+    Ok(input_port)
 }
 
 fn new_midi_input() -> Result<MidiInput> {
@@ -229,8 +266,6 @@ fn midi_input_ports() -> Result<HashMap<String, String>> {
 
     Ok(midi_input_ports)
 }
-
-
 
 fn message_type_from_status_byte(status: u8) -> MessageType {
     let status_type = status & 0xF0;
