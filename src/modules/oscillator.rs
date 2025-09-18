@@ -271,13 +271,13 @@ impl Oscillator {
 
     pub fn tune(&mut self, mut note_number: u8) {
         if self.tuning.course != 0 {
-            note_number = (note_number as i16)
-                .saturating_add(self.tuning.course as i16)
+            note_number = i16::from(note_number)
+                .saturating_add(i16::from(self.tuning.course))
                 .clamp(MIN_MIDI_NOTE_NUMBER, MAX_MIDI_NOTE_NUMBER) as u8;
         }
 
         if self.tuning.is_sub {
-            note_number = (note_number as i16)
+            note_number = i16::from(note_number)
                 .saturating_sub(12)
                 .clamp(MIN_MIDI_NOTE_NUMBER, MAX_MIDI_NOTE_NUMBER) as u8;
         }

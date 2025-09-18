@@ -103,7 +103,7 @@ impl Midi {
                 "create_midi_input_listener(): The MIDI input connection listener has been created for {}.",
                 input.name
             );
-        };
+        }
 
         Ok(())
     }
@@ -203,21 +203,18 @@ fn midi_message_type_from_message_byte(
 fn input_device_from_port(input_port: Option<MidiInputPort>) -> Result<Option<InputPort>> {
     let midi_input = new_midi_input()?;
 
-    match input_port {
-        Some(port) => {
-            let id = port.id();
-            let name = midi_input
-                .port_name(&port)
-                .unwrap_or(DEFAULT_NAME_FOR_UNNAMED_MIDI_PORTS.to_string());
+    if let Some(port) = input_port {
+        let id = port.id();
+        let name = midi_input
+            .port_name(&port)
+            .unwrap_or(DEFAULT_NAME_FOR_UNNAMED_MIDI_PORTS.to_string());
 
-            log::info!("input_device_from_port(): Using MIDI input port {name}");
+        log::info!("input_device_from_port(): Using MIDI input port {name}");
 
-            Ok(Some(InputPort { id, name, port }))
-        }
-        None => {
-            log::warn!("input_device_from_port(): Could not find a default MIDI input port. Continuing without MIDI input.");
-            Ok(None)
-        }
+        Ok(Some(InputPort { id, name, port }))
+    } else {
+        log::warn!("input_device_from_port(): Could not find a default MIDI input port. Continuing without MIDI input.");
+        Ok(None)
     }
 }
 
@@ -256,13 +253,13 @@ fn midi_input_ports() -> Result<HashMap<String, String>> {
     let port_list = midi_input.ports();
     let mut midi_input_ports: HashMap<String, String> = HashMap::new();
 
-    port_list.iter().for_each(|port| {
+    for port in &port_list {
         let name = midi_input
-            .port_name(&port)
+            .port_name(port)
             .unwrap_or(DEFAULT_NAME_FOR_UNNAMED_MIDI_PORTS.to_string());
         let id = port.id();
         midi_input_ports.insert(id.to_string(), name);
-    });
+    }
 
     Ok(midi_input_ports)
 }

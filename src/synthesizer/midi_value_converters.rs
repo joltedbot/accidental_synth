@@ -8,7 +8,6 @@ use crate::synthesizer::constants::{
 use std::cmp::Ordering;
 use std::sync::atomic::Ordering::Relaxed;
 
-
 pub fn midi_value_to_f32_range(midi_value: u8, minimum: f32, maximum: f32) -> f32 {
     let range = maximum - minimum;
     minimum + (f32::from(midi_value) * range / f32::from(MIDI_VALUE_RANGE))
@@ -20,7 +19,8 @@ pub fn midi_value_to_u8_range(midi_value: u8, mut minimum: u8, mut maximum: u8) 
     }
 
     let target_range = u16::from(maximum - minimum);
-    let output_range_value = u16::from(midi_value.min(MIDI_VALUE_RANGE)) * target_range / u16::from(MIDI_VALUE_RANGE);
+    let output_range_value =
+        u16::from(midi_value.min(MIDI_VALUE_RANGE)) * target_range / u16::from(MIDI_VALUE_RANGE);
     minimum + output_range_value as u8
 }
 
@@ -176,19 +176,31 @@ mod tests {
     fn midi_value_to_f32_range_correctly_maps_edge_values() {
         let value_zero = midi_value_to_f32_range(0, 0.0, 1.0);
         let expected_result = 0.0;
-        assert!(f32s_are_equal(value_zero, expected_result), "Expected: {expected_result} but got {value_zero}");
+        assert!(
+            f32s_are_equal(value_zero, expected_result),
+            "Expected: {expected_result} but got {value_zero}"
+        );
 
         let value_max = midi_value_to_f32_range(127, 0.0, 1.0);
         let expected_result = 1.0;
-        assert!(f32s_are_equal(value_max, 1.0), "Expected: {expected_result} but got {value_max}");
+        assert!(
+            f32s_are_equal(value_max, 1.0),
+            "Expected: {expected_result} but got {value_max}"
+        );
 
         let value_zero_negative_range = midi_value_to_f32_range(0, -1.0, 1.0);
         let expected_result = 1.0;
-        assert!(f32s_are_equal(value_zero_negative_range, -1.0), "Expected: {expected_result} but got {value_zero_negative_range}");
+        assert!(
+            f32s_are_equal(value_zero_negative_range, -1.0),
+            "Expected: {expected_result} but got {value_zero_negative_range}"
+        );
 
         let value_max_negative_range = midi_value_to_f32_range(127, -1.0, 1.0);
         let expected_result = 1.0;
-        assert!(f32s_are_equal(value_max_negative_range, 1.0), "Expected: {expected_result} but got {value_max_negative_range}");
+        assert!(
+            f32s_are_equal(value_max_negative_range, 1.0),
+            "Expected: {expected_result} but got {value_max_negative_range}"
+        );
     }
 
     #[test]
