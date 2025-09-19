@@ -86,7 +86,7 @@ impl Midi {
         self.current_input = input_device_from_port(input_port)?;
 
         if let Some(input) = &self.current_input {
-            self.input_listener = Some(gcreate_midi_input_listener(
+            self.input_listener = Some(create_midi_input_listener(
                 input,
                 self.current_channel.clone(),
                 self.message_sender.clone(),
