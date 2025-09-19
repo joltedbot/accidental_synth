@@ -67,7 +67,7 @@ impl Midi {
             input_listener: None,
             input_ports: HashMap::new(),
             current_note: Arc::default(),
-            current_channel: Arc::new(Mutex::new(Some(7))),
+            current_channel: Arc::new(Mutex::new(None)),
             current_input: None,
         }
     }
