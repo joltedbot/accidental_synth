@@ -50,7 +50,7 @@ pub struct Midi {
     input_listener: Option<MidiInputConnection<()>>,
     input_ports: HashMap<String, String>,
     current_note: Arc<Mutex<Option<u8>>>,
-    current_channel: Option<u8>,
+    current_channel: Arc<Mutex<Option<u8>>>,
     current_input: Option<InputPort>,
 }
 
@@ -67,7 +67,7 @@ impl Midi {
             input_listener: None,
             input_ports: HashMap::new(),
             current_note: Arc::default(),
-            current_channel: None,
+            current_channel: Arc::new(Mutex::new(Some(7))),
             current_input: None,
         }
     }
@@ -85,12 +85,10 @@ impl Midi {
         let input_port = midi_port_from_id(None)?;
         self.current_input = input_device_from_port(input_port)?;
 
-        let current_channel = self.current_channel;
-
         if let Some(input) = &self.current_input {
-            self.input_listener = Some(create_midi_input_listener(
+            self.input_listener = Some(gcreate_midi_input_listener(
                 input,
-                current_channel,
+                self.current_channel.clone(),
                 self.message_sender.clone(),
                 self.current_note.clone(),
             )?);
@@ -103,11 +101,12 @@ impl Midi {
 
         Ok(())
     }
+
 }
 
 fn create_midi_input_listener(
     input_port: &InputPort,
-    current_channel: Option<u8>,
+    current_channel_arc: Arc<Mutex<Option<u8>>>,
     midi_message_sender: Sender<MidiMessage>,
     current_note_arc: Arc<Mutex<Option<u8>>>,
 ) -> Result<MidiInputConnection<()>> {
@@ -118,9 +117,10 @@ fn create_midi_input_listener(
             &input_port.port,
             MIDI_INPUT_CONNECTION_NAME,
             move |_, message, ()| {
+
                 process_midi_message(
                     message,
-                    current_channel,
+                    &current_channel_arc,
                     &midi_message_sender,
                     &current_note_arc,
                 );
@@ -132,14 +132,17 @@ fn create_midi_input_listener(
 
 fn process_midi_message(
     message: &[u8],
-    current_channel: Option<u8>,
+    current_channel_arc: &Arc<Mutex<Option<u8>>>,
     midi_message_sender: &Sender<MidiMessage>,
     current_note_arc: &Arc<Mutex<Option<u8>>>,
 ) {
     let message_channel = channel_from_status_byte(message[MIDI_STATUS_BYTE_INDEX]);
-    if matches!(current_channel, Some(channel) if channel != message_channel) {
+
+    let current_channel = current_channel_arc.lock().unwrap_or_else(PoisonError::into_inner);
+    if matches!(*current_channel, Some(channel) if channel != message_channel) {
         return;
     }
+    drop(current_channel);
 
     if let Some(message) = message_type_from_message_byte(message, current_note_arc) {
         midi_message_sender.send(message).unwrap_or_else(|err| {
