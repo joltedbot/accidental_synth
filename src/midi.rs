@@ -1,24 +1,22 @@
-mod constants;
+pub mod constants;
 pub mod control_change;
+pub mod device_monitor;
+pub mod input_listener;
 
-use anyhow::{Result, anyhow};
-use constants::{
-    DEFAULT_MIDI_PORT_INDEX, DEFAULT_NAME_FOR_UNNAMED_MIDI_PORTS, MIDI_CC_NUMBER_BYTE_INDEX,
-    MIDI_CC_VALUE_BYTE_INDEX, MIDI_CHANNEL_PRESSURE_VALUE_BYTE_INDEX, MIDI_INPUT_CLIENT_NAME,
-    MIDI_INPUT_CONNECTION_NAME, MIDI_MESSAGE_IGNORE_LIST, MIDI_MESSAGE_SENDER_CAPACITY,
-    MIDI_NOTE_NUMBER_BYTE_INDEX, MIDI_PITCH_BEND_LSB_BYTE_INDEX, MIDI_PITCH_BEND_MSB_BYTE_INDEX,
-    MIDI_STATUS_BYTE_INDEX, MIDI_VELOCITY_BYTE_INDEX, PANIC_MESSAGE_MIDI_SENDER_FAILURE,
-    RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET, STATUS_BYTE_CHANNEL_MASK,
-    STATUS_BYTE_MESSAGE_TYPE_MASK,
+use crate::midi::constants::{
+    DEFAULT_MIDI_PORT_INDEX, MIDI_INPUT_CLIENT_NAME, MIDI_MESSAGE_SENDER_CAPACITY,
 };
+use crate::midi::device_monitor::{DeviceUpdate, get_input_port_list, input_device_from_port};
+use crate::midi::input_listener::create_midi_input_listener;
+use anyhow::{Result, anyhow};
 use control_change::CC;
 use crossbeam_channel::{Receiver, Sender};
-use midir::{MidiInput, MidiInputConnection, MidiInputPort};
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex, PoisonError};
+use midir::{MidiInput, MidiInputConnection, MidiInputPort, MidiInputPorts};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
+use std::thread;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-enum MessageType {
+enum Status {
     NoteOff,
     NoteOn,
     PolyphonicKeyPressure,
@@ -30,7 +28,7 @@ enum MessageType {
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub enum MidiMessage {
+pub enum Event {
     NoteOn(u8, u8),
     NoteOff,
     ControlChange(CC),
@@ -39,19 +37,18 @@ pub enum MidiMessage {
 }
 #[derive(PartialEq, Clone)]
 pub struct InputPort {
-    id: String,
-    name: String,
-    port: MidiInputPort,
+    pub name: String,
+    pub port: MidiInputPort,
 }
 
 pub struct Midi {
-    message_sender: Sender<MidiMessage>,
-    message_receiver: Receiver<MidiMessage>,
-    input_listener: Option<MidiInputConnection<()>>,
-    input_ports: HashMap<String, String>,
+    message_sender: Sender<Event>,
+    message_receiver: Receiver<Event>,
+    input_listener: Arc<Mutex<Option<MidiInputConnection<()>>>>,
+    input_ports: Arc<Mutex<Option<Vec<String>>>>,
     current_note: Arc<Mutex<Option<u8>>>,
     current_channel: Arc<Mutex<Option<u8>>>,
-    current_input: Option<InputPort>,
+    current_input: Arc<Mutex<Option<InputPort>>>,
 }
 
 impl Midi {
@@ -64,323 +61,199 @@ impl Midi {
         Self {
             message_sender: midi_message_sender,
             message_receiver: midi_message_receiver,
-            input_listener: None,
-            input_ports: HashMap::new(),
-            current_note: Arc::default(),
+            input_listener: Arc::new(Mutex::new(None)),
+            input_ports: Arc::new(Mutex::new(None)),
+            current_note: Arc::new(Mutex::new(None)),
             current_channel: Arc::new(Mutex::new(None)),
-            current_input: None,
+            current_input: Arc::new(Mutex::new(None)),
         }
     }
 
-    pub fn get_midi_message_receiver(&self) -> Receiver<MidiMessage> {
+    pub fn get_midi_message_receiver(&self) -> Receiver<Event> {
         self.message_receiver.clone()
     }
 
     pub fn run(&mut self) -> Result<()> {
         log::info!("Creating MIDI input connection listener.");
 
-        self.input_ports = midi_input_ports()?;
-        log::debug!("run(): Found MIDI input ports: {:?}", self.input_ports);
+        let mut device_monitor = device_monitor::DeviceMonitor::new();
+        let port_list_receiver = device_monitor.get_port_list_receiver();
 
-        let input_port = midi_port_from_id(None)?;
-        self.current_input = input_device_from_port(input_port)?;
+        self.create_control_listener(port_list_receiver)?;
+        device_monitor.run()?;
 
-        if let Some(input) = &self.current_input {
-            self.input_listener = Some(create_midi_input_listener(
-                input,
-                self.current_channel.clone(),
-                self.message_sender.clone(),
-                self.current_note.clone(),
-            )?);
+        self.create_midi_input_listener();
+
+        Ok(())
+    }
+
+    fn create_midi_input_listener(&mut self) {
+        let current_input_arc = self.current_input.clone();
+
+        let current_input = current_input_arc
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+
+        if let Some(input) = current_input.clone() {
+            self.midi_input_listener(&input);
 
             log::info!(
                 "run(): The MIDI input connection listener has been created for {}.",
                 input.name
             );
         }
+    }
+
+    fn midi_input_listener(&mut self, input: &InputPort) {
+        let mut input_listener = self
+            .input_listener
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+
+        *input_listener = create_midi_input_listener(
+            input,
+            self.current_channel.clone(),
+            self.message_sender.clone(),
+            self.current_note.clone(),
+        );
+    }
+
+    fn create_control_listener(
+        &mut self,
+        port_list_receiver: Receiver<DeviceUpdate>,
+    ) -> Result<()> {
+        let input_port_list_arc = self.input_ports.clone();
+        let current_input_arc = self.current_input.clone();
+        let mut input_listener_arc = self.input_listener.clone();
+        let current_channel_arc = self.current_channel.clone();
+        let message_sender_arc = self.message_sender.clone();
+        let current_note_arc = self.current_note.clone();
+        let midi_input = MidiInput::new(MIDI_INPUT_CLIENT_NAME)?;
+
+        thread::spawn(move || {
+            while let Ok(event) = port_list_receiver.recv() {
+                match event {
+                    DeviceUpdate::InputPortList(new_port_list) => {
+                        let current_port_list = update_current_port_list(
+                            &input_port_list_arc,
+                            &midi_input,
+                            new_port_list,
+                        );
+
+                        let current_input = current_input_arc
+                            .lock()
+                            .unwrap_or_else(PoisonError::into_inner);
+
+                        let new_input_port = update_current_input(
+                            &mut input_listener_arc,
+                            &midi_input,
+                            current_port_list,
+                            current_input,
+                        );
+
+                        if let Some(default_port) = new_input_port {
+                            let mut input_listener = input_listener_arc
+                                .lock()
+                                .unwrap_or_else(PoisonError::into_inner);
+
+                            *input_listener = create_midi_input_listener(
+                                &default_port,
+                                current_channel_arc.clone(),
+                                message_sender_arc.clone(),
+                                current_note_arc.clone(),
+                            );
+                        }
+                    }
+                }
+            }
+        });
 
         Ok(())
     }
-
 }
 
-fn create_midi_input_listener(
-    input_port: &InputPort,
-    current_channel_arc: Arc<Mutex<Option<u8>>>,
-    midi_message_sender: Sender<MidiMessage>,
-    current_note_arc: Arc<Mutex<Option<u8>>>,
-) -> Result<MidiInputConnection<()>> {
-    let midi_input = new_midi_input()?;
-
-    midi_input
-        .connect(
-            &input_port.port,
-            MIDI_INPUT_CONNECTION_NAME,
-            move |_, message, ()| {
-
-                process_midi_message(
-                    message,
-                    &current_channel_arc,
-                    &midi_message_sender,
-                    &current_note_arc,
-                );
-            },
-            (),
-        )
-        .map_err(|err| anyhow!(err))
-}
-
-fn process_midi_message(
-    message: &[u8],
-    current_channel_arc: &Arc<Mutex<Option<u8>>>,
-    midi_message_sender: &Sender<MidiMessage>,
-    current_note_arc: &Arc<Mutex<Option<u8>>>,
-) {
-    let message_channel = channel_from_status_byte(message[MIDI_STATUS_BYTE_INDEX]);
-
-    let current_channel = current_channel_arc.lock().unwrap_or_else(PoisonError::into_inner);
-    if matches!(*current_channel, Some(channel) if channel != message_channel) {
-        return;
-    }
-    drop(current_channel);
-
-    if let Some(message) = message_type_from_message_byte(message, current_note_arc) {
-        midi_message_sender.send(message).unwrap_or_else(|err| {
-            log::error!(
-                "process_midi_message(): FATAL ERROR: midi message sender failure. Exiting. Error: {err}."
-            );
-            panic!("{PANIC_MESSAGE_MIDI_SENDER_FAILURE}");
-        });
-    }
-}
-
-fn message_type_from_message_byte(
-    message: &[u8],
-    current_note_arc: &Arc<Mutex<Option<u8>>>,
-) -> Option<MidiMessage> {
-    match message_type_from_status_byte(message[MIDI_STATUS_BYTE_INDEX]) {
-        MessageType::NoteOn => {
-            let midi_note = message[MIDI_NOTE_NUMBER_BYTE_INDEX];
-            let midi_velocity = message[MIDI_VELOCITY_BYTE_INDEX];
-
-            let mut current_note = current_note_arc
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner);
-            *current_note = Some(midi_note);
-
-            if midi_velocity == 0 {
-                Some(MidiMessage::NoteOff)
-            } else {
-                Some(MidiMessage::NoteOn(midi_note, midi_velocity))
-            }
-        }
-        MessageType::NoteOff => {
-            let midi_note = message[MIDI_NOTE_NUMBER_BYTE_INDEX];
-            let mut current_note = current_note_arc
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner);
-            match *current_note {
-                Some(note) if note == midi_note => {
-                    *current_note = None;
-                    Some(MidiMessage::NoteOff)
-                }
-                _ => None,
-            }
-        }
-        MessageType::ControlChange => {
-            let cc_number = message[MIDI_CC_NUMBER_BYTE_INDEX];
-            let cc_value = message[MIDI_CC_VALUE_BYTE_INDEX];
-            control_change::get_supported_cc_from_cc_number(cc_number, cc_value)
-                .map(MidiMessage::ControlChange)
-        }
-        MessageType::PitchBend => {
-            let amount_most_significant_byte = message[MIDI_PITCH_BEND_MSB_BYTE_INDEX];
-            let amount_least_significant_byte = message[MIDI_PITCH_BEND_LSB_BYTE_INDEX];
-            let pitch_bend_amount = u16::from(amount_most_significant_byte) << 7
-                | u16::from(amount_least_significant_byte);
-            Some(MidiMessage::PitchBend(pitch_bend_amount))
-        }
-        MessageType::ChannelPressure => {
-            let pressure_amount = message[MIDI_CHANNEL_PRESSURE_VALUE_BYTE_INDEX];
-            Some(MidiMessage::ChannelPressure(pressure_amount))
-        }
-        _ => None,
-    }
-}
-
-fn input_device_from_port(input_port: Option<MidiInputPort>) -> Result<Option<InputPort>> {
-    let midi_input = new_midi_input()?;
-
-    if let Some(port) = input_port {
-        let id = port.id();
-        let name = midi_input
-            .port_name(&port)
-            .unwrap_or(DEFAULT_NAME_FOR_UNNAMED_MIDI_PORTS.to_string());
-
-        log::info!("input_device_from_port(): Using MIDI input port {name}");
-
-        Ok(Some(InputPort { id, name, port }))
-    } else {
-        log::warn!(
-            "input_device_from_port(): Could not find a default MIDI input port. Continuing without MIDI input."
-        );
-        Ok(None)
-    }
-}
-
-fn midi_port_from_id(id: Option<String>) -> Result<Option<MidiInputPort>> {
-    let mut midi_input = new_midi_input()?;
-    midi_input.ignore(MIDI_MESSAGE_IGNORE_LIST);
-
-    let input_port = match id {
+fn update_current_input(
+    mut input_listener_arc: &mut Arc<Mutex<Option<MidiInputConnection<()>>>>,
+    midi_input: &MidiInput,
+    current_port_list: Option<Vec<String>>,
+    mut current_input: MutexGuard<Option<InputPort>>,
+) -> Option<InputPort> {
+    let new_input_port = match current_port_list.as_ref() {
         None => {
-            log::info!(
-                "midi_port_from_id(): No id provided, falling back to default MIDI input port.",
+            *current_input = None;
+            close_midi_input_connection(&mut input_listener_arc);
+            log::warn!(
+                "create_midi_control_listener(): Current Midi Input Port List is No Longer Available. Continuing without MIDI input."
             );
-            midi_input.ports().get(DEFAULT_MIDI_PORT_INDEX).cloned()
+            None
         }
-        Some(id) => midi_input.find_port_by_id(id),
+        Some(port_list) => {
+            if let Some(input) = current_input.as_ref()
+                && port_list.contains(&input.name)
+            {
+                return None
+            }
+
+
+
+            let default_input_port_name = port_list[DEFAULT_MIDI_PORT_INDEX].clone();
+
+            let default_input_port =
+                input_port_from_name(&default_input_port_name, &midi_input);
+
+            (*current_input).clone_from(&default_input_port);
+
+            log::debug!(
+                "update_current_input_port(): MIDI port list changed and the current port is no longer available.\
+                 Using the default:{default_input_port_name}"
+            );
+
+            default_input_port
+
+
+        }
     };
 
-    Ok(input_port)
+    new_input_port
 }
 
-fn new_midi_input() -> Result<MidiInput> {
-    match MidiInput::new(MIDI_INPUT_CLIENT_NAME) {
-        Ok(input) => Ok(input),
-        Err(err) => {
-            log::error!("new_midi_input(): Could not create a new MIDI input object.");
-            Err(anyhow!(err))
-        }
-    }
+fn update_current_port_list(
+    input_port_list_arc: &Arc<Mutex<Option<Vec<String>>>>,
+    midi_input: &MidiInput,
+    new_port_list: Option<MidiInputPorts>,
+) -> Option<Vec<String>> {
+    let mut current_port_list = input_port_list_arc
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner);
+
+    *current_port_list = match new_port_list {
+        Some(device_list) => get_input_port_list(&device_list, &midi_input),
+        None => None,
+    };
+    current_port_list.clone()
 }
 
-fn midi_input_ports() -> Result<HashMap<String, String>> {
-    let midi_input = new_midi_input()?;
-    let port_list = midi_input.ports();
-    let mut midi_input_ports: HashMap<String, String> = HashMap::new();
-
-    for port in &port_list {
-        let name = midi_input
-            .port_name(port)
-            .unwrap_or(DEFAULT_NAME_FOR_UNNAMED_MIDI_PORTS.to_string());
-        let id = port.id();
-        midi_input_ports.insert(id.to_string(), name);
-    }
-
-    Ok(midi_input_ports)
+fn close_midi_input_connection(
+    input_listener_arc: &mut Arc<Mutex<Option<MidiInputConnection<()>>>>,
+) {
+    let mut input_listener = input_listener_arc
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner);
+    *input_listener = None;
 }
 
-fn channel_from_status_byte(status: u8) -> u8 {
-    let raw_message_channel = status & STATUS_BYTE_CHANNEL_MASK;
-    raw_message_channel + RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET
-}
+fn input_port_from_name(port_name: &str, midi_input: &MidiInput) -> Option<InputPort> {
+    let port = midi_input
+        .ports()
+        .iter()
+        .find(|port| midi_input.port_name(port).unwrap_or("".to_string()) == port_name.to_string())?
+        .clone();
 
-fn message_type_from_status_byte(status: u8) -> MessageType {
-    let status_type = status & STATUS_BYTE_MESSAGE_TYPE_MASK;
-    match status_type {
-        0x80 => MessageType::NoteOff,
-        0x90 => MessageType::NoteOn,
-        0xA0 => MessageType::PolyphonicKeyPressure,
-        0xB0 => MessageType::ControlChange,
-        0xC0 => MessageType::ProgramChange,
-        0xD0 => MessageType::ChannelPressure,
-        0xE0 => MessageType::PitchBend,
-        _ => MessageType::Unknown,
-    }
+    Some(InputPort {
+        name: port_name.to_string(),
+        port,
+    })
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::midi::control_change::get_supported_cc_from_cc_number;
-    use crossbeam_channel::internal::SelectHandle;
-
-    #[test]
-    fn new_returns_midi_with_correct_default_values() {
-        let midi = Midi::new();
-
-        assert!(midi.input_listener.is_none());
-        assert!(midi.message_sender.is_ready());
-        assert_eq!(
-            midi.message_receiver.capacity(),
-            Some(MIDI_MESSAGE_SENDER_CAPACITY)
-        );
-        assert!(
-            midi.current_note
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .is_none()
-        );
-    }
-
-    #[test]
-    fn message_type_from_status_byte_returns_correct_status_for_note_on_0_channel() {
-        let status_byte = 0x90;
-        let expected_result = MessageType::NoteOn;
-        let result = message_type_from_status_byte(status_byte);
-        assert_eq!(result, expected_result);
-    }
-
-    #[test]
-    fn message_type_from_status_byte_returns_correct_status_for_note_on_with_a_channel() {
-        let status_byte = 0x9A;
-        let expected_result = MessageType::NoteOn;
-        let result = message_type_from_status_byte(status_byte);
-        assert_eq!(result, expected_result);
-    }
-
-    #[test]
-    fn message_type_from_status_byte_returns_correct_status_for_control_change() {
-        let status_byte = 0xB3;
-        let expected_result = MessageType::ControlChange;
-        let result = message_type_from_status_byte(status_byte);
-        assert_eq!(result, expected_result);
-    }
-
-    #[test]
-    fn message_type_from_status_byte_returns_correct_status_for_unknown() {
-        let status_byte = 0x70; // Unknown/invalid status byte
-        let expected_result = MessageType::Unknown;
-        let result = message_type_from_status_byte(status_byte);
-        assert_eq!(result, expected_result);
-    }
-
-    #[test]
-    fn message_type_from_status_byte_correctly_returns_unknown_from_zero_status_byte() {
-        let status_byte = 0x00;
-        let expected_result = MessageType::Unknown;
-        let result = message_type_from_status_byte(status_byte);
-        assert_eq!(result, expected_result);
-    }
-
-    #[test]
-    fn message_type_from_status_byte_correctly_returns_unknown_from_max_status_byte() {
-        let status_byte = 0xFF;
-        let expected_result = MessageType::Unknown;
-        let result = message_type_from_status_byte(status_byte);
-        assert_eq!(result, expected_result);
-    }
-
-    #[test]
-    fn get_supported_cc_returns_some_for_known_ccs() {
-        assert_eq!(
-            get_supported_cc_from_cc_number(1, 64),
-            Some(CC::ModWheel(64))
-        );
-        assert_eq!(
-            get_supported_cc_from_cc_number(74, 100),
-            Some(CC::FilterCutoff(100))
-        );
-        assert_eq!(get_supported_cc_from_cc_number(107, 0), Some(CC::LFO1Reset));
-        assert_eq!(
-            get_supported_cc_from_cc_number(123, 0),
-            Some(CC::AllNotesOff)
-        );
-    }
-
-    #[test]
-    fn get_supported_cc_returns_none_for_out_of_range_cc_number() {
-        assert_eq!(get_supported_cc_from_cc_number(200, 127), None);
-    }
-}
+mod tests {}

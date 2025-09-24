@@ -144,7 +144,6 @@ pub fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

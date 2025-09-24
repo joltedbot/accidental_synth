@@ -1,7 +1,8 @@
 use midir::Ignore;
-
 pub const PANIC_MESSAGE_MIDI_SENDER_FAILURE: &str =
     "Could not send MIDI message to the synthesizer engine.";
+pub const PANIC_MESSAGE_PORT_LIST_SENDER_FAILURE: &str =
+    "Could not send MIDI ports list to the midi engine.";
 pub const MIDI_INPUT_CLIENT_NAME: &str = "Accidental Synth MIDI Input";
 pub const DEFAULT_MIDI_PORT_INDEX: usize = 0;
 pub const MIDI_INPUT_CONNECTION_NAME: &str = "Accidental Synth MIDI Input Connection";
@@ -19,3 +20,4 @@ pub const STATUS_BYTE_MESSAGE_TYPE_MASK: u8 = 0xF0;
 pub const RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET: u8 = 1;
 pub const DEFAULT_NAME_FOR_UNNAMED_MIDI_PORTS: &str = "Name Not Available";
 pub const MIDI_MESSAGE_IGNORE_LIST: Ignore = Ignore::SysexAndTime;
+pub const DEVICE_LIST_POLLING_INTERVAL: u64 = 2000;
