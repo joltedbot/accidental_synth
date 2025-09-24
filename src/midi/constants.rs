@@ -18,6 +18,5 @@ pub const MIDI_MESSAGE_SENDER_CAPACITY: usize = 16;
 pub const STATUS_BYTE_CHANNEL_MASK: u8 = 0x0F;
 pub const STATUS_BYTE_MESSAGE_TYPE_MASK: u8 = 0xF0;
 pub const RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET: u8 = 1;
-pub const DEFAULT_NAME_FOR_UNNAMED_MIDI_PORTS: &str = "Name Not Available";
 pub const MIDI_MESSAGE_IGNORE_LIST: Ignore = Ignore::SysexAndTime;
 pub const DEVICE_LIST_POLLING_INTERVAL: u64 = 2000;

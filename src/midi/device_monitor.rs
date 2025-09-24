@@ -1,12 +1,8 @@
-use crate::midi::InputPort;
-use crate::midi::constants::{
-    DEFAULT_MIDI_PORT_INDEX, DEFAULT_NAME_FOR_UNNAMED_MIDI_PORTS, DEVICE_LIST_POLLING_INTERVAL,
-};
+use crate::midi::constants::DEVICE_LIST_POLLING_INTERVAL;
 use crate::midi::constants::{MIDI_INPUT_CLIENT_NAME, PANIC_MESSAGE_PORT_LIST_SENDER_FAILURE};
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender, unbounded};
-use midir::{MidiInput, MidiInputPort, MidiInputPorts};
-use std::collections::HashMap;
+use midir::{MidiInput, MidiInputPorts};
 use std::thread;
 use std::thread::sleep;
 use std::time::Duration;
@@ -47,10 +43,10 @@ impl DeviceMonitor {
             loop {
                 let new_port_list = midi_input.ports();
                 if current_port_list != new_port_list {
-                    let input_port_list = if !new_port_list.is_empty() {
-                        Some(new_port_list.clone())
-                    } else {
+                    let input_port_list = if new_port_list.is_empty() {
                         None
+                    } else {
+                        Some(new_port_list.clone())
                     };
 
                     ports_list_sender.send(DeviceUpdate::InputPortList(input_port_list)).unwrap_or_else(|err| {
@@ -87,25 +83,7 @@ pub fn get_input_port_list(
     Some(filtered_port_list)
 }
 
-pub fn input_device_from_port(
-    input_port: Option<MidiInputPort>,
-    midi_input: &MidiInput,
-) -> Option<InputPort> {
-    if let Some(port) = input_port {
-        let name = midi_input
-            .port_name(&port)
-            .unwrap_or(DEFAULT_NAME_FOR_UNNAMED_MIDI_PORTS.to_string());
 
-        log::info!("input_device_from_port(): Using MIDI input port {name}");
-
-        Some(InputPort { name, port })
-    } else {
-        log::warn!(
-            "input_device_from_port(): Could not find a default MIDI input port. Continuing without MIDI input."
-        );
-        None
-    }
-}
 
 #[cfg(test)]
 mod tests {}

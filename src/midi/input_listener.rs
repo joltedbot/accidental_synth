@@ -1,4 +1,3 @@
-use crate::midi;
 use crate::midi::constants::{
     MIDI_CC_NUMBER_BYTE_INDEX, MIDI_CC_VALUE_BYTE_INDEX, MIDI_CHANNEL_PRESSURE_VALUE_BYTE_INDEX,
     MIDI_INPUT_CLIENT_NAME, MIDI_INPUT_CONNECTION_NAME, MIDI_MESSAGE_IGNORE_LIST,
@@ -7,13 +6,13 @@ use crate::midi::constants::{
     RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET, STATUS_BYTE_CHANNEL_MASK,
     STATUS_BYTE_MESSAGE_TYPE_MASK,
 };
-use crate::midi::{Event, InputPort, Status, control_change};
+use crate::midi::{Event, Status, control_change};
 use crossbeam_channel::Sender;
-use midir::{MidiInput, MidiInputConnection};
+use midir::{MidiInput, MidiInputConnection, MidiInputPort};
 use std::sync::{Arc, Mutex, PoisonError};
 
 pub fn create_midi_input_listener(
-    input_port: &InputPort,
+    input_port_name: &str,
     current_channel_arc: Arc<Mutex<Option<u8>>>,
     midi_message_sender: Sender<Event>,
     current_note_arc: Arc<Mutex<Option<u8>>>,
@@ -30,8 +29,16 @@ pub fn create_midi_input_listener(
 
     midi_input.ignore(MIDI_MESSAGE_IGNORE_LIST);
 
+
+    let Some(input_port) = input_port_from_port_name(input_port_name, &midi_input) else {
+            log::error!(
+                "create_midi_input_listener(): Could not find MIDI input port{input_port_name}. Continuing without Midi."
+            );
+            return None;
+        };
+
     let connection_result = midi_input.connect(
-        &input_port.port,
+        &input_port,
         MIDI_INPUT_CONNECTION_NAME,
         move |_, message, ()| {
             process_midi_message(
@@ -47,8 +54,7 @@ pub fn create_midi_input_listener(
     match connection_result {
         Ok(connection) => {
             log::info!(
-                "create_midi_control_listener(): The MIDI input connection listener has been created for {}.",
-                input_port.name
+                "create_midi_control_listener(): The MIDI input connection listener has been created for {input_port_name}."
             );
             Some(connection)
         }
@@ -168,7 +174,7 @@ fn channel_from_status_byte(status: u8) -> u8 {
     raw_message_channel + RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET
 }
 
-pub fn message_status_from_status_byte(status: u8) -> Status {
+fn message_status_from_status_byte(status: u8) -> Status {
     let status_type = status & STATUS_BYTE_MESSAGE_TYPE_MASK;
     match status_type {
         0x80 => Status::NoteOff,
@@ -180,6 +186,15 @@ pub fn message_status_from_status_byte(status: u8) -> Status {
         0xE0 => Status::PitchBend,
         _ => Status::Unknown,
     }
+}
+
+pub fn input_port_from_port_name(
+    input_port_name: &str,
+    midi_input: &MidiInput,
+) -> Option<MidiInputPort> {
+
+    midi_input.ports().into_iter().find(|port| midi_input.port_name(port).unwrap_or_default() == input_port_name)
+
 }
 
 #[cfg(test)]
