@@ -68,7 +68,7 @@ fn update_current_port_list_if_changed(
 }
 
 fn update_current_port_if_changed(
-    current_port_list: &Vec<MidiInputPort>,
+    current_port_list: &[MidiInputPort],
     current_input_port: &mut Option<MidiInputPort>,
 ) -> bool {
     match current_input_port {
