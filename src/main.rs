@@ -7,6 +7,7 @@ mod synthesizer;
 use crate::audio::Audio;
 use crate::midi::Midi;
 use crate::synthesizer::Synthesizer;
+use core_foundation::runloop::CFRunLoop;
 
 fn main() {
     env_logger::init();
@@ -32,7 +33,6 @@ fn main() {
 
     // Temporary run loop to keep the application alive until I add the Slint ui loop to replace it
     println!("Will Loop Forever. Press Ctrl-c to Exit");
-    loop {
-        std::thread::sleep(std::time::Duration::from_secs(100));
-    }
+
+    CFRunLoop::run_current();
 }

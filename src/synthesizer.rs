@@ -9,7 +9,7 @@ use self::constants::{
     QUAD_MIX_DEFAULT_BALANCE, QUAD_MIX_DEFAULT_INPUT_LEVEL, QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
 };
 use crate::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
-use crate::midi::MidiMessage;
+use crate::midi::Event;
 use crate::modules::amplifier::amplify_stereo;
 use crate::modules::envelope::{Envelope, EnvelopeParameters};
 use crate::modules::filter::{DEFAULT_KEY_TRACKING_AMOUNT, Filter, FilterParameters};
@@ -183,7 +183,7 @@ impl Synthesizer {
         }
     }
 
-    pub fn run(&mut self, midi_message_receiver: Receiver<MidiMessage>) -> Result<()> {
+    pub fn run(&mut self, midi_message_receiver: Receiver<Event>) -> Result<()> {
         log::info!("Creating the synthesizer audio stream");
         self.output_stream = Some(self.create_synthesizer()?);
         log::debug!("run(): The synthesizer audio stream has been created");
@@ -194,7 +194,7 @@ impl Synthesizer {
         Ok(())
     }
 
-    fn start_midi_event_listener(&mut self, midi_message_receiver: Receiver<MidiMessage>) {
+    fn start_midi_event_listener(&mut self, midi_message_receiver: Receiver<Event>) {
         let mut current_note = self.current_note.clone();
         let mut module_parameters = self.module_parameters.clone();
 
@@ -203,7 +203,7 @@ impl Synthesizer {
 
             while let Ok(event) = midi_message_receiver.recv() {
                 match event {
-                    MidiMessage::NoteOn(midi_note, velocity) => {
+                    Event::NoteOn(midi_note, velocity) => {
                         midi_messages::process_midi_note_on_message(
                             &mut module_parameters,
                             &mut current_note,
@@ -211,23 +211,23 @@ impl Synthesizer {
                             velocity,
                         );
                     }
-                    MidiMessage::NoteOff => {
+                    Event::NoteOff => {
                         midi_messages::process_midi_note_off_message(&mut module_parameters);
                     }
-                    MidiMessage::PitchBend(bend_amount) => {
+                    Event::PitchBend(bend_amount) => {
                         midi_messages::process_midi_pitch_bend_message(
                             &module_parameters.oscillators,
                             module_parameters.keyboard.pitch_bend_range.load(Relaxed),
                             bend_amount,
                         );
                     }
-                    MidiMessage::ChannelPressure(pressure_value) => {
+                    Event::ChannelPressure(pressure_value) => {
                         midi_messages::process_midi_channel_pressure_message(
                             &module_parameters.keyboard,
                             pressure_value,
                         );
                     }
-                    MidiMessage::ControlChange(cc_value) => {
+                    Event::ControlChange(cc_value) => {
                         midi_messages::process_midi_cc_values(
                             cc_value,
                             &mut current_note,
