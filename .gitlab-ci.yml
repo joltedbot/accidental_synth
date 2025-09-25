@@ -1,35 +1,45 @@
-include:
-  - template: Security/SAST.gitlab-ci.yml
-  - template: Security/Secret-Detection.gitlab-ci.yml
-
-stages:
+# You can override the included template(s) by including variable overrides
+# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Secret Detection customization: https://docs.gitlab.com/user/application_security/secret_detection/pipeline/configure
+# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
+# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
+# Note that environment variables can be set in several places
+# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
+:include:
+- :template: Security/SAST.gitlab-ci.yml
+- :template: Security/Secret-Detection.gitlab-ci.yml
+:stages:
 - test
 - security
 - semgrep
 - sonar
-
-
-semgrep:
-  stage: semgrep
-  image: semgrep/semgrep
-  script:
-    - semgrep ci --code
-  variables:
-    SEMGREP_APP_TOKEN: "$SEMGREP_APP_TOKEN"
-
-sonarcloud:
-  stage: sonar
-  image:
-    name: sonarsource/sonar-scanner-cli:latest
-    entrypoint: [""]
-  cache:
-    key: "${CI_JOB_NAME}"
-    paths:
-      - .sonar/cache
-  script:
-    - sonar-scanner -Dsonar.organization="$ORGANIZATION" -Dsonar.projectKey="$PROJECTKEY"
-  variables:
-    SONAR_HOST_URL: "$SONAR_HOST_URL"
-    SONAR_TOKEN: "$SONAR_TOKEN"
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
-    GIT_DEPTH: "0" 
+:semgrep:
+  :stage: semgrep
+  :image: semgrep/semgrep
+  :script:
+  - semgrep ci --code
+  :variables:
+    :SEMGREP_APP_TOKEN: "$SEMGREP_APP_TOKEN"
+:sonarcloud:
+  :stage: sonar
+  :image:
+    :name: sonarsource/sonar-scanner-cli:latest
+    :entrypoint:
+    - ''
+  :cache:
+    :key: "${CI_JOB_NAME}"
+    :paths:
+    - ".sonar/cache"
+  :script:
+  - sonar-scanner -Dsonar.organization="$ORGANIZATION" -Dsonar.projectKey="$PROJECTKEY"
+  :variables:
+    :SONAR_HOST_URL: "$SONAR_HOST_URL"
+    :SONAR_TOKEN: "$SONAR_TOKEN"
+    :SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    :GIT_DEPTH: '0'
+stages:
+- test
+sast:
+  stage: test
+include:
+- template: Security/SAST.gitlab-ci.yml
