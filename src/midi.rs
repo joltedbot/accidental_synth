@@ -3,16 +3,13 @@ pub mod control_change;
 pub mod device_monitor;
 pub mod input_listener;
 
-use crate::midi::constants::{
-    DEFAULT_MIDI_PORT_INDEX, MIDI_INPUT_CLIENT_NAME, MIDI_MESSAGE_SENDER_CAPACITY,
-};
-use crate::midi::device_monitor::{DeviceUpdate, get_input_port_list};
+use crate::midi::constants::MIDI_MESSAGE_SENDER_CAPACITY;
 use crate::midi::input_listener::create_midi_input_listener;
 use anyhow::Result;
 use control_change::CC;
 use crossbeam_channel::{Receiver, Sender};
-use midir::{MidiInput, MidiInputConnection, MidiInputPorts};
-use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
+use midir::{MidiInputConnection, MidiInputPort};
+use std::sync::{Arc, Mutex, PoisonError};
 use std::thread;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -36,15 +33,12 @@ pub enum Event {
     ChannelPressure(u8),
 }
 
-
 pub struct Midi {
     message_sender: Sender<Event>,
     message_receiver: Receiver<Event>,
     input_listener: Arc<Mutex<Option<MidiInputConnection<()>>>>,
-    input_ports: Arc<Mutex<Option<Vec<String>>>>,
     current_note: Arc<Mutex<Option<u8>>>,
     current_channel: Arc<Mutex<Option<u8>>>,
-    current_input_port: Arc<Mutex<Option<String>>>,
 }
 
 impl Midi {
@@ -58,10 +52,8 @@ impl Midi {
             message_sender: midi_message_sender,
             message_receiver: midi_message_receiver,
             input_listener: Arc::new(Mutex::new(None)),
-            input_ports: Arc::new(Mutex::new(None)),
             current_note: Arc::new(Mutex::new(None)),
             current_channel: Arc::new(Mutex::new(None)),
-            current_input_port: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -73,149 +65,42 @@ impl Midi {
         log::info!("Creating MIDI input connection listener.");
 
         let mut device_monitor = device_monitor::DeviceMonitor::new();
-        let port_list_receiver = device_monitor.get_port_list_receiver();
+        let input_port_receiver = device_monitor.get_input_port_receiver();
 
-        self.create_control_listener(port_list_receiver)?;
+        self.create_control_listener(input_port_receiver);
         device_monitor.run()?;
-
-        self.create_midi_input_listener();
 
         Ok(())
     }
 
-    fn create_midi_input_listener(&mut self) {
-        let current_input_arc = self.current_input_port.clone();
-
-        let current_input = current_input_arc
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner);
-
-        if let Some(input) = current_input.clone() {
-            self.midi_input_listener(&input);
-
-            log::info!("run(): The MIDI input connection listener has been created for {input}.");
-        }
-    }
-
-    fn midi_input_listener(&mut self, input: &str) {
-        let mut input_listener = self
-            .input_listener
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner);
-
-        *input_listener = create_midi_input_listener(
-            input,
-            self.current_channel.clone(),
-            self.message_sender.clone(),
-            self.current_note.clone(),
-        );
-    }
-
-    fn create_control_listener(
-        &mut self,
-        port_list_receiver: Receiver<DeviceUpdate>,
-    ) -> Result<()> {
-        let input_port_list_arc = self.input_ports.clone();
-        let current_input_port_arc = self.current_input_port.clone();
+    fn create_control_listener(&mut self, input_port_receiver: Receiver<Option<MidiInputPort>>) {
         let mut input_listener_arc = self.input_listener.clone();
         let current_channel_arc = self.current_channel.clone();
         let message_sender_arc = self.message_sender.clone();
         let current_note_arc = self.current_note.clone();
-        let midi_input = MidiInput::new(MIDI_INPUT_CLIENT_NAME)?;
 
         thread::spawn(move || {
-            while let Ok(event) = port_list_receiver.recv() {
-                match event {
-                    DeviceUpdate::InputPortList(new_port_list) => {
-                        let current_port_list = update_current_port_list(
-                            &input_port_list_arc,
-                            &midi_input,
-                            new_port_list,
-                        );
-
-                        let current_input = current_input_port_arc
+            while let Ok(new_port) = input_port_receiver.recv() {
+                match new_port {
+                    Some(input_port) => {
+                        let mut input_listener = input_listener_arc
                             .lock()
                             .unwrap_or_else(PoisonError::into_inner);
 
-                        let new_input_port = update_current_input(
-                            &mut input_listener_arc,
-                            current_port_list.as_ref(),
-                            current_input,
+                        *input_listener = create_midi_input_listener(
+                            &input_port,
+                            current_channel_arc.clone(),
+                            message_sender_arc.clone(),
+                            current_note_arc.clone(),
                         );
-
-                        if let Some(default_port) = new_input_port {
-                            let mut input_listener = input_listener_arc
-                                .lock()
-                                .unwrap_or_else(PoisonError::into_inner);
-
-                            *input_listener = create_midi_input_listener(
-                                &default_port,
-                                current_channel_arc.clone(),
-                                message_sender_arc.clone(),
-                                current_note_arc.clone(),
-                            );
-                        }
+                    }
+                    None => {
+                        close_midi_input_connection(&mut input_listener_arc);
                     }
                 }
             }
         });
-
-        Ok(())
     }
-}
-
-fn update_current_input(
-    input_listener_arc: &mut Arc<Mutex<Option<MidiInputConnection<()>>>>,
-    current_port_list: Option<&Vec<String>>,
-    mut current_input: MutexGuard<Option<String>>,
-) -> Option<String> {
-    match current_port_list.as_ref() {
-        None => {
-            *current_input = None;
-            close_midi_input_connection(input_listener_arc);
-            log::warn!(
-                "create_midi_control_listener(): Current Midi Input Port List is No Longer Available. Continuing without MIDI input."
-            );
-            None
-        }
-        Some(port_list) => {
-            if let Some(input) = current_input.as_ref()
-                && port_list.contains(input)
-            {
-                return None
-            }
-
-
-
-            let default_input_port_name = port_list[DEFAULT_MIDI_PORT_INDEX].clone();
-
-            log::debug!(
-                "update_current_input_port(): MIDI port list changed and the current port is no longer available.\
-                 Using the default:{default_input_port_name}"
-            );
-
-            *current_input = Some(default_input_port_name.clone());
-
-            Some(default_input_port_name)
-
-        }
-    }
-}
-
-fn update_current_port_list(
-    input_port_list_arc: &Arc<Mutex<Option<Vec<String>>>>,
-    midi_input: &MidiInput,
-    new_port_list: Option<MidiInputPorts>,
-) -> Option<Vec<String>> {
-    let mut current_port_list = input_port_list_arc
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner);
-
-    *current_port_list = match new_port_list {
-        Some(device_list) => get_input_port_list(&device_list, midi_input),
-        None => None,
-    };
-    current_port_list.clone()
 }
 
 fn close_midi_input_connection(
@@ -225,8 +110,8 @@ fn close_midi_input_connection(
         .lock()
         .unwrap_or_else(PoisonError::into_inner);
     *input_listener = None;
+    log::info!("close_midi_input_connection(): MIDI input connection closed.");
 }
-
 
 #[cfg(test)]
 mod tests {}

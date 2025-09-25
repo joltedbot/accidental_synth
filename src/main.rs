@@ -34,6 +34,5 @@ fn main() {
     // Temporary run loop to keep the application alive until I add the Slint ui loop to replace it
     println!("Will Loop Forever. Press Ctrl-c to Exit");
 
-
     CFRunLoop::run_current();
 }

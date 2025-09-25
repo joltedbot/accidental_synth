@@ -12,7 +12,7 @@ use midir::{MidiInput, MidiInputConnection, MidiInputPort};
 use std::sync::{Arc, Mutex, PoisonError};
 
 pub fn create_midi_input_listener(
-    input_port_name: &str,
+    input_port: &MidiInputPort,
     current_channel_arc: Arc<Mutex<Option<u8>>>,
     midi_message_sender: Sender<Event>,
     current_note_arc: Arc<Mutex<Option<u8>>>,
@@ -29,16 +29,8 @@ pub fn create_midi_input_listener(
 
     midi_input.ignore(MIDI_MESSAGE_IGNORE_LIST);
 
-
-    let Some(input_port) = input_port_from_port_name(input_port_name, &midi_input) else {
-            log::error!(
-                "create_midi_input_listener(): Could not find MIDI input port{input_port_name}. Continuing without Midi."
-            );
-            return None;
-        };
-
     let connection_result = midi_input.connect(
-        &input_port,
+        input_port,
         MIDI_INPUT_CONNECTION_NAME,
         move |_, message, ()| {
             process_midi_message(
@@ -54,7 +46,7 @@ pub fn create_midi_input_listener(
     match connection_result {
         Ok(connection) => {
             log::info!(
-                "create_midi_control_listener(): The MIDI input connection listener has been created for {input_port_name}."
+                "create_midi_control_listener(): The MIDI input connection listener has been created."
             );
             Some(connection)
         }
@@ -186,15 +178,6 @@ fn message_status_from_status_byte(status: u8) -> Status {
         0xE0 => Status::PitchBend,
         _ => Status::Unknown,
     }
-}
-
-pub fn input_port_from_port_name(
-    input_port_name: &str,
-    midi_input: &MidiInput,
-) -> Option<MidiInputPort> {
-
-    midi_input.ports().into_iter().find(|port| midi_input.port_name(port).unwrap_or_default() == input_port_name)
-
 }
 
 #[cfg(test)]
