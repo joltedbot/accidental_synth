@@ -2,12 +2,15 @@ include:
   - template: Security/SAST.gitlab-ci.yml
   - template: Security/Secret-Detection.gitlab-ci.yml
 
+
 stages:
 - test
 - security
 - semgrep
 - sonar
 
+sast:
+  stage: test
 
 semgrep:
   stage: semgrep
