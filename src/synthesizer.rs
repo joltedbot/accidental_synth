@@ -8,6 +8,7 @@ use self::constants::{
     DEFAULT_VIBRATO_LFO_DEPTH, DEFAULT_VIBRATO_LFO_RATE, MAX_MIDI_KEY_VELOCITY,
     QUAD_MIX_DEFAULT_BALANCE, QUAD_MIX_DEFAULT_INPUT_LEVEL, QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
 };
+use crate::audio::OutputDevice;
 use crate::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
 use crate::midi::Event;
 use crate::modules::amplifier::amplify_stereo;
@@ -17,8 +18,8 @@ use crate::modules::lfo::{Lfo, LfoParameters};
 use crate::modules::mixer::{MixerInput, output_mix, quad_mix};
 use crate::modules::oscillator::{HardSyncRole, Oscillator, OscillatorParameters, WaveShape};
 use anyhow::Result;
+use cpal::Stream;
 use cpal::traits::DeviceTrait;
-use cpal::{Device, Stream};
 use crossbeam_channel::Receiver;
 use std::default::Default;
 use std::sync::Arc;
@@ -99,14 +100,12 @@ pub struct ModuleParameters {
 
 pub struct Synthesizer {
     sample_rate: u32,
-    audio_output_device: Device,
-    output_stream: Option<Stream>,
     current_note: Arc<CurrentNote>,
     module_parameters: Arc<ModuleParameters>,
 }
 
 impl Synthesizer {
-    pub fn new(audio_output_device: Device, sample_rate: u32) -> Self {
+    pub fn new(sample_rate: u32) -> Self {
         log::info!("Constructing Synthesizer Module");
 
         let velocity = AtomicU32::new(0);
@@ -176,22 +175,79 @@ impl Synthesizer {
 
         Self {
             sample_rate,
-            audio_output_device,
-            output_stream: None,
             current_note: Arc::new(current_note),
             module_parameters: Arc::new(module_parameters),
         }
     }
 
-    pub fn run(&mut self, midi_message_receiver: Receiver<Event>) -> Result<()> {
+    pub fn run(
+        &mut self,
+        midi_message_receiver: Receiver<Event>,
+        output_device_receiver: Receiver<Option<OutputDevice>>,
+    ) {
         log::info!("Creating the synthesizer audio stream");
-        self.output_stream = Some(self.create_synthesizer()?);
+        self.start_audio_device_event_listener(output_device_receiver);
         log::debug!("run(): The synthesizer audio stream has been created");
 
         log::debug!("run(): Start the midi event listener thread");
         self.start_midi_event_listener(midi_message_receiver);
         log::debug!("run(): The midi event listener thread is running");
-        Ok(())
+    }
+
+    fn start_audio_device_event_listener(
+        &mut self,
+        output_device_receiver: Receiver<Option<OutputDevice>>,
+    ) {
+        let device_receiver = output_device_receiver;
+        let sample_rate = self.sample_rate;
+        let current_note = self.current_note.clone();
+        let module_parameters = self.module_parameters.clone();
+
+        thread::spawn(move || {
+            log::debug!(
+                "start_audio_device_event_listener(): spawned thread to receive audio device update events"
+            );
+
+            let mut output_stream = None;
+
+            while let Ok(new_output_device) = device_receiver.recv() {
+                output_stream = match new_output_device {
+                    None => {
+                        if output_stream.is_some() {
+                            log::info!(
+                                "start_audio_device_event_listener(): Audio output device removed. Stopping the\
+                             current audio output stream"
+                            );
+                            drop(output_stream);
+                        }
+
+                        None
+                    }
+                    Some(output_device) => {
+                        let stream = create_synthesizer(
+                            &output_device,
+                            sample_rate,
+                            &current_note,
+                            &module_parameters,
+                        )
+                        .expect(
+                            "start_audio_device_event_listener(): failed to create synthesizer",
+                        );
+
+                        if output_stream.is_some() {
+                            log::info!(
+                                "start_audio_device_event_listener(): Audio output device added. Starting the \
+                            new audio output stream. {}",
+                                output_device.name
+                            );
+                            drop(output_stream);
+                        }
+
+                        Some(stream)
+                    }
+                }
+            }
+        });
     }
 
     fn start_midi_event_listener(&mut self, midi_message_receiver: Receiver<Event>) {
@@ -199,7 +255,7 @@ impl Synthesizer {
         let mut module_parameters = self.module_parameters.clone();
 
         thread::spawn(move || {
-            log::debug!("run(): spawned thread to receive MIDI events");
+            log::debug!("start_midi_event_listener(): spawned thread to receive MIDI events");
 
             while let Ok(event) = midi_message_receiver.recv() {
                 match event {
@@ -240,121 +296,129 @@ impl Synthesizer {
             log::debug!("run(): MIDI event receiver thread has exited");
         });
     }
+}
 
-    fn create_synthesizer(&mut self) -> Result<Stream> {
-        let output_device = self.audio_output_device.clone();
-        let current_note = self.current_note.clone();
-        let module_parameters = self.module_parameters.clone();
+fn create_synthesizer(
+    output_device: &OutputDevice,
+    sample_rate: u32,
+    current_note: &Arc<CurrentNote>,
+    module_parameters: &Arc<ModuleParameters>,
+) -> Result<Stream> {
+    let current_note = current_note.clone();
+    let module_parameters = module_parameters.clone();
 
-        log::info!("Initializing the filter module");
-        let mut filter = Filter::new(self.sample_rate);
-        let mut amp_envelope = Envelope::new(self.sample_rate);
-        let mut filter_envelope = Envelope::new(self.sample_rate);
-        let mut filter_lfo = Lfo::new(self.sample_rate);
-        let mut lfo1 = Lfo::new(self.sample_rate);
+    log::info!("Initializing the filter module");
+    let mut filter = Filter::new(sample_rate);
+    let mut amp_envelope = Envelope::new(sample_rate);
+    let mut filter_envelope = Envelope::new(sample_rate);
+    let mut filter_lfo = Lfo::new(sample_rate);
+    let mut lfo1 = Lfo::new(sample_rate);
 
-        let mut oscillators = [
-            Oscillator::new(self.sample_rate, WaveShape::default()),
-            Oscillator::new(self.sample_rate, WaveShape::default()),
-            Oscillator::new(self.sample_rate, WaveShape::default()),
-            Oscillator::new(self.sample_rate, WaveShape::default()),
-        ];
-        oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
+    let mut oscillators = [
+        Oscillator::new(sample_rate, WaveShape::default()),
+        Oscillator::new(sample_rate, WaveShape::default()),
+        Oscillator::new(sample_rate, WaveShape::default()),
+        Oscillator::new(sample_rate, WaveShape::default()),
+    ];
+    oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
 
-        let oscillator_hard_sync_buffer = Arc::new(AtomicBool::new(false));
-        oscillators[OscillatorIndex::One as usize]
-            .set_hard_sync_role(HardSyncRole::Source(oscillator_hard_sync_buffer.clone()));
-        oscillators[OscillatorIndex::Two as usize]
-            .set_hard_sync_role(HardSyncRole::Synced(oscillator_hard_sync_buffer.clone()));
+    let oscillator_hard_sync_buffer = Arc::new(AtomicBool::new(false));
+    oscillators[OscillatorIndex::One as usize]
+        .set_hard_sync_role(HardSyncRole::Source(oscillator_hard_sync_buffer.clone()));
+    oscillators[OscillatorIndex::Two as usize]
+        .set_hard_sync_role(HardSyncRole::Synced(oscillator_hard_sync_buffer.clone()));
 
-        let default_device_stream_config = output_device.default_output_config()?.config();
-        let sample_rate = default_device_stream_config.sample_rate.0;
-        let number_of_channels = default_device_stream_config.channels as usize;
+    let default_device_stream_config = output_device.device.default_output_config()?.config();
+    let number_of_channels = output_device.channels.total;
+    let left_channel_index = output_device.channels.left;
+    let right_channel_index = output_device.channels.right;
 
-        log::info!(
-            "Creating the synthesizer audio output stream for the device {} with {} channels at sample rate: {}",
-            output_device.name().unwrap_or("Unknown".to_string()),
-            number_of_channels,
-            sample_rate
-        );
+    log::info!(
+        "Creating the synthesizer audio output stream for the device {} with {} channels at sample rate: {}",
+        output_device.name,
+        number_of_channels,
+        sample_rate
+    );
 
-        let stream = output_device.build_output_stream(
-            &default_device_stream_config,
-            move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                // Process the module parameters per buffer
-                amp_envelope.set_parameters(&module_parameters.amp_envelope);
-                filter_envelope.set_parameters(&module_parameters.filter_envelope);
-                filter_lfo.set_parameters(&module_parameters.filter_lfo);
-                filter.set_parameters(&module_parameters.filter);
-                lfo1.set_parameters(&module_parameters.lfo1);
+    let stream = output_device.device.build_output_stream(
+        &default_device_stream_config,
+        move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
+            // Process the module parameters per buffer
+            amp_envelope.set_parameters(&module_parameters.amp_envelope);
+            filter_envelope.set_parameters(&module_parameters.filter_envelope);
+            filter_lfo.set_parameters(&module_parameters.filter_lfo);
+            filter.set_parameters(&module_parameters.filter);
+            lfo1.set_parameters(&module_parameters.lfo1);
 
-                for (index, oscillator) in oscillators.iter_mut().enumerate() {
-                    oscillator.set_parameters(&module_parameters.oscillators[index]);
-                    oscillator.tune(current_note.midi_note.load(Relaxed));
+            for (index, oscillator) in oscillators.iter_mut().enumerate() {
+                oscillator.set_parameters(&module_parameters.oscillators[index]);
+                oscillator.tune(current_note.midi_note.load(Relaxed));
+            }
+
+            // Begin processing the audio buffer
+            let mut quad_mixer_inputs: [MixerInput; 4] =
+                create_quad_mixer_inputs(&module_parameters);
+
+            let vibrato_amount =
+                load_f32_from_atomic_u32(&module_parameters.keyboard.mod_wheel_amount);
+            lfo1.set_range(vibrato_amount / 4.0);
+
+            // Split the buffer into frames
+            for frame in buffer.chunks_mut(number_of_channels as usize) {
+                // Begin generating and processing the samples for the frame
+                let vibrato_value = lfo1.generate(None);
+                for (index, input) in quad_mixer_inputs.iter_mut().enumerate() {
+                    input.sample = oscillators[index].generate(Some(vibrato_value));
                 }
 
-                // Begin processing the audio buffer
-                let mut quad_mixer_inputs: [MixerInput; 4] =
-                    create_quad_mixer_inputs(&module_parameters);
+                // Any per-oscillator processing should happen before this stereo mix down
+                let (oscillator_mix_left, oscillator_mix_right) = quad_mix(quad_mixer_inputs);
 
-                let vibrato_amount =
-                    load_f32_from_atomic_u32(&module_parameters.keyboard.mod_wheel_amount);
-                lfo1.set_range(vibrato_amount / 4.0);
+                let amp_envelope_value = Some(amp_envelope.generate());
 
-                // Split the buffer into frames
-                for frame in buffer.chunks_mut(number_of_channels) {
-                    // Begin generating and processing the samples for the frame
-                    let vibrato_value = lfo1.generate(None);
-                    for (index, input) in quad_mixer_inputs.iter_mut().enumerate() {
-                        input.sample = oscillators[index].generate(Some(vibrato_value));
-                    }
+                let (left_envelope_sample, right_envelope_sample) = amplify_stereo(
+                    oscillator_mix_left,
+                    oscillator_mix_right,
+                    Some(load_f32_from_atomic_u32(&current_note.velocity)),
+                    amp_envelope_value,
+                );
 
-                    // Any per-oscillator processing should happen before this stereo mix down
-                    let (oscillator_mix_left, oscillator_mix_right) = quad_mix(quad_mixer_inputs);
+                let filter_envelope_value = filter_envelope.generate();
+                let filter_lfo_value = filter_lfo.generate(None);
+                let filter_modulation = filter_envelope_value + filter_lfo_value;
 
-                    let amp_envelope_value = Some(amp_envelope.generate());
+                let (filtered_left, filtered_right) = filter.process(
+                    left_envelope_sample,
+                    right_envelope_sample,
+                    Some(filter_modulation),
+                );
 
-                    let (left_envelope_sample, right_envelope_sample) = amplify_stereo(
-                        oscillator_mix_left,
-                        oscillator_mix_right,
-                        Some(load_f32_from_atomic_u32(&current_note.velocity)),
-                        amp_envelope_value,
-                    );
+                // Final output level control
+                let output_level = load_f32_from_atomic_u32(&module_parameters.mixer.output_level);
+                let output_balance =
+                    load_f32_from_atomic_u32(&module_parameters.mixer.output_balance);
 
-                    let filter_envelope_value = filter_envelope.generate();
-                    let filter_lfo_value = filter_lfo.generate(None);
-                    let filter_modulation = filter_envelope_value + filter_lfo_value;
+                let (output_left, output_right) =
+                    output_mix(filtered_left, filtered_right, output_level, output_balance);
 
-                    let (filtered_left, filtered_right) = filter.process(
-                        left_envelope_sample,
-                        right_envelope_sample,
-                        Some(filter_modulation),
-                    );
+                // Hand back the processed samples to the frame to be sent to the audio device
+                frame[left_channel_index] = output_left;
 
-                    // Final output level control
-                    let output_level =
-                        load_f32_from_atomic_u32(&module_parameters.mixer.output_level);
-                    let output_balance =
-                        load_f32_from_atomic_u32(&module_parameters.mixer.output_balance);
-
-                    let (output_left, output_right) =
-                        output_mix(filtered_left, filtered_right, output_level, output_balance);
-
-                    // Hand back the processed samples to the frame to be sent to the audio device
-                    frame[0] = output_left;
-                    frame[1] = output_right;
+                // For mono devices just drop the right sample
+                if let Some(index) = right_channel_index {
+                    frame[index] = output_right;
                 }
-            },
-            |err| {
-                log::error!("create_synthesizer(): Error in audio output stream: {err}");
-            },
-            None,
-        )?;
+            }
+        },
+        |err| {
+            log::error!("create_synthesizer(): Error in audio output stream: {err}");
+        },
+        None,
+    )?;
 
-        log::info!("Synthesizer audio output stream was successfully created.");
+    log::info!("Synthesizer audio output stream was successfully created.");
 
-        Ok(stream)
-    }
+    Ok(stream)
 }
 
 fn create_quad_mixer_inputs(module_parameters: &Arc<ModuleParameters>) -> [MixerInput; 4] {

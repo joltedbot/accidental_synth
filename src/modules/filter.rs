@@ -62,7 +62,7 @@ pub struct Filter {
 
 impl Filter {
     pub fn new(sample_rate: u32) -> Self {
-        log::info!("Constructing Filter Module");
+        log::debug!("Constructing Filter Module");
 
         let max_frequency =
             (sample_rate as f32 * MAX_FILTER_PERCENT_OF_NYQUIST).min(MAXIMUM_FILTER_CUTOFF);

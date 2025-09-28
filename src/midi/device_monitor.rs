@@ -61,7 +61,7 @@ fn update_current_port_list_if_changed(
     let new_port_list: Vec<MidiInputPort> = midi_input.ports();
     if *current_port_list != new_port_list {
         *current_port_list = new_port_list;
-        log::info!("run(): Midi Input Port List Changed. Updating Current Port List.");
+        log::info!("Midi Input Port List Changed. Updating Current Port List.");
         return true;
     }
     false
@@ -78,7 +78,7 @@ fn update_current_port_if_changed(
             } else {
                 let default_port = current_port_list[DEFAULT_MIDI_PORT_INDEX].clone();
                 log::info!(
-                    "run(): Midi Input Port Changed. Using Default Port: {}.",
+                    "Midi Input Port Changed. Using Default Port: {}.",
                     get_input_port_name(&default_port)
                 );
                 *current_input_port = Some(default_port);
@@ -94,7 +94,7 @@ fn update_current_port_if_changed(
             } else {
                 let default_port = current_port_list[DEFAULT_MIDI_PORT_INDEX].clone();
                 log::info!(
-                    "run(): Midi Input Port Changed. Using Default Port: {}.",
+                    "Midi Input Port Changed. Using Default Port: {}.",
                     get_input_port_name(&default_port)
                 );
                 *current_input_port = Some(default_port);

@@ -145,7 +145,7 @@ pub struct Oscillator {
 
 impl Oscillator {
     pub fn new(sample_rate: u32, wave_shape: WaveShape) -> Self {
-        log::info!("Constructing Oscillator Module");
+        log::debug!("Constructing Oscillator Module: {wave_shape:?}");
         let wave_generator = get_wave_generator_from_wave_shape(sample_rate, wave_shape);
 
         let portamento = Portamento {

@@ -49,6 +49,7 @@ pub struct Lfo {
 
 impl Lfo {
     pub fn new(sample_rate: u32) -> Self {
+        log::debug!("Constructing LFO Module");
         let oscillator = Oscillator::new(sample_rate, WaveShape::Sine);
         Self {
             oscillator,

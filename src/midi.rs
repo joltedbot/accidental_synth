@@ -62,11 +62,11 @@ impl Midi {
     }
 
     pub fn run(&mut self) -> Result<()> {
-        log::info!("Creating MIDI input connection listener.");
-
+        log::info!("Creating MIDI input port monitor.");
         let mut device_monitor = device_monitor::DeviceMonitor::new();
         let input_port_receiver = device_monitor.get_input_port_receiver();
 
+        log::info!("Creating MIDI input connection listener.");
         self.create_control_listener(input_port_receiver);
         device_monitor.run()?;
 

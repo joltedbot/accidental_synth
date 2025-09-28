@@ -75,7 +75,7 @@ pub struct Envelope {
 
 impl Envelope {
     pub fn new(sample_rate: u32) -> Self {
-        log::info!("Constructing Envelope Module");
+        log::debug!("Constructing Envelope Module");
 
         let milliseconds_per_sample = 1000.0 / sample_rate as f32;
 
