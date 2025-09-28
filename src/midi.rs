@@ -62,12 +62,14 @@ impl Midi {
     }
 
     pub fn run(&mut self) -> Result<()> {
-        log::info!("Creating MIDI input port monitor.");
+        log::debug!("Creating MIDI input port monitor.");
         let mut device_monitor = device_monitor::DeviceMonitor::new();
-        let input_port_receiver = device_monitor.get_input_port_receiver();
 
-        log::info!("Creating MIDI input connection listener.");
+        log::debug!("Creating MIDI input connection listener.");
+        let input_port_receiver = device_monitor.get_input_port_receiver();
         self.create_control_listener(input_port_receiver);
+
+        log::debug!("run(): Running the midi device monitor");
         device_monitor.run()?;
 
         Ok(())
@@ -80,6 +82,8 @@ impl Midi {
         let current_note_arc = self.current_note.clone();
 
         thread::spawn(move || {
+            log::debug!("create_control_listener(): Midi control listener thread running");
+
             while let Ok(new_port) = input_port_receiver.recv() {
                 match new_port {
                     Some(input_port) => {
@@ -112,6 +116,3 @@ fn close_midi_input_connection(
     *input_listener = None;
     log::info!("close_midi_input_connection(): MIDI input connection closed.");
 }
-
-#[cfg(test)]
-mod tests {}

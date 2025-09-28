@@ -1,18 +1,18 @@
-use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering::Relaxed;
-use cpal::Stream;
-use cpal::traits::DeviceTrait;
 use crate::audio::OutputDevice;
 use crate::math::load_f32_from_atomic_u32;
 use crate::modules::amplifier::amplify_stereo;
 use crate::modules::envelope::Envelope;
 use crate::modules::filter::Filter;
 use crate::modules::lfo::Lfo;
-use crate::modules::mixer::{output_mix, quad_mix, MixerInput};
+use crate::modules::mixer::{MixerInput, output_mix, quad_mix};
 use crate::modules::oscillator::{HardSyncRole, Oscillator, WaveShape};
 use crate::synthesizer;
 use crate::synthesizer::{CurrentNote, ModuleParameters, OscillatorIndex};
+use cpal::Stream;
+use cpal::traits::DeviceTrait;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering::Relaxed;
 
 pub fn create_synthesizer(
     output_device: &OutputDevice,

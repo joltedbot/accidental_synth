@@ -1,7 +1,7 @@
 mod constants;
+mod create_synthesizer;
 mod midi_messages;
 mod midi_value_converters;
-mod create_synthesizer;
 
 use self::constants::{
     DEFAULT_FILTER_ENVELOPE_AMOUNT, DEFAULT_OUTPUT_BALANCE, DEFAULT_OUTPUT_LEVEL,
@@ -12,26 +12,26 @@ use self::constants::{
 use crate::audio::OutputDevice;
 use crate::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
 use crate::midi::Event;
-use crate::modules::envelope::{EnvelopeParameters};
-use crate::modules::filter::{FilterParameters, DEFAULT_KEY_TRACKING_AMOUNT};
-use crate::modules::lfo::{LfoParameters};
-use crate::modules::mixer::{MixerInput};
+use crate::modules::envelope::EnvelopeParameters;
+use crate::modules::filter::{DEFAULT_KEY_TRACKING_AMOUNT, FilterParameters};
+use crate::modules::lfo::LfoParameters;
+use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
+use crate::synthesizer::create_synthesizer::create_synthesizer;
 use crossbeam_channel::Receiver;
 use std::default::Default;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU8};
+use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::thread;
-use crate::synthesizer::create_synthesizer::create_synthesizer;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy)]
 enum MidiNoteEvent {
     NoteOn = 1,
     NoteOff = 2,
 }
 
-#[derive(Default, Debug, Clone, Copy, PartialEq)]
+#[derive(Default, Debug, Clone, Copy)]
 enum MidiGateEvent {
     #[default]
     Wait = 0,
@@ -39,7 +39,7 @@ enum MidiGateEvent {
     GateOff = 2,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy)]
 pub enum OscillatorIndex {
     Sub = 0,
     One = 1,
@@ -185,11 +185,9 @@ impl Synthesizer {
     ) {
         log::info!("Creating the synthesizer audio stream");
         self.start_audio_device_event_listener(output_device_receiver);
-        log::debug!("run(): The synthesizer audio stream has been created");
 
         log::debug!("run(): Start the midi event listener thread");
         self.start_midi_event_listener(midi_message_receiver);
-        log::debug!("run(): The midi event listener thread is running");
     }
 
     fn start_audio_device_event_listener(
