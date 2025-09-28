@@ -1,6 +1,6 @@
 use anyhow::{Result, anyhow};
 use cpal::traits::{DeviceTrait, HostTrait};
-use cpal::{Device, Host, default_host};
+use cpal::{Device, Host, default_host, SampleRate, StreamConfig};
 use crossbeam_channel::{Receiver, Sender, bounded};
 use std::thread;
 use std::thread::sleep;
@@ -144,11 +144,11 @@ fn update_current_output_device(
             } else if current_device_list.contains(&output_device.name) {
                 false
             } else {
-                let default_port = current_device_list[DEFAULT_AUDIO_DEVICE_INDEX].clone();
+                let default_device = current_device_list[DEFAULT_AUDIO_DEVICE_INDEX].clone();
                 log::info!(
-                    "update_current_output_device(): Audio Device List Changed. Using Default Device: {default_port}."
+                    "update_current_output_device(): Audio Device List Changed. Using Default Device: {default_device}."
                 );
-                *current_output_device = output_device_from_name(host, &default_port);
+                *current_output_device = output_device_from_name(host, &default_device);
                 true
             }
         }
@@ -181,6 +181,7 @@ fn output_device_from_name(host: &Host, name: &str) -> Option<OutputDevice> {
         }
     })
 }
+
 
 fn default_channels_from_device(device: &Device) -> Result<Channels> {
     let total_channels = device.default_output_config()?.channels();
