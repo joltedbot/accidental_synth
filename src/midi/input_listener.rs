@@ -1,12 +1,13 @@
 use crate::midi::constants::{
-    MIDI_CC_NUMBER_BYTE_INDEX, MIDI_CC_VALUE_BYTE_INDEX, MIDI_CHANNEL_PRESSURE_VALUE_BYTE_INDEX,
-    MIDI_INPUT_CLIENT_NAME, MIDI_INPUT_CONNECTION_NAME, MIDI_MESSAGE_IGNORE_LIST,
-    MIDI_NOTE_NUMBER_BYTE_INDEX, MIDI_PITCH_BEND_LSB_BYTE_INDEX, MIDI_PITCH_BEND_MSB_BYTE_INDEX,
-    MIDI_STATUS_BYTE_INDEX, MIDI_VELOCITY_BYTE_INDEX, PANIC_MESSAGE_MIDI_SENDER_FAILURE,
-    RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET, STATUS_BYTE_CHANNEL_MASK,
-    STATUS_BYTE_MESSAGE_TYPE_MASK,
+    CC_MESSAGE_NUMBER_BYTE_INDEX, CC_MESSAGE_VALUE_BYTE_INDEX, CHANNEL_PRESSURE_VALUE_BYTE_INDEX,
+    MESSAGE_STATUS_BYTE_CHANNEL_MASK, MESSAGE_STATUS_BYTE_INDEX, MESSAGE_STATUS_BYTE_TYPE_MASK,
+    MESSAGE_TYPE_IGNORE_LIST, MIDI_INPUT_CLIENT_NAME, MIDI_INPUT_CONNECTION_NAME,
+    NOTE_MESSAGE_NUMBER_BYTE_INDEX, NOTE_MESSAGE_VELOCITY_BYTE_INDEX,
+    PANIC_MESSAGE_MIDI_SENDER_FAILURE, PITCH_BEND_MESSAGE_LSB_BYTE_INDEX,
+    PITCH_BEND_MESSAGE_MSB_BYTE_INDEX, RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET,
 };
 use crate::midi::{Event, Status, control_change};
+use anyhow::Result;
 use crossbeam_channel::Sender;
 use midir::{MidiInput, MidiInputConnection, MidiInputPort};
 use std::sync::{Arc, Mutex, PoisonError};
@@ -16,18 +17,9 @@ pub fn create_midi_input_listener(
     current_channel_arc: Arc<Mutex<Option<u8>>>,
     midi_message_sender: Sender<Event>,
     current_note_arc: Arc<Mutex<Option<u8>>>,
-) -> Option<MidiInputConnection<()>> {
-    let mut midi_input = match MidiInput::new(MIDI_INPUT_CLIENT_NAME) {
-        Ok(midi_input) => midi_input,
-        Err(err) => {
-            log::error!(
-                "create_midi_input_listener(): Could not create MIDI input. Returning None.  Error: {err}."
-            );
-            return None;
-        }
-    };
-
-    midi_input.ignore(MIDI_MESSAGE_IGNORE_LIST);
+) -> Result<MidiInputConnection<()>> {
+    let mut midi_input = MidiInput::new(MIDI_INPUT_CLIENT_NAME)?;
+    midi_input.ignore(MESSAGE_TYPE_IGNORE_LIST);
 
     let connection_result = midi_input.connect(
         input_port,
@@ -41,22 +33,9 @@ pub fn create_midi_input_listener(
             );
         },
         (),
-    );
+    )?;
 
-    match connection_result {
-        Ok(connection) => {
-            log::info!(
-                "create_midi_control_listener(): The MIDI input connection listener has been created."
-            );
-            Some(connection)
-        }
-        Err(err) => {
-            log::error!(
-                "create_midi_input_listener(): Could not connect to MIDI input port. Returning None.  Error: {err}."
-            );
-            None
-        }
-    }
+    Ok(connection_result)
 }
 
 fn process_midi_message(
@@ -83,7 +62,7 @@ fn message_channel_matches_current_channel(
     message: &[u8],
     current_channel_arc: &Arc<Mutex<Option<u8>>>,
 ) -> bool {
-    let message_channel = channel_from_status_byte(message[MIDI_STATUS_BYTE_INDEX]);
+    let message_channel = channel_from_status_byte(message[MESSAGE_STATUS_BYTE_INDEX]);
     let current_channel = current_channel_arc
         .lock()
         .unwrap_or_else(PoisonError::into_inner);
@@ -105,69 +84,83 @@ fn event_from_message_status(
     message: &[u8],
     current_note_arc: &Arc<Mutex<Option<u8>>>,
 ) -> Option<Event> {
-    match message_status_from_status_byte(message[MIDI_STATUS_BYTE_INDEX]) {
-        Status::NoteOn => {
-            let midi_note = message[MIDI_NOTE_NUMBER_BYTE_INDEX];
-            let midi_velocity = message[MIDI_VELOCITY_BYTE_INDEX];
+    match message_status_from_status_byte(message[MESSAGE_STATUS_BYTE_INDEX]) {
+        Status::NoteOn => process_note_on_message(message, current_note_arc),
+        Status::NoteOff => process_note_off_message(message, current_note_arc),
+        Status::ControlChange => process_cc_message(message),
+        Status::PitchBend => Some(process_pitch_bend_message(message)),
+        Status::ChannelPressure => Some(process_channel_pressure_message(message)),
+        _ => None,
+    }
+}
 
-            let mut current_note = current_note_arc
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner);
+fn process_channel_pressure_message(message: &[u8]) -> Event {
+    let pressure_amount = message[CHANNEL_PRESSURE_VALUE_BYTE_INDEX];
+    Event::ChannelPressure(pressure_amount)
+}
 
-            if midi_velocity == 0 {
-                match *current_note {
-                    Some(note) if note == midi_note => {
-                        *current_note = None;
-                        Some(Event::NoteOff)
-                    }
-                    _ => None,
-                }
-            } else {
-                *current_note = Some(midi_note);
-                Some(Event::NoteOn(midi_note, midi_velocity))
-            }
-        }
-        Status::NoteOff => {
-            let midi_note = message[MIDI_NOTE_NUMBER_BYTE_INDEX];
-            let mut current_note = current_note_arc
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner);
-            match *current_note {
-                Some(note) if note == midi_note => {
-                    *current_note = None;
-                    Some(Event::NoteOff)
-                }
-                _ => None,
-            }
-        }
-        Status::ControlChange => {
-            let cc_number = message[MIDI_CC_NUMBER_BYTE_INDEX];
-            let cc_value = message[MIDI_CC_VALUE_BYTE_INDEX];
-            control_change::get_supported_cc_from_cc_number(cc_number, cc_value)
-                .map(Event::ControlChange)
-        }
-        Status::PitchBend => {
-            let amount_most_significant_byte = message[MIDI_PITCH_BEND_MSB_BYTE_INDEX];
-            let amount_least_significant_byte = message[MIDI_PITCH_BEND_LSB_BYTE_INDEX];
-            let pitch_bend_amount = u16::from(amount_most_significant_byte) << 7
-                | u16::from(amount_least_significant_byte);
-            Some(Event::PitchBend(pitch_bend_amount))
-        }
-        Status::ChannelPressure => {
-            let pressure_amount = message[MIDI_CHANNEL_PRESSURE_VALUE_BYTE_INDEX];
-            Some(Event::ChannelPressure(pressure_amount))
+fn process_pitch_bend_message(message: &[u8]) -> Event {
+    let amount_most_significant_byte = message[PITCH_BEND_MESSAGE_MSB_BYTE_INDEX];
+    let amount_least_significant_byte = message[PITCH_BEND_MESSAGE_LSB_BYTE_INDEX];
+    let pitch_bend_amount =
+        u16::from(amount_most_significant_byte) << 7 | u16::from(amount_least_significant_byte);
+    Event::PitchBend(pitch_bend_amount)
+}
+
+fn process_cc_message(message: &[u8]) -> Option<Event> {
+    let cc_number = message[CC_MESSAGE_NUMBER_BYTE_INDEX];
+    let cc_value = message[CC_MESSAGE_VALUE_BYTE_INDEX];
+    control_change::get_supported_cc_from_cc_number(cc_number, cc_value).map(Event::ControlChange)
+}
+
+fn process_note_off_message(
+    message: &[u8],
+    current_note_arc: &Arc<Mutex<Option<u8>>>,
+) -> Option<Event> {
+    let midi_note = message[NOTE_MESSAGE_NUMBER_BYTE_INDEX];
+    let mut current_note = current_note_arc
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner);
+    match *current_note {
+        Some(note) if note == midi_note => {
+            *current_note = None;
+            Some(Event::NoteOff)
         }
         _ => None,
     }
 }
 
+fn process_note_on_message(
+    message: &[u8],
+    current_note_arc: &Arc<Mutex<Option<u8>>>,
+) -> Option<Event> {
+    let midi_note = message[NOTE_MESSAGE_NUMBER_BYTE_INDEX];
+    let midi_velocity = message[NOTE_MESSAGE_VELOCITY_BYTE_INDEX];
+
+    let mut current_note = current_note_arc
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner);
+
+    if midi_velocity > 0 {
+        *current_note = Some(midi_note);
+        return Some(Event::NoteOn(midi_note, midi_velocity));
+    }
+
+    if matches!(*current_note, Some(note) if note == midi_note) {
+        *current_note = None;
+        return Some(Event::NoteOff);
+    }
+
+    None
+}
+
 fn channel_from_status_byte(status: u8) -> u8 {
-    let raw_message_channel = status & STATUS_BYTE_CHANNEL_MASK;
+    let raw_message_channel = status & MESSAGE_STATUS_BYTE_CHANNEL_MASK;
     raw_message_channel + RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET
 }
 
 fn message_status_from_status_byte(status: u8) -> Status {
-    let status_type = status & STATUS_BYTE_MESSAGE_TYPE_MASK;
+    let status_type = status & MESSAGE_STATUS_BYTE_TYPE_MASK;
     match status_type {
         0x80 => Status::NoteOff,
         0x90 => Status::NoteOn,

@@ -87,16 +87,18 @@ impl Midi {
             while let Ok(new_port) = input_port_receiver.recv() {
                 match new_port {
                     Some(input_port) => {
-                        let mut input_listener = input_listener_arc
-                            .lock()
-                            .unwrap_or_else(PoisonError::into_inner);
-
-                        *input_listener = create_midi_input_listener(
+                        let new_input_listener = create_midi_input_listener(
                             &input_port,
                             current_channel_arc.clone(),
                             message_sender_arc.clone(),
                             current_note_arc.clone(),
-                        );
+                        ).expect("create_control_listener(): FATAL ERROR: midi input connection creation failure. Exiting. Error: {err}.");
+
+                        let mut input_listener = input_listener_arc
+                            .lock()
+                            .unwrap_or_else(PoisonError::into_inner);
+
+                        *input_listener = Some(new_input_listener);
                     }
                     None => {
                         close_midi_input_connection(&mut input_listener_arc);

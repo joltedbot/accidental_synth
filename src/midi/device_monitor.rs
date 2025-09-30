@@ -42,8 +42,9 @@ impl DeviceMonitor {
                 if is_changed
                     && update_current_port_if_changed(&current_port_list, &mut current_port)
                 {
-                    input_port_sender.send(current_port.clone()).expect("Midi Device \
-                    Monitor run(): Could not send device update to the input port sender. Exiting. ");
+                    input_port_sender.send(current_port.clone()).expect(
+                        "run(): Could not send device update to the input port sender. Exiting. ",
+                    );
                 }
 
                 sleep(Duration::from_millis(DEVICE_LIST_POLLING_INTERVAL));
@@ -59,11 +60,13 @@ fn update_current_port_list_if_changed(
     current_port_list: &mut Vec<MidiInputPort>,
 ) -> bool {
     let new_port_list: Vec<MidiInputPort> = midi_input.ports();
+
     if *current_port_list != new_port_list {
         *current_port_list = new_port_list;
         log::info!("Midi Input Port List Changed. Updating Current Port List.");
         return true;
     }
+
     false
 }
 
@@ -71,36 +74,26 @@ fn update_current_port_if_changed(
     current_port_list: &[MidiInputPort],
     current_input_port: &mut Option<MidiInputPort>,
 ) -> bool {
-    match current_input_port {
-        None => {
-            if current_port_list.is_empty() {
-                false
-            } else {
-                let default_port = current_port_list[DEFAULT_MIDI_PORT_INDEX].clone();
-                log::info!(
-                    "Midi Input Port Changed. Using Default Port: {}.",
-                    get_input_port_name(&default_port)
-                );
-                *current_input_port = Some(default_port);
-                true
-            }
-        }
-        Some(input_port) => {
-            if current_port_list.is_empty() {
-                *current_input_port = None;
-                true
-            } else if current_port_list.contains(input_port) {
-                false
-            } else {
-                let default_port = current_port_list[DEFAULT_MIDI_PORT_INDEX].clone();
-                log::info!(
-                    "Midi Input Port Changed. Using Default Port: {}.",
-                    get_input_port_name(&default_port)
-                );
-                *current_input_port = Some(default_port);
-                true
-            }
-        }
+    if current_port_list.is_empty() {
+        return if current_input_port.is_none() {
+            false
+        } else {
+            *current_input_port = None;
+            true
+        };
+    }
+
+    if matches!(current_input_port,Some(input_port) if current_port_list.contains(input_port)) {
+        false
+    } else {
+        let default_port = current_port_list[DEFAULT_MIDI_PORT_INDEX].clone();
+        log::info!(
+            "Midi Input Port Changed. Using Default Port: {}.",
+            get_input_port_name(&default_port)
+        );
+        *current_input_port = Some(default_port);
+
+        true
     }
 }
 
@@ -113,6 +106,3 @@ fn get_input_port_name(input_port: &MidiInputPort) -> String {
         UNKNOWN_MIDI_PORT_NAME_MESSAGE.to_string()
     }
 }
-
-#[cfg(test)]
-mod tests {}

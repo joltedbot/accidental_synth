@@ -22,13 +22,13 @@ fn main() {
     log::debug!("Initialize the midi module");
     let mut midi = Midi::new();
 
-
     let output_device_receiver = audio.get_output_device_receiver();
     let midi_message_receiver = midi.get_midi_message_receiver();
 
     log::debug!("Run the main modules");
     audio.run();
-    midi.run().expect("Could not initialize midi module. Exiting.");
+    midi.run()
+        .expect("Could not initialize midi module. Exiting.");
     synthesizer.run(midi_message_receiver, output_device_receiver);
 
     // Temporary run loop to keep the application alive until I add the ui loop to replace it

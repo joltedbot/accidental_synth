@@ -78,11 +78,13 @@ impl Audio {
         thread::spawn(move || {
             log::debug!("run(): Audio device monitor thread running");
             loop {
-                let is_changed =
-                    update_current_output_device_list(&host, &mut current_output_device_list);
+                let is_changed = update_current_output_device_list_if_changed(
+                    &host,
+                    &mut current_output_device_list,
+                );
 
                 if is_changed
-                    && update_current_output_device(
+                    && update_current_output_device_if_changed(
                         &host,
                         &current_output_device_list,
                         &mut current_output_device,
@@ -98,7 +100,6 @@ impl Audio {
 }
 
 fn default_audio_output_device() -> Result<Device> {
-
     if let Some(device) = default_host().default_output_device() {
         log::debug!(
             "default_audio_output_device(): Using default audio output device: {}",
@@ -113,7 +114,10 @@ fn default_audio_output_device() -> Result<Device> {
     }
 }
 
-fn update_current_output_device_list(host: &Host, current_device_list: &mut Vec<String>) -> bool {
+fn update_current_output_device_list_if_changed(
+    host: &Host,
+    current_device_list: &mut Vec<String>,
+) -> bool {
     let new_device_list = output_audio_device_name_list(host);
 
     if *current_device_list != new_device_list {
@@ -124,42 +128,30 @@ fn update_current_output_device_list(host: &Host, current_device_list: &mut Vec<
     false
 }
 
-fn update_current_output_device(
+fn update_current_output_device_if_changed(
     host: &Host,
     current_device_list: &[String],
     current_output_device: &mut Option<OutputDevice>,
 ) -> bool {
-
     if current_device_list.is_empty() {
         return if current_output_device.is_none() {
             false
         } else {
             *current_output_device = None;
             true
-        }
+        };
     }
 
+    if matches!(current_output_device, Some(output_device) if current_device_list.contains(&output_device.name))
+    {
+        false
+    } else {
+        let default_device = current_device_list[DEFAULT_AUDIO_DEVICE_INDEX].clone();
+        *current_output_device = output_device_from_name(host, &default_device);
 
-    match current_output_device {
-        None => {
-                let default_device = current_device_list[DEFAULT_AUDIO_DEVICE_INDEX].clone();
-                *current_output_device = output_device_from_name(host, &default_device);
+        log::info!("Audio Device List Changed. Using Default Device: {default_device}.");
 
-                log::info!("Audio Device List Changed. Using Default Device: {default_device}.");
-                true
-        }
-        Some(output_device) if current_device_list.contains(&output_device.name) => {
-                false
-        }
-        _ => {
-                let default_device = current_device_list[DEFAULT_AUDIO_DEVICE_INDEX].clone();
-                *current_output_device = output_device_from_name(host, &default_device);
-
-                log::info!(
-                    "update_current_output_device(): Audio Device List Changed. Using Default Device: {default_device}."
-                );
-                true
-        }
+        true
     }
 }
 
