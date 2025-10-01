@@ -27,7 +27,7 @@ use self::sine::Sine;
 use self::square::Square;
 use self::triangle::Triangle;
 use crate::math;
-use crate::math::{f32s_are_equal, load_f32_from_atomic_u32};
+use crate::math::{dbfs_to_f32_sample, f32s_are_equal, load_f32_from_atomic_u32};
 use generate_wave_trait::GenerateWave;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
@@ -88,6 +88,7 @@ pub struct OscillatorParameters {
     pub hard_sync_enabled: AtomicBool,
     pub portamento_is_enabled: AtomicBool,
     pub portamento_speed: AtomicU16,
+    pub clipper_boost: AtomicU8,
 }
 
 impl Default for OscillatorParameters {
@@ -104,6 +105,7 @@ impl Default for OscillatorParameters {
             hard_sync_enabled: AtomicBool::new(false),
             portamento_is_enabled: AtomicBool::new(false),
             portamento_speed: AtomicU16::new(DEFAULT_PORTAMENTO_SPEED_IN_BUFFERS),
+            clipper_boost: AtomicU8::new(0),
         }
     }
 }
@@ -138,6 +140,7 @@ pub struct Oscillator {
     wave_generator: Box<dyn GenerateWave + Send + Sync>,
     wave_shape_index: u8,
     key_sync_enabled: bool,
+    clipper_boost: u8,
     tuning: Tuning,
     hard_sync: HardSync,
     portamento: Portamento,
@@ -178,6 +181,7 @@ impl Oscillator {
             tuning,
             hard_sync,
             portamento,
+            clipper_boost: 0,
         }
     }
 
@@ -195,6 +199,7 @@ impl Oscillator {
             parameters.portamento_speed.load(Relaxed),
         );
         self.set_gate(&parameters.gate_flag);
+        self.set_clipper_boost(parameters.clipper_boost.load(Relaxed));
     }
 
     pub fn generate(&mut self, mut modulation: Option<f32>) -> f32 {
@@ -202,9 +207,11 @@ impl Oscillator {
             modulation = None;
         }
 
-        let next_sample = self
+        let mut next_sample = self
             .wave_generator
             .next_sample(self.tuning.frequency, modulation);
+
+        next_sample = self.clip_signal(next_sample);
 
         if !self.hard_sync.is_enabled {
             return next_sample;
@@ -267,6 +274,16 @@ impl Oscillator {
 
     pub fn reset(&mut self) {
         self.wave_generator.reset();
+    }
+
+    pub fn clip_signal(&mut self, signal: f32) -> f32 {
+        if self.clipper_boost == 0 {
+            return signal;
+        }
+
+        let boost = dbfs_to_f32_sample(f32::from(self.clipper_boost));
+        let boosted_signal = signal * boost;
+        boosted_signal.clamp(-1.0, 1.0)
     }
 
     pub fn tune(&mut self, mut note_number: u8) {
@@ -375,6 +392,10 @@ impl Oscillator {
 
     fn set_shape_parameter2(&mut self, parameter: f32) {
         self.wave_generator.set_shape_parameter2(parameter);
+    }
+
+    fn set_clipper_boost(&mut self, clipper_boost: u8) {
+        self.clipper_boost = clipper_boost;
     }
 }
 
