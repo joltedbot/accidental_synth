@@ -1,0 +1,60 @@
+import "../../fonts/HackNerdFontMono-Regular.ttf";
+import "../../fonts/HackNerdFontMono-Bold.ttf";
+import { Theme } from "theme.slint";
+import { TabWidget, Slider, VerticalBox, SpinBox } from "std-widgets.slint";
+import { Panel } from "components.slint";
+import { GlobalPanel } from "global-panel.slint";
+import { HeaderPanel } from "header-panel.slint";
+import { OscillatorsPanel } from "oscillator-panel.slint";
+
+
+
+export component AccidentalSynth inherits Window {
+    title: Theme.window-title;
+    icon: Theme.icon;
+    background: transparent;
+    min-width: Theme.window-width;
+    min-height: Theme.window-height;
+    default-font-size: Theme.default-text-size;
+    default-font-family: Theme.default-font-family;
+    default-font-weight: Theme.default-font-weight;
+
+    top-level := Rectangle {
+        background: Theme.window-background;
+        border-width: Theme.window-border-width;
+        border-color: Theme.window-border-colour;
+        border-bottom-left-radius: Theme.window-border-radius;
+        border-bottom-right-radius: Theme.window-border-radius;
+
+        VerticalLayout {
+            padding: 0px;
+            spacing: 0px;
+
+            header-panel := HeaderPanel {
+                width: Theme.window-width;
+            }
+
+            tab-bar := TabWidget {
+                Tab {
+                    title: Theme.tab-title-oscillators;
+                    oscillator-panel := OscillatorsPanel {}
+                }
+                Tab {
+                    title: Theme.tab-title-modulation;
+                }
+                Tab {
+                    title: Theme.tab-title-effects;
+                }
+                Tab {
+                    title: Theme.tab-title-settings;
+                }
+            }
+
+            global-panel := GlobalPanel {
+                width: Theme.window-width;
+            }
+
+        }
+    }
+
+}

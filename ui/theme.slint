@@ -1,0 +1,65 @@
+export global Theme {
+
+    // Main Window
+    out property <string> window-title: "Accidental Synthesizer";
+    in-out property <image> icon: @image-url("../../images/icon.png");
+    out property <length> window-width: 1300px;
+    out property <length> window-height: 800px;
+    out property <length> window-border-width: 2px;
+    out property <color> window-background: #101010;
+    out property <color> window-border-colour: #404040;
+    out property <length> window-border-radius: 15px;
+
+    // Text Defaults
+    out property <length> default-text-size: 14px;
+    out property <string> default-font-family: "HackNerdFontMono";
+    out property <int> default-font-weight: 400;
+    out property <color> default-font-color: #AAAAAA;
+
+    // Panel Defaults
+    out property <length> panel-border-width: 2px;
+    out property <color> panel-background: #101010;
+    out property <color> panel-border-colour: #404040;
+    out property <length> panel-border-radius: 0px;
+    out property <length> panel-label-font-size: 16px;
+    out property <int> panel-label-font-weight: 600;
+    out property <color> spacer-color: #999999;
+
+
+    // Header Panel
+    in-out property <image> header-logo: @image-url("../../images/transparent.png");
+    out property <length> header-logo-height: 20px;
+    out property <ImageHorizontalAlignment> header-logo-alignment: left;
+    out property <length> header-panel-padding: 10px;
+    out property <length> header-panel-spacing: 0px;
+    out property <length> header-panel-height: 40px;
+    out property <length> header-version-font-size: 10px;
+    out property <string> header-version-prefix: "v";
+    out property <brush> header-panel-background: @radial-gradient(circle, #101010 0%, #101020 75%, #101035 100%);
+
+    // Main Tabs
+    out property <string> tab-title-oscillators: "Oscillators";
+    out property <string> tab-title-modulation: "Modulation";
+    out property <string> tab-title-effects: "Effects";
+    out property <string> tab-title-settings: "Settings";
+
+    // Oscillators Panel
+    out property <length> oscillator-panel-height: 530px;
+    out property <length> oscillator-panel-padding: 0px;
+    out property <length> oscillator-panel-spacing: 0px;
+
+    // Osciallator Controls Panels
+    out property <length> osc-controls-panel-padding: 8px;
+    out property <length> osc-controls-panel-spacing: 20px;
+    out property <string> osc-controls-panel-title-1: "Oscillator 1";
+    out property <string> osc-controls-panel-title-2: "Oscillator 2";
+    out property <string> osc-controls-panel-title-3: "Oscillator 3";
+    out property <string> osc-controls-panel-title-sub: "Sub Oscillator";
+
+    // Global Panels
+    out property <length> global-panel-height: 200px;
+    out property <length> global-panel-padding: 10px;
+    out property <length> global-panel-spacing: 0px;
+
+
+}

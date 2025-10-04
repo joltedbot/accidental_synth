@@ -7,9 +7,13 @@ mod synthesizer;
 use crate::audio::Audio;
 use crate::midi::Midi;
 use crate::synthesizer::Synthesizer;
-use core_foundation::runloop::CFRunLoop;
 
-fn main() {
+
+slint::include_modules!();
+
+fn main() -> Result<(), slint::PlatformError> {
+    let application = AccidentalSynth::new()?;
+
     env_logger::init();
     log::info!("Starting Accidental Synthesizer");
 
@@ -33,5 +37,5 @@ fn main() {
 
     // Temporary run loop to keep the application alive until I add the ui loop to replace it
     println!("Will Loop Forever. Press Ctrl-c to Exit");
-    CFRunLoop::run_current();
+    application.run()
 }

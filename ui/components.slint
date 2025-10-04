@@ -1,0 +1,292 @@
+import { Theme } from "../ui/theme.slint";
+import { Slider, SpinBox, ComboBox } from "std-widgets.slint";
+
+
+export component Panel inherits Rectangle {
+    border-width: Theme.panel-border-width;
+    background: Theme.panel-background;
+    border-color: Theme.panel-border-colour;
+    border-bottom-left-radius: Theme.panel-border-radius;
+    border-bottom-right-radius: Theme.panel-border-radius;
+}
+
+export component HorizontalSpacer inherits HorizontalLayout {
+        padding-top: 10px;
+        padding-bottom: 5px;
+
+        Rectangle {
+            background: Theme.spacer-color;
+            height: 3px;
+        }
+}
+
+export component VerticalSpacer inherits VerticalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+
+        Rectangle {
+            background: Theme.spacer-color;
+            width: 3px;
+        }
+}
+
+export component PanelLabel inherits VerticalLayout {
+    in property <string> label;
+
+    Text {
+        font-size: Theme.panel-label-font-size;
+        font-weight: Theme.panel-label-font-weight;
+        text: label;
+    }
+
+    HorizontalSpacer{}
+}
+
+export component HorizontalControlLabel inherits Rectangle{
+    in property <string> label;
+    in property <string> value-postfix;
+    in property <string> value;
+    callback reset();
+
+    TouchArea {
+        double-clicked() => {
+             reset();
+        }
+    }
+
+    HorizontalLayout {
+        Text {
+            text: label + ": ";
+        }
+        Text {
+            horizontal-alignment: right;
+            width: 50px;
+            text: value;
+        }
+        Text {
+            text: " " + value-postfix;
+        }
+    }
+}
+
+export component VerticalControlLabel inherits Rectangle{
+    in property <string> label;
+    in property <string> value-postfix;
+    in property <string> value;
+    callback reset();
+
+        TouchArea {
+            double-clicked() => {
+                 reset();
+            }
+        }
+
+        VerticalLayout {
+            Text {
+                horizontal-alignment: center;
+                text: label + " " + value-postfix;
+            }
+            HorizontalLayout {
+                Text {
+                    horizontal-alignment: center;
+                    width: 50px;
+                    text: value;
+                }
+            }
+        }
+}
+
+export component FilterControlLabel inherits Rectangle{
+    in property <string> label;
+    callback reset();
+
+        TouchArea {
+            double-clicked() => {
+                 reset();
+            }
+        }
+
+        Text {
+            horizontal-alignment: center;
+            width: 100px;
+            text: label;
+        }
+}
+
+export component HorizontalIntSlider inherits VerticalLayout {
+    in property <string> label;
+    in property <string> value-postfix;
+    in property <int> default-value;
+    in property <int> step;
+    in property <int> minimum;
+    in property <int> maximum;
+    in property <length> slider-width: 100px;
+    in property <length> slider-height: 25px;
+    callback horizontal-int-slider-changed(int);
+
+    spacing: 5px;
+
+    hslider-label := HorizontalControlLabel {
+        label: label;
+        value: default-value;
+        value-postfix: value-postfix;
+        reset => {
+            hslider.value = default-value;
+        }
+    }
+
+    hslider := Slider {
+        height: slider-height;
+        width: slider-width;
+        step: step;
+        minimum: minimum;
+        maximum: maximum;
+        orientation: horizontal;
+        value: default-value;
+
+        changed value => {
+            hslider-label.value = self.value.round();
+            horizontal-int-slider-changed(self.value);
+        }
+    }
+}
+
+export component FilterSlider inherits VerticalLayout {
+    in property <string> label;
+    in property <int> step;
+    in property <int> minimum;
+    in property <int> maximum;
+    in property <bool> inverse: false;
+    in property <length> slider-width: 25px;
+    in property <length> slider-height: 100px;
+    callback filter-int-slider-changed(int);
+    spacing: 10px;
+
+    FilterControlLabel {
+        label: label;
+        reset => {
+            fslider.value = inverse?minimum:maximum;
+        }
+    }
+
+    HorizontalLayout {
+        alignment: center;
+        fslider := Slider {
+            height: slider-height;
+            width: slider-width;
+            step: step;
+            minimum: minimum;
+            maximum: maximum;
+            value: inverse?minimum:maximum;
+            orientation: vertical;
+
+            changed value => {
+                if (inverse) {
+                    filter-int-slider-changed(maximum - self.value.round());
+                } else {
+                    filter-int-slider-changed(self.value.round());
+                }
+            }
+        }
+    }
+}
+
+export component VerticalIntSlider inherits VerticalLayout {
+    in property <string> label;
+    in property <string> value-postfix;
+    in property <int> default-value;
+    in property <int> step;
+    in property <int> minimum;
+    in property <int> maximum;
+    in property <length> slider-width: 25px;
+    in property <length> slider-height: 100px;
+    callback vertical-int-slider-changed(int);
+
+    spacing: 5px;
+
+
+    vslider-label := VerticalControlLabel {
+        label: label;
+        value: default-value;
+        value-postfix: value-postfix;
+        reset => {
+            hslider.value = default-value;
+        }
+    }
+    HorizontalLayout {
+        alignment: center;
+        hslider := Slider {
+            height: slider-height;
+            width: slider-width;
+            step: step;
+            minimum: minimum;
+            maximum: maximum;
+            value: default-value;
+            orientation: vertical;
+
+            changed value => {
+                vslider-label.value = self.value.round();
+                vertical-int-slider-changed(self.value);
+            }
+        }
+    }
+}
+
+export component IntSpinBox inherits VerticalLayout {
+    in property <string> label;
+    in property <string> value-postfix;
+    in property <int> default-value;
+    in property <int> step;
+    in property <int> minimum;
+    in property <int> maximum;
+    in property <length> spinbox-width: 100px;
+    in property <length> spinbox-height: 25px;
+    callback horizontal-int-spinbox-changed(int);
+
+    spacing: 5px;
+
+    hslider-label := HorizontalControlLabel {
+        label: label;
+        value-postfix: value-postfix;
+        reset => {
+            hspinbox.value = default-value;
+        }
+    }
+
+    hspinbox := SpinBox {
+        height: spinbox-height;
+        width: spinbox-width;
+        step-size: step;
+        minimum: minimum;
+        maximum: maximum;
+        value: default-value;
+
+        changed value => {
+            horizontal-int-spinbox-changed(self.value);
+        }
+    }
+}
+
+export component WaveShapeDropDown inherits VerticalLayout {
+    in property <string> label;
+    in property <[string]> default-model;
+    in property <length> dropdown-width: 100px;
+    in property <length> dropdown-height: 25px;
+    callback wave_shape_changed(string);
+
+    spacing: 5px;
+
+    Text {
+        text: label;
+    }
+
+    dropdown := ComboBox {
+        height: dropdown-height;
+        width: dropdown-width;
+        model: default-model;
+
+        selected(value) => {
+            wave_shape_changed(value);
+        }
+    }
+}

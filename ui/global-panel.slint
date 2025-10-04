@@ -1,0 +1,17 @@
+import { Panel } from "components.slint";
+import { Theme } from "../ui/theme.slint";
+
+export component GlobalPanel inherits Panel {
+    height: Theme.global-panel-height;
+
+    HorizontalLayout {
+        padding: Theme.global-panel-padding;
+        spacing: Theme.global-panel-spacing;
+
+                    Text {
+                        text: "This is the gobal panel";
+                    }
+
+
+    }
+}

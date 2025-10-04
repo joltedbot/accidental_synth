@@ -1,0 +1,30 @@
+import { Panel } from "components.slint";
+import { Theme } from "../ui/theme.slint";
+
+export component Version inherits Text {
+    vertical-alignment: bottom;
+    font-size: Theme.header-version-font-size;
+    // TODO - Update this with the version from Cargo.toml once the ui modules is created
+    text: Theme.header-version-prefix + "0.1.0";
+}
+
+export component Logo inherits Image {
+    source: Theme.header-logo;
+    horizontal-alignment: Theme.header-logo-alignment;
+    height: Theme.header-logo-height;
+}
+
+export component HeaderPanel inherits Panel {
+   height: Theme.header-panel-height;
+   background: Theme.header-panel-background;
+
+    HorizontalLayout {
+        padding: Theme.header-panel-padding;
+        spacing: Theme.header-panel-spacing;
+        alignment: space-between;
+        Logo {}
+        header-spacer := Rectangle {}
+        Version {}
+
+    }
+}
