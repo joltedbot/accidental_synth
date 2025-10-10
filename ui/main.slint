@@ -37,14 +37,17 @@ export component AccidentalSynth inherits Window {
             tab-bar := TabWidget {
                 Tab {
                     title: Theme.tab-title-oscillators;
-                    oscillator-panel := OscillatorsPanel {}
+                    oscillator-panel := OscillatorsPanel { }
                 }
+
                 Tab {
                     title: Theme.tab-title-modulation;
                 }
+
                 Tab {
                     title: Theme.tab-title-effects;
                 }
+
                 Tab {
                     title: Theme.tab-title-settings;
                 }
@@ -53,8 +56,6 @@ export component AccidentalSynth inherits Window {
             global-panel := GlobalPanel {
                 width: Theme.window-width;
             }
-
         }
     }
-
 }

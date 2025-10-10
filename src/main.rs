@@ -8,7 +8,6 @@ use crate::audio::Audio;
 use crate::midi::Midi;
 use crate::synthesizer::Synthesizer;
 
-
 slint::include_modules!();
 
 fn main() -> Result<(), slint::PlatformError> {

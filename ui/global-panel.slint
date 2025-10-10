@@ -1,5 +1,111 @@
-import { Panel } from "components.slint";
+import { Panel, VerticalSpacer, SectionLabel, HorizontalSpacer, ComponentLabel, MixerLevel, MixerBalance, MixerMute } from "components.slint";
 import { Theme } from "../ui/theme.slint";
+import { VerticalSlider, HorzontalSlider } from "custom-widgets.slint";
+import { Switch } from "std-widgets.slint";
+
+
+export component OutputMixer inherits VerticalLayout {
+    in property <float> minimum: 0.0;
+    in property <float> maximum: 100.0;
+    in property <float> default-level: 80.0;
+    in property <float> default-balance: 50.0;
+
+    output := VerticalLayout {
+        SectionLabel {
+            label: Theme.output-mixer-label;
+        }
+
+        HorizontalSpacer { }
+
+        MixerBalance {
+            default-value: default-balance;
+        }
+
+        MixerLevel {
+            minimum: minimum;
+            maximum: maximum;
+            default-value: default-level;
+        }
+    }
+}
+
+export component OscillatorMixerStrip inherits VerticalLayout {
+    in-out property <string> label;
+    in property <float> minimum: 0.0;
+    in property <float> maximum: 100.0;
+    in property <float> default-value: 0.0;
+
+    SectionLabel {
+        label: label;
+    }
+
+    HorizontalSpacer { }
+
+    HorizontalLayout {
+        MixerLevel {
+            minimum: minimum;
+            maximum: maximum;
+            default-value: default-value;
+        }
+
+        VerticalLayout {
+            alignment: start;
+
+            MixerBalance { }
+
+            Rectangle {
+                height: 20px;
+            }
+
+            MixerMute { }
+        }
+    }
+}
+
+export component OscillatorMixer inherits VerticalLayout {
+    SectionLabel {
+        label: Theme.osc-mixer-label;
+    }
+
+    HorizontalSpacer { }
+
+    HorizontalLayout {
+
+        OscillatorMixerStrip {
+            label: Theme.osc-mixer-title-1;
+            minimum: 0;
+            maximum: 100;
+            default-value: 100;
+        }
+
+        VerticalSpacer { }
+
+        OscillatorMixerStrip {
+            label: Theme.osc-mixer-title-2;
+            minimum: 0;
+            maximum: 100;
+            default-value: 100;
+        }
+
+        VerticalSpacer { }
+
+        OscillatorMixerStrip {
+            label: Theme.osc-mixer-title-3;
+            minimum: 0;
+            maximum: 100;
+            default-value: 100;
+        }
+
+        VerticalSpacer { }
+
+        OscillatorMixerStrip {
+            label: Theme.osc-mixer-title-sub;
+            minimum: 0;
+            maximum: 100;
+            default-value: 0;
+        }
+    }
+}
 
 export component GlobalPanel inherits Panel {
     height: Theme.global-panel-height;
@@ -8,10 +114,12 @@ export component GlobalPanel inherits Panel {
         padding: Theme.global-panel-padding;
         spacing: Theme.global-panel-spacing;
 
-                    Text {
-                        text: "This is the gobal panel";
-                    }
+        outout-mixer := OutputMixer { }
 
+        VerticalSpacer { }
 
+        oscillator-mixer := OscillatorMixer { }
+
+        VerticalSpacer { }
     }
 }

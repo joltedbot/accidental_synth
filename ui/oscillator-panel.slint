@@ -1,6 +1,6 @@
-import { Panel, PanelLabel, VerticalSpacer, HorizontalIntSlider, VerticalIntSlider, FilterSlider, IntSpinBox, WaveShapeDropDown, HorizontalSpacer }
-from
-"components.slint";
+import { Panel, PanelLabel, VerticalSpacer, HorizontalParameterSlider, VerticalIntSlider, FilterSlider, IntSpinBox, WaveShapeDropDown,
+HorizontalSpacer } from "components.slint";
+import { VerticalSlider, HorzontalSlider } from "custom-widgets.slint";
 import { Theme } from "../ui/theme.slint";
 
 
@@ -21,27 +21,19 @@ export component FilterControlsPanel inherits Panel {
 
             cutoff := FilterSlider {
                 label: "Cutoff";
-                step: 1;
-                minimum: 0;
-                maximum: 16800;
+                default-value: 100;
                 width: 60px;
-                inverse: true;
                 slider-height: 220px;
             }
 
             resonance := FilterSlider {
                 label: "Resonance";
-                step: 1;
-                minimum: 0;
-                maximum: 90;
+                default-value: 0;
                 slider-height: 220px;
             }
-
         }
 
-
-        HorizontalSpacer {}
-
+        HorizontalSpacer { }
     }
 }
 
@@ -73,76 +65,74 @@ export component OscControlsPanel inherits Panel {
             spinbox-width: 220px;
         }
 
-        fine-tune := HorizontalIntSlider {
+        fine-tune := HorizontalParameterSlider {
             label: "Fine Tune";
             value-postfix: "cents";
-            step: 1;
             minimum: -63;
             maximum: 63;
             default-value: 0;
             slider-width: 220px;
         }
 
-        clip-boost := HorizontalIntSlider {
+        clip-boost := HorizontalParameterSlider {
             label: "Clipper Boost";
             value-postfix: "dbfs";
-            step: 1;
             minimum: 0;
             maximum: 30;
             default-value: 0;
             slider-width: 220px;
         }
 
-        param1 := HorizontalIntSlider {
+        param1 := HorizontalParameterSlider {
             label: "Parameter 1";
-            step: 1;
             minimum: 0;
             maximum: 100;
             default-value: 0;
             slider-width: 220px;
         }
 
-        param3 := HorizontalIntSlider {
+        param3 := HorizontalParameterSlider {
             label: "Parameter 2";
-            step: 1;
             minimum: 0;
             maximum: 100;
             default-value: 0;
             slider-width: 220px;
         }
-
     }
 }
-
 
 export component OscillatorsPanel inherits Panel {
     HorizontalLayout {
         padding: Theme.oscillator-panel-padding;
         spacing: Theme.oscillator-panel-spacing;
 
-        osc1 := OscControlsPanel{
+        osc1 := OscControlsPanel {
             title: Theme.osc-controls-panel-title-1;
             height: parent.height;
-             width: parent.width/5;
+            width: parent.width / 5;
         }
-        osc2 := OscControlsPanel{
+
+        osc2 := OscControlsPanel {
             title: Theme.osc-controls-panel-title-2;
             height: parent.height;
-            width: parent.width/5;
+            width: parent.width / 5;
         }
-        osc3 := OscControlsPanel{
+
+        osc3 := OscControlsPanel {
             title: Theme.osc-controls-panel-title-3;
             height: parent.height;
-            width: parent.width/5;
+            width: parent.width / 5;
         }
-        sub_osc := OscControlsPanel{
+
+        sub_osc := OscControlsPanel {
             title: Theme.osc-controls-panel-title-sub;
             height: parent.height;
-            width: parent.width/5;
+            width: parent.width / 5;
         }
-        filter := FilterControlsPanel{
+
+        filter := FilterControlsPanel {
             title: "Filter";
-            width: parent.width/5;
+            width: parent.width / 5;
         }
     }
 }

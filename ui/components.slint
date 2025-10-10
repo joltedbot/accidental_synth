@@ -1,5 +1,6 @@
 import { Theme } from "../ui/theme.slint";
-import { Slider, SpinBox, ComboBox } from "std-widgets.slint";
+import { Slider, SpinBox, ComboBox, Switch, Palette, StyleMetrics } from "std-widgets.slint";
+import { VerticalSlider, HorzontalSlider } from "custom-widgets.slint";
 
 
 export component Panel inherits Rectangle {
@@ -11,23 +12,23 @@ export component Panel inherits Rectangle {
 }
 
 export component HorizontalSpacer inherits HorizontalLayout {
-        padding-top: 10px;
-        padding-bottom: 5px;
+    padding-top: 10px;
+    padding-bottom: 5px;
 
-        Rectangle {
-            background: Theme.spacer-color;
-            height: 3px;
-        }
+    Rectangle {
+        background: Theme.spacer-color;
+        height: 3px;
+    }
 }
 
 export component VerticalSpacer inherits VerticalLayout {
-        padding-left: 10px;
-        padding-right: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
 
-        Rectangle {
-            background: Theme.spacer-color;
-            width: 3px;
-        }
+    Rectangle {
+        background: Theme.spacer-color;
+        width: 3px;
+    }
 }
 
 export component PanelLabel inherits VerticalLayout {
@@ -39,10 +40,34 @@ export component PanelLabel inherits VerticalLayout {
         text: label;
     }
 
-    HorizontalSpacer{}
+    HorizontalSpacer { }
 }
 
-export component HorizontalControlLabel inherits Rectangle{
+export component SectionLabel inherits VerticalLayout {
+    in property <string> label;
+    in property <angle> angle;
+
+    Text {
+        rotation-angle: angle;
+        horizontal-alignment: center;
+        font-size: Theme.section-label-font-size;
+        font-weight: Theme.section-label-font-weight;
+        text: label;
+    }
+}
+
+export component ComponentLabel inherits VerticalLayout {
+    in property <string> label;
+
+    Text {
+        horizontal-alignment: center;
+        font-size: Theme.component-label-font-size;
+        font-weight: Theme.component-label-font-weight;
+        text: label;
+    }
+}
+
+export component HorizontalControlLabel inherits Rectangle {
     in property <string> label;
     in property <string> value-postfix;
     in property <string> value;
@@ -50,7 +75,7 @@ export component HorizontalControlLabel inherits Rectangle{
 
     TouchArea {
         double-clicked() => {
-             reset();
+            reset();
         }
     }
 
@@ -58,68 +83,70 @@ export component HorizontalControlLabel inherits Rectangle{
         Text {
             text: label + ": ";
         }
+
         Text {
             horizontal-alignment: right;
             width: 50px;
             text: value;
         }
+
         Text {
             text: " " + value-postfix;
         }
     }
 }
 
-export component VerticalControlLabel inherits Rectangle{
+export component VerticalControlLabel inherits Rectangle {
     in property <string> label;
     in property <string> value-postfix;
     in property <string> value;
     callback reset();
 
-        TouchArea {
-            double-clicked() => {
-                 reset();
-            }
+    TouchArea {
+        double-clicked() => {
+            reset();
+        }
+    }
+
+    VerticalLayout {
+        Text {
+            horizontal-alignment: center;
+            text: label + " " + value-postfix;
         }
 
-        VerticalLayout {
+        HorizontalLayout {
             Text {
                 horizontal-alignment: center;
-                text: label + " " + value-postfix;
-            }
-            HorizontalLayout {
-                Text {
-                    horizontal-alignment: center;
-                    width: 50px;
-                    text: value;
-                }
+                width: 50px;
+                text: value;
             }
         }
+    }
 }
 
-export component FilterControlLabel inherits Rectangle{
+export component FilterControlLabel inherits Rectangle {
     in property <string> label;
     callback reset();
 
-        TouchArea {
-            double-clicked() => {
-                 reset();
-            }
+    TouchArea {
+        double-clicked() => {
+            reset();
         }
+    }
 
-        Text {
-            horizontal-alignment: center;
-            width: 100px;
-            text: label;
-        }
+    Text {
+        horizontal-alignment: center;
+        width: 100px;
+        text: label;
+    }
 }
 
-export component HorizontalIntSlider inherits VerticalLayout {
+export component HorizontalParameterSlider inherits VerticalLayout {
     in property <string> label;
     in property <string> value-postfix;
-    in property <int> default-value;
-    in property <int> step;
-    in property <int> minimum;
-    in property <int> maximum;
+    in property <float> default-value;
+    in property <float> minimum;
+    in property <float> maximum;
     in property <length> slider-width: 100px;
     in property <length> slider-height: 25px;
     callback horizontal-int-slider-changed(int);
@@ -131,22 +158,20 @@ export component HorizontalIntSlider inherits VerticalLayout {
         value: default-value;
         value-postfix: value-postfix;
         reset => {
-            hslider.value = default-value;
+            hslider.default-value = default-value;
         }
     }
 
-    hslider := Slider {
+    hslider := HorzontalSlider {
         height: slider-height;
         width: slider-width;
-        step: step;
         minimum: minimum;
         maximum: maximum;
-        orientation: horizontal;
-        value: default-value;
+        default-value: default-value;
 
-        changed value => {
-            hslider-label.value = self.value.round();
-            horizontal-int-slider-changed(self.value);
+        updated(value) => {
+            hslider-label.value = value.round();
+            horizontal-int-slider-changed(value.round());
         }
     }
 }
@@ -154,9 +179,10 @@ export component HorizontalIntSlider inherits VerticalLayout {
 export component FilterSlider inherits VerticalLayout {
     in property <string> label;
     in property <int> step;
-    in property <int> minimum;
-    in property <int> maximum;
+    in property <float> minimum: 0;
+    in property <float> maximum: 100;
     in property <bool> inverse: false;
+    in property <int> default-value: 0;
     in property <length> slider-width: 25px;
     in property <length> slider-height: 100px;
     callback filter-int-slider-changed(int);
@@ -164,28 +190,17 @@ export component FilterSlider inherits VerticalLayout {
 
     FilterControlLabel {
         label: label;
-        reset => {
-            fslider.value = inverse?minimum:maximum;
-        }
     }
 
     HorizontalLayout {
         alignment: center;
-        fslider := Slider {
-            height: slider-height;
-            width: slider-width;
-            step: step;
+        fslider := VerticalSlider {
+            height: 220px;
+            default-value: default-value;
             minimum: minimum;
             maximum: maximum;
-            value: inverse?minimum:maximum;
-            orientation: vertical;
-
-            changed value => {
-                if (inverse) {
-                    filter-int-slider-changed(maximum - self.value.round());
-                } else {
-                    filter-int-slider-changed(self.value.round());
-                }
+            updated(value) => {
+                filter-int-slider-changed(value)
             }
         }
     }
@@ -204,7 +219,6 @@ export component VerticalIntSlider inherits VerticalLayout {
 
     spacing: 5px;
 
-
     vslider-label := VerticalControlLabel {
         label: label;
         value: default-value;
@@ -213,6 +227,7 @@ export component VerticalIntSlider inherits VerticalLayout {
             hslider.value = default-value;
         }
     }
+
     HorizontalLayout {
         alignment: center;
         hslider := Slider {
@@ -288,5 +303,55 @@ export component WaveShapeDropDown inherits VerticalLayout {
         selected(value) => {
             wave_shape_changed(value);
         }
+    }
+}
+
+export component MixerMute inherits VerticalLayout {
+    in-out property <bool> is_muted;
+    Text {
+        horizontal-alignment: center;
+        font-size: Theme.section-label-font-size;
+        font-weight: Theme.section-label-font-weight;
+        text: "Mute";
+    }
+
+    HorizontalLayout {
+        alignment: center;
+        Switch {
+            height: 30px;
+        }
+    }
+}
+
+export component MixerBalance inherits VerticalLayout {
+    in property <float> default-value: 50;
+
+    Text {
+        horizontal-alignment: center;
+        font-size: Theme.section-label-font-size;
+        font-weight: Theme.section-label-font-weight;
+        text: Theme.mixer-balance-label;
+    }
+
+    HorzontalSlider {
+        height: 30px;
+        width: 50px;
+        default-value: default-value;
+    }
+}
+
+export component MixerLevel inherits VerticalLayout {
+    in property <float> minimum: 0.0;
+    in property <float> maximum: 100.0;
+    in property <float> default-value: 0.0;
+
+    ComponentLabel {
+        label: Theme.mixer-level-label;
+    }
+
+    VerticalSlider {
+        minimum: minimum;
+        maximum: maximum;
+        default-value: default-value;
     }
 }

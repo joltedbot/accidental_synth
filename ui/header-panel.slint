@@ -15,16 +15,17 @@ export component Logo inherits Image {
 }
 
 export component HeaderPanel inherits Panel {
-   height: Theme.header-panel-height;
-   background: Theme.header-panel-background;
+    height: Theme.header-panel-height;
+    background: Theme.header-panel-background;
 
     HorizontalLayout {
         padding: Theme.header-panel-padding;
         spacing: Theme.header-panel-spacing;
         alignment: space-between;
-        Logo {}
-        header-spacer := Rectangle {}
-        Version {}
+        Logo { }
 
+        header-spacer := Rectangle { }
+
+        Version { }
     }
 }

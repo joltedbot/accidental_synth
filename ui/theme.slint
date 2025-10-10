@@ -1,3 +1,5 @@
+import { Palette } from "std-widgets.slint";
+
 export global Theme {
 
     // Main Window
@@ -6,25 +8,28 @@ export global Theme {
     out property <length> window-width: 1300px;
     out property <length> window-height: 800px;
     out property <length> window-border-width: 2px;
-    out property <color> window-background: #101010;
-    out property <color> window-border-colour: #404040;
+    out property <color> window-background: Palette.background;
+    out property <color> window-border-colour: Palette.border;
     out property <length> window-border-radius: 15px;
 
     // Text Defaults
     out property <length> default-text-size: 14px;
     out property <string> default-font-family: "HackNerdFontMono";
     out property <int> default-font-weight: 400;
-    out property <color> default-font-color: #AAAAAA;
+    out property <color> default-font-color: Palette.foreground;
 
     // Panel Defaults
     out property <length> panel-border-width: 2px;
-    out property <color> panel-background: #101010;
-    out property <color> panel-border-colour: #404040;
+    out property <color> panel-background: Palette.background;
+    out property <color> panel-border-colour: Palette.border;
     out property <length> panel-border-radius: 0px;
     out property <length> panel-label-font-size: 16px;
     out property <int> panel-label-font-weight: 600;
-    out property <color> spacer-color: #999999;
-
+    out property <color> spacer-color: Palette.border;
+    out property <length> section-label-font-size: 12px;
+    out property <int> section-label-font-weight: 400;
+    out property <length> component-label-font-size: 12px;
+    out property <int> component-label-font-weight: 400;
 
     // Header Panel
     in-out property <image> header-logo: @image-url("../../images/transparent.png");
@@ -37,6 +42,13 @@ export global Theme {
     out property <string> header-version-prefix: "v";
     out property <brush> header-panel-background: @radial-gradient(circle, #101010 0%, #101020 75%, #101035 100%);
 
+    // Custom Widgets
+    out property <color> handle-border-colour: Palette.background;
+    out property <color> slider-indicator-colour: #0044FF;
+    out property <color> handle-background-colour: #0044FF;
+    out property <color> slider-track-colour: Palette.border;
+
+
     // Main Tabs
     out property <string> tab-title-oscillators: "Oscillators";
     out property <string> tab-title-modulation: "Modulation";
@@ -48,7 +60,7 @@ export global Theme {
     out property <length> oscillator-panel-padding: 0px;
     out property <length> oscillator-panel-spacing: 0px;
 
-    // Osciallator Controls Panels
+    // Osciallator Controls Panel
     out property <length> osc-controls-panel-padding: 8px;
     out property <length> osc-controls-panel-spacing: 20px;
     out property <string> osc-controls-panel-title-1: "Oscillator 1";
@@ -56,10 +68,17 @@ export global Theme {
     out property <string> osc-controls-panel-title-3: "Oscillator 3";
     out property <string> osc-controls-panel-title-sub: "Sub Oscillator";
 
-    // Global Panels
-    out property <length> global-panel-height: 200px;
+    // Global Panel
+    out property <length> global-panel-height: 220px;
     out property <length> global-panel-padding: 10px;
     out property <length> global-panel-spacing: 0px;
-
-
+    out property <string> output-mixer-label: "Output";
+    out property <string> osc-mixer-label: "Oscillator Mixer";
+    out property <string> osc-mixer-title-1: "Osc 1";
+    out property <string> osc-mixer-title-2: "Osc 2";
+    out property <string> osc-mixer-title-3: "Osc 3";
+    out property <string> osc-mixer-title-sub: "Sub";
+    out property <string> mixer-level-label: "Level";
+    out property <string> mixer-balance-label: "Balance";
+    out property <string> mixer-mute-label: "Mute";
 }
