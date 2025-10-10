@@ -1,14 +1,17 @@
 import { Panel, VerticalSpacer, SectionLabel, HorizontalSpacer, ComponentLabel, MixerLevel, MixerBalance, MixerMute } from "components.slint";
-import { Theme } from "../ui/theme.slint";
+import { Theme } from "theme.slint";
+import { Constant } from "constants.slint";
 import { VerticalSlider, HorzontalSlider } from "custom-widgets.slint";
 import { Switch } from "std-widgets.slint";
 
 
 export component OutputMixer inherits VerticalLayout {
-    in property <float> minimum: 0.0;
-    in property <float> maximum: 100.0;
-    in property <float> default-level: 80.0;
-    in property <float> default-balance: 50.0;
+    in property <float> level-minimum: Constant.SILENCE_LEVEL_DBFS;
+    in property <float> level-maximum: Constant.MAX_OUTPUT_LEVEL_DBFS;
+    in property <float> default-level: Constant.DEFAULT_OUTPUT_LEVEL_DBFS;
+
+    callback output-level-update(float);
+    callback output-balance-update(float);
 
     output := VerticalLayout {
         SectionLabel {
@@ -18,13 +21,18 @@ export component OutputMixer inherits VerticalLayout {
         HorizontalSpacer { }
 
         MixerBalance {
-            default-value: default-balance;
+            mixer-balance-update(value) => {
+                output-balance-update(value);
+            }
         }
 
         MixerLevel {
-            minimum: minimum;
-            maximum: maximum;
+            minimum: level-minimum;
+            maximum: level-maximum;
             default-value: default-level;
+            mixer-level-update(value) => {
+                output-level-update(value);
+            }
         }
     }
 }
@@ -114,7 +122,10 @@ export component GlobalPanel inherits Panel {
         padding: Theme.global-panel-padding;
         spacing: Theme.global-panel-spacing;
 
-        outout-mixer := OutputMixer { }
+        outout-mixer := OutputMixer {
+            output-level-update(value) => {
+            }
+         }
 
         VerticalSpacer { }
 

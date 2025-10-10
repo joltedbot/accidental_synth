@@ -15,53 +15,57 @@ import {  Palette, StyleMetrics } from "std-widgets.slint";
 */
 
 export component VerticalSlider inherits Rectangle {
-
-    function calculate_output_value(position: length) -> float {
-        let output_range = maximum - minimum;
-        let position_as_percent = (track.height - position) / track.height;
-        let scaled_value = minimum + (output_range * position_as_percent);
-        return scaled_value;
-    }
-
-    function calculate_default_position(start: length, height: length) -> length {
-        return start + height - (height * (default-value / maximum));
-    }
-
-    function calculate_mouse_position(mouse-y: length) -> length {
-        return mouse-y.clamp(track.y, track.y + track.height);
-    }
-
-    in property <float> minimum: 0.0;
-    in property <float> maximum: 100.0;
-    in property <float> default-value: 0.0;
+    in-out property <float> minimum: 0;
+    in-out property <float> maximum: 100;
+    in-out property <float> default-value: 0;
     callback updated(float);
 
+
+    width: 50px;
+    height: 100px;
     property <length> track-width: 6px;
     property <length> handle-width: 20px;
     property <length> handle-height: 10px;
     property <length> handle-border-width: 4px;
     property <length> handle-radius: 5px;
+    property <length> indicator-default-position: calculate_default_position(track.y, track.height, default-value);
 
-    width: 50px;
-    height: 100px;
+    function calculate_default_position(track-start: length, track-end: length, value: float) -> length {
+        let max = maximum > minimum?maximum:minimum;
+        let min = minimum < maximum?minimum:maximum;
+
+        let output_range = max - min;
+        let value_as_percent =  (value.clamp(min, max) - min)/output_range;
+        let scaled_position = track-start + track-end - (track-end * value_as_percent);
+        return scaled_position;
+    }
+
+    function calculate_output_value(position: length) -> float {
+        let max = maximum > minimum?maximum:minimum;
+        let min = minimum < maximum?minimum:maximum;
+
+        let output_range = max - min;
+        let position_as_percent = (track.height - position) / track.height;
+        let scaled_value = min + (output_range * position_as_percent);
+        return scaled_value;
+    }
 
     touch := TouchArea {
         width: parent.width;
         height: parent.height;
 
         moved => {
-            indicator.position = calculate_mouse_position(self.mouse-y);
+            indicator.position = self.mouse-y.clamp(track.y, track.y + track.height);
         }
 
         double-clicked => {
-            indicator.position = indicator.default-position;
+            indicator.position = indicator-default-position;
         }
     }
 
-
     handle := Rectangle {
         z: 2;
-        y: indicator.y.clamp(track.y, track.height - handle-height);
+        y: indicator-default-position - (handle-height/2);
         width: handle-width;
         height: handle-height;
         border-color: Theme.handle-border-colour;
@@ -77,8 +81,7 @@ export component VerticalSlider inherits Rectangle {
         clip: true;
 
         indicator := Rectangle {
-            in-out property <length> default-position: calculate_default_position(parent.y, parent.height);
-            in-out property <length> position: default-position;
+            out property <length> position: indicator-default-position;
             y: position;
             width: parent.width;
             height: parent.height;
@@ -87,6 +90,7 @@ export component VerticalSlider inherits Rectangle {
             changed y => {
                 let output = calculate_output_value(self.y);
                 updated(output);
+                handle.y = clamp(self.y - (handle-height/2), parent.y, parent.y + parent.height - handle-height);
             }
         }
     }
@@ -98,32 +102,34 @@ export component HorzontalSlider inherits Rectangle {
     in property <float> default-value: 0;
     callback updated(float);
 
+
+    width: 100px;
+    height: 50px;
     property <length> track-height: 6px;
     property <length> handle-height: 20px;
     property <length> handle-width: 10px;
     property <length> handle-border-width: 4px;
     property <length> handle-radius: 5px;
+    property <length> indicator-default-position: calculate_default_position(track.x, track.width, default-value);
 
-    width: 100px;
-    height: 50px;
+    function calculate_default_position(track-start: length, track-end: length, value: float) -> length {
+        let max = maximum > minimum?maximum:minimum;
+        let min = minimum < maximum?minimum:maximum;
 
-
-    function calculate_output_value(position: length) -> float {
-        let output_range = maximum - minimum;
-        let position_as_percent = (position + track.width) / track.width;
-        let scaled_value = minimum + (output_range * position_as_percent);
-        return scaled_value;
-    }
-
-    function calculate_default_position(start: length, width: length) -> length {
-        let output_range = maximum - minimum;
-        let value_as_percent = abs((minimum + default_value)/output_range);
-        let scaled_position = start - width + (width * value_as_percent);
+        let output_range = max - min;
+        let value_as_percent =  (value.clamp(min, max) - min)/output_range;
+        let scaled_position = track-start - track-end + (track-end * value_as_percent);
         return scaled_position;
     }
 
-    function calculate_mouse_position(mouse-x: length) -> length {
-        return mouse-x.clamp(track.x, track.x + track.width) - indicator.width;
+    function calculate_output_value(position: length) -> float {
+        let max = maximum > minimum?maximum:minimum;
+        let min = minimum < maximum?minimum:maximum;
+
+        let output_range = max - min;
+        let position_as_percent = (position + track.width) / track.width;
+        let scaled_value = min + (output_range * position_as_percent);
+        return scaled_value;
     }
 
     touch := TouchArea {
@@ -131,17 +137,17 @@ export component HorzontalSlider inherits Rectangle {
         height: parent.height;
 
         moved => {
-            indicator.position = calculate_mouse_position(self.mouse-x);
+            indicator.position = self.mouse-x.clamp(track.x, track.x + track.width) - indicator.width
         }
 
         double-clicked => {
-            indicator.position = indicator.default-position;
+            indicator.position = indicator-default-position;
         }
     }
 
     handle := Rectangle {
         z: 2;
-        x: indicator.x + indicator.width - (handle-width/2);
+        x: indicator-default-position + indicator.width - (handle-width/2);
         width: handle-width;
         height: handle-height;
         border-color: Theme.handle-border-colour;
@@ -157,8 +163,7 @@ export component HorzontalSlider inherits Rectangle {
         clip: true;
 
         indicator := Rectangle {
-            in-out property <length> default-position: calculate_default_position(parent.x, parent.width);
-            in-out property <length> position: default-position;
+            in-out property <length> position: indicator-default-position;
             x: position;
             width: parent.width;
             height: parent.height;
@@ -167,6 +172,7 @@ export component HorzontalSlider inherits Rectangle {
             changed x => {
                 let output = calculate_output_value(self.x);
                 updated(output);
+                handle.x = clamp(indicator.x + indicator.width - (handle-width/2), track.x, track.x + indicator.width - handle.width);
             }
         }
     }

@@ -1,6 +1,8 @@
 import { Theme } from "../ui/theme.slint";
+import { Constant } from "constants.slint";
 import { Slider, SpinBox, ComboBox, Switch, Palette, StyleMetrics } from "std-widgets.slint";
 import { VerticalSlider, HorzontalSlider } from "custom-widgets.slint";
+
 
 
 export component Panel inherits Rectangle {
@@ -324,7 +326,8 @@ export component MixerMute inherits VerticalLayout {
 }
 
 export component MixerBalance inherits VerticalLayout {
-    in property <float> default-value: 50;
+    in property <float> default-value: Constant.DEFAULT_BALANCE;
+    callback mixer-balance-update(float);
 
     Text {
         horizontal-alignment: center;
@@ -336,7 +339,12 @@ export component MixerBalance inherits VerticalLayout {
     HorzontalSlider {
         height: 30px;
         width: 50px;
+        maximum: Constant.MAX_LEFT_BALANCE;
+        minimum: Constant.MAX_RIGHT_BALANCE;
         default-value: default-value;
+        updated(value) => {
+            mixer-balance-update(value);
+        }
     }
 }
 
@@ -344,8 +352,9 @@ export component MixerLevel inherits VerticalLayout {
     in property <float> minimum: 0.0;
     in property <float> maximum: 100.0;
     in property <float> default-value: 0.0;
+    callback mixer-level-update(float);
 
-    ComponentLabel {
+    title := ComponentLabel {
         label: Theme.mixer-level-label;
     }
 
@@ -353,5 +362,8 @@ export component MixerLevel inherits VerticalLayout {
         minimum: minimum;
         maximum: maximum;
         default-value: default-value;
+        updated(value) => {
+            mixer-level-update(value);
+        }
     }
 }
