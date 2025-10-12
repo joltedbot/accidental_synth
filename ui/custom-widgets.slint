@@ -1,10 +1,11 @@
-import { Theme } from "../ui/theme.slint";
+import { Theme } from "theme.slint";
+import { Constant } from "constants.slint";
 import {  Palette, StyleMetrics } from "std-widgets.slint";
 
 export component SliderHandle inherits Rectangle {
     in property <Orientation> orientation: vertical;
-    property <length> handle_height: orientation == Orientation.vertical?10px:20px;
-    property <length> handle_width: orientation == Orientation.vertical?20px:10px;
+    property <length> handle_height: orientation == Orientation.vertical ? 10px : 20px;
+    property <length> handle_width: orientation == Orientation.vertical ? 20px : 10px;
     property <length> handle_border_width: 4px;
     property <length> handle_radius: 5px;
 
@@ -16,12 +17,11 @@ export component SliderHandle inherits Rectangle {
     background: Theme.handle-background-colour;
 }
 
-
 export component SliderTrack inherits Rectangle {
     in property <Orientation> orientation: vertical;
-    in-out property <length> track-width: orientation == Orientation.vertical?Theme.slider-track-width:Theme.slider-track-height;
-    in-out property <length> track-height: orientation == Orientation.vertical?Theme.slider-track-height:Theme.slider-track-width;
-    in-out property <length> position: orientation == Orientation.vertical?Theme.slider-track-height:self.x + Theme.slider-track-width;
+    in-out property <length> track-width: orientation == Orientation.vertical ? Theme.slider-track-width : Theme.slider-track-height;
+    in-out property <length> track-height: orientation == Orientation.vertical ? Theme.slider-track-height : Theme.slider-track-width;
+    in-out property <length> position: orientation == Orientation.vertical ? Theme.slider-track-height : self.x + Theme.slider-track-width;
 
     width: track-width;
     height: track-height;
@@ -29,14 +29,13 @@ export component SliderTrack inherits Rectangle {
     clip: true;
 
     indicator := Rectangle {
-        x: orientation == Orientation.vertical?0px:position;
-        y: orientation == Orientation.vertical?position:0px;
+        x: orientation == Orientation.vertical ? 0px : position;
+        y: orientation == Orientation.vertical ? position : 0px;
         width: parent.width;
         height: parent.height;
         background: Theme.slider-indicator-colour;
     }
 }
-
 
 export component VerticalSlider inherits Rectangle {
     in-out property <float> minimum: 0;
@@ -65,13 +64,15 @@ export component VerticalSlider inherits Rectangle {
     }
 
     function get_handle_position() -> length {
-        return clamp(track.position - (handle.height/2), track.y, track.height - handle.height);
+        return clamp(track.position - (handle.height / 2), track.y, track.height - handle.height);
     }
 
     touch := TouchArea {
         moved => {
-            track.position = clamp(self.mouse-y, track.y, track.y + track.height);
+            let position = clamp(self.mouse-y, track.y, track.y + track.height);
+            track.position = position;
             handle.y = get_handle_position();
+            updated(get_output_value(position));
         }
 
         double-clicked => {
@@ -90,8 +91,6 @@ export component VerticalSlider inherits Rectangle {
         position: indicator-default-position;
     }
 }
-
-
 
 export component HorzontalSlider inherits Rectangle {
     in property <float> minimum: 0;
@@ -120,7 +119,7 @@ export component HorzontalSlider inherits Rectangle {
     }
 
     function get_handle_position() -> length {
-        return clamp(track.position + track.width - (handle.width/2), track.x, track.x + track.width - handle.width);
+        return clamp(track.position + track.width - (handle.width / 2), track.x, track.x + track.width - handle.width);
     }
 
     touch := TouchArea {
@@ -128,16 +127,17 @@ export component HorzontalSlider inherits Rectangle {
         height: parent.height;
 
         moved => {
-            track.position = self.mouse-x.clamp(track.x, track.x + track.width) - track.width;
-             handle.x = get_handle_position();
+            let position = self.mouse-x.clamp(track.x, track.x + track.width) - track.width;
+            track.position = position;
+            handle.x = get_handle_position();
+            updated(get_output_value(position));
         }
 
         double-clicked => {
-           track.position = indicator-default-position;
-           handle.x = get_handle_position();
+            track.position = indicator-default-position;
+            handle.x = get_handle_position();
         }
     }
-
 
     handle := SliderHandle {
         z: 2;
@@ -150,39 +150,85 @@ export component HorzontalSlider inherits Rectangle {
         track-width: parent.width;
         position: indicator-default-position;
     }
-
 }
 
-/*
-handle := Rectangle {
-        z: 2;
-        x: indicator-default-position + indicator.width - (handle-width / 2);
-        width: handle-width;
-        height: handle-height;
-        border-color: Theme.handle-border-colour;
-        border-width: handle-border-width;
-        border-radius: handle-radius;
-        background: Theme.handle-background-colour;
+export component BalanceTrack inherits Rectangle {
+    in-out property <length> track-width: Theme.slider-track-height;
+    in-out property <length> track-height: Theme.slider-track-width;
+    out property <length> track-center: track-width / 2;
+    in-out property <length> position: track-center;
+
+    width: track-width;
+    height: track-height;
+    background: Theme.slider-track-colour;
+    clip: true;
+
+    changed position => {
+        if (position < 0) {
+            indicator.x = track-center + position;
+        } else if (indicator.x != track-center) {
+            indicator.x = track-center;
+        }
+        indicator.width = abs(position);
     }
 
-    track := Rectangle {
+    indicator := Rectangle {
+        x: track-center;
+        width: 0px;
+        height: parent.height;
+        background: Theme.slider-indicator-colour;
+    }
+}
+
+export component BalanceSlider inherits Rectangle {
+    in property <float> minimum: Constant.MAX_LEFT_BALANCE;
+    in property <float> maximum: Constant.MAX_RIGHT_BALANCE;
+    callback updated(float);
+
+    width: 100px;
+    height: 50px;
+
+    property <float> range_max: max(maximum, minimum);
+    property <float> range_min: min(minimum, maximum);
+    property <float> range: range_max - range_min;
+    property <length> indicator-default-position: 0px;
+
+    function get_output_value(position: length) -> float {
+        let position_as_percent = position / track.width;
+        let scaled_value = range * position_as_percent;
+        return scaled_value;
+    }
+
+    function get_handle_position(position: length) -> length {
+        return clamp(track.track-center + position - (handle.width / 2), track.x, track.x + track.width);
+    }
+
+    touch := TouchArea {
         width: parent.width;
-        height: track-height;
-        background: Theme.slider-track-colour;
-        clip: true;
+        height: parent.height;
 
-        indicator := Rectangle {
-            in-out property <length> position: indicator-default-position;
-            x: position;
-            width: parent.width;
-            height: parent.height;
-            background: Theme.slider-indicator-colour;
+        moved => {
+            let position = self.mouse-x.clamp(track.x, track.x + track.width) - track.width / 2;
+            track.position = position;
+            handle.x = get_handle_position(position);
+            updated(get_output_value(position));
+        }
 
-            changed x => {
-                let output = get_output_value(self.x);
-                updated(output);
-                handle.x = clamp(indicator.x + indicator.width - (handle-width / 2), track.x, track.x + indicator.width - handle.width);
-            }
+        double-clicked => {
+            track.position = indicator-default-position;
+            handle.x = get_handle_position(indicator-default-position);
+            updated(get_output_value(indicator-default-position));
         }
     }
-*/
+
+    handle := SliderHandle {
+        z: 2;
+        orientation: horizontal;
+        x: get_handle_position(indicator-default-position);
+    }
+
+    track := BalanceTrack {
+        track-width: parent.width;
+        position: indicator-default-position;
+    }
+}

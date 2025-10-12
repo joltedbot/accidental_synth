@@ -1,7 +1,7 @@
 import { Theme } from "../ui/theme.slint";
 import { Constant } from "constants.slint";
 import { Slider, SpinBox, ComboBox, Switch, Palette, StyleMetrics } from "std-widgets.slint";
-import { VerticalSlider, HorzontalSlider } from "custom-widgets.slint";
+import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.slint";
 
 
 
@@ -178,6 +178,37 @@ export component HorizontalParameterSlider inherits VerticalLayout {
     }
 }
 
+export component CenteredParameterSlider inherits VerticalLayout {
+    in property <string> label;
+    in property <string> value-postfix;
+    in property <float> default-value;
+    in property <float> minimum;
+    in property <float> maximum;
+    in property <length> slider-width: 100px;
+    in property <length> slider-height: 25px;
+    callback horizontal-int-slider-changed(int);
+
+    spacing: 5px;
+
+    hslider-label := HorizontalControlLabel {
+        label: label;
+        value: default-value;
+        value-postfix: value-postfix;
+    }
+
+    hslider := BalanceSlider {
+        height: slider-height;
+        width: slider-width;
+        minimum: minimum;
+        maximum: maximum;
+
+        updated(value) => {
+            hslider-label.value = value.round();
+            horizontal-int-slider-changed(value.round());
+        }
+    }
+}
+
 export component FilterSlider inherits VerticalLayout {
     in property <string> label;
     in property <int> step;
@@ -336,12 +367,11 @@ export component MixerBalance inherits VerticalLayout {
         text: Theme.mixer-balance-label;
     }
 
-    HorzontalSlider {
+    BalanceSlider {
         height: 30px;
         width: 50px;
         maximum: Constant.MAX_LEFT_BALANCE;
         minimum: Constant.MAX_RIGHT_BALANCE;
-        default-value: default-value;
         updated(value) => {
             mixer-balance-update(value);
         }
