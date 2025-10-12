@@ -1,5 +1,18 @@
 import { Palette } from "std-widgets.slint";
 
+/*  Palette - Fluent Dark
+    foreground - white
+    background - dark gray
+    alternate f - white
+    alternate b - lighter dark grey than  background background
+    control f - white
+    control b - Transparent
+    accent f - black
+    accent b - Control tracks in the theme
+    selection f - black
+    selection b - other blue
+*/
+
 export global Theme {
 
     // Main Window
@@ -40,14 +53,13 @@ export global Theme {
     out property <length> header-panel-height: 40px;
     out property <length> header-version-font-size: 10px;
     out property <string> header-version-prefix: "v";
-    out property <brush> header-panel-background: @radial-gradient(circle, #101010 0%, #101020 75%, #101035 100%);
+    out property <brush> header-panel-background: @radial-gradient(circle, #101010 0%, #101035 100%);
 
     // Custom Widgets
     out property <color> handle-border-colour: Palette.background;
-    out property <color> slider-indicator-colour: #0044FF;
-    out property <color> handle-background-colour: #0044FF;
+    out property <color> slider-indicator-colour: #0066CC;
+    out property <color> handle-background-colour: #0066CC;
     out property <color> slider-track-colour: Palette.border;
-
 
     // Main Tabs
     out property <string> tab-title-oscillators: "Oscillators";
