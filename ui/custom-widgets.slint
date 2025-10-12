@@ -1,14 +1,13 @@
 import { Theme } from "../ui/theme.slint";
 import {  Palette, StyleMetrics } from "std-widgets.slint";
 
-export component VerticalSliderHandle inherits Rectangle {
-    in property <length> position: self.height;
-    property <length> handle_height: 10px;
-    property <length> handle_width: 20px;
+export component SliderHandle inherits Rectangle {
+    in property <Orientation> orientation: vertical;
+    property <length> handle_height: orientation == Orientation.vertical?10px:20px;
+    property <length> handle_width: orientation == Orientation.vertical?20px:10px;
     property <length> handle_border_width: 4px;
     property <length> handle_radius: 5px;
 
-    y: position;
     width: handle_width;
     height: handle_height;
     border-color: Theme.handle-border-colour;
@@ -17,26 +16,12 @@ export component VerticalSliderHandle inherits Rectangle {
     background: Theme.handle-background-colour;
 }
 
-export component HorizonalSliderHandle inherits Rectangle {
-    in property <length> position: self.width;
-    property <length> handle_height: 20px;
-    property <length> handle_width: 10px;
-    property <length> handle_border_width: 4px;
-    property <length> handle_radius: 5px;
 
-    x: position;
-    width: handle_width;
-    height: handle_height;
-    border-color: Theme.handle-border-colour;
-    border-width: handle_border_width;
-    border-radius: handle_radius;
-    background: Theme.handle-background-colour;
-}
-
-export component VerticalSliderTrack inherits Rectangle {
-    in-out property <length> track-width: 6px;
-    in-out property <length> track-height: 100px;
-    in-out property <length> position: track-height;
+export component SliderTrack inherits Rectangle {
+    in property <Orientation> orientation: vertical;
+    in-out property <length> track-width: orientation == Orientation.vertical?Theme.slider-track-width:Theme.slider-track-height;
+    in-out property <length> track-height: orientation == Orientation.vertical?Theme.slider-track-height:Theme.slider-track-width;
+    in-out property <length> position: orientation == Orientation.vertical?Theme.slider-track-height:self.x + Theme.slider-track-width;
 
     width: track-width;
     height: track-height;
@@ -44,30 +29,14 @@ export component VerticalSliderTrack inherits Rectangle {
     clip: true;
 
     indicator := Rectangle {
-        y: position;
+        x: orientation == Orientation.vertical?0px:position;
+        y: orientation == Orientation.vertical?position:0px;
         width: parent.width;
         height: parent.height;
         background: Theme.slider-indicator-colour;
     }
 }
 
-export component HorizontalSliderTrack inherits Rectangle {
-    in-out property <length> track-width: 100px;
-    in-out property <length> track-height: 6px;
-    in-out property <length> position: track-height;
-
-    width: track-width;
-    height: track-height;
-    background: Theme.slider-track-colour;
-    clip: true;
-
-    indicator := Rectangle {
-        x: position;
-        width: parent.width;
-        height: parent.height;
-        background: Theme.slider-indicator-colour;
-    }
-}
 
 export component VerticalSlider inherits Rectangle {
     in-out property <float> minimum: 0;
@@ -96,7 +65,7 @@ export component VerticalSlider inherits Rectangle {
     }
 
     function get_handle_position() -> length {
-        return clamp(track.position, track.y, track.height - handle.height);
+        return clamp(track.position - (handle.height/2), track.y, track.height - handle.height);
     }
 
     touch := TouchArea {
@@ -111,12 +80,12 @@ export component VerticalSlider inherits Rectangle {
         }
     }
 
-    handle := VerticalSliderHandle {
+    handle := SliderHandle {
         z: 2;
         y: get_handle_position();
     }
 
-    track := VerticalSliderTrack {
+    track := SliderTrack {
         track-height: parent.height;
         position: indicator-default-position;
     }
@@ -151,7 +120,7 @@ export component HorzontalSlider inherits Rectangle {
     }
 
     function get_handle_position() -> length {
-        return clamp(track.position + track.width, track.x, track.x + track.width - handle.width);
+        return clamp(track.position + track.width - (handle.width/2), track.x, track.x + track.width - handle.width);
     }
 
     touch := TouchArea {
@@ -170,12 +139,14 @@ export component HorzontalSlider inherits Rectangle {
     }
 
 
-    handle := HorizonalSliderHandle {
+    handle := SliderHandle {
         z: 2;
+        orientation: horizontal;
         x: get_handle_position();
     }
 
-    track := HorizontalSliderTrack {
+    track := SliderTrack {
+        orientation: horizontal;
         track-width: parent.width;
         position: indicator-default-position;
     }
