@@ -13,7 +13,7 @@ use crate::synthesizer::{
     MidiNoteEvent, MixerParameters, ModuleParameters, OscillatorIndex, midi_value_converters,
 };
 use std::sync::Arc;
-use std::sync::atomic::Ordering::{Relaxed, Release};
+use std::sync::atomic::Ordering::{Relaxed, Release, SeqCst};
 
 pub fn action_midi_note_events(
     midi_events: MidiNoteEvent,
@@ -80,7 +80,7 @@ pub fn process_midi_note_on_message(
         );
 
     store_f32_as_atomic_u32(&current_note.velocity, scaled_velocity);
-    current_note.midi_note.store(midi_note, Relaxed);
+    current_note.midi_note.store(midi_note, SeqCst);
 
     module_parameters
         .filter

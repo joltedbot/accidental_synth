@@ -1,17 +1,20 @@
 use anyhow::{Result, anyhow};
-use cpal::traits::{DeviceTrait, HostTrait};
-use cpal::{Device, Host, default_host};
+use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use cpal::{Device, Host, Stream, default_host};
 use crossbeam_channel::{Receiver, Sender, bounded};
+use rtrb::{Consumer, Producer, RingBuffer};
 use std::thread;
 use std::thread::sleep;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use thiserror::Error;
 
 const DEFAULT_AUDIO_DEVICE_INDEX: usize = 0;
 const DEFAULT_LEFT_CHANNEL_INDEX: usize = 0;
 const DEFAULT_RIGHT_CHANNEL_INDEX: usize = 1;
 const DEVICE_LIST_POLLING_INTERVAL: u64 = 2000;
-const OUTPUT_DEVICE_SENDER_CAPACITY: usize = 5;
+const SAMPLE_BUFFER_SENDER_CAPACITY: usize = 5;
+const SAMPLE_BUFFER_CAPACITY: usize = 8192;
+pub const SAMPLE_BUFFER_CHUNK_SIZE: usize = 256;
 const MONO_CHANNELS: u16 = 1;
 
 #[derive(Debug, Clone)]
@@ -39,14 +42,14 @@ pub enum AudioError {
 
 pub struct Audio {
     sample_rate: u32,
-    output_device_sender: Sender<Option<OutputDevice>>,
-    output_device_receiver: Receiver<Option<OutputDevice>>,
+    sample_buffer_sender: Sender<Producer<f32>>,
+    sample_buffer_receiver: Receiver<Producer<f32>>,
 }
 
 impl Audio {
     pub fn new() -> Result<Self> {
         log::info!("Constructing Audio Module");
-        let (output_device_sender, output_device_receiver) = bounded(OUTPUT_DEVICE_SENDER_CAPACITY);
+        let (output_device_sender, output_device_receiver) = bounded(SAMPLE_BUFFER_SENDER_CAPACITY);
 
         let default_output_device = default_audio_output_device()?;
         let sample_rate = default_output_device
@@ -56,8 +59,8 @@ impl Audio {
 
         Ok(Self {
             sample_rate,
-            output_device_sender,
-            output_device_receiver,
+            sample_buffer_sender: output_device_sender,
+            sample_buffer_receiver: output_device_receiver,
         })
     }
 
@@ -65,17 +68,18 @@ impl Audio {
         self.sample_rate
     }
 
-    pub fn get_output_device_receiver(&self) -> Receiver<Option<OutputDevice>> {
-        self.output_device_receiver.clone()
+    pub fn get_sample_buffer_receiver(&self) -> Receiver<Producer<f32>> {
+        self.sample_buffer_receiver.clone()
     }
 
     pub fn run(&mut self) {
-        let output_device_sender = self.output_device_sender.clone();
+        let sample_producer_sender = self.sample_buffer_sender.clone();
         let host = default_host();
         let mut current_output_device_list = Vec::new();
         let mut current_output_device = None;
 
         thread::spawn(move || {
+            let mut audio_output_stream = None;
             log::debug!("run(): Audio device monitor thread running");
             loop {
                 let is_changed = update_current_output_device_list_if_changed(
@@ -90,13 +94,66 @@ impl Audio {
                         &mut current_output_device,
                     )
                 {
-                    output_device_sender.send(current_output_device.clone()).expect("run(): Could not send device update to the audio output device sender. Exiting. ");
+                    if let Some(output_device) = &current_output_device {
+                        log::debug!("run(): Output device changed. New device: {:?}", output_device.name);
+
+                        let (sample_producer, sample_consumer) =
+                            RingBuffer::<f32>::new(SAMPLE_BUFFER_CAPACITY);
+                        sample_producer_sender.send(sample_producer).expect("run(): Could not send device update to the audio output device sender. Exiting. ");
+                        drop(audio_output_stream);
+                        audio_output_stream =
+                            start_main_audio_output_loop(output_device, sample_consumer).ok();
+                    } else {
+                        audio_output_stream = None;
+                    }
                 }
 
                 sleep(Duration::from_millis(DEVICE_LIST_POLLING_INTERVAL));
             }
         });
     }
+}
+
+fn start_main_audio_output_loop(
+    output_device: &OutputDevice,
+    mut sample_buffer: Consumer<f32>,
+) -> Result<Stream> {
+    let default_device_stream_config = output_device.device.default_output_config()?.config();
+    let number_of_channels = output_device.channels.total;
+    let left_channel_index = output_device.channels.left;
+    let right_channel_index = output_device.channels.right;
+
+    log::info!("Starting audio output loop");
+    let stream = output_device.device.build_output_stream(
+        &default_device_stream_config,
+        move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
+            let number_of_frames = buffer.len()/number_of_channels as usize;
+            let mut samples = if let Ok(samples) = sample_buffer.read_chunk(number_of_frames*2) {
+                samples.into_iter()
+            } else {
+                log::debug!("Audio output buffer dropout");
+                return
+            };
+
+            for frame in buffer.chunks_mut(number_of_channels as usize){
+                frame[left_channel_index] = samples.next().unwrap_or(0.0);
+                let right_sample = samples.next().unwrap_or(0.0);
+                if let Some(index) = right_channel_index {
+                    frame[index] = right_sample;
+                }
+            }
+        },
+        |err| {
+            log::error!("start_main_audio_output_loop(): Error in audio output stream: {err}");
+        },
+        None,
+    )?;
+
+    stream.play()?;
+
+    log::debug!("start_main_audio_output_loop(): Main audio loop started and playing.");
+
+    Ok(stream)
 }
 
 fn default_audio_output_device() -> Result<Device> {

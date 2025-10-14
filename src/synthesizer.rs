@@ -9,7 +9,7 @@ use self::constants::{
     DEFAULT_VIBRATO_LFO_DEPTH, DEFAULT_VIBRATO_LFO_RATE, MAX_MIDI_KEY_VELOCITY,
     QUAD_MIX_DEFAULT_BALANCE, QUAD_MIX_DEFAULT_INPUT_LEVEL, QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
 };
-use crate::audio::OutputDevice;
+
 use crate::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
 use crate::midi::Event;
 use crate::modules::envelope::EnvelopeParameters;
@@ -18,7 +18,9 @@ use crate::modules::lfo::LfoParameters;
 use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
 use crate::synthesizer::create_synthesizer::create_synthesizer;
+use anyhow::Result;
 use crossbeam_channel::Receiver;
+use rtrb::Producer;
 use std::default::Default;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
@@ -181,69 +183,22 @@ impl Synthesizer {
     pub fn run(
         &mut self,
         midi_message_receiver: Receiver<Event>,
-        output_device_receiver: Receiver<Option<OutputDevice>>,
-    ) {
-        log::info!("Creating the synthesizer audio stream");
-        self.start_audio_device_event_listener(output_device_receiver);
+        sample_buffer_receiver: Receiver<Producer<f32>>,
+    ) -> Result<()> {
 
         log::debug!("run(): Start the midi event listener thread");
         self.start_midi_event_listener(midi_message_receiver);
-    }
 
-    fn start_audio_device_event_listener(
-        &mut self,
-        output_device_receiver: Receiver<Option<OutputDevice>>,
-    ) {
-        let device_receiver = output_device_receiver;
-        let sample_rate = self.sample_rate;
-        let current_note = self.current_note.clone();
-        let module_parameters = self.module_parameters.clone();
+        log::info!("Creating the synthesizer audio stream");
+        create_synthesizer(
+            sample_buffer_receiver,
+            self.sample_rate,
+            &self.current_note,
+            &self.module_parameters,
+        )?;
 
-        thread::spawn(move || {
-            log::debug!(
-                "start_audio_device_event_listener(): spawned thread to receive audio device update events"
-            );
 
-            let mut output_stream = None;
-
-            while let Ok(new_output_device) = device_receiver.recv() {
-                output_stream = match new_output_device {
-                    None => {
-                        if output_stream.is_some() {
-                            log::info!(
-                                "start_audio_device_event_listener(): Audio output device removed. Stopping the\
-                             current audio output stream"
-                            );
-                            drop(output_stream);
-                        }
-
-                        None
-                    }
-                    Some(output_device) => {
-                        let stream = create_synthesizer(
-                            &output_device,
-                            sample_rate,
-                            &current_note,
-                            &module_parameters,
-                        )
-                        .expect(
-                            "start_audio_device_event_listener(): failed to create synthesizer",
-                        );
-
-                        if output_stream.is_some() {
-                            log::info!(
-                                "start_audio_device_event_listener(): Audio output device added. Starting the \
-                            new audio output stream. {}",
-                                output_device.name
-                            );
-                            drop(output_stream);
-                        }
-
-                        Some(stream)
-                    }
-                }
-            }
-        });
+        Ok(())
     }
 
     fn start_midi_event_listener(&mut self, midi_message_receiver: Receiver<Event>) {
