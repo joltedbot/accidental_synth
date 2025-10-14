@@ -1,4 +1,3 @@
-use crate::audio::OutputDevice;
 use crate::math::load_f32_from_atomic_u32;
 use crate::modules::amplifier::amplify_stereo;
 use crate::modules::envelope::Envelope;
@@ -8,18 +7,22 @@ use crate::modules::mixer::{MixerInput, output_mix, quad_mix};
 use crate::modules::oscillator::{HardSyncRole, Oscillator, WaveShape};
 use crate::synthesizer;
 use crate::synthesizer::{CurrentNote, ModuleParameters, OscillatorIndex};
-use cpal::Stream;
-use cpal::traits::DeviceTrait;
+use anyhow::Result;
+use crossbeam_channel::Receiver;
+use rtrb::Producer;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering::Relaxed;
+use std::sync::atomic::Ordering::{Acquire, Relaxed, SeqCst};
+use std::thread;
+use std::time::Duration;
+use crate::synthesizer::constants::{LOCAL_BUFFER_CAPACITY, SAMPLE_PRODUCER_LOOP_SLEEP_DURATION_MICROSECONDS};
 
 pub fn create_synthesizer(
-    output_device: &OutputDevice,
+    sample_buffer_receiver: Receiver<Producer<f32>>,
     sample_rate: u32,
     current_note: &Arc<CurrentNote>,
     module_parameters: &Arc<ModuleParameters>,
-) -> anyhow::Result<Stream> {
+) -> Result<()> {
     let current_note = current_note.clone();
     let module_parameters = module_parameters.clone();
 
@@ -44,21 +47,23 @@ pub fn create_synthesizer(
     oscillators[OscillatorIndex::Two as usize]
         .set_hard_sync_role(HardSyncRole::Synced(oscillator_hard_sync_buffer.clone()));
 
-    let default_device_stream_config = output_device.device.default_output_config()?.config();
-    let number_of_channels = output_device.channels.total;
-    let left_channel_index = output_device.channels.left;
-    let right_channel_index = output_device.channels.right;
+    log::debug!("Blocking till we receive a sample buffer producer from the audio module");
+    let mut sample_buffer = sample_buffer_receiver.recv()?;
+    log::debug!("Sample buffer producer received from the audio module");
 
-    log::info!(
-        "Creating the synthesizer audio output stream for the device {} with {} channels at sample rate: {}",
-        output_device.name,
-        number_of_channels,
-        sample_rate
-    );
+    log::info!("Creating the synthesizer audio loop at sample rate: {sample_rate}");
 
-    let stream = output_device.device.build_output_stream(
-        &default_device_stream_config,
-        move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
+    thread::sleep(Duration::from_secs(1));
+
+
+    thread::spawn(move || {
+        loop {
+
+            // Check for a new sample buffer producer
+            if let Ok(new_sample_buffer) = sample_buffer_receiver.try_recv() {
+                sample_buffer = new_sample_buffer;
+            }
+
             // Process the module parameters per buffer
             amp_envelope.set_parameters(&module_parameters.amp_envelope);
             filter_envelope.set_parameters(&module_parameters.filter_envelope);
@@ -68,7 +73,7 @@ pub fn create_synthesizer(
 
             for (index, oscillator) in oscillators.iter_mut().enumerate() {
                 oscillator.set_parameters(&module_parameters.oscillators[index]);
-                oscillator.tune(current_note.midi_note.load(Relaxed));
+                oscillator.tune(current_note.midi_note.load(SeqCst));
             }
 
             // Begin processing the audio buffer
@@ -79,8 +84,11 @@ pub fn create_synthesizer(
                 load_f32_from_atomic_u32(&module_parameters.keyboard.mod_wheel_amount);
             lfo1.set_range(vibrato_amount / 4.0);
 
-            // Split the buffer into frames
-            for frame in buffer.chunks_mut(number_of_channels as usize) {
+            // Loop Here
+            let mut local_buffer = Vec::<f32>::with_capacity(LOCAL_BUFFER_CAPACITY);
+
+            while local_buffer.len() < LOCAL_BUFFER_CAPACITY {
+
                 // Begin generating and processing the samples for the frame
                 let vibrato_value = lfo1.generate(None);
                 for (index, input) in quad_mixer_inputs.iter_mut().enumerate() {
@@ -117,22 +125,26 @@ pub fn create_synthesizer(
                 let (output_left, output_right) =
                     output_mix(filtered_left, filtered_right, output_level, output_balance);
 
-                // Hand back the processed samples to the frame to be sent to the audio device
-                frame[left_channel_index] = output_left;
+                local_buffer.push(output_left);
+                local_buffer.push(output_right);
 
-                // For mono devices just drop the right sample
-                if let Some(index) = right_channel_index {
-                    frame[index] = output_right;
-                }
             }
-        },
-        |err| {
-            log::error!("create_synthesizer(): Error in audio output stream: {err}");
-        },
-        None,
-    )?;
 
-    log::info!("Synthesizer audio output stream was successfully created.");
+            // Wait for sample_buffer to have enough capacity to accept local_buffer, then break to restart main loop
+            loop  {
+                if let Ok(chunk) =sample_buffer.write_chunk_uninit(LOCAL_BUFFER_CAPACITY) {
+                    _ = chunk.fill_from_iter(local_buffer);
+                    break;
+                }
 
-    Ok(stream)
+                thread::sleep(Duration::from_micros(SAMPLE_PRODUCER_LOOP_SLEEP_DURATION_MICROSECONDS));
+
+            }
+
+        }
+    });
+
+    log::info!("Synthesizer audio  loop was successfully created.");
+
+    Ok(())
 }

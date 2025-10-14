@@ -29,7 +29,9 @@ fn main() {
     audio.run();
     midi.run()
         .expect("Could not initialize midi module. Exiting.");
-    synthesizer.run(midi_message_receiver, output_device_receiver);
+    synthesizer
+        .run(midi_message_receiver, output_device_receiver)
+        .expect("Could not initialize synthesizer module. Exiting.");
 
     // Temporary run loop to keep the application alive until I add the ui loop to replace it
     println!("Will Loop Forever. Press Ctrl-c to Exit");
