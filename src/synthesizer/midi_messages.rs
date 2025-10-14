@@ -2,7 +2,10 @@ use crate::math::store_f32_as_atomic_u32;
 use crate::midi::control_change::CC;
 use crate::modules::lfo::LfoParameters;
 use crate::modules::oscillator::OscillatorParameters;
-use crate::modules::oscillator::triangle::{MAX_CLIP_BOOST, MAX_PORTAMENTO_SPEED_IN_BUFFERS, MIN_CLIP_BOOST, MIN_PORTAMENTO_SPEED_IN_BUFFERS};
+use crate::modules::oscillator::triangle::{
+    MAX_CLIP_BOOST, MAX_PORTAMENTO_SPEED_IN_BUFFERS, MIN_CLIP_BOOST,
+    MIN_PORTAMENTO_SPEED_IN_BUFFERS,
+};
 use crate::synthesizer::constants::{
     MAX_FILTER_RESONANCE, MAX_PITCH_BEND_RANGE, MIN_FILTER_RESONANCE, MIN_PITCH_BEND_RANGE,
     OSCILLATOR_COURSE_TUNE_MAX_INTERVAL, OSCILLATOR_COURSE_TUNE_MIN_INTERVAL,
@@ -13,7 +16,7 @@ use crate::synthesizer::{
     MidiNoteEvent, MixerParameters, ModuleParameters, OscillatorIndex, midi_value_converters,
 };
 use std::sync::Arc;
-use std::sync::atomic::Ordering::{Relaxed, Release, SeqCst};
+use std::sync::atomic::Ordering::{Relaxed, Release};
 
 pub fn action_midi_note_events(
     midi_events: MidiNoteEvent,
@@ -80,7 +83,7 @@ pub fn process_midi_note_on_message(
         );
 
     store_f32_as_atomic_u32(&current_note.velocity, scaled_velocity);
-    current_note.midi_note.store(midi_note, SeqCst);
+    current_note.midi_note.store(midi_note, Relaxed);
 
     module_parameters
         .filter
@@ -292,7 +295,11 @@ pub fn process_midi_cc_values(
             set_oscillator_clip_boost(&module_parameters.oscillators, OscillatorIndex::Two, value);
         }
         CC::Oscillator3ClipBoost(value) => {
-            set_oscillator_clip_boost(&module_parameters.oscillators, OscillatorIndex::Three, value);
+            set_oscillator_clip_boost(
+                &module_parameters.oscillators,
+                OscillatorIndex::Three,
+                value,
+            );
         }
         CC::FilterPoles(value) => {
             set_filter_poles(&module_parameters.filter, value);
@@ -535,9 +542,16 @@ fn set_portamento_time(parameters: &[OscillatorParameters; 4], value: u8) {
     }
 }
 
-fn set_oscillator_clip_boost(parameters: &[OscillatorParameters; 4], oscillator: OscillatorIndex, value: u8) {
-    let boost = midi_value_converters::midi_value_to_u8_range(value, MIN_CLIP_BOOST, MAX_CLIP_BOOST);
-    parameters[oscillator as usize].clipper_boost.store(boost, Relaxed);
+fn set_oscillator_clip_boost(
+    parameters: &[OscillatorParameters; 4],
+    oscillator: OscillatorIndex,
+    value: u8,
+) {
+    let boost =
+        midi_value_converters::midi_value_to_u8_range(value, MIN_CLIP_BOOST, MAX_CLIP_BOOST);
+    parameters[oscillator as usize]
+        .clipper_boost
+        .store(boost, Relaxed);
 }
 
 fn set_portamento_enabled(parameters: &[OscillatorParameters; 4], value: u8) {

@@ -5,7 +5,7 @@ use crossbeam_channel::{Receiver, Sender, bounded};
 use rtrb::{Consumer, Producer, RingBuffer};
 use std::thread;
 use std::thread::sleep;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use thiserror::Error;
 
 const DEFAULT_AUDIO_DEVICE_INDEX: usize = 0;
@@ -14,7 +14,6 @@ const DEFAULT_RIGHT_CHANNEL_INDEX: usize = 1;
 const DEVICE_LIST_POLLING_INTERVAL: u64 = 2000;
 const SAMPLE_BUFFER_SENDER_CAPACITY: usize = 5;
 const SAMPLE_BUFFER_CAPACITY: usize = 8192;
-pub const SAMPLE_BUFFER_CHUNK_SIZE: usize = 256;
 const MONO_CHANNELS: u16 = 1;
 
 #[derive(Debug, Clone)]
@@ -95,7 +94,10 @@ impl Audio {
                     )
                 {
                     if let Some(output_device) = &current_output_device {
-                        log::debug!("run(): Output device changed. New device: {:?}", output_device.name);
+                        log::debug!(
+                            "run(): Output device changed. New device: {:?}",
+                            output_device.name
+                        );
 
                         let (sample_producer, sample_consumer) =
                             RingBuffer::<f32>::new(SAMPLE_BUFFER_CAPACITY);
@@ -127,15 +129,15 @@ fn start_main_audio_output_loop(
     let stream = output_device.device.build_output_stream(
         &default_device_stream_config,
         move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
-            let number_of_frames = buffer.len()/number_of_channels as usize;
-            let mut samples = if let Ok(samples) = sample_buffer.read_chunk(number_of_frames*2) {
+            let number_of_frames = buffer.len() / number_of_channels as usize;
+            let mut samples = if let Ok(samples) = sample_buffer.read_chunk(number_of_frames * 2) {
                 samples.into_iter()
             } else {
                 log::debug!("Audio output buffer dropout");
-                return
+                return;
             };
 
-            for frame in buffer.chunks_mut(number_of_channels as usize){
+            for frame in buffer.chunks_mut(number_of_channels as usize) {
                 frame[left_channel_index] = samples.next().unwrap_or(0.0);
                 let right_sample = samples.next().unwrap_or(0.0);
                 if let Some(index) = right_channel_index {
