@@ -22,7 +22,7 @@ fn main() {
     log::debug!("Initialize the midi module");
     let mut midi = Midi::new();
 
-    let output_device_receiver = audio.get_output_device_receiver();
+    let output_device_receiver = audio.get_sample_buffer_receiver();
     let midi_message_receiver = midi.get_midi_message_receiver();
 
     log::debug!("Run the main modules");
