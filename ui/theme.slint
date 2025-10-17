@@ -30,17 +30,18 @@ export global Theme {
     out property <string> default-font-family: "HackNerdFontMono";
     out property <int> default-font-weight: 400;
     out property <color> default-font-color: Palette.foreground;
+    out property <color> default-font-disabled-color: Palette.control-background;
 
     // Panel Defaults
     out property <length> panel-border-width: 2px;
     out property <color> panel-background: Palette.background;
     out property <color> panel-border-colour: Palette.border;
     out property <length> panel-border-radius: 0px;
-    out property <length> panel-label-font-size: 16px;
+    out property <length> panel-label-font-size: 15px;
     out property <int> panel-label-font-weight: 600;
     out property <color> spacer-color: Palette.border;
-    out property <length> section-label-font-size: 12px;
-    out property <int> section-label-font-weight: 400;
+    out property <length> section-label-font-size: 13px;
+    out property <int> section-label-font-weight: 500;
     out property <length> component-label-font-size: 12px;
     out property <int> component-label-font-weight: 400;
 
@@ -53,7 +54,7 @@ export global Theme {
     out property <length> header-panel-height: 40px;
     out property <length> header-version-font-size: 10px;
     out property <string> header-version-prefix: "v";
-    out property <brush> header-panel-background: @radial-gradient(circle, #101010 0%, #101035 100%);
+    out property <brush> header-panel-background: @radial-gradient(circle, #000000 0%, #101035 100%);
 
     // Custom Widgets
     out property <color> handle-border-colour: Palette.background;
@@ -62,6 +63,7 @@ export global Theme {
     out property <color> slider-track-colour: Palette.border;
     out property <length> slider-track-width: 6px;
     out property <length> slider-track-height: 100px;
+    out property <string> control-label-default-string: "---";
 
     // Main Tabs
     out property <string> tab-title-oscillators: "Oscillators";
@@ -70,24 +72,22 @@ export global Theme {
     out property <string> tab-title-settings: "Settings";
 
     // Oscillators Panel
-    out property <length> oscillator-panel-height: 530px;
+    out property <length> oscillator-panel-height: 425px;
+    out property <length> oscillator-panel-width: 600px;
     out property <length> oscillator-panel-padding: 0px;
     out property <length> oscillator-panel-spacing: 0px;
-
-    // Osciallator Controls Panel
-    out property <length> osc-controls-panel-padding: 8px;
-    out property <length> osc-controls-panel-spacing: 20px;
-    out property <string> osc-controls-panel-title-1: "Oscillator 1";
-    out property <string> osc-controls-panel-title-2: "Oscillator 2";
-    out property <string> osc-controls-panel-title-3: "Oscillator 3";
-    out property <string> osc-controls-panel-title-sub: "Sub Oscillator";
+    out property <length> oscillator-panel-section-width: 250px;
+    out property <length> oscillator-panel-widget-width: 200px;
+    out property <length> filter-panel-widget-width: 120px;
+    out property <length> filter-panel-width: 300px;
 
     // Global Panel
-    out property <length> global-panel-height: 220px;
+    out property <length> global-panel-height: 350px;
+    out property <length> global-panel-width: 500px;
     out property <length> global-panel-padding: 10px;
-    out property <length> global-panel-spacing: 0px;
+    out property <length> global-panel-spacing: 10px;
     out property <string> output-mixer-label: "Output";
-    out property <string> osc-mixer-label: "Oscillator Mixer";
+    out property <string> osc-mixer-label: "Mixer";
     out property <string> osc-mixer-title-1: "Osc 1";
     out property <string> osc-mixer-title-2: "Osc 2";
     out property <string> osc-mixer-title-3: "Osc 3";
@@ -95,4 +95,16 @@ export global Theme {
     out property <string> mixer-level-label: "Level";
     out property <string> mixer-balance-label: "Balance";
     out property <string> mixer-mute-label: "Mute";
+
+    // Osciallator Controls Panel
+    out property <length> osc-controls-panel-padding: 8px;
+    out property <length> osc-controls-panel-spacing: 15px;
+    out property <string> osc-controls-panel-title-1: "Oscillator 1";
+    out property <string> osc-controls-panel-title-2: "Oscillator 2";
+    out property <string> osc-controls-panel-title-3: "Oscillator 3";
+    out property <string> osc-controls-panel-title-sub: "Sub Oscillator";
+
+    // Settings Panel
+    out property <length> settings-panel-width: 300px;
+
 }

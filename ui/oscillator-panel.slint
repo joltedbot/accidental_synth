@@ -1,138 +1,102 @@
 import { Panel, PanelLabel, VerticalSpacer, HorizontalParameterSlider, CenteredParameterSlider, VerticalIntSlider, FilterSlider, IntSpinBox,
-WaveShapeDropDown,
-HorizontalSpacer } from "components.slint";
+DropDownMenu,
+HorizontalSpacer, SectionLabel } from "components.slint";
 import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.slint";
-import { Theme } from "../ui/theme.slint";
+import { Theme } from "theme.slint";
+import { Constant } from "constants.slint";
 
 
-export component FilterControlsPanel inherits Panel {
-    in-out property <string> title;
 
-    VerticalLayout {
-        padding: Theme.osc-controls-panel-padding;
-        spacing: Theme.osc-controls-panel-spacing;
-        alignment: start;
-
-        PanelLabel {
-            label: title;
-        }
-
-        HorizontalLayout {
-            alignment: start;
-
-            cutoff := FilterSlider {
-                label: "Cutoff";
-                default-value: 100;
-                width: 60px;
-                slider-height: 220px;
-            }
-
-            resonance := FilterSlider {
-                label: "Resonance";
-                default-value: 0;
-                slider-height: 220px;
-            }
-        }
-
-        HorizontalSpacer { }
-    }
-}
 
 export component OscControlsPanel inherits Panel {
     in-out property <string> title;
 
-    VerticalLayout {
-        padding: Theme.osc-controls-panel-padding;
-        spacing: Theme.osc-controls-panel-spacing;
-        alignment: start;
+    HorizontalLayout {
+        alignment: center;
+        VerticalLayout {
+            padding: Theme.osc-controls-panel-padding;
+            spacing: Theme.osc-controls-panel-spacing;
+            alignment: start;
 
-        PanelLabel {
-            label: title;
-        }
+            PanelLabel {
+                label: title;
+            }
 
-        wave-shape := WaveShapeDropDown {
-            label: "Wave Shape";
-            default-model: ["Sine", "Saw", "Square", "Triangle"];
-            dropdown-width: 220px;
-        }
+            wave-shape := DropDownMenu {
+                label: "Wave Shape";
+                default-model: Constant.WAVE_SHAPES;
+                dropdown-width: Theme.oscillator-panel-widget-width;
+            }
 
-        course-tune := IntSpinBox {
-            label: "Course Tune";
-            value-postfix: "semitones";
-            step: 1;
-            minimum: -12;
-            maximum: 12;
-            default-value: 0;
-            spinbox-width: 220px;
-        }
+            course-tune := IntSpinBox {
+                label: "Course Tune";
+                value-postfix: "semitones";
+                step: 1;
+                minimum: -12;
+                maximum: 12;
+                default-value: 0;
+                spinbox-width: Theme.oscillator-panel-widget-width;
+            }
 
-        fine-tune := CenteredParameterSlider {
-            label: "Fine Tune";
-            value-postfix: "cents";
-            minimum: -63;
-            maximum: 63;
-            slider-width: 220px;
-        }
+            fine-tune := CenteredParameterSlider {
+                label: "Fine Tune";
+                value-postfix: "cents";
+                minimum: -63;
+                maximum: 63;
+                slider-width: Theme.oscillator-panel-widget-width;
+            }
 
-        clip-boost := HorizontalParameterSlider {
-            label: "Clipper Boost";
-            value-postfix: "dbfs";
-            minimum: 0;
-            maximum: 30;
-            default-value: 0;
-            slider-width: 220px;
-        }
+            clip-boost := HorizontalParameterSlider {
+                label: "Clipper Boost";
+                value-postfix: "dbfs";
+                minimum: 0;
+                maximum: 30;
+                default-value: 0;
+                slider-width: Theme.oscillator-panel-widget-width;
+            }
 
-        param1 := HorizontalParameterSlider {
-            label: "Parameter 1";
-            minimum: 0;
-            maximum: 100;
-            default-value: 0;
-            slider-width: 220px;
-        }
+            param1 := HorizontalParameterSlider {
+                minimum: 0;
+                maximum: 100;
+                default-value: 0;
+                slider-width: Theme.oscillator-panel-widget-width;
+            }
 
-        param3 := HorizontalParameterSlider {
-            label: "Parameter 2";
-            minimum: 0;
-            maximum: 100;
-            default-value: 0;
-            slider-width: 220px;
+            param3 := HorizontalParameterSlider {
+                minimum: 0;
+                maximum: 100;
+                default-value: 0;
+                slider-width: Theme.oscillator-panel-widget-width;
+            }
         }
     }
 }
 
 export component OscillatorsPanel inherits Panel {
+
+
     HorizontalLayout {
         padding: Theme.oscillator-panel-padding;
         spacing: Theme.oscillator-panel-spacing;
 
         osc1 := OscControlsPanel {
             title: Theme.osc-controls-panel-title-1;
-            height: parent.height;
-            width: parent.width / 5;
+            width: Theme.oscillator-panel-section-width;
         }
 
         osc2 := OscControlsPanel {
             title: Theme.osc-controls-panel-title-2;
-            height: parent.height;
-            width: parent.width / 5;
+            width: Theme.oscillator-panel-section-width;
         }
 
         osc3 := OscControlsPanel {
             title: Theme.osc-controls-panel-title-3;
-            height: parent.height;
-            width: parent.width / 5;
+            width: Theme.oscillator-panel-section-width;
         }
 
         sub_osc := OscControlsPanel {
             title: Theme.osc-controls-panel-title-sub;
-            height: parent.height;
-            width: parent.width / 5;
-        }
-
-        filter := FilterControlsPanel {
-            title: "Filter";
-            width: parent.width / 5;
+            width: Theme.oscillator-panel-section-width;
         }
     }
 }

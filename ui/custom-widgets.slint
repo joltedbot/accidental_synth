@@ -6,8 +6,8 @@ export component SliderHandle inherits Rectangle {
     in property <Orientation> orientation: vertical;
     property <length> handle_height: orientation == Orientation.vertical ? 10px : 20px;
     property <length> handle_width: orientation == Orientation.vertical ? 20px : 10px;
-    property <length> handle_border_width: 4px;
-    property <length> handle_radius: 5px;
+    property <length> handle_border_width: 3px;
+    property <length> handle_radius: 7px;
 
     width: handle_width;
     height: handle_height;
@@ -41,6 +41,7 @@ export component VerticalSlider inherits Rectangle {
     in-out property <float> minimum: 0;
     in-out property <float> maximum: 100;
     in-out property <float> default-value: 0;
+    in property <bool> enabled: true;
     callback updated(float);
 
     width: 50px;
@@ -68,6 +69,8 @@ export component VerticalSlider inherits Rectangle {
     }
 
     touch := TouchArea {
+        enabled: root.enabled;
+
         moved => {
             let position = clamp(self.mouse-y, track.y, track.y + track.height);
             track.position = position;
@@ -96,6 +99,7 @@ export component HorzontalSlider inherits Rectangle {
     in property <float> minimum: 0;
     in property <float> maximum: 100;
     in property <float> default-value: 0;
+    in property <bool> enabled: true;
     callback updated(float);
 
     width: 100px;
@@ -122,9 +126,11 @@ export component HorzontalSlider inherits Rectangle {
         return clamp(track.position + track.width - (handle.width / 2), track.x, track.x + track.width - handle.width);
     }
 
+
     touch := TouchArea {
         width: parent.width;
         height: parent.height;
+        enabled: root.enabled;
 
         moved => {
             let position = self.mouse-x.clamp(track.x, track.x + track.width) - track.width;
@@ -150,6 +156,7 @@ export component HorzontalSlider inherits Rectangle {
         track-width: parent.width;
         position: indicator-default-position;
     }
+
 }
 
 export component BalanceTrack inherits Rectangle {
@@ -183,6 +190,7 @@ export component BalanceTrack inherits Rectangle {
 export component BalanceSlider inherits Rectangle {
     in property <float> minimum: Constant.MAX_LEFT_BALANCE;
     in property <float> maximum: Constant.MAX_RIGHT_BALANCE;
+    in property <bool> enabled: true;
     callback updated(float);
 
     width: 100px;
@@ -206,6 +214,7 @@ export component BalanceSlider inherits Rectangle {
     touch := TouchArea {
         width: parent.width;
         height: parent.height;
+        enabled: root.enabled;
 
         moved => {
             let position = self.mouse-x.clamp(track.x, track.x + track.width) - track.width / 2;

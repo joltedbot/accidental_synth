@@ -1,0 +1,84 @@
+import { Theme } from "theme.slint";
+import { Panel, PanelLabel, ComponentLabel, DropDownMenu, HorizontalSpacer } from "components.slint";
+
+export component AudioSettings inherits VerticalLayout {
+    padding: Theme.osc-controls-panel-padding;
+    spacing: Theme.osc-controls-panel-spacing;
+
+    device := DropDownMenu {
+        label: "Output Device";
+        default-model: ["Focusrite Scarlett", "Builtin Speakers", "External Headphones"];
+        dropdown-width: Theme.oscillator-panel-widget-width;
+    }
+
+    HorizontalLayout {
+            padding: Theme.osc-controls-panel-padding;
+            spacing: Theme.osc-controls-panel-spacing;
+
+            left := DropDownMenu {
+                label: "Left Channel";
+                default-model: ["1", "2", "3", "4"];
+            }
+            right := DropDownMenu {
+                label: "Right Channel";
+                default-model: ["1", "2", "3", "4"];
+            }
+    }
+
+    sample := DropDownMenu {
+        label: "Sample Rate";
+        default-model: ["44,100", "48,000", "96,000"];
+        dropdown-width: Theme.oscillator-panel-widget-width;
+    }
+
+}
+
+export component MidiSettings inherits VerticalLayout {
+    padding: Theme.osc-controls-panel-padding;
+    spacing: Theme.osc-controls-panel-spacing;
+
+    port := DropDownMenu {
+        label: "Input Port";
+        default-model: ["MidiHub", "Focusrite Scarlett"];
+        dropdown-width: Theme.oscillator-panel-widget-width;
+    }
+
+    channel := DropDownMenu {
+        label: "Channel";
+        default-model: ["Omni", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"];
+        dropdown-width: Theme.oscillator-panel-widget-width;
+    }
+
+}
+
+export component SettingsPanel inherits Panel {
+
+    VerticalLayout {
+       padding: Theme.osc-controls-panel-padding;
+       spacing: Theme.osc-controls-panel-spacing;
+        alignment: start;
+
+
+        PanelLabel {
+            label: "Audio Settings";
+        }
+
+        AudioSettings {}
+        
+        HorizontalSpacer {
+            top-padding: 20px;
+            bottom-padding: 20px;
+        }
+
+        PanelLabel {
+            label: "Midi Settings";
+        }
+
+        MidiSettings {}
+
+        HorizontalSpacer {
+            top-padding: 20px;
+            bottom-padding: 20px;
+        }
+    }
+}

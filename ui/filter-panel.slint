@@ -1,0 +1,211 @@
+import { Panel, FilterSlider, IntSpinBox, CenteredParameterSlider, HorizontalParameterSlider, PanelLabel, VerticalSpacer, HorizontalSpacer,
+SectionLabel, ToggleSwitch, DropDownMenu, MomentaryButton } from "components.slint";
+import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.slint";
+import { Switch } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Constant } from "constants.slint";
+
+export component FilterCutoffSection inherits HorizontalLayout {
+
+    alignment: start;
+
+    cutoff := FilterSlider {
+        label: "Cutoff";
+        default-value: 100;
+        slider-height: 220px;
+        slider-width: 50px;
+    }
+
+    resonance := FilterSlider {
+        label: "Reso";
+        default-value: 0;
+        slider-width: 50px;
+        slider-height: 220px;
+    }
+
+}
+
+
+export component FilterOptionsSection inherits VerticalLayout {
+            padding: Theme.osc-controls-panel-padding;
+            spacing: Theme.osc-controls-panel-spacing;
+            alignment: start;
+
+            poles := IntSpinBox {
+                label: "Poles";
+                step: 1;
+                minimum: 1;
+                maximum: 4;
+                height: 50px;
+                default-value: 4;
+                spinbox-width: Theme.filter-panel-widget-width;
+            }
+
+            keytrack := CenteredParameterSlider {
+                label: "Key Tracking";
+                minimum: -100;
+                maximum: 100;
+                slider-width: Theme.filter-panel-widget-width;
+            }
+
+            eg_amount := HorizontalParameterSlider {
+                label: "EG Amount";
+                minimum: 0;
+                maximum: 100;
+                default-value: 0;
+                slider-width: Theme.filter-panel-widget-width;
+            }
+
+            lfo_amount := HorizontalParameterSlider {
+                label: "LFO Amount";
+                minimum: 0;
+                maximum: 100;
+                default-value: 0;
+                slider-width: Theme.filter-panel-widget-width;
+            }
+
+}
+
+export component FilterEGSection inherits VerticalLayout {
+
+            alignment: start;
+
+            SectionLabel {
+                label: "Filter Envelope";
+            }
+            HorizontalSpacer { }
+
+            HorizontalLayout {
+                padding: Theme.osc-controls-panel-padding;
+                spacing: Theme.osc-controls-panel-spacing;
+                alignment: space-between;
+
+
+                    filter_attack := FilterSlider {
+                        label: "Attack";
+                        minimum: 0;
+                        maximum: 100;
+                        default-value: 0;
+                        slider-height: 90px;
+                    }
+
+                    filter_decay := FilterSlider {
+                        label: "Decay";
+                        minimum: 0;
+                        maximum: 100;
+                        default-value: 0;
+                        slider-height: 90px;
+                    }
+
+                    filter_sustain := FilterSlider {
+                        label: "Sustain";
+                        minimum: 0;
+                        maximum: 100;
+                        default-value: 0;
+                       slider-height: 90px;
+                    }
+
+                    filter_release := FilterSlider {
+                        label: "Release";
+                        minimum: 0;
+                        maximum: 100;
+                        default-value: 0;
+                       slider-height: 90px;
+                    }
+                }
+
+
+            ToggleSwitch {
+                height: 50px;
+                label: "Inverted";
+            }
+
+}
+
+export component FilterLFOSection inherits VerticalLayout {
+            alignment: start;
+
+            SectionLabel {
+                label: "Filter LFO";
+            }
+            HorizontalSpacer { }
+
+            HorizontalLayout {
+                alignment: start;
+
+                VerticalLayout {
+                    padding: Theme.osc-controls-panel-padding;
+                    spacing: Theme.osc-controls-panel-spacing;
+                    alignment: start;
+
+                    frequency := HorizontalParameterSlider {
+                        label: "Frequency";
+                        minimum: 0;
+                        maximum: 100;
+                        default-value: 0;
+                        slider-width: Theme.filter-panel-widget-width;
+                    }
+
+                    wave-shape := DropDownMenu {
+                        label: "Wave Shape";
+                        default-model: Constant.WAVE_SHAPES;
+                        dropdown-width: Theme.filter-panel-widget-width;
+                    }
+                }
+
+                VerticalLayout {
+                    padding: Theme.osc-controls-panel-padding;
+                    spacing: Theme.osc-controls-panel-spacing;
+                    alignment: start;
+
+                    phase := HorizontalParameterSlider {
+                        label: "Phase";
+                        minimum: 0;
+                        maximum: 100;
+                        default-value: 0;
+                        slider-width: Theme.filter-panel-widget-width;
+                    }
+
+                    reset := MomentaryButton {
+                        title: "Phase";
+                        label: "Reset";
+                        button-width: 100px;
+                        button-height: 27px;
+                    }
+                }
+            }
+
+
+}
+
+export component FilterPanel inherits Panel {
+
+
+    VerticalLayout {
+       padding: Theme.osc-controls-panel-padding;
+       spacing: Theme.osc-controls-panel-spacing;
+        alignment: start;
+
+
+        PanelLabel {
+            label: "Filter";
+        }
+
+        HorizontalLayout {
+            FilterCutoffSection {}
+            VerticalSpacer { }
+            FilterOptionsSection {}
+        }
+
+        HorizontalSpacer { }
+
+        FilterEGSection {}
+
+        HorizontalSpacer { }
+
+        FilterLFOSection {}
+
+
+
+    }
+}

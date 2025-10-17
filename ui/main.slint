@@ -5,7 +5,10 @@ import { TabWidget, Slider, VerticalBox, SpinBox } from "std-widgets.slint";
 import { Panel } from "components.slint";
 import { GlobalPanel } from "global-panel.slint";
 import { HeaderPanel } from "header-panel.slint";
+import { FilterPanel } from "filter-panel.slint";
 import { OscillatorsPanel } from "oscillator-panel.slint";
+import { EffectsPanel } from "effects.slint";
+import { SettingsPanel } from "settings.slint";
 
 
 
@@ -13,8 +16,8 @@ export component AccidentalSynth inherits Window {
     title: Theme.window-title;
     icon: Theme.icon;
     background: transparent;
-    min-width: Theme.window-width;
-    min-height: Theme.window-height;
+    width: Theme.window-width;
+    height: Theme.window-height;
     default-font-size: Theme.default-text-size;
     default-font-family: Theme.default-font-family;
     default-font-weight: Theme.default-font-weight;
@@ -25,36 +28,47 @@ export component AccidentalSynth inherits Window {
         border-color: Theme.window-border-colour;
         border-bottom-left-radius: Theme.window-border-radius;
         border-bottom-right-radius: Theme.window-border-radius;
+        height: parent.height;
 
         VerticalLayout {
             padding: 0px;
             spacing: 0px;
+            alignment: start;
 
             header-panel := HeaderPanel {
                 width: Theme.window-width;
             }
 
             tab-bar := TabWidget {
+                height: parent.height;
                 Tab {
                     title: Theme.tab-title-oscillators;
-                    oscillator-panel := OscillatorsPanel { }
-                }
+                    HorizontalLayout {
 
-                Tab {
-                    title: Theme.tab-title-modulation;
+                        VerticalLayout {
+                            oscillator-panel := OscillatorsPanel { }
+                            global-panel := GlobalPanel { }
+                        }
+
+                        filter-panel := FilterPanel {
+                            width: Theme.filter-panel-width;
+                        }
+                    }
                 }
 
                 Tab {
                     title: Theme.tab-title-effects;
+                    EffectsPanel {
+                        title: "TBD";
+                    }
                 }
 
                 Tab {
                     title: Theme.tab-title-settings;
+                    SettingsPanel {
+                        width: Theme.settings-panel-width;
+                    }
                 }
-            }
-
-            global-panel := GlobalPanel {
-                width: Theme.window-width;
             }
         }
     }
