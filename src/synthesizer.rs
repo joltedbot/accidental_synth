@@ -185,7 +185,6 @@ impl Synthesizer {
         midi_message_receiver: Receiver<Event>,
         sample_buffer_receiver: Receiver<Producer<f32>>,
     ) -> Result<()> {
-
         log::debug!("run(): Start the midi event listener thread");
         self.start_midi_event_listener(midi_message_receiver);
 
@@ -196,7 +195,6 @@ impl Synthesizer {
             &self.current_note,
             &self.module_parameters,
         )?;
-
 
         Ok(())
     }

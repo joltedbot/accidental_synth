@@ -162,9 +162,9 @@ pub fn update_current_note_from_midi_pitch_bend(
 }
 
 fn midi_value_to_pitch_bend_cents(pitch_bend_amount: u16, max_bend_in_cents: u16) -> i16 {
-    ((i32::from(pitch_bend_amount) - i32::from(PITCH_BEND_AMOUNT_ZERO_POINT))
-        / i32::from(PITCH_BEND_AMOUNT_ZERO_POINT)
-        * i32::from(max_bend_in_cents)) as i16
+    ((f32::from(pitch_bend_amount) - f32::from(PITCH_BEND_AMOUNT_ZERO_POINT))
+        / f32::from(PITCH_BEND_AMOUNT_ZERO_POINT)
+        * f32::from(max_bend_in_cents)) as i16
 }
 
 #[cfg(test)]

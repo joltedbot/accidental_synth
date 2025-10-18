@@ -9,7 +9,6 @@ pub const DEFAULT_KEY_SYNC_ENABLED: bool = true;
 pub const MIN_CLIP_BOOST: u8 = 0;
 pub const MAX_CLIP_BOOST: u8 = 30;
 
-
 // Oscillator Shape Specific Constants
 pub const DEFAULT_AMPLITUDE_MODULATION_AMOUNT: f32 = 4.0;
 pub const DEFAULT_AM_TONE_AMOUNT: f32 = 1.0;
