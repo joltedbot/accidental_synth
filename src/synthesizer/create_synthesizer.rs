@@ -73,7 +73,7 @@ pub fn create_synthesizer(
 
             for (index, oscillator) in oscillators.iter_mut().enumerate() {
                 oscillator.set_parameters(&module_parameters.oscillators[index]);
-                oscillator.tune(current_note.midi_note.load(SeqCst));
+                oscillator.tune(current_note.midi_note.load(Relaxed));
             }
 
             // Begin processing the audio buffer
