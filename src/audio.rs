@@ -138,8 +138,8 @@ fn start_main_audio_output_loop(
             };
 
             for frame in buffer.chunks_mut(number_of_channels as usize) {
-                frame[left_channel_index] = samples.next().unwrap_or(0.0);
-                let right_sample = samples.next().unwrap_or(0.0);
+                frame[left_channel_index] = samples.next().unwrap_or_default();
+                let right_sample = samples.next().unwrap_or_default();
                 if let Some(index) = right_channel_index {
                     frame[index] = right_sample;
                 }

@@ -15,7 +15,7 @@ use crossbeam_channel::Receiver;
 use rtrb::Producer;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering::Relaxed;
+use std::sync::atomic::Ordering::SeqCst;
 use std::thread;
 use std::time::Duration;
 
