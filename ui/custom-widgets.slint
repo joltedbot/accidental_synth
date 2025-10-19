@@ -81,6 +81,7 @@ export component VerticalSlider inherits Rectangle {
         double-clicked => {
             track.position = indicator-default-position;
             handle.y = get_handle_position();
+            updated(get_output_value(indicator-default-position));
         }
     }
 
@@ -126,7 +127,6 @@ export component HorzontalSlider inherits Rectangle {
         return clamp(track.position + track.width - (handle.width / 2), track.x, track.x + track.width - handle.width);
     }
 
-
     touch := TouchArea {
         width: parent.width;
         height: parent.height;
@@ -142,6 +142,7 @@ export component HorzontalSlider inherits Rectangle {
         double-clicked => {
             track.position = indicator-default-position;
             handle.x = get_handle_position();
+            updated(get_output_value(indicator-default-position));
         }
     }
 
@@ -156,7 +157,6 @@ export component HorzontalSlider inherits Rectangle {
         track-width: parent.width;
         position: indicator-default-position;
     }
-
 }
 
 export component BalanceTrack inherits Rectangle {

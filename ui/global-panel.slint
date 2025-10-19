@@ -6,8 +6,6 @@ import { Constant } from "constants.slint";
 import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.slint";
 import { ComboBox } from "std-widgets.slint";
 
-
-
 export component MixerStrip inherits VerticalLayout {
     in-out property <string> label;
     in property <float> minimum: 0.0;
@@ -49,7 +47,7 @@ export component MixerStrip inherits VerticalLayout {
             mixer_mute_update(is_muted) => {
                 root.mixer_mute_update(is_muted);
             }
-         }
+        }
     }
 }
 
@@ -72,7 +70,6 @@ export component OutputMixer inherits VerticalLayout {
 export component OscillatorMixer inherits VerticalLayout {
     in property <float> level-minimum: Constant.SILENCE_LEVEL_DBFS;
     in property <float> level-maximum: Constant.MAX_OUTPUT_LEVEL_DBFS;
-
 
     HorizontalLayout {
         MixerStrip {
@@ -113,53 +110,96 @@ export component OscillatorMixer inherits VerticalLayout {
     }
 }
 
-export component GlobalPanel inherits Panel {
-    height: Theme.global-panel-height;
+export component MixerSection inherits VerticalLayout {
+    alignment: start;
 
-    HorizontalLayout {
-        padding: Theme.global-panel-padding;
-        spacing: Theme.global-panel-spacing;
+    PanelLabel {
+        label: Theme.osc-mixer-label;
+    }
+
+    VerticalLayout {
+        padding-top: 4px;
         alignment: start;
 
-        VerticalLayout {
-            alignment: start;
-            PanelLabel {
-                label: Theme.osc-mixer-label;
-            }
+        HorizontalLayout {
 
-        VerticalLayout {
-            alignment: start;
+            VerticalSpacer { }
 
-                HorizontalLayout {
-
-                    VerticalSpacer {}
-
-                    outout-mixer := OutputMixer {
-                        output-level-update(value) => {
-                        }
-                    }
-
-                    VerticalSpacer { }
-                    VerticalSpacer { }
-
-                    oscillator-mixer := OscillatorMixer { }
-                }
+            outout-mixer := OutputMixer {
+                output-level-update(value) => {
                 }
             }
-        
-        VerticalSpacer {}
 
-        VerticalLayout {
+            VerticalSpacer { }
+
+            VerticalSpacer { }
+
+            oscillator-mixer := OscillatorMixer { }
+        }
+    }
+}
+
+export component OscillatorSection inherits VerticalLayout {
+
+    width: 250px;
+    alignment: start;
+
+    PanelLabel {
+        label: "Oscillator Options";
+    }
+
+    VerticalLayout {
+        padding: Theme.global-panel-padding;
+        spacing: Theme.global-panel-spacing;
+        alignment: space-between;
+
+        HorizontalLayout {
+            padding: Theme.global-panel-padding;
+            spacing: Theme.global-panel-spacing;
+            alignment: space-around;
+
+            ToggleSwitch {
+                label: "Portamento";
+            }
+
+            HorizontalParameterSlider {
+                label: "Time";
+                value-postfix: "ms";
+                default-value: 0;
+                minimum: 0;
+                maximum: 100;
+            }
+        }
+
+        HorizontalSpacer { }
+
+        HorizontalLayout {
             alignment: start;
 
-            PanelLabel {
-                label: "Oscillators";
+            VerticalLayout {
+                spacing: 20px;
+                alignment: center;
+
+                IntSpinBox {
+                    label: "Pitch Bend Range";
+                    minimum: 2;
+                    maximum: 12;
+                    default-value: 12;
+                    step: 1;
+                }
+
+                CenteredParameterSlider {
+                    label: "Velocity Curve";
+                    show-value: false;
+                    default-value: 0;
+                    minimum: -1;
+                    maximum: 1;
+                }
             }
 
             VerticalLayout {
-                padding: Theme.global-panel-padding;
-                spacing: Theme.global-panel-spacing;
-                alignment: start;
+                spacing: 20px;
+                alignment: center;
 
                 ToggleSwitch {
                     label: "Hard Sync";
@@ -168,66 +208,25 @@ export component GlobalPanel inherits Panel {
                 ToggleSwitch {
                     label: "Key Sync";
                 }
-
-                HorizontalSpacer {}
-
-                SectionLabel {
-                    label: "Portamento";
-                }
-
-                ToggleSwitch {
-                    label: "Enabled";
-                }
-
-                HorizontalParameterSlider {
-                    label: "Time";
-                    value-postfix: "ms";
-                    default-value: 0;
-                    minimum: 0;
-                    maximum: 100;
-                }
-
             }
         }
+    }
+}
 
-        VerticalSpacer {}
-        
-        VerticalLayout {
-            alignment: start;
+export component GlobalPanel inherits Panel {
+    height: Theme.global-panel-height;
 
-            PanelLabel {
-                label: "Keyboard";
-            }
+    HorizontalLayout {
+        width: 100%;
+        padding: Theme.global-panel-padding;
+        spacing: Theme.global-panel-spacing;
 
-            VerticalLayout {
-                padding: Theme.global-panel-padding;
-                spacing: Theme.global-panel-spacing;
-                alignment: start;
+        mixer-section := MixerSection { }
 
-                IntSpinBox {
-                    width: 100px;
-                    label: "Pitch Bend";
-                    minimum: 2;
-                    maximum: 12;
-                    default-value: 12;
-                    step: 1;
-                }
-                
-                HorizontalSpacer {}
+        VerticalSpacer { }
 
-                CenteredParameterSlider {
-                    width: 100px;
-                    label: "Velocity Curve";
-                    show-value: false;
-                    default-value: 0;
-                    minimum: -1;
-                    maximum: 1;
-                }
+        osc-section := OscillatorSection { }
 
-                HorizontalSpacer {}
-
-            }    
-        }
-        VerticalSpacer {}    
+        VerticalSpacer { }
     }
 }

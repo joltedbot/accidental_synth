@@ -1,5 +1,8 @@
 import { Theme } from "theme.slint";
-import { Panel, PanelLabel, ComponentLabel, DropDownMenu, HorizontalSpacer } from "components.slint";
+import { Constant } from "constants.slint";
+import { MomentaryButton, Panel, PanelLabel, ComponentLabel, DropDownMenu, HorizontalSpacer, VerticalControlLabel } from "components.slint";
+import { Button, StandardButton } from "std-widgets.slint";
+
 
 export component AudioSettings inherits VerticalLayout {
     padding: Theme.osc-controls-panel-padding;
@@ -12,17 +15,18 @@ export component AudioSettings inherits VerticalLayout {
     }
 
     HorizontalLayout {
-            padding: Theme.osc-controls-panel-padding;
-            spacing: Theme.osc-controls-panel-spacing;
+        padding: Theme.osc-controls-panel-padding;
+        spacing: Theme.osc-controls-panel-spacing;
 
-            left := DropDownMenu {
-                label: "Left Channel";
-                default-model: ["1", "2", "3", "4"];
-            }
-            right := DropDownMenu {
-                label: "Right Channel";
-                default-model: ["1", "2", "3", "4"];
-            }
+        left := DropDownMenu {
+            label: "Left Channel";
+            default-model: ["1", "2", "3", "4"];
+        }
+
+        right := DropDownMenu {
+            label: "Right Channel";
+            default-model: ["1", "2", "3", "4"];
+        }
     }
 
     sample := DropDownMenu {
@@ -30,7 +34,6 @@ export component AudioSettings inherits VerticalLayout {
         default-model: ["44,100", "48,000", "96,000"];
         dropdown-width: Theme.oscillator-panel-widget-width;
     }
-
 }
 
 export component MidiSettings inherits VerticalLayout {
@@ -45,40 +48,86 @@ export component MidiSettings inherits VerticalLayout {
 
     channel := DropDownMenu {
         label: "Channel";
-        default-model: ["Omni", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"];
+        default-model: Constant.MIDI_CHANNELS;
         dropdown-width: Theme.oscillator-panel-widget-width;
     }
-
 }
 
-export component SettingsPanel inherits Panel {
+export component SettingsIcon inherits Image {
+    source: Theme.settings-image;
+    height: Theme.header-logo-height;
+    width: Theme.header-logo-height;
+    colorize: touch.pressed ? black : transparent;
+    callback open-settings();
 
-    VerticalLayout {
-       padding: Theme.osc-controls-panel-padding;
-       spacing: Theme.osc-controls-panel-spacing;
-        alignment: start;
-
-
-        PanelLabel {
-            label: "Audio Settings";
+    touch := TouchArea {
+        changed pressed => {
+            if (self.pressed) {
+                open-settings();
+            }
         }
+    }
+}
 
-        AudioSettings {}
-        
-        HorizontalSpacer {
-            top-padding: 20px;
-            bottom-padding: 20px;
-        }
+export component SettingsWindow inherits PopupWindow {
+    width: Theme.settings-panel-width;
+    height: Theme.settings-panel-height;
+    x: Theme.window-width / 2 - Theme.settings-panel-width / 2;
+    y: Theme.window-height / 2 - Theme.settings-panel-height / 2;
+    close-policy: no-auto-close;
 
-        PanelLabel {
-            label: "Midi Settings";
-        }
+    Rectangle {
+        background: Theme.settings-window-background;
+        border-width: Theme.settings-window-border-width;
+        border-color: Theme.settings-window-border-colour;
+        border-bottom-left-radius: Theme.settings-window-border-radius;
+        border-bottom-right-radius: Theme.settings-window-border-radius;
+        border-top-left-radius: Theme.settings-window-border-radius;
+        border-top-right-radius: Theme.settings-window-border-radius;
 
-        MidiSettings {}
+        VerticalLayout {
+            padding: Theme.osc-controls-panel-padding;
+            spacing: Theme.osc-controls-panel-spacing;
+            alignment: start;
 
-        HorizontalSpacer {
-            top-padding: 20px;
-            bottom-padding: 20px;
+            HorizontalLayout {
+                padding: Theme.osc-controls-panel-padding;
+                spacing: Theme.osc-controls-panel-spacing;
+                alignment: start;
+
+                VerticalLayout {
+                    padding: Theme.osc-controls-panel-padding;
+                    spacing: Theme.osc-controls-panel-spacing;
+                    alignment: start;
+
+                    PanelLabel {
+                        label: "Audio Settings";
+                    }
+
+                    AudioSettings { }
+                }
+
+                VerticalLayout {
+                    padding: Theme.osc-controls-panel-padding;
+                    spacing: Theme.osc-controls-panel-spacing;
+                    alignment: start;
+
+                    PanelLabel {
+                        label: "Midi Settings";
+                    }
+
+                    MidiSettings { }
+                }
+            }
+
+            HorizontalSpacer { }
+
+            StandardButton {
+                kind: close;
+                clicked => {
+                    root.close();
+                }
+            }
         }
     }
 }

@@ -27,8 +27,11 @@ export component HorizontalSpacer inherits HorizontalLayout {
 }
 
 export component VerticalSpacer inherits VerticalLayout {
-    padding-left: 10px;
-    padding-right: 10px;
+    in property <length> left-padding: 10px;
+    in property <length> right-padding: 10px;
+
+    padding-left: left-padding;
+    padding-right: right-padding;
 
     Rectangle {
         background: Theme.spacer-color;
@@ -48,7 +51,7 @@ export component PanelLabel inherits VerticalLayout {
         text: label;
     }
 
-    HorizontalSpacer {}
+    HorizontalSpacer { }
 }
 
 export component SectionLabel inherits VerticalLayout {
@@ -81,7 +84,7 @@ export component HorizontalControlLabel inherits Rectangle {
     in property <string> value;
     in property <bool> enabled: true;
 
-    property <color> text-color: enabled?Theme.default-font-color:Theme.default-font-color.darker(2);
+    property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
 
     HorizontalLayout {
         Text {
@@ -108,7 +111,7 @@ export component VerticalControlLabel inherits Rectangle {
     in property <string> value-postfix;
     in property <string> value;
     in property <bool> enabled: true;
-    property <color> text-color: enabled?Theme.default-font-color:Theme.default-font-color.darker(2);
+    property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
 
     VerticalLayout {
         Text {
@@ -131,7 +134,7 @@ export component VerticalControlLabel inherits Rectangle {
 export component FilterControlLabel inherits Rectangle {
     in property <string> label;
     in property <bool> enabled: true;
-    property <color> text-color: enabled?Theme.default-font-color:Theme.default-font-color.darker(2);
+    property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
 
     Text {
         horizontal-alignment: center;
@@ -149,14 +152,13 @@ export component ToggleSwitch inherits VerticalLayout {
     alignment: start;
 
     Text {
-        horizontal-alignment: center;
         font-size: Theme.section-label-font-size;
         font-weight: Theme.section-label-font-weight;
         text: label;
     }
 
     HorizontalLayout {
-        alignment: center;
+        alignment: start;
         Switch {
             height: switch-height;
             checked: is_on;
@@ -169,18 +171,11 @@ export component ToggleSwitch inherits VerticalLayout {
 
 export component MomentaryButton inherits VerticalLayout {
     in property <string> label;
-    in property <string> title;
     in property <length> button-width: 100px;
     in property <length> button-height: 30px;
     callback momentary-button-pressed();
     alignment: center;
     spacing: 5px;
-
-        HorizontalControlLabel {
-            label: title;
-        }
-
-
 
     Button {
         width: button-width;
@@ -249,7 +244,7 @@ export component CenteredParameterSlider inherits VerticalLayout {
     hslider-label := HorizontalControlLabel {
         label: label;
         enabled: enabled;
-        value: show-value?default-value:"";
+        value: show-value ? default-value : "";
         value-postfix: value-postfix;
     }
 

@@ -17,7 +17,8 @@ export global Theme {
 
     // Main Window
     out property <string> window-title: "Accidental Synthesizer";
-    in-out property <image> icon: @image-url("../../images/icon.png");
+    in-out property <image> icon: @image-url("images/icon.png");
+    in-out property <image> settings-image: @image-url("images/gear.png");
     out property <length> window-width: 1300px;
     out property <length> window-height: 800px;
     out property <length> window-border-width: 2px;
@@ -46,7 +47,7 @@ export global Theme {
     out property <int> component-label-font-weight: 400;
 
     // Header Panel
-    in-out property <image> header-logo: @image-url("../../images/transparent.png");
+    in-out property <image> header-logo: @image-url("images/header.png");
     out property <length> header-logo-height: 20px;
     out property <ImageHorizontalAlignment> header-logo-alignment: left;
     out property <length> header-panel-padding: 10px;
@@ -59,7 +60,7 @@ export global Theme {
     // Custom Widgets
     out property <color> handle-border-colour: Palette.background;
     out property <color> slider-indicator-colour: #0066CC;
-    out property <color> handle-background-colour: #0066CC;
+    out property <color> handle-background-colour: slider-indicator-colour;
     out property <color> slider-track-colour: Palette.border;
     out property <length> slider-track-width: 6px;
     out property <length> slider-track-height: 100px;
@@ -67,9 +68,7 @@ export global Theme {
 
     // Main Tabs
     out property <string> tab-title-oscillators: "Oscillators";
-    out property <string> tab-title-modulation: "Modulation";
     out property <string> tab-title-effects: "Effects";
-    out property <string> tab-title-settings: "Settings";
 
     // Oscillators Panel
     out property <length> oscillator-panel-height: 425px;
@@ -78,8 +77,28 @@ export global Theme {
     out property <length> oscillator-panel-spacing: 0px;
     out property <length> oscillator-panel-section-width: 250px;
     out property <length> oscillator-panel-widget-width: 200px;
+
+    // Filter Panel
     out property <length> filter-panel-widget-width: 120px;
     out property <length> filter-panel-width: 300px;
+    out property <string> filter-panel-label: "Filter";
+    out property <string> filter-label-cutoff: "Cutoff";
+    out property <string> filter-label-resonance: "Reso";
+    out property <string> filter-label-poles: "Poles";
+    out property <string> filter-label-key-tracking: "Key Tracking";
+    out property <string> filter-label-envelope-amount: "EG Amount";
+    out property <string> filter-label-lfo-amount: "LFO Amount";
+    out property <string> filter-section-label-envelope: "Filter Envelope";
+    out property <string> filter-label-envelope-attack: "Attack";
+    out property <string> filter-label-envelope-decay: "Decay";
+    out property <string> filter-label-envelope-sustain: "Sustain";
+    out property <string> filter-label-envelope-release: "Release";
+    out property <string> filter-label-envelope-inverted: "Inverted";
+    out property <string> filter-section-label-lfo: "Filter LFO";
+    out property <string> filter-label-lfo-frequency: "Frequency";
+    out property <string> filter-label-lfo-wave-shape: "Wave Shape";
+    out property <string> filter-label-lfo-phase: "Phase";
+    out property <string> filter-label-lfo-reset: "Reset";
 
     // Global Panel
     out property <length> global-panel-height: 350px;
@@ -104,7 +123,11 @@ export global Theme {
     out property <string> osc-controls-panel-title-3: "Oscillator 3";
     out property <string> osc-controls-panel-title-sub: "Sub Oscillator";
 
-    // Settings Panel
-    out property <length> settings-panel-width: 300px;
-
+    // Settings Window
+    out property <length> settings-panel-width: 600px;
+    out property <length> settings-panel-height: 300px;
+    out property <length> settings-window-border-width: 2px;
+    out property <color> settings-window-background: Palette.background;
+    out property <color> settings-window-border-colour: Palette.background.brighter(3);
+    out property <length> settings-window-border-radius: 10px;
 }

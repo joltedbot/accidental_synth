@@ -8,8 +8,6 @@ import { HeaderPanel } from "header-panel.slint";
 import { FilterPanel } from "filter-panel.slint";
 import { OscillatorsPanel } from "oscillator-panel.slint";
 import { EffectsPanel } from "effects.slint";
-import { SettingsPanel } from "settings.slint";
-
 
 
 export component AccidentalSynth inherits Window {
@@ -47,6 +45,7 @@ export component AccidentalSynth inherits Window {
 
                         VerticalLayout {
                             oscillator-panel := OscillatorsPanel { }
+
                             global-panel := GlobalPanel { }
                         }
 
@@ -60,13 +59,6 @@ export component AccidentalSynth inherits Window {
                     title: Theme.tab-title-effects;
                     EffectsPanel {
                         title: "TBD";
-                    }
-                }
-
-                Tab {
-                    title: Theme.tab-title-settings;
-                    SettingsPanel {
-                        width: Theme.settings-panel-width;
                     }
                 }
             }
