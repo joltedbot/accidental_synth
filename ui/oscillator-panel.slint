@@ -20,48 +20,48 @@ export component OscControlsPanel inherits Panel {
             }
 
             wave-shape := DropDownMenu {
-                label: "Wave Shape";
-                default-model: Constant.WAVE_SHAPES;
+                label: Theme.osc-controls-wave-shape;
+                default-model: Constant.OSC_WAVE_SHAPES;
                 dropdown-width: Theme.oscillator-panel-widget-width;
             }
 
             course-tune := IntSpinBox {
-                label: "Course Tune";
-                value-postfix: "semitones";
+                label: Theme.osc-controls-course-tune;
+                value-postfix: Theme.osc-controls-semitones;
                 step: 1;
-                minimum: -12;
-                maximum: 12;
+                minimum: Constant.OSC_COURSE_TUNE_MINIMUM;
+                maximum: Constant.OSC_COURSE_TUNE_MAXIMUM;
                 default-value: 0;
                 spinbox-width: Theme.oscillator-panel-widget-width;
             }
 
             fine-tune := CenteredParameterSlider {
-                label: "Fine Tune";
-                value-postfix: "cents";
-                minimum: -63;
-                maximum: 63;
+                label: Theme.osc-controls-fine-tune;
+                value-postfix: Theme.osc-controls-cents;
+                minimum: Constant.OSC_FINE_TUNE_MINIMUM;
+                maximum: Constant.OSC_FINE_TUNE_MAXIMUM;
                 slider-width: Theme.oscillator-panel-widget-width;
             }
 
             clip-boost := HorizontalParameterSlider {
-                label: "Clipper Boost";
-                value-postfix: "dbfs";
-                minimum: 0;
-                maximum: 30;
+                label: Theme.osc-controls-clipper-boost;
+                value-postfix: Theme.osc-controls-dbfs;
+                minimum: Constant.OSC_CLIPPER_BOOST_MAXIMUM;
+                maximum: Constant.OSC_CLIPPER_BOOST_MAXIMUM;
                 default-value: 0;
                 slider-width: Theme.oscillator-panel-widget-width;
             }
 
             param1 := HorizontalParameterSlider {
-                minimum: 0;
-                maximum: 100;
+                minimum: Constant.OSC_PARAMETER1_MAXIMUM;
+                maximum: Constant.OSC_PARAMETER1_MAXIMUM;
                 default-value: 0;
                 slider-width: Theme.oscillator-panel-widget-width;
             }
 
             param3 := HorizontalParameterSlider {
-                minimum: 0;
-                maximum: 100;
+                minimum: Constant.OSC_PARAMETER2_MAXIMUM;
+                maximum: Constant.OSC_PARAMETER2_MAXIMUM;
                 default-value: 0;
                 slider-width: Theme.oscillator-panel-widget-width;
             }

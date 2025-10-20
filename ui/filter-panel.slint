@@ -126,6 +126,7 @@ export component FilterEGSection inherits VerticalLayout {
 
 export component FilterLFOSection inherits VerticalLayout {
     alignment: start;
+    spacing: 5px;
 
     SectionLabel {
         label: Theme.filter-section-label-lfo;
@@ -151,7 +152,7 @@ export component FilterLFOSection inherits VerticalLayout {
 
             wave-shape := DropDownMenu {
                 label: Theme.filter-label-lfo-wave-shape;
-                default-model: Constant.WAVE_SHAPES;
+                default-model: Constant.OSC_WAVE_SHAPES;
                 dropdown-width: Theme.filter-panel-widget-width;
             }
         }
