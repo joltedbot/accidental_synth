@@ -158,13 +158,14 @@ export component ToggleSwitch inherits VerticalLayout {
     alignment: start;
 
     Text {
+        horizontal-alignment: center;
         font-size: Theme.section-label-font-size;
         font-weight: Theme.section-label-font-weight;
         text: label;
     }
 
     HorizontalLayout {
-        alignment: start;
+        alignment: center;
         Switch {
             height: switch-height;
             checked: is_on;
@@ -245,6 +246,7 @@ export component CenteredParameterSlider inherits VerticalLayout {
     in property <bool> enabled: true;
     callback horizontal-int-slider-changed(int);
 
+    alignment: start;
     spacing: 5px;
 
     hslider-label := HorizontalControlLabel {
@@ -354,6 +356,7 @@ export component IntSpinBox inherits VerticalLayout {
     in property <length> spinbox-height: 25px;
     callback horizontal-int-spinbox-changed(int);
 
+    alignment: start;
     spacing: 5px;
 
     hslider-label := HorizontalControlLabel {
@@ -546,7 +549,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
 
             wave-shape := DropDownMenu {
                 label: Theme.filter-label-lfo-wave-shape;
-                default-model: Constant.OSC_WAVE_SHAPES;
+                default-model: Constant.LFO_WAVE_SHAPES;
                 dropdown-width: Theme.filter-panel-widget-width;
             }
         }

@@ -1,5 +1,5 @@
 import { Panel, FilterSlider, IntSpinBox, CenteredParameterSlider, HorizontalParameterSlider, PanelLabel, VerticalSpacer, HorizontalSpacer,
-SectionLabel, ToggleSwitch, DropDownMenu, MomentaryButton, EnvelopeSection } from "components.slint";
+SectionLabel, ToggleSwitch, DropDownMenu, MomentaryButton, EnvelopeSection, FixedCenterLFOSection } from "components.slint";
 import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.slint";
 import { Switch } from "std-widgets.slint";
 import { Theme } from "theme.slint";
@@ -78,61 +78,6 @@ export component FilterEGSection inherits VerticalLayout {
     EnvelopeSection { }
 }
 
-export component FilterLFOSection inherits VerticalLayout {
-    alignment: start;
-    spacing: 5px;
-
-    SectionLabel {
-        label: Theme.filter-section-label-lfo;
-    }
-
-    HorizontalSpacer { }
-
-    VerticalLayout {
-        alignment: start;
-
-        HorizontalLayout {
-            padding: Theme.osc-controls-panel-padding;
-            spacing: Theme.osc-controls-panel-spacing;
-            alignment: start;
-
-            frequency := HorizontalParameterSlider {
-                label: Theme.filter-label-lfo-frequency;
-                minimum: 0;
-                maximum: 100;
-                default-value: 0;
-                slider-width: Theme.filter-panel-widget-width;
-            }
-
-            wave-shape := DropDownMenu {
-                label: Theme.filter-label-lfo-wave-shape;
-                default-model: Constant.OSC_WAVE_SHAPES;
-                dropdown-width: Theme.filter-panel-widget-width;
-            }
-        }
-
-        HorizontalLayout {
-            padding: Theme.osc-controls-panel-padding;
-            spacing: Theme.osc-controls-panel-spacing;
-            alignment: start;
-
-            phase := HorizontalParameterSlider {
-                label: Theme.filter-label-lfo-phase;
-                minimum: 0;
-                maximum: 100;
-                default-value: 0;
-                slider-width: Theme.filter-panel-widget-width;
-            }
-
-            reset := MomentaryButton {
-                label: Theme.filter-label-lfo-reset;
-                button-width: 100px;
-                button-height: 27px;
-            }
-        }
-    }
-}
-
 export component FilterPanel inherits Panel {
 
     VerticalLayout {
@@ -158,6 +103,6 @@ export component FilterPanel inherits Panel {
 
         HorizontalSpacer { }
 
-        FilterLFOSection { }
+        FixedCenterLFOSection { }
     }
 }

@@ -141,15 +141,17 @@ export component OscillatorSection inherits VerticalLayout {
     alignment: start;
 
     HorizontalLayout {
-        alignment: center;
+        alignment: start;
         HorizontalLayout {
             padding: Theme.global-panel-padding;
             spacing: Theme.global-panel-spacing;
-            alignment: space-between;
-            VerticalLayout {
+            alignment: start;
+
+            portamento-section := VerticalLayout {
                 padding: Theme.global-panel-padding;
                 spacing: Theme.global-panel-spacing;
-                alignment: space-around;
+                alignment: space-between;
+
                 ToggleSwitch {
                     label: Theme.osc-options-portamento-label;
                 }
@@ -163,21 +165,23 @@ export component OscillatorSection inherits VerticalLayout {
                 }
             }
 
-            HorizontalSpacer { }
+            VerticalSpacer { }
 
             HorizontalLayout {
-                alignment: start;
                 padding: Theme.global-panel-padding;
                 spacing: Theme.global-panel-spacing;
+                alignment: space-between;
+
                 VerticalLayout {
-                    spacing: Theme.global-panel-spacing;
-                    alignment: center;
+                    alignment: space-between;
+
                     IntSpinBox {
                         label: Theme.osc-options-pitch-bend-range;
                         minimum: 2;
                         maximum: 12;
                         default-value: 12;
                         step: 1;
+                        width: 120px;
                     }
 
                     CenteredParameterSlider {
@@ -186,12 +190,15 @@ export component OscillatorSection inherits VerticalLayout {
                         default-value: 0;
                         minimum: -1;
                         maximum: 1;
+                        width: 120px;
                     }
                 }
 
+                VerticalSpacer { }
+
                 VerticalLayout {
-                    spacing: Theme.global-panel-spacing;
-                    alignment: center;
+                    alignment: space-between;
+
                     ToggleSwitch {
                         label: Theme.osc-options-hard-sync;
                     }
@@ -200,6 +207,8 @@ export component OscillatorSection inherits VerticalLayout {
                         label: Theme.osc-options-key-sync;
                     }
                 }
+
+                VerticalSpacer { }
             }
         }
     }
@@ -224,7 +233,12 @@ export component ModWheelSection inherits VerticalLayout {
         label: Theme.mod-wheel-section-label;
     }
 
-    FixedCenterLFOSection { }
+    HorizontalLayout {
+        alignment: start;
+        VerticalSpacer { }
+
+        FixedCenterLFOSection { }
+    }
 }
 
 export component GlobalPanel inherits Panel {
@@ -240,8 +254,6 @@ export component GlobalPanel inherits Panel {
             HorizontalLayout {
                 alignment: start;
                 amp-section := AmpEnvelopeSection { }
-
-                VerticalSpacer { }
 
                 mod-whee-section := ModWheelSection { }
             }
