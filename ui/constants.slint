@@ -5,17 +5,16 @@ export global Constant {
     out property <float> DEFAULT_OUTPUT_LEVEL_DBFS: -6;
     out property <float> MAX_OUTPUT_LEVEL_DBFS: 0;
     out property <float> SILENCE_LEVEL_DBFS: -70;
-    out property <float> OSC_COURSE_TUNE_MINIMUM: -12;
-    out property <float> OSC_COURSE_TUNE_MAXIMUM: 12;
-    out property <float> OSC_FINE_TUNE_MINIMUM: -63;
-    out property <float> OSC_FINE_TUNE_MAXIMUM: 63;
-    out property <float> OSC_CLIPPER_BOOST_MINIMUM: -12;
-    out property <float> OSC_CLIPPER_BOOST_MAXIMUM: 12;
-    out property <float> OSC_PARAMETER1_MINIMUM: -63;
-    out property <float> OSC_PARAMETER1_MAXIMUM: 63;
-    out property <float> OSC_PARAMETER2_MINIMUM: -12;
-    out property <float> OSC_PARAMETER2_MAXIMUM: 12;
-
+    out property <int> OSC_COURSE_TUNE_MINIMUM: -12;
+    out property <int> OSC_COURSE_TUNE_MAXIMUM: 12;
+    out property <int> OSC_FINE_TUNE_MINIMUM: -63;
+    out property <int> OSC_FINE_TUNE_MAXIMUM: 63;
+    out property <float> OSC_CLIPPER_BOOST_MINIMUM: 0;
+    out property <float> OSC_CLIPPER_BOOST_MAXIMUM: 100;
+    out property <float> OSC_PARAMETER1_MINIMUM: 0;
+    out property <float> OSC_PARAMETER1_MAXIMUM: 100;
+    out property <float> OSC_PARAMETER2_MINIMUM: 0;
+    out property <float> OSC_PARAMETER2_MAXIMUM: 100;
 
     out property <[string]> OSC_WAVE_SHAPES: [
         "Sine",

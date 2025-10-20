@@ -1,6 +1,6 @@
 import { Panel, VerticalSpacer, SectionLabel, CenteredParameterSlider, PanelLabel, HorizontalSpacer, ComponentLabel, MixerLevel, MixerBalance,
 MixerMute, VerticalIntSlider,
-ToggleSwitch, HorizontalParameterSlider, IntSpinBox } from "components.slint";
+ToggleSwitch, HorizontalParameterSlider, IntSpinBox, EnvelopeSection, FixedCenterLFOSection } from "components.slint";
 import { Theme } from "theme.slint";
 import { Constant } from "constants.slint";
 import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.slint";
@@ -114,25 +114,21 @@ export component MixerSection inherits VerticalLayout {
     alignment: start;
     padding-top: Theme.global-panel-padding;
 
-
     PanelLabel {
         label: Theme.osc-mixer-label;
     }
 
     VerticalLayout {
-
         alignment: start;
 
         HorizontalLayout {
 
-            VerticalSpacer {  }
+            VerticalSpacer { }
 
             outout-mixer := OutputMixer {
                 output-level-update(value) => {
                 }
             }
-
-            VerticalSpacer { }
 
             VerticalSpacer { }
 
@@ -143,30 +139,21 @@ export component MixerSection inherits VerticalLayout {
 
 export component OscillatorSection inherits VerticalLayout {
     alignment: start;
-    padding-top: Theme.global-panel-padding;
 
-
-    PanelLabel {
-        label: Theme.osc-options-section-label;
-    }
-    
     HorizontalLayout {
-        alignment: start;
-        
-        VerticalLayout {
+        alignment: center;
+        HorizontalLayout {
             padding: Theme.global-panel-padding;
             spacing: Theme.global-panel-spacing;
             alignment: space-between;
-    
-            HorizontalLayout {
+            VerticalLayout {
                 padding: Theme.global-panel-padding;
                 spacing: Theme.global-panel-spacing;
                 alignment: space-around;
-    
                 ToggleSwitch {
                     label: Theme.osc-options-portamento-label;
                 }
-    
+
                 HorizontalParameterSlider {
                     label: Theme.osc-options-portamento-time-label;
                     value-postfix: Theme.osc-options-portamento-time-postfix;
@@ -175,18 +162,16 @@ export component OscillatorSection inherits VerticalLayout {
                     maximum: 100;
                 }
             }
-    
+
             HorizontalSpacer { }
-    
+
             HorizontalLayout {
                 alignment: start;
                 padding: Theme.global-panel-padding;
                 spacing: Theme.global-panel-spacing;
-    
                 VerticalLayout {
-                    spacing: 20px;
+                    spacing: Theme.global-panel-spacing;
                     alignment: center;
-    
                     IntSpinBox {
                         label: Theme.osc-options-pitch-bend-range;
                         minimum: 2;
@@ -194,7 +179,7 @@ export component OscillatorSection inherits VerticalLayout {
                         default-value: 12;
                         step: 1;
                     }
-    
+
                     CenteredParameterSlider {
                         label: Theme.osc-options-velocity-curve;
                         show-value: false;
@@ -203,46 +188,43 @@ export component OscillatorSection inherits VerticalLayout {
                         maximum: 1;
                     }
                 }
-    
+
                 VerticalLayout {
-                    spacing: 20px;
+                    spacing: Theme.global-panel-spacing;
                     alignment: center;
-    
                     ToggleSwitch {
                         label: Theme.osc-options-hard-sync;
                     }
-    
+
                     ToggleSwitch {
                         label: Theme.osc-options-key-sync;
                     }
                 }
             }
-            HorizontalSpacer { }
-
         }
-        VerticalSpacer {}
     }
 }
 
-export component SpacerSection inherits VerticalLayout {
+export component AmpEnvelopeSection inherits VerticalLayout {
     alignment: start;
     padding-top: Theme.global-panel-padding;
 
     PanelLabel {
-        label: "Scratch Notes";
+        label: Theme.amp-envelope-section-label;
     }
 
-    HorizontalLayout {
-        VerticalLayout {
-            padding: 10px;
-            TextEdit {
-                height: 250px;
-                width: 160px;
-            }
-        }
+    EnvelopeSection { }
+}
 
+export component ModWheelSection inherits VerticalLayout {
+    alignment: start;
+    padding-top: Theme.global-panel-padding;
 
+    PanelLabel {
+        label: Theme.mod-wheel-section-label;
     }
+
+    FixedCenterLFOSection { }
 }
 
 export component GlobalPanel inherits Panel {
@@ -253,12 +235,20 @@ export component GlobalPanel inherits Panel {
 
         mixer-section := MixerSection { }
 
-        osc-section := OscillatorSection { }
+        VerticalLayout {
+            alignment: start;
+            HorizontalLayout {
+                alignment: start;
+                amp-section := AmpEnvelopeSection { }
 
-        spacer-section := SpacerSection {
+                VerticalSpacer { }
 
-         }
+                mod-whee-section := ModWheelSection { }
+            }
 
+            HorizontalSpacer { }
 
+            osc-section := OscillatorSection { }
+        }
     }
 }

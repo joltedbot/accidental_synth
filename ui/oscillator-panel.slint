@@ -1,8 +1,9 @@
+import { Constant } from "constants.slint";
 import { Panel, PanelLabel, VerticalSpacer, HorizontalParameterSlider, CenteredParameterSlider, VerticalIntSlider, FilterSlider, IntSpinBox,
 DropDownMenu, HorizontalSpacer, SectionLabel } from "components.slint";
 import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.slint";
 import { Theme } from "theme.slint";
-import { Constant } from "constants.slint";
+
 
 
 export component OscControlsPanel inherits Panel {
@@ -46,21 +47,21 @@ export component OscControlsPanel inherits Panel {
             clip-boost := HorizontalParameterSlider {
                 label: Theme.osc-controls-clipper-boost;
                 value-postfix: Theme.osc-controls-dbfs;
-                minimum: Constant.OSC_CLIPPER_BOOST_MAXIMUM;
+                minimum: Constant.OSC_CLIPPER_BOOST_MINIMUM;
                 maximum: Constant.OSC_CLIPPER_BOOST_MAXIMUM;
                 default-value: 0;
                 slider-width: Theme.oscillator-panel-widget-width;
             }
 
             param1 := HorizontalParameterSlider {
-                minimum: Constant.OSC_PARAMETER1_MAXIMUM;
+                minimum: Constant.OSC_PARAMETER1_MINIMUM;
                 maximum: Constant.OSC_PARAMETER1_MAXIMUM;
                 default-value: 0;
                 slider-width: Theme.oscillator-panel-widget-width;
             }
 
             param3 := HorizontalParameterSlider {
-                minimum: Constant.OSC_PARAMETER2_MAXIMUM;
+                minimum: Constant.OSC_PARAMETER2_MINIMUM;
                 maximum: Constant.OSC_PARAMETER2_MAXIMUM;
                 default-value: 0;
                 slider-width: Theme.oscillator-panel-widget-width;

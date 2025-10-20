@@ -1,5 +1,5 @@
 import { Panel, FilterSlider, IntSpinBox, CenteredParameterSlider, HorizontalParameterSlider, PanelLabel, VerticalSpacer, HorizontalSpacer,
-SectionLabel, ToggleSwitch, DropDownMenu, MomentaryButton } from "components.slint";
+SectionLabel, ToggleSwitch, DropDownMenu, MomentaryButton, EnvelopeSection } from "components.slint";
 import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.slint";
 import { Switch } from "std-widgets.slint";
 import { Theme } from "theme.slint";
@@ -64,7 +64,6 @@ export component FilterOptionsSection inherits VerticalLayout {
 }
 
 export component FilterEGSection inherits VerticalLayout {
-
     alignment: start;
     spacing: 5px;
 
@@ -76,52 +75,7 @@ export component FilterEGSection inherits VerticalLayout {
 
     HorizontalSpacer { }
 
-    HorizontalLayout {
-        padding: Theme.osc-controls-panel-padding;
-        spacing: Theme.osc-controls-panel-spacing;
-        alignment: space-between;
-
-        filter_attack := FilterSlider {
-            label: Theme.filter-label-envelope-attack;
-            width: 35px;
-            minimum: 0;
-            maximum: 100;
-            default-value: 0;
-            slider-height: 90px;
-        }
-
-        filter_decay := FilterSlider {
-            label: Theme.filter-label-envelope-decay;
-            width: 35px;
-            minimum: 0;
-            maximum: 100;
-            default-value: 0;
-            slider-height: 90px;
-        }
-
-        filter_sustain := FilterSlider {
-            label: Theme.filter-label-envelope-sustain;
-            width: 35px;
-            minimum: 0;
-            maximum: 100;
-            default-value: 0;
-            slider-height: 90px;
-        }
-
-        filter_release := FilterSlider {
-            label: Theme.filter-label-envelope-release;
-            width: 35px;
-            minimum: 0;
-            maximum: 100;
-            default-value: 0;
-            slider-height: 90px;
-        }
-
-        ToggleSwitch {
-
-            label: Theme.filter-label-envelope-inverted;
-        }
-    }
+    EnvelopeSection { }
 }
 
 export component FilterLFOSection inherits VerticalLayout {

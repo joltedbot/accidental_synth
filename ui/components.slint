@@ -88,11 +88,15 @@ export component HorizontalControlLabel inherits Rectangle {
 
     HorizontalLayout {
         Text {
+            font-size: Theme.section-label-font-size;
+            font-weight: Theme.section-label-font-weight;
             color: text-color;
             text: label;
         }
 
         Text {
+            font-size: Theme.section-label-font-size;
+            font-weight: Theme.section-label-font-weight;
             color: text-color;
             horizontal-alignment: right;
             width: 50px;
@@ -100,6 +104,8 @@ export component HorizontalControlLabel inherits Rectangle {
         }
 
         Text {
+            font-size: Theme.section-label-font-size;
+            font-weight: Theme.section-label-font-weight;
             color: text-color;
             text: " " + value-postfix;
         }
@@ -462,6 +468,107 @@ export component MixerLevel inherits VerticalLayout {
         height: slider-height;
         updated(value) => {
             mixer-level-update(value);
+        }
+    }
+}
+
+export component EnvelopeSection inherits VerticalLayout {
+    alignment: start;
+    spacing: 5px;
+
+    HorizontalLayout {
+        padding: Theme.osc-controls-panel-padding;
+        spacing: Theme.osc-controls-panel-spacing;
+        alignment: space-between;
+
+        filter_attack := FilterSlider {
+            label: Theme.filter-label-envelope-attack;
+            width: 35px;
+            minimum: 0;
+            maximum: 100;
+            default-value: 0;
+            slider-height: 90px;
+        }
+
+        filter_decay := FilterSlider {
+            label: Theme.filter-label-envelope-decay;
+            width: 35px;
+            minimum: 0;
+            maximum: 100;
+            default-value: 0;
+            slider-height: 90px;
+        }
+
+        filter_sustain := FilterSlider {
+            label: Theme.filter-label-envelope-sustain;
+            width: 35px;
+            minimum: 0;
+            maximum: 100;
+            default-value: 0;
+            slider-height: 90px;
+        }
+
+        filter_release := FilterSlider {
+            label: Theme.filter-label-envelope-release;
+            width: 35px;
+            minimum: 0;
+            maximum: 100;
+            default-value: 0;
+            slider-height: 90px;
+        }
+
+        ToggleSwitch {
+
+            label: Theme.filter-label-envelope-inverted;
+        }
+    }
+}
+
+export component FixedCenterLFOSection inherits VerticalLayout {
+    alignment: start;
+    spacing: 5px;
+
+    VerticalLayout {
+        alignment: start;
+
+        HorizontalLayout {
+            padding: Theme.osc-controls-panel-padding;
+            spacing: Theme.osc-controls-panel-spacing;
+            alignment: start;
+
+            frequency := HorizontalParameterSlider {
+                label: Theme.filter-label-lfo-frequency;
+                minimum: 0;
+                maximum: 100;
+                default-value: 0;
+                slider-width: Theme.filter-panel-widget-width;
+            }
+
+            wave-shape := DropDownMenu {
+                label: Theme.filter-label-lfo-wave-shape;
+                default-model: Constant.OSC_WAVE_SHAPES;
+                dropdown-width: Theme.filter-panel-widget-width;
+            }
+        }
+
+        HorizontalLayout {
+            padding: Theme.osc-controls-panel-padding;
+            spacing: Theme.osc-controls-panel-spacing;
+            alignment: start;
+
+            phase := HorizontalParameterSlider {
+                label: Theme.filter-label-lfo-phase;
+                minimum: 0;
+                maximum: 100;
+                default-value: 0;
+                slider-width: Theme.filter-panel-widget-width;
+            }
+
+            reset := MomentaryButton {
+                label: Theme.filter-label-lfo-reset;
+                button-width: 100px;
+                button-height: 27px;
+            }
         }
     }
 }
