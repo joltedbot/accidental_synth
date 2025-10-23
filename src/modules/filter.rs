@@ -4,11 +4,13 @@ use crate::math::load_f32_from_atomic_u32;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicU8, AtomicU32};
 
+pub const NUMBER_OF_FILER_POLES: u8 = 4;
 const MAXIMUM_FILTER_CUTOFF: f32 = 20000.0;
 const DEFAULT_RESONANCE: f32 = 0.0;
 const NATURAL_LOG_OF_4: f32 = 1.386_294_3;
 const DENORMAL_GUARD: f32 = 1e-25_f32;
 const MIDI_CENTER_NOTE_NUMBER: u8 = 64;
+const NOTES_PER_OCTAVE: u8 = 12;
 pub const DEFAULT_KEY_TRACKING_AMOUNT: f32 = 0.5;
 pub const DEFAULT_KEY_TRACKING_FREQUENCY_OFFSET: f32 = 1.0;
 const DEFAULT_FILTER_POLES: u8 = 4;
@@ -247,8 +249,11 @@ impl Filter {
     }
 }
 
-fn get_tracking_offset_from_midi_note_number(midi_note: u8, amount: f32) -> f32 {
-    (2.0_f32 * amount).powf((f32::from(midi_note) - f32::from(MIDI_CENTER_NOTE_NUMBER)) / 12.0)
+fn get_tracking_offset_from_midi_note_number(midi_note: u8, key_tracking_amount: f32) -> f32 {
+    let delta_from_tracking_reference_note =
+        f32::from(midi_note) - f32::from(MIDI_CENTER_NOTE_NUMBER);
+    (2.0_f32 * key_tracking_amount).powf(delta_from_tracking_reference_note)
+        / f32::from(NOTES_PER_OCTAVE)
 }
 
 fn calculate_non_linear_saturation(stage4_output: f32) -> f32 {

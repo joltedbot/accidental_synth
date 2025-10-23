@@ -2,6 +2,7 @@ mod constants;
 mod create_synthesizer;
 mod midi_messages;
 mod midi_value_converters;
+mod set_parameters;
 
 use self::constants::{
     DEFAULT_FILTER_ENVELOPE_AMOUNT, DEFAULT_OUTPUT_BALANCE, DEFAULT_OUTPUT_LEVEL,
@@ -18,6 +19,10 @@ use crate::modules::lfo::LfoParameters;
 use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
 use crate::synthesizer::create_synthesizer::create_synthesizer;
+use crate::synthesizer::midi_messages::{
+    process_midi_cc_values, process_midi_channel_pressure_message, process_midi_note_off_message,
+    process_midi_note_on_message, process_midi_pitch_bend_message,
+};
 use anyhow::Result;
 use crossbeam_channel::Receiver;
 use rtrb::Producer;
@@ -209,7 +214,7 @@ impl Synthesizer {
             while let Ok(event) = midi_message_receiver.recv() {
                 match event {
                     Event::NoteOn(midi_note, velocity) => {
-                        midi_messages::process_midi_note_on_message(
+                        process_midi_note_on_message(
                             &mut module_parameters,
                             &mut current_note,
                             midi_note,
@@ -217,27 +222,23 @@ impl Synthesizer {
                         );
                     }
                     Event::NoteOff => {
-                        midi_messages::process_midi_note_off_message(&mut module_parameters);
+                        process_midi_note_off_message(&mut module_parameters);
                     }
                     Event::PitchBend(bend_amount) => {
-                        midi_messages::process_midi_pitch_bend_message(
+                        process_midi_pitch_bend_message(
                             &module_parameters.oscillators,
                             module_parameters.keyboard.pitch_bend_range.load(Relaxed),
                             bend_amount,
                         );
                     }
                     Event::ChannelPressure(pressure_value) => {
-                        midi_messages::process_midi_channel_pressure_message(
+                        process_midi_channel_pressure_message(
                             &module_parameters.keyboard,
                             pressure_value,
                         );
                     }
                     Event::ControlChange(cc_value) => {
-                        midi_messages::process_midi_cc_values(
-                            cc_value,
-                            &mut current_note,
-                            &mut module_parameters,
-                        );
+                        process_midi_cc_values(cc_value, &mut current_note, &mut module_parameters);
                     }
                 }
             }

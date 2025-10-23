@@ -8,9 +8,9 @@ pub const MIN_LFO_FREQUENCY: f32 = 0.01;
 pub const MAX_LFO_FREQUENCY: f32 = 20000.0;
 pub const MAX_LFO_RANGE: f32 = 2.0;
 pub const MIN_LFO_RANGE: f32 = 0.01;
+pub const MAX_LFO_CENTER_VALUE: f32 = 1.0;
+pub const MIN_LFO_CENTER_VALUE: f32 = -1.0;
 const DEFAULT_CENTER_VALUE: f32 = 0.0;
-const MAX_CENTER_VALUE: f32 = 1.0;
-const MIN_CENTER_VALUE: f32 = -1.0;
 const DEFAULT_RANGE: f32 = 2.0;
 const DEFAULT_PHASE: f32 = 0.0;
 const DEFAULT_FREQUENCY: f32 = 0.1;
@@ -87,7 +87,7 @@ impl Lfo {
     }
 
     pub fn set_center_value(&mut self, center_value: f32) {
-        self.center_value = center_value.clamp(MIN_CENTER_VALUE, MAX_CENTER_VALUE);
+        self.center_value = center_value.clamp(MIN_LFO_CENTER_VALUE, MAX_LFO_CENTER_VALUE);
     }
 
     pub fn set_range(&mut self, range: f32) {

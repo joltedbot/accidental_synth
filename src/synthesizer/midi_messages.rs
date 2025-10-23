@@ -1,19 +1,22 @@
-use crate::math::store_f32_as_atomic_u32;
+use crate::math::{normalize_midi_value, store_f32_as_atomic_u32};
 use crate::midi::control_change::CC;
-use crate::modules::lfo::LfoParameters;
 use crate::modules::oscillator::OscillatorParameters;
-use crate::modules::oscillator::triangle::{
-    MAX_CLIP_BOOST, MAX_PORTAMENTO_SPEED_IN_BUFFERS, MIN_CLIP_BOOST,
-    MIN_PORTAMENTO_SPEED_IN_BUFFERS,
-};
-use crate::synthesizer::constants::{
-    MAX_FILTER_RESONANCE, MAX_PITCH_BEND_RANGE, MIN_FILTER_RESONANCE, MIN_PITCH_BEND_RANGE,
-    OSCILLATOR_COURSE_TUNE_MAX_INTERVAL, OSCILLATOR_COURSE_TUNE_MIN_INTERVAL,
-    OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS,
+use crate::synthesizer::midi_value_converters::continuously_variable_curve_mapping_from_midi_value;
+use crate::synthesizer::set_parameters::{
+    lfo_reset, set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time,
+    set_envelope_inverted, set_envelope_release_time, set_envelope_sustain_level,
+    set_filter_cutoff, set_filter_poles, set_filter_resonance, set_key_tracking_amount,
+    set_lfo_center_value, set_lfo_frequency, set_lfo_phase, set_lfo_range, set_lfo_wave_shape,
+    set_mod_wheel, set_oscillator_balance, set_oscillator_clip_boost, set_oscillator_course_tune,
+    set_oscillator_fine_tune, set_oscillator_hard_sync, set_oscillator_key_sync,
+    set_oscillator_level, set_oscillator_mute, set_oscillator_shape_parameter1,
+    set_oscillator_shape_parameter2, set_oscillator_wave_shape, set_output_balance,
+    set_output_volume, set_pitch_bend_range, set_portamento_enabled, set_portamento_time,
+    set_velocity_curve,
 };
 use crate::synthesizer::{
-    CurrentNote, EnvelopeParameters, FilterParameters, KeyboardParameters, MidiGateEvent,
-    MidiNoteEvent, MixerParameters, ModuleParameters, OscillatorIndex, midi_value_converters,
+    CurrentNote, KeyboardParameters, MidiGateEvent, MidiNoteEvent, ModuleParameters,
+    OscillatorIndex, midi_value_converters,
 };
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Relaxed, Release};
@@ -50,7 +53,7 @@ pub fn action_midi_note_events(
 }
 
 pub fn process_midi_channel_pressure_message(parameters: &KeyboardParameters, pressure_value: u8) {
-    let aftertouch_amount = midi_value_converters::midi_value_to_f32_0_to_1(pressure_value);
+    let aftertouch_amount = normalize_midi_value(pressure_value);
     store_f32_as_atomic_u32(&parameters.aftertouch_amount, aftertouch_amount);
 }
 
@@ -76,11 +79,10 @@ pub fn process_midi_note_on_message(
     midi_note: u8,
     velocity: u8,
 ) {
-    let scaled_velocity =
-        midi_value_converters::continuously_variable_curve_mapping_from_midi_value(
-            current_note.velocity_curve.load(Relaxed),
-            velocity,
-        );
+    let scaled_velocity = continuously_variable_curve_mapping_from_midi_value(
+        current_note.velocity_curve.load(Relaxed),
+        velocity,
+    );
 
     store_f32_as_atomic_u32(&current_note.velocity, scaled_velocity);
     current_note.midi_note.store(midi_note, Relaxed);
@@ -103,278 +105,359 @@ pub fn process_midi_cc_values(
     log::debug!("process_midi_cc_values(): CC received: {cc_value:?}");
     match cc_value {
         CC::ModWheel(value) => {
-            set_mod_wheel(&module_parameters.keyboard, value);
+            set_mod_wheel(&module_parameters.keyboard, normalize_midi_value(value));
         }
         CC::VelocityCurve(value) => {
             set_velocity_curve(current_note, value);
         }
         CC::PitchBendRange(value) => {
-            set_pitch_bend_range(&module_parameters.keyboard, value);
+            set_pitch_bend_range(&module_parameters.keyboard, normalize_midi_value(value));
         }
         CC::Volume(value) => {
-            set_output_volume(&module_parameters.mixer, value);
+            set_output_volume(&module_parameters.mixer, normalize_midi_value(value));
         }
         CC::Balance(value) => {
-            set_output_balance(&module_parameters.mixer, value);
+            set_output_balance(&module_parameters.mixer, normalize_midi_value(value));
         }
         CC::SubOscillatorShapeParameter1(value) => {
             set_oscillator_shape_parameter1(
                 &module_parameters.oscillators[OscillatorIndex::Sub as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::SubOscillatorShapeParameter2(value) => {
             set_oscillator_shape_parameter2(
                 &module_parameters.oscillators[OscillatorIndex::Sub as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator1ShapeParameter1(value) => {
             set_oscillator_shape_parameter1(
                 &module_parameters.oscillators[OscillatorIndex::One as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator1ShapeParameter2(value) => {
             set_oscillator_shape_parameter2(
                 &module_parameters.oscillators[OscillatorIndex::One as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator2ShapeParameter1(value) => {
             set_oscillator_shape_parameter1(
                 &module_parameters.oscillators[OscillatorIndex::Two as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator2ShapeParameter2(value) => {
             set_oscillator_shape_parameter2(
                 &module_parameters.oscillators[OscillatorIndex::Two as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator3ShapeParameter1(value) => {
             set_oscillator_shape_parameter1(
                 &module_parameters.oscillators[OscillatorIndex::Three as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator3ShapeParameter2(value) => {
             set_oscillator_shape_parameter2(
                 &module_parameters.oscillators[OscillatorIndex::Three as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::OscillatorKeySyncEnabled(value) => {
-            set_oscillator_key_sync(&module_parameters.oscillators, value);
+            set_oscillator_key_sync(&module_parameters.oscillators, normalize_midi_value(value));
         }
         CC::PortamentoTime(value) => {
-            set_portamento_time(&module_parameters.oscillators, value);
+            set_portamento_time(&module_parameters.oscillators, normalize_midi_value(value));
         }
         CC::OscillatorHardSync(value) => {
-            set_oscillator_hard_sync(&module_parameters.oscillators, value);
+            set_oscillator_hard_sync(&module_parameters.oscillators, normalize_midi_value(value));
         }
         CC::SubOscillatorShape(value) => {
             set_oscillator_wave_shape(
                 &module_parameters.oscillators[OscillatorIndex::Sub as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator1Shape(value) => {
             set_oscillator_wave_shape(
                 &module_parameters.oscillators[OscillatorIndex::One as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator2Shape(value) => {
             set_oscillator_wave_shape(
                 &module_parameters.oscillators[OscillatorIndex::Two as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator3Shape(value) => {
             set_oscillator_wave_shape(
                 &module_parameters.oscillators[OscillatorIndex::Three as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::SubOscillatorCourseTune(value) => {
             set_oscillator_course_tune(
                 &module_parameters.oscillators[OscillatorIndex::Sub as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator1CourseTune(value) => {
             set_oscillator_course_tune(
                 &module_parameters.oscillators[OscillatorIndex::One as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator2CourseTune(value) => {
             set_oscillator_course_tune(
                 &module_parameters.oscillators[OscillatorIndex::Two as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator3CourseTune(value) => {
             set_oscillator_course_tune(
                 &module_parameters.oscillators[OscillatorIndex::Three as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::SubOscillatorFineTune(value) => {
             set_oscillator_fine_tune(
                 &module_parameters.oscillators[OscillatorIndex::Sub as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator1FineTune(value) => {
             set_oscillator_fine_tune(
                 &module_parameters.oscillators[OscillatorIndex::One as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator2FineTune(value) => {
             set_oscillator_fine_tune(
                 &module_parameters.oscillators[OscillatorIndex::Two as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::Oscillator3FineTune(value) => {
             set_oscillator_fine_tune(
                 &module_parameters.oscillators[OscillatorIndex::Three as usize],
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::SubOscillatorLevel(value) => {
-            set_oscillator_level(&module_parameters.mixer, OscillatorIndex::Sub, value);
+            set_oscillator_level(
+                &module_parameters.mixer,
+                OscillatorIndex::Sub,
+                normalize_midi_value(value),
+            );
         }
         CC::Oscillator1Level(value) => {
-            set_oscillator_level(&module_parameters.mixer, OscillatorIndex::One, value);
+            set_oscillator_level(
+                &module_parameters.mixer,
+                OscillatorIndex::One,
+                normalize_midi_value(value),
+            );
         }
         CC::Oscillator2Level(value) => {
-            set_oscillator_level(&module_parameters.mixer, OscillatorIndex::Two, value);
+            set_oscillator_level(
+                &module_parameters.mixer,
+                OscillatorIndex::Two,
+                normalize_midi_value(value),
+            );
         }
         CC::Oscillator3Level(value) => {
-            set_oscillator_level(&module_parameters.mixer, OscillatorIndex::Three, value);
+            set_oscillator_level(
+                &module_parameters.mixer,
+                OscillatorIndex::Three,
+                normalize_midi_value(value),
+            );
         }
         CC::SubOscillatorMute(value) => {
-            set_oscillator_mute(&module_parameters.mixer, OscillatorIndex::Sub, value);
+            set_oscillator_mute(
+                &module_parameters.mixer,
+                OscillatorIndex::Sub,
+                normalize_midi_value(value),
+            );
         }
         CC::Oscillator1Mute(value) => {
-            set_oscillator_mute(&module_parameters.mixer, OscillatorIndex::One, value);
+            set_oscillator_mute(
+                &module_parameters.mixer,
+                OscillatorIndex::One,
+                normalize_midi_value(value),
+            );
         }
         CC::Oscillator2Mute(value) => {
-            set_oscillator_mute(&module_parameters.mixer, OscillatorIndex::Two, value);
+            set_oscillator_mute(
+                &module_parameters.mixer,
+                OscillatorIndex::Two,
+                normalize_midi_value(value),
+            );
         }
         CC::Oscillator3Mute(value) => {
-            set_oscillator_mute(&module_parameters.mixer, OscillatorIndex::Three, value);
+            set_oscillator_mute(
+                &module_parameters.mixer,
+                OscillatorIndex::Three,
+                normalize_midi_value(value),
+            );
         }
         CC::SubOscillatorBalance(value) => {
-            set_oscillator_balance(&module_parameters.mixer, OscillatorIndex::Sub, value);
+            set_oscillator_balance(
+                &module_parameters.mixer,
+                OscillatorIndex::Sub,
+                normalize_midi_value(value),
+            );
         }
         CC::Oscillator1Balance(value) => {
-            set_oscillator_balance(&module_parameters.mixer, OscillatorIndex::One, value);
+            set_oscillator_balance(
+                &module_parameters.mixer,
+                OscillatorIndex::One,
+                normalize_midi_value(value),
+            );
         }
         CC::Oscillator2Balance(value) => {
-            set_oscillator_balance(&module_parameters.mixer, OscillatorIndex::Two, value);
+            set_oscillator_balance(
+                &module_parameters.mixer,
+                OscillatorIndex::Two,
+                normalize_midi_value(value),
+            );
         }
         CC::Oscillator3Balance(value) => {
-            set_oscillator_balance(&module_parameters.mixer, OscillatorIndex::Three, value);
+            set_oscillator_balance(
+                &module_parameters.mixer,
+                OscillatorIndex::Three,
+                normalize_midi_value(value),
+            );
         }
         CC::PortamentoEnabled(value) => {
-            set_portamento_enabled(&module_parameters.oscillators, value);
+            set_portamento_enabled(&module_parameters.oscillators, normalize_midi_value(value));
         }
         CC::SubOscillatorClipBoost(value) => {
-            set_oscillator_clip_boost(&module_parameters.oscillators, OscillatorIndex::Sub, value);
+            set_oscillator_clip_boost(
+                &module_parameters.oscillators,
+                OscillatorIndex::Sub,
+                normalize_midi_value(value),
+            );
         }
         CC::Oscillator1ClipBoost(value) => {
-            set_oscillator_clip_boost(&module_parameters.oscillators, OscillatorIndex::One, value);
+            set_oscillator_clip_boost(
+                &module_parameters.oscillators,
+                OscillatorIndex::One,
+                normalize_midi_value(value),
+            );
         }
         CC::Oscillator2ClipBoost(value) => {
-            set_oscillator_clip_boost(&module_parameters.oscillators, OscillatorIndex::Two, value);
+            set_oscillator_clip_boost(
+                &module_parameters.oscillators,
+                OscillatorIndex::Two,
+                normalize_midi_value(value),
+            );
         }
         CC::Oscillator3ClipBoost(value) => {
             set_oscillator_clip_boost(
                 &module_parameters.oscillators,
                 OscillatorIndex::Three,
-                value,
+                normalize_midi_value(value),
             );
         }
         CC::FilterPoles(value) => {
-            set_filter_poles(&module_parameters.filter, value);
+            set_filter_poles(&module_parameters.filter, normalize_midi_value(value));
         }
         CC::FilterResonance(value) => {
-            set_filter_resonance(&module_parameters.filter, value);
+            set_filter_resonance(&module_parameters.filter, normalize_midi_value(value));
         }
         CC::AmpEGReleaseTime(value) => {
-            set_envelope_release_time(&module_parameters.amp_envelope, value);
+            set_envelope_release_time(&module_parameters.amp_envelope, normalize_midi_value(value));
         }
         CC::AmpEGAttackTime(value) => {
-            set_envelope_attack_time(&module_parameters.amp_envelope, value);
+            set_envelope_attack_time(&module_parameters.amp_envelope, normalize_midi_value(value));
         }
         CC::FilterCutoff(value) => {
-            set_filter_cutoff(&module_parameters.filter, value);
+            set_filter_cutoff(&module_parameters.filter, normalize_midi_value(value));
         }
         CC::AmpEGDecayTime(value) => {
-            set_envelope_decay_time(&module_parameters.amp_envelope, value);
+            set_envelope_decay_time(&module_parameters.amp_envelope, normalize_midi_value(value));
         }
         CC::AmpEGSustainLevel(value) => {
-            set_envelope_sustain_level(&module_parameters.amp_envelope, value);
+            set_envelope_sustain_level(
+                &module_parameters.amp_envelope,
+                normalize_midi_value(value),
+            );
         }
         CC::AmpEGInverted(value) => {
-            set_envelope_inverted(&module_parameters.amp_envelope, value);
+            set_envelope_inverted(&module_parameters.amp_envelope, normalize_midi_value(value));
         }
         CC::FilterEGAttackTime(value) => {
-            set_envelope_attack_time(&module_parameters.filter_envelope, value);
+            set_envelope_attack_time(
+                &module_parameters.filter_envelope,
+                normalize_midi_value(value),
+            );
         }
         CC::FilterEGDecayTime(value) => {
-            set_envelope_decay_time(&module_parameters.filter_envelope, value);
+            set_envelope_decay_time(
+                &module_parameters.filter_envelope,
+                normalize_midi_value(value),
+            );
         }
         CC::FilterEGSustainLevel(value) => {
-            set_envelope_sustain_level(&module_parameters.filter_envelope, value);
+            set_envelope_sustain_level(
+                &module_parameters.filter_envelope,
+                normalize_midi_value(value),
+            );
         }
         CC::FilterEGReleaseTime(value) => {
-            set_envelope_release_time(&module_parameters.filter_envelope, value);
+            set_envelope_release_time(
+                &module_parameters.filter_envelope,
+                normalize_midi_value(value),
+            );
         }
         CC::FilterEGInverted(value) => {
-            set_envelope_inverted(&module_parameters.filter_envelope, value);
+            set_envelope_inverted(
+                &module_parameters.filter_envelope,
+                normalize_midi_value(value),
+            );
         }
         CC::FilterEGAmount(value) => {
-            set_envelope_amount(&module_parameters.filter_envelope, value);
+            set_envelope_amount(
+                &module_parameters.filter_envelope,
+                normalize_midi_value(value),
+            );
         }
         CC::KeyTrackingAmount(value) => {
-            set_key_tracking_amount(&module_parameters.filter, value);
+            set_key_tracking_amount(&module_parameters.filter, normalize_midi_value(value));
         }
         CC::LFO1Frequency(value) => {
-            set_lfo_frequency(&module_parameters.lfo1, value);
+            set_lfo_frequency(&module_parameters.lfo1, normalize_midi_value(value));
         }
         CC::LFO1CenterValue(value) => {
-            set_lfo_center_value(&module_parameters.lfo1, value);
+            set_lfo_center_value(&module_parameters.lfo1, normalize_midi_value(value));
         }
         CC::LFO1Range(value) => {
-            set_lfo_range(&module_parameters.lfo1, value);
+            set_lfo_range(&module_parameters.lfo1, normalize_midi_value(value));
         }
         CC::LFO1WaveShape(value) => {
-            set_lfo_wave_shape(&module_parameters.lfo1, value);
+            set_lfo_wave_shape(&module_parameters.lfo1, normalize_midi_value(value));
         }
         CC::LFO1Phase(value) => {
-            set_lfo_phase(&module_parameters.lfo1, value);
+            set_lfo_phase(&module_parameters.lfo1, normalize_midi_value(value));
         }
         CC::LFO1Reset => {
             lfo_reset(&module_parameters.lfo1);
         }
         CC::FilterModLFOFrequency(value) => {
-            set_lfo_frequency(&module_parameters.filter_lfo, value);
+            set_lfo_frequency(&module_parameters.filter_lfo, normalize_midi_value(value));
         }
         CC::FilterModLFOAmount(value) => {
-            set_lfo_range(&module_parameters.filter_lfo, value);
+            set_lfo_range(&module_parameters.filter_lfo, normalize_midi_value(value));
         }
         CC::FilterModLFOWaveShape(value) => {
-            set_lfo_wave_shape(&module_parameters.filter_lfo, value);
+            set_lfo_wave_shape(&module_parameters.filter_lfo, normalize_midi_value(value));
         }
         CC::FilterModLFOPhase(value) => {
-            set_lfo_phase(&module_parameters.filter_lfo, value);
+            set_lfo_phase(&module_parameters.filter_lfo, normalize_midi_value(value));
         }
         CC::FilterModLFOReset => {
             lfo_reset(&module_parameters.filter_lfo);
@@ -383,229 +466,4 @@ pub fn process_midi_cc_values(
             process_midi_note_off_message(module_parameters);
         }
     }
-}
-
-fn set_lfo_frequency(parameters: &LfoParameters, value: u8) {
-    let frequency = midi_value_converters::exponential_curve_lfo_frequency_from_midi_value(value);
-    store_f32_as_atomic_u32(&parameters.frequency, frequency);
-}
-
-fn set_lfo_center_value(parameters: &LfoParameters, value: u8) {
-    let center_value = midi_value_converters::midi_value_to_f32_negative_1_to_1(value);
-    store_f32_as_atomic_u32(&parameters.center_value, center_value);
-}
-
-fn set_lfo_range(parameters: &LfoParameters, value: u8) {
-    let lfo_range = if value == 0 {
-        0.0
-    } else {
-        midi_value_converters::midi_value_to_f32_0_to_1(value)
-    };
-
-    store_f32_as_atomic_u32(&parameters.range, lfo_range);
-}
-
-fn set_lfo_phase(parameters: &LfoParameters, value: u8) {
-    let phase = midi_value_converters::midi_value_to_f32_0_to_1(value);
-    store_f32_as_atomic_u32(&parameters.phase, phase);
-}
-
-fn set_lfo_wave_shape(parameters: &LfoParameters, value: u8) {
-    let wave_shape_index = midi_value_converters::midi_value_to_wave_shape_index(value);
-    parameters.wave_shape.store(wave_shape_index, Relaxed);
-}
-
-fn lfo_reset(parameters: &LfoParameters) {
-    parameters.reset.store(true, Relaxed);
-}
-
-fn set_key_tracking_amount(filter_parameters: &FilterParameters, value: u8) {
-    let amount = midi_value_converters::midi_value_to_f32_range(value, 0.0, 2.0);
-    store_f32_as_atomic_u32(&filter_parameters.key_tracking_amount, amount);
-}
-
-fn set_envelope_amount(envelope_parameters: &EnvelopeParameters, value: u8) {
-    let amount = midi_value_converters::midi_value_to_f32_0_to_1(value);
-    store_f32_as_atomic_u32(&envelope_parameters.amount, amount);
-}
-
-fn set_envelope_release_time(envelope_parameters: &EnvelopeParameters, value: u8) {
-    let milliseconds = midi_value_converters::midi_value_to_envelope_milliseconds(value);
-    envelope_parameters.release_ms.store(milliseconds, Relaxed);
-}
-
-fn set_envelope_sustain_level(envelope_parameters: &EnvelopeParameters, value: u8) {
-    let sustain_level =
-        midi_value_converters::exponential_curve_level_adjustment_from_midi_value(value);
-    store_f32_as_atomic_u32(&envelope_parameters.sustain_level, sustain_level);
-}
-
-fn set_envelope_decay_time(envelope_parameters: &EnvelopeParameters, value: u8) {
-    let milliseconds = midi_value_converters::midi_value_to_envelope_milliseconds(value);
-    envelope_parameters.decay_ms.store(milliseconds, Relaxed);
-}
-
-fn set_envelope_attack_time(envelope_parameters: &EnvelopeParameters, value: u8) {
-    let milliseconds = midi_value_converters::midi_value_to_envelope_milliseconds(value);
-    envelope_parameters.attack_ms.store(milliseconds, Relaxed);
-}
-
-fn set_envelope_inverted(envelope_parameters: &EnvelopeParameters, value: u8) {
-    let is_inverted = midi_value_converters::midi_value_to_bool(value);
-    envelope_parameters.is_inverted.store(is_inverted, Relaxed);
-}
-
-fn set_filter_resonance(filter_parameters: &FilterParameters, value: u8) {
-    let resonance = midi_value_converters::midi_value_to_f32_range(
-        value,
-        MIN_FILTER_RESONANCE,
-        MAX_FILTER_RESONANCE,
-    );
-    store_f32_as_atomic_u32(&filter_parameters.resonance, resonance);
-}
-
-fn set_filter_poles(filter_parameters: &FilterParameters, value: u8) {
-    let filter_poles = midi_value_converters::midi_value_to_number_of_filter_poles(value);
-    filter_parameters.filter_poles.swap(filter_poles, Relaxed);
-}
-
-fn set_filter_cutoff(filter_parameters: &FilterParameters, value: u8) {
-    let cutoff_frequency =
-        midi_value_converters::exponential_curve_filter_cutoff_from_midi_value(value);
-    store_f32_as_atomic_u32(&filter_parameters.cutoff_frequency, cutoff_frequency);
-}
-
-fn set_output_balance(parameters: &MixerParameters, value: u8) {
-    let output_balance = midi_value_converters::midi_value_to_f32_negative_1_to_1(value);
-    store_f32_as_atomic_u32(&parameters.output_balance, output_balance);
-}
-
-fn set_output_volume(parameters: &MixerParameters, value: u8) {
-    let output_level =
-        midi_value_converters::exponential_curve_level_adjustment_from_midi_value(value);
-    store_f32_as_atomic_u32(&parameters.output_level, output_level);
-}
-
-fn set_velocity_curve(current_note: &mut Arc<CurrentNote>, value: u8) {
-    current_note.velocity_curve.store(value, Relaxed);
-}
-
-fn set_pitch_bend_range(parameters: &KeyboardParameters, value: u8) {
-    let range = midi_value_converters::midi_value_to_u8_range(
-        value,
-        MIN_PITCH_BEND_RANGE,
-        MAX_PITCH_BEND_RANGE,
-    );
-    parameters.pitch_bend_range.store(range, Relaxed);
-}
-
-fn set_mod_wheel(parameters: &KeyboardParameters, value: u8) {
-    let mod_wheel_amount = midi_value_converters::midi_value_to_f32_0_to_1(value);
-    store_f32_as_atomic_u32(&parameters.mod_wheel_amount, mod_wheel_amount);
-}
-
-fn set_oscillator_shape_parameter1(parameters: &OscillatorParameters, value: u8) {
-    let shape_parameter1 = midi_value_converters::midi_value_to_f32_0_to_1(value);
-    store_f32_as_atomic_u32(&parameters.shape_parameter1, shape_parameter1);
-}
-
-fn set_oscillator_shape_parameter2(parameters: &OscillatorParameters, value: u8) {
-    let shape_parameter2 = midi_value_converters::midi_value_to_f32_0_to_1(value);
-    store_f32_as_atomic_u32(&parameters.shape_parameter2, shape_parameter2);
-}
-
-fn set_oscillator_key_sync(parameters: &[OscillatorParameters; 4], value: u8) {
-    for parameters in parameters {
-        parameters
-            .key_sync_enabled
-            .store(midi_value_converters::midi_value_to_bool(value), Relaxed);
-    }
-}
-
-fn set_oscillator_hard_sync(parameters: &[OscillatorParameters; 4], value: u8) {
-    for parameters in parameters {
-        parameters
-            .hard_sync_enabled
-            .store(midi_value_converters::midi_value_to_bool(value), Relaxed);
-    }
-}
-
-fn set_portamento_time(parameters: &[OscillatorParameters; 4], value: u8) {
-    let speed = midi_value_converters::midi_value_to_u16_range(
-        value,
-        MIN_PORTAMENTO_SPEED_IN_BUFFERS,
-        MAX_PORTAMENTO_SPEED_IN_BUFFERS,
-    );
-
-    for parameters in parameters {
-        parameters.portamento_speed.store(speed, Relaxed);
-    }
-}
-
-fn set_oscillator_clip_boost(
-    parameters: &[OscillatorParameters; 4],
-    oscillator: OscillatorIndex,
-    value: u8,
-) {
-    let boost =
-        midi_value_converters::midi_value_to_u8_range(value, MIN_CLIP_BOOST, MAX_CLIP_BOOST);
-    parameters[oscillator as usize]
-        .clipper_boost
-        .store(boost, Relaxed);
-}
-
-fn set_portamento_enabled(parameters: &[OscillatorParameters; 4], value: u8) {
-    for parameters in parameters {
-        parameters
-            .portamento_is_enabled
-            .store(midi_value_converters::midi_value_to_bool(value), Relaxed);
-    }
-}
-
-fn set_oscillator_balance(parameters: &MixerParameters, oscillator: OscillatorIndex, value: u8) {
-    let balance = midi_value_converters::midi_value_to_f32_negative_1_to_1(value);
-    store_f32_as_atomic_u32(
-        &parameters.quad_mixer_inputs[oscillator as usize].balance,
-        balance,
-    );
-}
-
-fn set_oscillator_mute(parameters: &MixerParameters, oscillator: OscillatorIndex, value: u8) {
-    let mute = midi_value_converters::midi_value_to_bool(value);
-    parameters.quad_mixer_inputs[oscillator as usize]
-        .mute
-        .swap(mute, Relaxed);
-}
-
-fn set_oscillator_level(parameters: &MixerParameters, oscillator: OscillatorIndex, value: u8) {
-    let level = midi_value_converters::exponential_curve_level_adjustment_from_midi_value(value);
-    store_f32_as_atomic_u32(
-        &parameters.quad_mixer_inputs[oscillator as usize].level,
-        level,
-    );
-}
-
-fn set_oscillator_fine_tune(parameters: &OscillatorParameters, value: u8) {
-    let cents = midi_value_converters::midi_value_to_i8_range(
-        value,
-        OSCILLATOR_FINE_TUNE_MIN_CENTS,
-        OSCILLATOR_FINE_TUNE_MAX_CENTS,
-    );
-
-    parameters.fine_tune.store(cents, Relaxed);
-}
-
-fn set_oscillator_course_tune(parameters: &OscillatorParameters, value: u8) {
-    let interval = midi_value_converters::midi_value_to_i8_range(
-        value,
-        OSCILLATOR_COURSE_TUNE_MIN_INTERVAL,
-        OSCILLATOR_COURSE_TUNE_MAX_INTERVAL,
-    );
-
-    parameters.course_tune.store(interval, Relaxed);
-}
-
-fn set_oscillator_wave_shape(parameters: &OscillatorParameters, value: u8) {
-    let wave_shape_index = midi_value_converters::midi_value_to_wave_shape_index(value);
-    parameters.wave_shape_index.store(wave_shape_index, Relaxed);
 }

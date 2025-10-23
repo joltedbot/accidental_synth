@@ -1,5 +1,7 @@
 use super::WaveShape;
-pub use super::constants::*;
+use crate::modules::oscillator::constants::{
+    DEFAULT_X_COORDINATE, DEFAULT_X_INCREMENT, RADS_PER_CYCLE,
+};
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use std::f32::consts::PI;
 

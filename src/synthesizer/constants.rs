@@ -1,7 +1,7 @@
 // MIDI Constants
-pub const MIDI_VALUE_RANGE: u8 = 127;
+pub const MAX_MIDI_VALUE: u8 = 127;
 pub const MIDI_CENTER_VALUE: u8 = 64;
-pub const MIDI_SWITCH_MAX_OFF_VALUE: u8 = 63;
+pub const NORMAL_TO_BOOL_SWITCH_ON_VALUE: f32 = 0.5;
 pub const PITCH_BEND_AMOUNT_ZERO_POINT: u16 = 8192;
 pub const PITCH_BEND_AMOUNT_MAX_VALUE: u16 = 16383;
 pub const CENTS_PER_SEMITONE: u16 = 100;
@@ -13,7 +13,6 @@ pub const EXPONENTIAL_FILTER_COEFFICIENT: f32 = 9.903_487; // filter range 20,00
 pub const EXPONENTIAL_LEVEL_COEFFICIENT: f32 = 6.908; // Level linear range is 1000x so log(1000) = 6.908
 pub const EXPONENTIAL_LFO_COEFFICIENT: f32 = 13.81551; // log(100_000) = 13.81551
 pub const LEVEL_CURVE_LINEAR_RANGE: f32 = 1000.0; // Level range is -60 to 0 = 60dbfs so 10^(60/20) = 1000x
-
 // Tuner Constants
 pub const OSCILLATOR_FINE_TUNE_MAX_CENTS: i8 = 63;
 pub const OSCILLATOR_FINE_TUNE_MIN_CENTS: i8 = -63;
@@ -35,6 +34,8 @@ pub const QUAD_MIX_DEFAULT_BALANCE: f32 = 0.0;
 // Filter Constants
 pub const MIN_FILTER_RESONANCE: f32 = 0.0;
 pub const MAX_FILTER_RESONANCE: f32 = 0.90;
+pub const MIN_KEY_TRACKING_AMOUNT: f32 = 0.0;
+pub const MAX_KEY_TRACKING_AMOUNT: f32 = 2.0;
 
 // LFO Constants
 pub const DEFAULT_VIBRATO_LFO_RATE: f32 = 10.0;

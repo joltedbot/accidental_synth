@@ -5,6 +5,7 @@ use std::sync::atomic::Ordering::Relaxed;
 const ALTERNATE_EPSILON: f32 = 1e-6;
 const DBFS_SILENCE_LEVEL: f32 = -70.0;
 const CENTS_PER_OCTAVE: f32 = 1200.0;
+const MAX_MIDI_VALUE: f32 = 127.0;
 
 pub fn dbfs_to_f32_sample(dbfs: f32) -> f32 {
     if !dbfs.is_finite() || dbfs <= DBFS_SILENCE_LEVEL {
@@ -51,6 +52,10 @@ pub fn frequency_from_cents(frequency: f32, cents: i16) -> f32 {
     }
 
     frequency.abs() * (2.0f32.powf(f32::from(cents) / CENTS_PER_OCTAVE))
+}
+
+pub fn normalize_midi_value(midi_value: u8) -> f32 {
+    (f32::from(midi_value) / MAX_MIDI_VALUE).clamp(0.0, 1.0)
 }
 
 fn map_value_from_linear_to_exponential_scale(
@@ -489,5 +494,29 @@ mod tests {
 
         swap_tuple_order(&mut test_tuple);
         assert_eq!(test_tuple, expected_result_2);
+    }
+
+    #[test]
+    fn normalize_midi_value_returns_correct_normal_value_for_valid_input() {
+        let midi_value = 54;
+        let expected_result = 0.425_196_8;
+        let result = normalize_midi_value(midi_value);
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "For: {midi_value}, Expected: {expected_result}, got: {result}"
+        );
+    }
+
+    #[test]
+    fn normalize_midi_value_returns_1_for_out_of_range_values() {
+        let high_midi_value = 200;
+        let high_expected_result = 1.0;
+
+        let high_result = normalize_midi_value(high_midi_value);
+        assert!(
+            f32s_are_equal(high_result, high_expected_result),
+            "For: {high_midi_value}, Expected: \
+        {high_expected_result}, got: {high_result}"
+        );
     }
 }

@@ -1,5 +1,5 @@
 pub mod am;
-mod constants;
+pub mod constants;
 pub mod fm;
 mod generate_wave_trait;
 pub mod gigasaw;
