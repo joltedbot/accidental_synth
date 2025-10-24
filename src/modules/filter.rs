@@ -4,7 +4,7 @@ use crate::math::load_f32_from_atomic_u32;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicU8, AtomicU32};
 
-pub const NUMBER_OF_FILER_POLES: u8 = 4;
+pub const NUMBER_OF_FILER_POLES: f32 = 4.0;
 const MAXIMUM_FILTER_CUTOFF: f32 = 20000.0;
 const DEFAULT_RESONANCE: f32 = 0.0;
 const NATURAL_LOG_OF_4: f32 = 1.386_294_3;

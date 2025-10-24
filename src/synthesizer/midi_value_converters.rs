@@ -79,7 +79,7 @@ pub fn normal_value_to_envelope_milliseconds(normal_value: f32) -> u32 {
 }
 
 pub fn normal_value_to_number_of_filter_poles(normal_value: f32) -> u8 {
-    (f32::from(NUMBER_OF_FILER_POLES) * normal_value).ceil() as u8
+    (f32::from(NUMBER_OF_FILER_POLES) * normal_value).ceil().clamp(1.0, NUMBER_OF_FILER_POLES) as u8
 }
 
 pub fn normal_value_to_wave_shape_index(normal_value: f32) -> u8 {
