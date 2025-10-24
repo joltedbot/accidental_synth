@@ -6,6 +6,7 @@ const ALTERNATE_EPSILON: f32 = 1e-6;
 const DBFS_SILENCE_LEVEL: f32 = -70.0;
 const CENTS_PER_OCTAVE: f32 = 1200.0;
 const MAX_MIDI_VALUE: f32 = 127.0;
+const CENTER_MIDI_VALUE: u8 = 64;
 
 pub fn dbfs_to_f32_sample(dbfs: f32) -> f32 {
     if !dbfs.is_finite() || dbfs <= DBFS_SILENCE_LEVEL {
@@ -55,6 +56,9 @@ pub fn frequency_from_cents(frequency: f32, cents: i16) -> f32 {
 }
 
 pub fn normalize_midi_value(midi_value: u8) -> f32 {
+    if midi_value == CENTER_MIDI_VALUE {
+        return 0.5;
+    }
     (f32::from(midi_value) / MAX_MIDI_VALUE).clamp(0.0, 1.0)
 }
 

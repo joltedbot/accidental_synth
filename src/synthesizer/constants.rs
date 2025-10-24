@@ -1,6 +1,4 @@
 // MIDI Constants
-pub const MAX_MIDI_VALUE: u8 = 127;
-pub const MIDI_CENTER_VALUE: u8 = 64;
 pub const NORMAL_TO_BOOL_SWITCH_ON_VALUE: f32 = 0.5;
 pub const PITCH_BEND_AMOUNT_ZERO_POINT: u16 = 8192;
 pub const PITCH_BEND_AMOUNT_MAX_VALUE: u16 = 16383;
@@ -8,11 +6,16 @@ pub const CENTS_PER_SEMITONE: u16 = 100;
 pub const MIN_PITCH_BEND_RANGE: u8 = 2;
 pub const MAX_PITCH_BEND_RANGE: u8 = 12;
 pub const MAX_MIDI_KEY_VELOCITY: f32 = 1.0;
-pub const DEFAULT_VELOCITY_CURVE_MIDI_VALUE: u8 = 80;
+pub const DEFAULT_VELOCITY_CURVE: f32 = 1.0;
 pub const EXPONENTIAL_FILTER_COEFFICIENT: f32 = 9.903_487; // filter range 20,000hz so log(20000) = 9.903487
 pub const EXPONENTIAL_LEVEL_COEFFICIENT: f32 = 6.908; // Level linear range is 1000x so log(1000) = 6.908
 pub const EXPONENTIAL_LFO_COEFFICIENT: f32 = 13.81551; // log(100_000) = 13.81551
 pub const LEVEL_CURVE_LINEAR_RANGE: f32 = 1000.0; // Level range is -60 to 0 = 60dbfs so 10^(60/20) = 1000x
+pub const MIN_VELOCITY_CURVE_EXPONENT: f32 = 0.25;
+pub const MAX_VELOCITY_CURVE_EXPONENT: f32 = 4.0;
+pub const LINEAR_VELOCITY_CURVE_EXPONENT: f32 = 1.0;
+
+
 // Tuner Constants
 pub const OSCILLATOR_FINE_TUNE_MAX_CENTS: i8 = 63;
 pub const OSCILLATOR_FINE_TUNE_MIN_CENTS: i8 = -63;

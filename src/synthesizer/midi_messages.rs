@@ -1,7 +1,7 @@
-use crate::math::{normalize_midi_value, store_f32_as_atomic_u32};
+use crate::math::{load_f32_from_atomic_u32, normalize_midi_value, store_f32_as_atomic_u32};
 use crate::midi::control_change::CC;
 use crate::modules::oscillator::OscillatorParameters;
-use crate::synthesizer::midi_value_converters::continuously_variable_curve_mapping_from_midi_value;
+use crate::synthesizer::midi_value_converters::scaled_velocity_from_normal_value;
 use crate::synthesizer::set_parameters::{
     lfo_reset, set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time,
     set_envelope_inverted, set_envelope_release_time, set_envelope_sustain_level,
@@ -79,9 +79,9 @@ pub fn process_midi_note_on_message(
     midi_note: u8,
     velocity: u8,
 ) {
-    let scaled_velocity = continuously_variable_curve_mapping_from_midi_value(
-        current_note.velocity_curve.load(Relaxed),
-        velocity,
+    let scaled_velocity = scaled_velocity_from_normal_value(
+        load_f32_from_atomic_u32(&current_note.velocity_curve),
+        normalize_midi_value(velocity),
     );
 
     store_f32_as_atomic_u32(&current_note.velocity, scaled_velocity);
@@ -108,7 +108,7 @@ pub fn process_midi_cc_values(
             set_mod_wheel(&module_parameters.keyboard, normalize_midi_value(value));
         }
         CC::VelocityCurve(value) => {
-            set_velocity_curve(current_note, value);
+            set_velocity_curve(current_note, normalize_midi_value(value));
         }
         CC::PitchBendRange(value) => {
             set_pitch_bend_range(&module_parameters.keyboard, normalize_midi_value(value));

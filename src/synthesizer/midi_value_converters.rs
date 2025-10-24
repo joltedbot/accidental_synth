@@ -1,13 +1,8 @@
 use crate::modules::filter::NUMBER_OF_FILER_POLES;
 use crate::modules::oscillator::{NUMBER_OF_WAVE_SHAPES, OscillatorParameters};
-use crate::synthesizer::constants::{
-    CENTS_PER_SEMITONE, ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS,
-    EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT,
-    LEVEL_CURVE_LINEAR_RANGE, MAX_MIDI_VALUE, MIDI_CENTER_VALUE, NORMAL_TO_BOOL_SWITCH_ON_VALUE,
-    PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT,
-};
-use std::cmp::Ordering;
+use crate::synthesizer::constants::{CENTS_PER_SEMITONE, ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT, LEVEL_CURVE_LINEAR_RANGE, LINEAR_VELOCITY_CURVE_EXPONENT, MAX_MIDI_KEY_VELOCITY, MAX_VELOCITY_CURVE_EXPONENT, MIN_VELOCITY_CURVE_EXPONENT, NORMAL_TO_BOOL_SWITCH_ON_VALUE, PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT};
 use std::sync::atomic::Ordering::Relaxed;
+use crate::math::f32s_are_equal;
 /*
 
     midi module:
@@ -79,7 +74,7 @@ pub fn normal_value_to_envelope_milliseconds(normal_value: f32) -> u32 {
 }
 
 pub fn normal_value_to_number_of_filter_poles(normal_value: f32) -> u8 {
-    (f32::from(NUMBER_OF_FILER_POLES) * normal_value).ceil().clamp(1.0, NUMBER_OF_FILER_POLES) as u8
+    (NUMBER_OF_FILER_POLES * normal_value).ceil().clamp(1.0, NUMBER_OF_FILER_POLES) as u8
 }
 
 pub fn normal_value_to_wave_shape_index(normal_value: f32) -> u8 {
@@ -127,22 +122,36 @@ fn exponential_curve_from_normal_value_and_coefficient(
     (exponential_coefficient * normal_value).exp()
 }
 
-pub fn continuously_variable_curve_mapping_from_midi_value(
-    mut slope_midi_value: u8,
-    input_midi_value: u8,
-) -> f32 {
-    if slope_midi_value == 0 {
-        slope_midi_value = 1;
+pub fn velocity_curve_from_normal_value(normal_value: f32) -> f32 {
+
+    if normal_value == 0.0 {
+        return 0.0;
     }
 
-    let curve_exponent = match slope_midi_value.cmp(&MIDI_CENTER_VALUE) {
-        Ordering::Less => f32::from(slope_midi_value) / 64f32,
-        Ordering::Greater => (f32::from(slope_midi_value - MIDI_CENTER_VALUE) / 63f32) * 7.0,
-        Ordering::Equal => 1.0,
-    };
+    let linear_normal_value = 0.5;
 
-    f32::from(input_midi_value).powf(curve_exponent)
-        / f32::from(MAX_MIDI_VALUE).powf(curve_exponent)
+    if normal_value <= linear_normal_value {
+        let renormaled_value = normal_value/linear_normal_value;
+        normal_value_to_f32_range(renormaled_value, MIN_VELOCITY_CURVE_EXPONENT, LINEAR_VELOCITY_CURVE_EXPONENT)
+    } else {
+        let renormaled_value = (normal_value - 0.5)/linear_normal_value;
+        normal_value_to_f32_range(renormaled_value, LINEAR_VELOCITY_CURVE_EXPONENT, MAX_VELOCITY_CURVE_EXPONENT)
+
+    }
+}
+
+pub fn scaled_velocity_from_normal_value(
+    velocity_curve: f32,
+    velocity: f32,
+) -> f32 {
+    if f32s_are_equal(velocity_curve, 1.0) {
+        return velocity;
+    }
+    if f32s_are_equal(velocity_curve, 0.0) {
+        return MAX_MIDI_KEY_VELOCITY;
+    }
+
+    velocity.powf(velocity_curve)
 }
 
 pub fn update_current_note_from_midi_pitch_bend(

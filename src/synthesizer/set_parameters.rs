@@ -13,14 +13,7 @@ use crate::synthesizer::constants::{
     OSCILLATOR_COURSE_TUNE_MIN_INTERVAL, OSCILLATOR_FINE_TUNE_MAX_CENTS,
     OSCILLATOR_FINE_TUNE_MIN_CENTS,
 };
-use crate::synthesizer::midi_value_converters::{
-    exponential_curve_filter_cutoff_from_midi_value,
-    exponential_curve_level_adjustment_from_normal_value,
-    exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool,
-    normal_value_to_envelope_milliseconds, normal_value_to_f32_range,
-    normal_value_to_integer_range, normal_value_to_number_of_filter_poles,
-    normal_value_to_unsigned_integer_range, normal_value_to_wave_shape_index,
-};
+use crate::synthesizer::midi_value_converters::{exponential_curve_filter_cutoff_from_midi_value, exponential_curve_level_adjustment_from_normal_value, exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool, normal_value_to_envelope_milliseconds, normal_value_to_f32_range, normal_value_to_integer_range, normal_value_to_number_of_filter_poles, normal_value_to_unsigned_integer_range, normal_value_to_wave_shape_index, velocity_curve_from_normal_value};
 use crate::synthesizer::{CurrentNote, KeyboardParameters, MixerParameters, OscillatorIndex};
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
@@ -118,8 +111,9 @@ pub fn set_output_volume(parameters: &MixerParameters, normal_value: f32) {
     store_f32_as_atomic_u32(&parameters.output_level, output_level);
 }
 
-pub fn set_velocity_curve(current_note: &mut Arc<CurrentNote>, value: u8) {
-    current_note.velocity_curve.store(value, Relaxed);
+pub fn set_velocity_curve(current_note: &mut Arc<CurrentNote>, normal_value: f32) {
+    let velocity_curve = velocity_curve_from_normal_value(normal_value);
+    store_f32_as_atomic_u32(&current_note.velocity_curve, velocity_curve);
 }
 
 pub fn set_pitch_bend_range(parameters: &KeyboardParameters, normal_value: f32) {

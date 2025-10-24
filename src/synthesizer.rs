@@ -6,7 +6,7 @@ mod set_parameters;
 
 use self::constants::{
     DEFAULT_FILTER_ENVELOPE_AMOUNT, DEFAULT_OUTPUT_BALANCE, DEFAULT_OUTPUT_LEVEL,
-    DEFAULT_VELOCITY_CURVE_MIDI_VALUE, DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY,
+    DEFAULT_VELOCITY_CURVE, DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY,
     DEFAULT_VIBRATO_LFO_DEPTH, DEFAULT_VIBRATO_LFO_RATE, MAX_MIDI_KEY_VELOCITY,
     QUAD_MIX_DEFAULT_BALANCE, QUAD_MIX_DEFAULT_INPUT_LEVEL, QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
 };
@@ -58,7 +58,7 @@ pub enum OscillatorIndex {
 struct CurrentNote {
     midi_note: AtomicU8,
     velocity: AtomicU32,
-    velocity_curve: AtomicU8,
+    velocity_curve: AtomicU32,
 }
 
 #[derive(Default, Debug)]
@@ -116,10 +116,12 @@ impl Synthesizer {
         let velocity = AtomicU32::new(0);
         store_f32_as_atomic_u32(&velocity, MAX_MIDI_KEY_VELOCITY);
 
+        let velocity_curve =  AtomicU32::new(0);
+        store_f32_as_atomic_u32(&velocity_curve, DEFAULT_VELOCITY_CURVE);
         let current_note = CurrentNote {
             midi_note: AtomicU8::new(60),
             velocity,
-            velocity_curve: AtomicU8::new(DEFAULT_VELOCITY_CURVE_MIDI_VALUE),
+            velocity_curve,
         };
 
         let oscillator_mixer_parameters: [QuadMixerInput; 4] = Default::default();
