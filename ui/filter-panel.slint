@@ -32,32 +32,26 @@ export component FilterOptionsSection inherits VerticalLayout {
     poles := IntSpinBox {
         label: Theme.filter-label-poles;
         step: 1;
+        height: 50px;
         minimum: 1;
         maximum: 4;
-        height: 50px;
         default-value: 4;
         spinbox-width: Theme.filter-panel-widget-width;
     }
 
     keytrack := CenteredParameterSlider {
         label: Theme.filter-label-key-tracking;
-        minimum: -100;
-        maximum: 100;
         slider-width: Theme.filter-panel-widget-width;
     }
 
     eg_amount := HorizontalParameterSlider {
         label: Theme.filter-label-envelope-amount;
-        minimum: 0;
-        maximum: 100;
         default-value: 0;
         slider-width: Theme.filter-panel-widget-width;
     }
 
     lfo_amount := HorizontalParameterSlider {
         label: Theme.filter-label-lfo-amount;
-        minimum: 0;
-        maximum: 100;
         default-value: 0;
         slider-width: Theme.filter-panel-widget-width;
     }

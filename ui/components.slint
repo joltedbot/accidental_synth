@@ -80,8 +80,9 @@ export component ComponentLabel inherits VerticalLayout {
 
 export component HorizontalControlLabel inherits Rectangle {
     in property <string> label: Theme.control-label-default-string;
-    in property <string> value-postfix;
+    in property <string> value-units;
     in property <string> value;
+    in property <bool> show-value: false;
     in property <bool> enabled: true;
 
     property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
@@ -100,6 +101,7 @@ export component HorizontalControlLabel inherits Rectangle {
             color: text-color;
             horizontal-alignment: right;
             width: 50px;
+            visible: show-value;
             text: value;
         }
 
@@ -107,14 +109,15 @@ export component HorizontalControlLabel inherits Rectangle {
             font-size: Theme.section-label-font-size;
             font-weight: Theme.section-label-font-weight;
             color: text-color;
-            text: " " + value-postfix;
+            visible: show-value;
+            text: " " + value-units;
         }
     }
 }
 
 export component VerticalControlLabel inherits Rectangle {
     in property <string> label;
-    in property <string> value-postfix;
+    in property <string> value-units;
     in property <string> value;
     in property <bool> enabled: true;
     property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
@@ -122,7 +125,7 @@ export component VerticalControlLabel inherits Rectangle {
     VerticalLayout {
         Text {
             horizontal-alignment: center;
-            text: label + " " + value-postfix;
+            text: label + " " + value-units;
             color: text-color;
         }
 
@@ -201,50 +204,44 @@ export component MomentaryButton inherits VerticalLayout {
 
 export component HorizontalParameterSlider inherits VerticalLayout {
     in property <string> label: Theme.control-label-default-string;
-    in property <string> value-postfix;
+    in property <string> value-units;
     in property <float> default-value;
-    in property <float> minimum;
-    in property <float> maximum;
     in property <length> slider-width: 100px;
     in property <length> slider-height: 30px;
     in property <bool> enabled: true;
-    callback horizontal-int-slider-changed(int);
+    in property <bool> show-value: false;
+    callback horizontal-parameter-slider-changed(float);
 
     spacing: 5px;
 
     hslider-label := HorizontalControlLabel {
         label: label;
         value: default-value;
-        value-postfix: value-postfix;
+        value-units: value-units;
+        show-value: show-value;
         enabled: enabled;
     }
 
     hslider := HorzontalSlider {
         height: slider-height;
         width: slider-width;
-        minimum: minimum;
-        maximum: maximum;
         default-value: default-value;
         enabled: enabled;
 
         updated(value) => {
-            hslider-label.value = value.round();
-            horizontal-int-slider-changed(value.round());
+           horizontal-parameter-slider-changed(value);
         }
     }
 }
 
 export component CenteredParameterSlider inherits VerticalLayout {
     in property <string> label;
-    in property <string> value-postfix;
-    in property <bool> show-value: true;
-    in property <float> default-value;
-    in property <float> minimum;
-    in property <float> maximum;
+    in property <float> value;
+    in property <string> value-units;
     in property <length> slider-width: 100px;
     in property <length> slider-height: 25px;
     in property <bool> enabled: true;
-    callback horizontal-int-slider-changed(int);
+    callback centered-parameter-slider-changed(float);
 
     alignment: start;
     spacing: 5px;
@@ -252,22 +249,17 @@ export component CenteredParameterSlider inherits VerticalLayout {
     hslider-label := HorizontalControlLabel {
         label: label;
         enabled: enabled;
-        value: show-value ? default-value : "";
-        value-postfix: value-postfix;
+        value: value;
+        value-units: value-units;
     }
 
     hslider := BalanceSlider {
         height: slider-height;
         width: slider-width;
-        minimum: minimum;
-        maximum: maximum;
         enabled: enabled;
 
         updated(value) => {
-            if (show-value) {
-                hslider-label.value = value.round();
-            }
-            horizontal-int-slider-changed(value.round());
+            centered-parameter-slider-changed(value);
         }
     }
 }
@@ -296,8 +288,6 @@ export component FilterSlider inherits VerticalLayout {
             height: slider-height;
             width: slider-width;
             default-value: default-value;
-            minimum: minimum;
-            maximum: maximum;
             enabled: root.enabled;
             updated(value) => {
                 filter-int-slider-changed(value)
@@ -308,7 +298,7 @@ export component FilterSlider inherits VerticalLayout {
 
 export component VerticalIntSlider inherits VerticalLayout {
     in property <string> label;
-    in property <string> value-postfix;
+    in property <string> value-units;
     in property <int> default-value;
     in property <int> step;
     in property <int> minimum;
@@ -322,7 +312,7 @@ export component VerticalIntSlider inherits VerticalLayout {
     vslider-label := VerticalControlLabel {
         label: label;
         value: default-value;
-        value-postfix: value-postfix;
+        value-units: value-units;
     }
 
     HorizontalLayout {
@@ -331,8 +321,6 @@ export component VerticalIntSlider inherits VerticalLayout {
             height: slider-height;
             width: slider-width;
             step: step;
-            minimum: minimum;
-            maximum: maximum;
             value: default-value;
             orientation: vertical;
 
@@ -346,7 +334,7 @@ export component VerticalIntSlider inherits VerticalLayout {
 
 export component IntSpinBox inherits VerticalLayout {
     in property <string> label;
-    in property <string> value-postfix;
+    in property <string> value-units;
     in property <int> default-value;
     in property <int> step;
     in property <int> minimum;
@@ -354,7 +342,9 @@ export component IntSpinBox inherits VerticalLayout {
     in property <bool> enabled: true;
     in property <length> spinbox-width: 100px;
     in property <length> spinbox-height: 25px;
-    callback horizontal-int-spinbox-changed(int);
+    callback spinbox-changed(float);
+
+    property <int> range: maximum - minimum;
 
     alignment: start;
     spacing: 5px;
@@ -362,7 +352,7 @@ export component IntSpinBox inherits VerticalLayout {
     hslider-label := HorizontalControlLabel {
         label: label;
         enabled: enabled;
-        value-postfix: value-postfix;
+        value-units: value-units;
     }
 
     hspinbox := SpinBox {
@@ -375,7 +365,7 @@ export component IntSpinBox inherits VerticalLayout {
         value: default-value;
 
         changed value => {
-            horizontal-int-spinbox-changed(self.value);
+            spinbox-changed((self.value - minimum)/range);
         }
     }
 }
@@ -445,8 +435,6 @@ export component MixerBalance inherits VerticalLayout {
     BalanceSlider {
         height: 30px;
         width: 50px;
-        maximum: Constant.MAX_LEFT_BALANCE;
-        minimum: Constant.MAX_RIGHT_BALANCE;
         updated(value) => {
             mixer-balance-update(value);
         }
@@ -454,8 +442,6 @@ export component MixerBalance inherits VerticalLayout {
 }
 
 export component MixerLevel inherits VerticalLayout {
-    in property <float> minimum: 0.0;
-    in property <float> maximum: 100.0;
     in property <float> default-value: 0.0;
     in property <length> slider-height: 100px;
     callback mixer-level-update(float);
@@ -465,8 +451,6 @@ export component MixerLevel inherits VerticalLayout {
     }
 
     VerticalSlider {
-        minimum: minimum;
-        maximum: maximum;
         default-value: default-value;
         height: slider-height;
         updated(value) => {
@@ -487,8 +471,6 @@ export component EnvelopeSection inherits VerticalLayout {
         filter_attack := FilterSlider {
             label: Theme.filter-label-envelope-attack;
             width: 35px;
-            minimum: 0;
-            maximum: 100;
             default-value: 0;
             slider-height: 90px;
         }
@@ -496,8 +478,6 @@ export component EnvelopeSection inherits VerticalLayout {
         filter_decay := FilterSlider {
             label: Theme.filter-label-envelope-decay;
             width: 35px;
-            minimum: 0;
-            maximum: 100;
             default-value: 0;
             slider-height: 90px;
         }
@@ -505,8 +485,6 @@ export component EnvelopeSection inherits VerticalLayout {
         filter_sustain := FilterSlider {
             label: Theme.filter-label-envelope-sustain;
             width: 35px;
-            minimum: 0;
-            maximum: 100;
             default-value: 0;
             slider-height: 90px;
         }
@@ -514,8 +492,6 @@ export component EnvelopeSection inherits VerticalLayout {
         filter_release := FilterSlider {
             label: Theme.filter-label-envelope-release;
             width: 35px;
-            minimum: 0;
-            maximum: 100;
             default-value: 0;
             slider-height: 90px;
         }
@@ -541,9 +517,9 @@ export component FixedCenterLFOSection inherits VerticalLayout {
 
             frequency := HorizontalParameterSlider {
                 label: Theme.filter-label-lfo-frequency;
-                minimum: 0;
-                maximum: 100;
                 default-value: 0;
+                show-value: true;
+                value-units: Theme.display-units-hertz;
                 slider-width: Theme.filter-panel-widget-width;
             }
 
@@ -561,9 +537,9 @@ export component FixedCenterLFOSection inherits VerticalLayout {
 
             phase := HorizontalParameterSlider {
                 label: Theme.filter-label-lfo-phase;
-                minimum: 0;
-                maximum: 100;
                 default-value: 0;
+                show-value: true;
+                value-units: Theme.display-units-degrees;
                 slider-width: Theme.filter-panel-widget-width;
             }
 

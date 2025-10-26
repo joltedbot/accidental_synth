@@ -20,6 +20,16 @@ export component AccidentalSynth inherits Window {
     default-font-family: Theme.default-font-family;
     default-font-weight: Theme.default-font-weight;
 
+    // Oscillator Panel Callbacks and Properties
+    callback osc-wave_shape_changed(int, string);
+    callback osc-course-tune-changed(int, float);
+    callback osc-fine-tune-changed(int, float);
+    callback osc-clipper-boost-changed(int, float);
+    callback osc-parameter1-changed(int, float);
+    callback osc-parameter2-changed(int, float);
+
+
+
     top-level := Rectangle {
         background: Theme.window-background;
         border-width: Theme.window-border-width;
@@ -44,7 +54,26 @@ export component AccidentalSynth inherits Window {
                     HorizontalLayout {
 
                         VerticalLayout {
-                            oscillator-panel := OscillatorsPanel { }
+                            oscillator-panel := OscillatorsPanel {
+                                wave_shape_changed(oscillator, shape) => {
+                                    osc-wave_shape_changed(oscillator, shape);
+                                }
+                                course-tune-changed(oscillator, semitones) => {
+                                    osc-course-tune-changed(oscillator, semitones);
+                                }
+                                fine-tune-changed(oscillator, cents) => {
+                                    osc-fine-tune-changed(oscillator, cents);
+                                }
+                                clipper-boost-changed(oscillator, boost) => {
+                                    osc-clipper-boost-changed(oscillator, boost);
+                                }
+                                parameter1-changed(oscillator, value) => {
+                                    osc-parameter1-changed(oscillator, value);
+                                }
+                                parameter2-changed(oscillator, value) => {
+                                    osc-parameter2-changed(oscillator, value);
+                                }
+                            }
 
                             global-panel := GlobalPanel { }
                         }
