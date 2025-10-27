@@ -1,5 +1,5 @@
 import { Panel, VerticalSpacer, SectionLabel, CenteredParameterSlider, PanelLabel, HorizontalSpacer, ComponentLabel, MixerLevel, MixerBalance,
-MixerMute, VerticalIntSlider,
+MixerMute,
 ToggleSwitch, HorizontalParameterSlider, IntSpinBox, EnvelopeSection, FixedCenterLFOSection } from "components.slint";
 import { Theme } from "theme.slint";
 import { Constant } from "constants.slint";
@@ -13,6 +13,8 @@ export component MixerStrip inherits VerticalLayout {
     callback mixer-balance-update(float);
     callback mixer_mute_update(bool);
 
+    width: 56px;
+
     SectionLabel {
         label: label;
     }
@@ -21,7 +23,8 @@ export component MixerStrip inherits VerticalLayout {
 
     VerticalLayout {
         padding: Theme.global-panel-padding;
-        spacing: Theme.global-panel-spacing;
+        spacing: Theme.global-panel-spacing + 5px;
+
         alignment: space-between;
 
         MixerBalance {
@@ -48,48 +51,98 @@ export component MixerStrip inherits VerticalLayout {
 }
 
 export component OutputMixer inherits VerticalLayout {
-    in property <float> level-minimum: Constant.SILENCE_LEVEL_DBFS;
-    in property <float> level-maximum: Constant.MAX_OUTPUT_LEVEL_DBFS;
-    in property <float> default-level: Constant.DEFAULT_OUTPUT_LEVEL_DBFS;
-
+    in property <float> default-level: Constant.DEFAULT_OUTPUT_MIXER_LEVEL_NORMAL;
     callback output-level-update(float);
     callback output-balance-update(float);
+    callback output-mute-update(bool);
+
+    padding: Theme.global-panel-padding;
+    spacing: Theme.global-panel-spacing;
 
     output := MixerStrip {
         label: Theme.output-mixer-label;
         default-value: default-level;
+        mixer-balance-update(balance) => {
+            output-balance-update(balance);
+        }
+        mixer-level-update(level) => {
+            output-level-update(level);
+        }
+        mixer_mute_update(is_muted) => {
+            output-mute-update(is_muted);
+        }
     }
 }
 
 export component OscillatorMixer inherits VerticalLayout {
-    in property <float> level-minimum: Constant.SILENCE_LEVEL_DBFS;
-    in property <float> level-maximum: Constant.MAX_OUTPUT_LEVEL_DBFS;
+    callback osc-mixer-level-update(int, float);
+    callback osc-mixer-balance-update(int, float);
+    callback osc-mixer-mute-update(int, bool);
 
     HorizontalLayout {
-        MixerStrip {
+        padding: Theme.global-panel-padding;
+        spacing: Theme.global-panel-spacing;
+
+        osc1-mix := MixerStrip {
             label: Theme.osc-mixer-title-1;
-            default-value: level-maximum;
+            default-value: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL;
+            mixer-balance-update(balance) => {
+                osc-mixer-balance-update(1, balance);
+            }
+            mixer-level-update(level) => {
+                osc-mixer-level-update(1, level);
+            }
+            mixer_mute_update(is_muted) => {
+                osc-mixer-mute-update(1, is_muted);
+            }
         }
 
         VerticalSpacer { }
 
-        MixerStrip {
+        osc2-mix := MixerStrip {
             label: Theme.osc-mixer-title-2;
-            default-value: level-maximum;
+            default-value: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL;
+            mixer-balance-update(balance) => {
+                osc-mixer-balance-update(2, balance);
+            }
+            mixer-level-update(level) => {
+                osc-mixer-level-update(2, level);
+            }
+            mixer_mute_update(is_muted) => {
+                osc-mixer-mute-update(2, is_muted);
+            }
         }
 
         VerticalSpacer { }
 
-        MixerStrip {
+        osc3-mix := MixerStrip {
             label: Theme.osc-mixer-title-3;
-            default-value: level-maximum;
+            default-value: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL;
+            mixer-balance-update(balance) => {
+                osc-mixer-balance-update(3, balance);
+            }
+            mixer-level-update(level) => {
+                osc-mixer-level-update(3, level);
+            }
+            mixer_mute_update(is_muted) => {
+                osc-mixer-mute-update(3, is_muted);
+            }
         }
 
         VerticalSpacer { }
 
-        MixerStrip {
+        sub-mix := MixerStrip {
             label: Theme.osc-mixer-title-sub;
-            default-value: level-minimum;
+            default-value: Constant.DEFAULT_SUB_OSCILLATOR_LEVEL_NORMAL;
+            mixer-balance-update(balance) => {
+                osc-mixer-balance-update(0, balance);
+            }
+            mixer-level-update(level) => {
+                osc-mixer-level-update(0, level);
+            }
+            mixer_mute_update(is_muted) => {
+                osc-mixer-mute-update(0, is_muted);
+            }
         }
 
         VerticalSpacer { }
@@ -97,6 +150,13 @@ export component OscillatorMixer inherits VerticalLayout {
 }
 
 export component MixerSection inherits VerticalLayout {
+    callback output-balance-update(float);
+    callback output-level-update(float);
+    callback output-mute-update(bool);
+    callback osc-mixer-balance-update(int, float);
+    callback osc-mixer-level-update(int, float);
+    callback osc-mixer-mute-update(int, bool);
+
     alignment: start;
     padding-top: Theme.global-panel-padding;
 
@@ -112,13 +172,30 @@ export component MixerSection inherits VerticalLayout {
             VerticalSpacer { }
 
             outout-mixer := OutputMixer {
+                output-balance-update(value) => {
+                   output-balance-update(value);
+                }
                 output-level-update(value) => {
+                    output-level-update(value);
+                }
+                output-mute-update(bool) => {
+                   output-mute-update(bool);
                 }
             }
 
             VerticalSpacer { }
 
-            oscillator-mixer := OscillatorMixer { }
+            oscillator-mixer := OscillatorMixer {
+                osc-mixer-balance-update(oscillator, balance) => {
+                    osc-mixer-balance-update(oscillator, balance);
+                }
+                osc-mixer-level-update(oscillator, level) => {
+                    osc-mixer-level-update(oscillator, level);
+                }
+                osc-mixer-mute-update(oscillator, is_muted) => {
+                    osc-mixer-mute-update(oscillator, is_muted);
+                }
+            }
         }
     }
 }
@@ -194,6 +271,12 @@ export component OscillatorSection inherits VerticalLayout {
 }
 
 export component AmpEnvelopeSection inherits VerticalLayout {
+    callback envelope-attack-changed(float);
+    callback envelope-decay-changed(float);
+    callback envelope-sustain-changed(float);
+    callback envelope-release-changed(float);
+    callback envelope-invert-changed(bool);
+
     alignment: start;
     padding-top: Theme.global-panel-padding;
 
@@ -201,10 +284,31 @@ export component AmpEnvelopeSection inherits VerticalLayout {
         label: Theme.amp-envelope-section-label;
     }
 
-    EnvelopeSection { }
+    EnvelopeSection {
+        envelope-attack-changed(milliseconds) => {
+            envelope-attack-changed(milliseconds);
+        }
+        envelope-decay-changed(milliseconds) => {
+            envelope-decay-changed(milliseconds);
+        }
+        envelope-sustain-changed(level) => {
+            envelope-sustain-changed(level);
+        }
+        envelope-release-changed(milliseconds) => {
+            envelope-release-changed(milliseconds);
+        }
+        envelope-invert-changed(is_active) => {
+            envelope-invert-changed(is_active);
+        }
+    }
 }
 
 export component ModWheelSection inherits VerticalLayout {
+    callback lfo-frequency-changed(int, float);
+    callback lfo-shape-changed(int, string);
+    callback lfo-phase-changed(int, float);
+    callback lfo-phase-reset(int);
+
     alignment: start;
     padding-top: Theme.global-panel-padding;
 
@@ -216,25 +320,77 @@ export component ModWheelSection inherits VerticalLayout {
         alignment: start;
         VerticalSpacer { }
 
-        FixedCenterLFOSection { }
+        FixedCenterLFOSection {
+            lfo-frequency-changed(frequency) => {
+                lfo-frequency-changed(Constant.LFO_MOD_WHEEL_INDEX, frequency);
+            }
+            lfo-shape-changed(shape) => {
+                lfo-shape-changed(Constant.LFO_MOD_WHEEL_INDEX, shape);
+            }
+            lfo-phase-changed(phase) => {
+                lfo-phase-changed(Constant.LFO_MOD_WHEEL_INDEX, phase);
+            }
+            lfo-phase-reset() => {
+                lfo-phase-reset(Constant.LFO_MOD_WHEEL_INDEX);
+            }
+        }
     }
 }
 
 export component GlobalPanel inherits Panel {
+    callback envelope-attack-changed(int, float);
+    callback envelope-decay-changed(int, float);
+    callback envelope-sustain-changed(int, float);
+    callback envelope-release-changed(int, float);
+    callback envelope-invert-changed(int, bool);
+    callback lfo-frequency-changed(int, float);
+    callback lfo-shape-changed(int, string);
+    callback lfo-phase-changed(int, float);
+    callback lfo-phase-reset(int);
+
     height: Theme.global-panel-height;
+    width: Theme.global-panel-width;
 
     HorizontalLayout {
-        alignment: start;
-
+        width: parent.width;
         mixer-section := MixerSection { }
 
         VerticalLayout {
             alignment: start;
             HorizontalLayout {
                 alignment: start;
-                amp-section := AmpEnvelopeSection { }
+                amp-section := AmpEnvelopeSection {
+                    envelope-attack-changed(milliseconds) => {
+                        envelope-attack-changed(Constant.ENVELOPE_AMP_INDEX, milliseconds);
+                    }
+                    envelope-decay-changed(milliseconds) => {
+                        envelope-decay-changed(Constant.ENVELOPE_AMP_INDEX, milliseconds);
+                    }
+                    envelope-sustain-changed(level) => {
+                        envelope-sustain-changed(Constant.ENVELOPE_AMP_INDEX, level);
+                    }
+                    envelope-release-changed(milliseconds) => {
+                        envelope-release-changed(Constant.ENVELOPE_AMP_INDEX, milliseconds);
+                    }
+                    envelope-invert-changed(is_active) => {
+                        envelope-invert-changed(Constant.ENVELOPE_AMP_INDEX, is_active);
+                    }
+                }
 
-                mod-whee-section := ModWheelSection { }
+                mod-wheel-section := ModWheelSection {
+                    lfo-frequency-changed(lfo_index, frequency) => {
+                        lfo-frequency-changed(lfo_index, frequency);
+                    }
+                    lfo-shape-changed(lfo_index, shape) => {
+                        lfo-shape-changed(lfo_index, shape);
+                    }
+                    lfo-phase-changed(lfo_index, phase) => {
+                        lfo-phase-changed(lfo_index, phase);
+                    }
+                    lfo-phase-reset(lfo_index) => {
+                        lfo-phase-reset(lfo_index);
+                    }
+                }
             }
 
             HorizontalSpacer { }

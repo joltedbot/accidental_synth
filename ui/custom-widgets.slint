@@ -56,8 +56,6 @@ export component VerticalSlider inherits Rectangle {
         return clamp(track.position - (handle.height / 2), track.y, track.height - handle.height);
     }
 
-
-
     touch := TouchArea {
         enabled: root.enabled;
 
@@ -95,7 +93,6 @@ export component HorzontalSlider inherits Rectangle {
     height: 50px;
 
     property <length> indicator-default-position: track.x - track.width + (track.width * default-value);
-
 
     function get_output_value(position: length) -> float {
         let scaled_value = (position + track.width) / track.width;
@@ -174,7 +171,7 @@ export component BalanceSlider inherits Rectangle {
     height: 50px;
 
     property <length> indicator-default-position: 0px;
-    property <length> minimum-position: -self.width/2;
+    property <length> minimum-position: -self.width / 2;
 
     function get_output_value(position: length) -> float {
         let scaled_value = (position - minimum-position) / self.width;

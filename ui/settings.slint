@@ -10,7 +10,7 @@ export component AudioSettings inherits VerticalLayout {
 
     device := DropDownMenu {
         label: "Output Device";
-        default-model: ["Focusrite Scarlett", "Builtin Speakers", "External Headphones"];
+        value-list: ["Focusrite Scarlett", "Builtin Speakers", "External Headphones"];
         dropdown-width: Theme.oscillator-panel-widget-width;
     }
 
@@ -20,18 +20,18 @@ export component AudioSettings inherits VerticalLayout {
 
         left := DropDownMenu {
             label: "Left Channel";
-            default-model: ["1", "2", "3", "4"];
+            value-list: ["1", "2", "3", "4"];
         }
 
         right := DropDownMenu {
             label: "Right Channel";
-            default-model: ["1", "2", "3", "4"];
+            value-list: ["1", "2", "3", "4"];
         }
     }
 
     sample := DropDownMenu {
         label: "Sample Rate";
-        default-model: ["44,100", "48,000", "96,000"];
+        value-list: ["44,100", "48,000", "96,000"];
         dropdown-width: Theme.oscillator-panel-widget-width;
     }
 }
@@ -42,13 +42,13 @@ export component MidiSettings inherits VerticalLayout {
 
     port := DropDownMenu {
         label: "Input Port";
-        default-model: ["MidiHub", "Focusrite Scarlett"];
+        value-list: ["MidiHub", "Focusrite Scarlett"];
         dropdown-width: Theme.oscillator-panel-widget-width;
     }
 
     channel := DropDownMenu {
         label: "Channel";
-        default-model: Constant.MIDI_CHANNELS;
+        value-list: Constant.MIDI_CHANNELS;
         dropdown-width: Theme.oscillator-panel-widget-width;
     }
 }

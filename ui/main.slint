@@ -20,7 +20,11 @@ export component AccidentalSynth inherits Window {
     default-font-family: Theme.default-font-family;
     default-font-weight: Theme.default-font-weight;
 
-    // Oscillator Panel Callbacks and Properties
+    // Oscillator Panel Properties & Callbacks
+    in property <int> osc-osc1-fine-tune-cents: 0;
+    in property <int> osc-osc2-fine-tune-cents: 0;
+    in property <int> osc-osc3-fine-tune-cents: 0;
+    in property <int> osc-sub-fine-tune-cents: 0;
     callback osc-wave_shape_changed(int, string);
     callback osc-course-tune-changed(int, float);
     callback osc-fine-tune-changed(int, float);
@@ -28,7 +32,22 @@ export component AccidentalSynth inherits Window {
     callback osc-parameter1-changed(int, float);
     callback osc-parameter2-changed(int, float);
 
-
+    // Filter Panel Properties & Callbacks
+    callback filter-cutoff-changed(float);
+    callback filter-resonance-changed(float);
+    callback filter-poles-changed(float);
+    callback filter-key-tracking-changed(float);
+    callback filter-eg-amount-changed(float);
+    callback filter-lfo-amount-changed(float);
+    callback envelope-attack-changed(int, float);
+    callback envelope-decay-changed(int, float);
+    callback envelope-sustain-changed(int, float);
+    callback envelope-release-changed(int, float);
+    callback envelope-invert-changed(int, bool);
+    callback lfo-frequency-changed(int, float);
+    callback lfo-shape-changed(int, string);
+    callback lfo-phase-changed(int, float);
+    callback lfo-phase-reset(int);
 
     top-level := Rectangle {
         background: Theme.window-background;
@@ -55,6 +74,11 @@ export component AccidentalSynth inherits Window {
 
                         VerticalLayout {
                             oscillator-panel := OscillatorsPanel {
+                                osc1-fine-tune-cents: osc-osc1-fine-tune-cents;
+                                osc2-fine-tune-cents: osc-osc2-fine-tune-cents;
+                                osc3-fine-tune-cents: osc-osc3-fine-tune-cents;
+                                sub-fine-tune-cents: osc-sub-fine-tune-cents;
+
                                 wave_shape_changed(oscillator, shape) => {
                                     osc-wave_shape_changed(oscillator, shape);
                                 }
@@ -75,11 +99,85 @@ export component AccidentalSynth inherits Window {
                                 }
                             }
 
-                            global-panel := GlobalPanel { }
+                            global-panel := GlobalPanel {
+                                envelope-attack-changed(envelope_index, milliseconds) => {
+                                    envelope-attack-changed(envelope_index, milliseconds);
+                                }
+                                envelope-decay-changed(envelope_index, milliseconds) => {
+                                    envelope-decay-changed(envelope_index, milliseconds);
+                                }
+                                envelope-sustain-changed(envelope_index, level) => {
+                                    envelope-sustain-changed(envelope_index, level);
+                                }
+                                envelope-release-changed(envelope_index, milliseconds) => {
+                                    envelope-release-changed(envelope_index, milliseconds);
+                                }
+                                envelope-invert-changed(envelope_index, is_active) => {
+                                    envelope-invert-changed(envelope_index, is_active);
+                                }
+                                lfo-frequency-changed(lfo_index, frequency) => {
+                                    lfo-frequency-changed(lfo_index, frequency);
+                                }
+                                lfo-shape-changed(lfo_index, shape) => {
+                                    lfo-shape-changed(lfo_index, shape);
+                                }
+                                lfo-phase-changed(lfo_index, phase) => {
+                                    lfo-phase-changed(lfo_index, phase);
+                                }
+                                lfo-phase-reset(lfo_index) => {
+                                    lfo-phase-reset(lfo_index);
+                                }
+                            }
                         }
 
                         filter-panel := FilterPanel {
                             width: Theme.filter-panel-width;
+
+                            filter-cutoff-changed(frequency) => {
+                                filter-cutoff-changed(frequency);
+                            }
+                            filter-resonance-changed(resonance) => {
+                                filter-resonance-changed(resonance);
+                            }
+                            filter-poles-changed(poles) => {
+                                filter-poles-changed(poles);
+                            }
+                            filter-key-tracking-changed(amount) => {
+                                filter-key-tracking-changed(amount);
+                            }
+                            filter-eg-amount-changed(amount) => {
+                                filter-eg-amount-changed(amount);
+                            }
+                            filter-lfo-amount-changed(amount) => {
+                                filter-lfo-amount-changed(amount);
+                            }
+                            envelope-attack-changed(envelope_index, milliseconds) => {
+                                envelope-attack-changed(envelope_index, milliseconds);
+                            }
+                            envelope-decay-changed(envelope_index, milliseconds) => {
+                                envelope-decay-changed(envelope_index, milliseconds);
+                            }
+                            envelope-sustain-changed(envelope_index, level) => {
+                                envelope-sustain-changed(envelope_index, level);
+                            }
+                            envelope-release-changed(envelope_index, milliseconds) => {
+                                envelope-release-changed(envelope_index, milliseconds);
+                            }
+                            envelope-invert-changed(envelope_index, is_active) => {
+                                envelope-invert-changed(envelope_index, is_active);
+                            }
+                            lfo-frequency-changed(lfo_index, frequency) => {
+                                lfo-frequency-changed(lfo_index, frequency);
+                            }
+                            lfo-shape-changed(lfo_index, shape) => {
+                                lfo-shape-changed(lfo_index, shape);
+                            }
+                            lfo-phase-changed(lfo_index, phase) => {
+                                lfo-phase-changed(lfo_index, phase);
+                            }
+                            lfo-phase-reset(lfo_index) => {
+                                lfo-phase-reset(lfo_index);
+                            }
                         }
                     }
                 }

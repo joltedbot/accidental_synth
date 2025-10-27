@@ -1,5 +1,5 @@
 import { Constant } from "constants.slint";
-import { Panel, PanelLabel, VerticalSpacer, HorizontalParameterSlider, CenteredParameterSlider, VerticalIntSlider, FilterSlider, IntSpinBox,
+import { Panel, PanelLabel, VerticalSpacer, HorizontalParameterSlider, CenteredParameterSlider, FilterSlider, IntSpinBox,
 DropDownMenu, HorizontalSpacer, SectionLabel } from "components.slint";
 import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.slint";
 import { Theme } from "theme.slint";
@@ -8,6 +8,8 @@ import { Theme } from "theme.slint";
 
 export component OscControlsPanel inherits Panel {
     in property <string> title;
+    in property <int> fine-tune-cents: 0;
+
     callback wave_shape_changed(string);
     callback course-tune-changed(float);
     callback fine-tune-changed(float);
@@ -28,7 +30,7 @@ export component OscControlsPanel inherits Panel {
 
             wave-shape := DropDownMenu {
                 label: Theme.osc-controls-wave-shape;
-                default-model: Constant.OSC_WAVE_SHAPES;
+                value-list: Constant.OSC_WAVE_SHAPES;
                 dropdown-width: Theme.oscillator-panel-widget-width;
                 drop_down_changed(shape) => {
                     wave_shape_changed(shape);
@@ -50,7 +52,9 @@ export component OscControlsPanel inherits Panel {
 
             fine-tune := CenteredParameterSlider {
                 label: Theme.osc-controls-fine-tune;
+                value: fine-tune-cents;
                 value-units: Theme.osc-controls-cents;
+                show-value: true;
                 slider-width: Theme.oscillator-panel-widget-width;
                 centered-parameter-slider-changed(cents) => {
                     fine-tune-changed(cents);
@@ -85,12 +89,17 @@ export component OscControlsPanel inherits Panel {
 }
 
 export component OscillatorsPanel inherits Panel {
+    in property <int> osc1-fine-tune-cents: 0;
+    in property <int> osc2-fine-tune-cents: 0;
+    in property <int> osc3-fine-tune-cents: 0;
+    in property <int> sub-fine-tune-cents: 0;
     callback wave_shape_changed(int, string);
     callback course-tune-changed(int, float);
     callback fine-tune-changed(int, float);
     callback clipper-boost-changed(int, float);
     callback parameter1-changed(int, float);
     callback parameter2-changed(int, float);
+
 
     HorizontalLayout {
         padding: Theme.oscillator-panel-padding;
@@ -99,6 +108,7 @@ export component OscillatorsPanel inherits Panel {
         osc1 := OscControlsPanel {
             title: Theme.osc-controls-panel-title-1;
             width: Theme.oscillator-panel-section-width;
+            fine-tune-cents: osc1-fine-tune-cents;
             wave_shape_changed(string) => {
                 wave_shape_changed(1, string);
             }
@@ -122,6 +132,7 @@ export component OscillatorsPanel inherits Panel {
         osc2 := OscControlsPanel {
             title: Theme.osc-controls-panel-title-2;
             width: Theme.oscillator-panel-section-width;
+            fine-tune-cents: osc2-fine-tune-cents;
             wave_shape_changed(string) => {
                 wave_shape_changed(2, string);
             }
@@ -145,6 +156,7 @@ export component OscillatorsPanel inherits Panel {
         osc3 := OscControlsPanel {
             title: Theme.osc-controls-panel-title-3;
             width: Theme.oscillator-panel-section-width;
+            fine-tune-cents: osc3-fine-tune-cents;
             wave_shape_changed(string) => {
                 wave_shape_changed(3, string);
             }
@@ -168,6 +180,7 @@ export component OscillatorsPanel inherits Panel {
         sub_osc := OscControlsPanel {
             title: Theme.osc-controls-panel-title-sub;
             width: Theme.oscillator-panel-section-width;
+            fine-tune-cents: sub-fine-tune-cents;
             wave_shape_changed(string) => {
                 wave_shape_changed(0, string);
             }

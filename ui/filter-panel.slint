@@ -6,58 +6,89 @@ import { Theme } from "theme.slint";
 import { Constant } from "constants.slint";
 
 export component FilterCutoffSection inherits HorizontalLayout {
+    callback filter-cutoff-changed(float);
+    callback filter-resonance-changed(float);
 
     alignment: start;
 
     cutoff := FilterSlider {
         label: Theme.filter-label-cutoff;
-        default-value: 100;
+        default-value: Constant.DEFAULT_FILTER_CUTOFF_NORMAL;
         slider-height: 220px;
         slider-width: 50px;
+        filter-slider-changed(frequency) => {
+            filter-cutoff-changed(frequency);
+        }
     }
 
     resonance := FilterSlider {
         label: Theme.filter-label-resonance;
-        default-value: 0;
+        default-value: Constant.DEFAULT_FILTER_RESONANCE_NORMAL;
         slider-width: 50px;
         slider-height: 220px;
+        filter-slider-changed(amount) => {
+            filter-resonance-changed(amount);
+        }
     }
 }
 
 export component FilterOptionsSection inherits VerticalLayout {
+    callback filter-poles-changed(float);
+    callback filter-key-tracking-changed(float);
+    callback filter-eg-amount-changed(float);
+    callback filter-lfo-amount-changed(float);
+
     padding: Theme.osc-controls-panel-padding;
     spacing: Theme.osc-controls-panel-spacing;
     alignment: start;
 
     poles := IntSpinBox {
         label: Theme.filter-label-poles;
-        step: 1;
         height: 50px;
+        step: 1;
         minimum: 1;
         maximum: 4;
-        default-value: 4;
+        default-value: Constant.DEFAULT_FILTER_POLES;
         spinbox-width: Theme.filter-panel-widget-width;
+        spinbox-changed(poles) => {
+            filter-poles-changed(poles);
+        }
     }
 
     keytrack := CenteredParameterSlider {
         label: Theme.filter-label-key-tracking;
         slider-width: Theme.filter-panel-widget-width;
+        centered-parameter-slider-changed(amount) => {
+            filter-key-tracking-changed(amount);
+        }
     }
 
     eg_amount := HorizontalParameterSlider {
         label: Theme.filter-label-envelope-amount;
         default-value: 0;
         slider-width: Theme.filter-panel-widget-width;
+        horizontal-parameter-slider-changed(amount) => {
+            filter-eg-amount-changed(amount);
+        }
     }
 
     lfo_amount := HorizontalParameterSlider {
         label: Theme.filter-label-lfo-amount;
         default-value: 0;
         slider-width: Theme.filter-panel-widget-width;
+        horizontal-parameter-slider-changed(amount) => {
+            filter-lfo-amount-changed(amount);
+        }
     }
 }
 
 export component FilterEGSection inherits VerticalLayout {
+    callback envelope-attack-changed(float);
+    callback envelope-decay-changed(float);
+    callback envelope-sustain-changed(float);
+    callback envelope-release-changed(float);
+    callback envelope-invert-changed(bool);
+
     alignment: start;
     spacing: 5px;
 
@@ -69,10 +100,42 @@ export component FilterEGSection inherits VerticalLayout {
 
     HorizontalSpacer { }
 
-    EnvelopeSection { }
+    EnvelopeSection {
+        envelope-attack-changed(milliseconds) => {
+            envelope-attack-changed(milliseconds);
+        }
+        envelope-decay-changed(milliseconds) => {
+            envelope-decay-changed(milliseconds);
+        }
+        envelope-sustain-changed(level) => {
+            envelope-sustain-changed(level);
+        }
+        envelope-release-changed(milliseconds) => {
+            envelope-release-changed(milliseconds);
+        }
+        envelope-invert-changed(is_active) => {
+            envelope-invert-changed(is_active);
+        }
+    }
 }
 
 export component FilterPanel inherits Panel {
+    callback filter-cutoff-changed(float);
+    callback filter-resonance-changed(float);
+    callback filter-poles-changed(float);
+    callback filter-key-tracking-changed(float);
+    callback filter-eg-amount-changed(float);
+    callback filter-lfo-amount-changed(float);
+    callback envelope-attack-changed(int, float);
+    callback envelope-decay-changed(int, float);
+    callback envelope-sustain-changed(int, float);
+    callback envelope-release-changed(int, float);
+    callback envelope-invert-changed(int, bool);
+    callback lfo-frequency-changed(int, float);
+    callback lfo-shape-changed(int, string);
+    callback lfo-phase-changed(int, float);
+    callback lfo-phase-reset(int);
+
 
     VerticalLayout {
         padding: Theme.osc-controls-panel-padding;
@@ -84,19 +147,68 @@ export component FilterPanel inherits Panel {
         }
 
         HorizontalLayout {
-            FilterCutoffSection { }
+            FilterCutoffSection {
+                filter-cutoff-changed(frequency) => {
+                    filter-cutoff-changed(frequency);
+                }
+                filter-resonance-changed(frequency) => {
+                    filter-resonance-changed(frequency);
+                }
+            }
 
             VerticalSpacer { }
 
-            FilterOptionsSection { }
+            FilterOptionsSection {
+                filter-poles-changed(poles) => {
+                    filter-poles-changed(poles);
+                }
+                filter-key-tracking-changed(amount) => {
+                    filter-key-tracking-changed(amount);
+                }
+                filter-eg-amount-changed(amount) => {
+                    filter-eg-amount-changed(amount);
+                }
+                filter-lfo-amount-changed(amount) => {
+                    filter-lfo-amount-changed(amount);
+                }
+            }
         }
 
         HorizontalSpacer { }
 
-        FilterEGSection { }
+        FilterEGSection {
+            envelope-attack-changed(milliseconds) => {
+                envelope-attack-changed(Constant.ENVELOPE_FILTER_INDEX, milliseconds);
+            }
+            envelope-decay-changed(milliseconds) => {
+                envelope-decay-changed(Constant.ENVELOPE_FILTER_INDEX, milliseconds);
+            }
+            envelope-sustain-changed(level) => {
+                envelope-sustain-changed(Constant.ENVELOPE_FILTER_INDEX, level);
+            }
+            envelope-release-changed(milliseconds) => {
+                envelope-release-changed(Constant.ENVELOPE_FILTER_INDEX, milliseconds);
+            }
+            envelope-invert-changed(is_active) => {
+                envelope-invert-changed(Constant.ENVELOPE_FILTER_INDEX, is_active);
+            }
+        }
 
         HorizontalSpacer { }
 
-        FixedCenterLFOSection { }
+        FixedCenterLFOSection {
+            lfo-frequency-changed(frequency) => {
+                lfo-frequency-changed(Constant.LFO_FILTER_INDEX, frequency);
+            }
+            lfo-shape-changed(shape) => {
+                lfo-shape-changed(Constant.LFO_FILTER_INDEX, shape);
+            }
+            lfo-phase-changed(phase) => {
+                lfo-phase-changed(Constant.LFO_FILTER_INDEX, phase);
+            }
+            lfo-phase-reset() => {
+                lfo-phase-reset(Constant.LFO_FILTER_INDEX);
+            }
+        }
     }
 }

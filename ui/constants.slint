@@ -2,21 +2,24 @@ export global Constant {
     out property <float> DEFAULT_BALANCE: 0;
     out property <float> MAX_LEFT_BALANCE: 1;
     out property <float> MAX_RIGHT_BALANCE: -1;
-    out property <float> DEFAULT_OUTPUT_LEVEL_DBFS: -6;
+    out property <float> SILENCE_LEVEL_DBFS: -70;
     out property <float> MAX_OUTPUT_LEVEL_DBFS: 0;
     out property <int> MIN_COURSE_TUNE_SEMITONES: -12;
     out property <int> MAX_COURSE_TUNE_SEMITONES: 12;
-    out property <float> SILENCE_LEVEL_DBFS: -70;
-    out property <int> OSC_COURSE_TUNE_MINIMUM: -12;
-    out property <int> OSC_COURSE_TUNE_MAXIMUM: 12;
-    out property <int> OSC_FINE_TUNE_MINIMUM: -63;
-    out property <int> OSC_FINE_TUNE_MAXIMUM: 63;
-    out property <float> OSC_CLIPPER_BOOST_MINIMUM: 0;
-    out property <float> OSC_CLIPPER_BOOST_MAXIMUM: 100;
-    out property <float> OSC_PARAMETER1_MINIMUM: 0;
-    out property <float> OSC_PARAMETER1_MAXIMUM: 100;
-    out property <float> OSC_PARAMETER2_MINIMUM: 0;
-    out property <float> OSC_PARAMETER2_MAXIMUM: 100;
+    out property <int> ENVELOPE_AMP_INDEX: 0;
+    out property <int> ENVELOPE_FILTER_INDEX: 1;
+    out property <int> LFO_MOD_WHEEL_INDEX: 0;
+    out property <int> LFO_FILTER_INDEX: 1;
+
+    // Control Default Values
+    out property <float> DEFAULT_OUTPUT_MIXER_LEVEL_NORMAL: 0.8;
+    out property <float> DEFAULT_OSCILLATOR_LEVEL_NORMAL: 1.0;
+    out property <float> DEFAULT_SUB_OSCILLATOR_LEVEL_NORMAL: 0.0;
+    out property <float> DEFAULT_EG_MILLISECONDS_STAGE_NORMAL: 0.02;
+    out property <float> DEFAULT_EG_SUSTAIN_LEVEL_NORMAL: 0.8;
+    out property <float> DEFAULT_FILTER_CUTOFF_NORMAL: 1.0;
+    out property <float> DEFAULT_FILTER_RESONANCE_NORMAL: 0.0;
+    out property <int> DEFAULT_FILTER_POLES: 4;
 
     out property <[string]> OSC_WAVE_SHAPES: [
         "Sine",
