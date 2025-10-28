@@ -38,14 +38,14 @@ export component SliderTrack inherits Rectangle {
 }
 
 export component VerticalSlider inherits Rectangle {
-    in-out property <float> default-value: 0.0;
+    in-out property <float> value: 0.0;
     in property <bool> enabled: true;
     callback updated(float);
 
     width: 50px;
     height: 100px;
 
-    property <length> indicator-default-position: track.y + track.height - (track.height * default-value.clamp(0.0, 1.0));
+    property <length> indicator-default-position: track.y + track.height - (track.height * value.clamp(0.0, 1.0));
 
     function get_output_value(position: length) -> float {
         let scaled_value = (track.height - position) / track.height;
@@ -85,14 +85,14 @@ export component VerticalSlider inherits Rectangle {
 }
 
 export component HorzontalSlider inherits Rectangle {
-    in property <float> default-value: 0;
+    in property <float> value: 0;
     in property <bool> enabled: true;
     callback updated(float);
 
     width: 100px;
     height: 50px;
 
-    property <length> indicator-default-position: track.x - track.width + (track.width * default-value);
+    property <length> indicator-default-position: track.x - track.width + (track.width * value);
 
     function get_output_value(position: length) -> float {
         let scaled_value = (position + track.width) / track.width;

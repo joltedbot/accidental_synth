@@ -5,13 +5,30 @@ import { Button, StandardButton } from "std-widgets.slint";
 
 
 export component AudioSettings inherits VerticalLayout {
+    in property <[string]> output-device-list: Theme.empty-dropdown-value;
+    in property <[string]> output-left-channel-list: Theme.empty-dropdown-value;
+    in property <[string]> output-right-channel-list: Theme.empty-dropdown-value;
+    in property <[string]> output-sample-rate-list: Theme.empty-dropdown-value;
+    in property <int> current-output-device-index: 0;
+    in property <int> current-output-left-channel-index: 0;
+    in property <int> current-output-right-channel-index: 0;
+    in property <int> current-sample-rate-index: 0;
+    callback audio-output-device-changed(string);
+    callback audio-output-left-channel-changed(string);
+    callback audio-output-right-channel-changed(string);
+    callback audio-sample-rate-changed(string);
+
     padding: Theme.osc-controls-panel-padding;
     spacing: Theme.osc-controls-panel-spacing;
 
     device := DropDownMenu {
         label: "Output Device";
-        value-list: ["Focusrite Scarlett", "Builtin Speakers", "External Headphones"];
         dropdown-width: Theme.oscillator-panel-widget-width;
+        value-list: output-device-list;
+        value-index: current-output-device-index;
+        drop_down_changed(device) => {
+            audio-output-device-changed(device);
+        }
     }
 
     HorizontalLayout {
@@ -20,36 +37,62 @@ export component AudioSettings inherits VerticalLayout {
 
         left := DropDownMenu {
             label: "Left Channel";
-            value-list: ["1", "2", "3", "4"];
+            value-list: output-left-channel-list;
+            value-index: current-output-left-channel-index;
+            drop_down_changed(left) => {
+                audio-output-left-channel-changed(left);
+            }
         }
 
         right := DropDownMenu {
             label: "Right Channel";
-            value-list: ["1", "2", "3", "4"];
+            value-list: output-right-channel-list;
+            value-index: current-output-right-channel-index;
+            drop_down_changed(right) => {
+                audio-output-left-channel-changed(right);
+            }
         }
     }
 
     sample := DropDownMenu {
         label: "Sample Rate";
-        value-list: ["44,100", "48,000", "96,000"];
         dropdown-width: Theme.oscillator-panel-widget-width;
+        value-list: output-sample-rate-list;
+        value-index: current-sample-rate-index;
+        drop_down_changed(rate) => {
+            audio-sample-rate-changed(rate);
+        }
     }
 }
 
 export component MidiSettings inherits VerticalLayout {
+    in property <[string]> input-port-list: Theme.empty-dropdown-value;
+    in property <int> current-input-port-index: 0;
+    in property <int> current-input-channel-index: 0;
+    callback midi-input-port-changed(string);
+    callback midi-input-channel-changed(string);
+
     padding: Theme.osc-controls-panel-padding;
     spacing: Theme.osc-controls-panel-spacing;
 
     port := DropDownMenu {
         label: "Input Port";
-        value-list: ["MidiHub", "Focusrite Scarlett"];
+        value-list: input-port-list;
+        value-index: current-input-port-index;
         dropdown-width: Theme.oscillator-panel-widget-width;
+        drop_down_changed(left) => {
+            midi-input-port-changed(left);
+        }
     }
 
     channel := DropDownMenu {
         label: "Channel";
         value-list: Constant.MIDI_CHANNELS;
+        value-index: current-input-channel-index;
         dropdown-width: Theme.oscillator-panel-widget-width;
+        drop_down_changed(left) => {
+            midi-input-channel-changed(left);
+        }
     }
 }
 
@@ -70,6 +113,25 @@ export component SettingsIcon inherits Image {
 }
 
 export component SettingsWindow inherits PopupWindow {
+    in property <[string]> output-device-list: Theme.empty-dropdown-value;
+    in property <[string]> output-left-channel-list: Theme.empty-dropdown-value;
+    in property <[string]> output-right-channel-list: Theme.empty-dropdown-value;
+    in property <[string]> output-sample-rate-list: Theme.empty-dropdown-value;
+    in property <int> current-output-device-index: 0;
+    in property <int> current-output-left-channel-index: 0;
+    in property <int> current-output-right-channel-index: 0;
+    in property <int> current-sample-rate-index: 0;
+    in property <[string]> input-port-list: Theme.empty-dropdown-value;
+    in property <int> current-input-port-index: 0;
+    in property <int> current-input-channel-index: 0;
+
+    callback audio-output-device-changed(string);
+    callback audio-output-left-channel-changed(string);
+    callback audio-output-right-channel-changed(string);
+    callback audio-sample-rate-changed(string);
+    callback midi-input-port-changed(string);
+    callback midi-input-channel-changed(string);
+
     width: Theme.settings-panel-width;
     height: Theme.settings-panel-height;
     x: Theme.window-width / 2 - Theme.settings-panel-width / 2;
@@ -104,7 +166,20 @@ export component SettingsWindow inherits PopupWindow {
                         label: "Audio Settings";
                     }
 
-                    AudioSettings { }
+                    AudioSettings {
+                        audio-output-device-changed(device) => {
+                            audio-output-device-changed(device);
+                        }
+                        audio-output-left-channel-changed(left) => {
+                            audio-output-left-channel-changed(left);
+                        }
+                        audio-output-right-channel-changed(right) => {
+                            audio-output-right-channel-changed(right);
+                        }
+                        audio-sample-rate-changed(rate) => {
+                            audio-sample-rate-changed(rate);
+                        }
+                    }
                 }
 
                 VerticalLayout {
@@ -116,7 +191,14 @@ export component SettingsWindow inherits PopupWindow {
                         label: "Midi Settings";
                     }
 
-                    MidiSettings { }
+                    MidiSettings {
+                        midi-input-port-changed(port) => {
+                            midi-input-port-changed(port);
+                        }
+                        midi-input-channel-changed(channel) => {
+                            midi-input-channel-changed(channel);
+                        }
+                    }
                 }
             }
 

@@ -4,10 +4,10 @@ import { Button } from "std-widgets.slint";
 import { SettingsIcon, SettingsWindow } from "settings.slint";
 
 export component Version inherits Text {
+    in property <string> version;
     vertical-alignment: bottom;
     font-size: Theme.header-version-font-size;
-    // TODO - Update this with the version from Cargo.toml once the ui modules is created
-    text: Theme.header-version-prefix + "0.1.0";
+    text: Theme.header-version-prefix + version;
 }
 
 export component Logo inherits Image {
@@ -17,10 +17,50 @@ export component Logo inherits Image {
 }
 
 export component HeaderPanel inherits Panel {
+    in property <string> version;
+    in property <[string]> output-device-list: Theme.empty-dropdown-value;
+    in property <[string]> output-left-channel-list: Theme.empty-dropdown-value;
+    in property <[string]> output-right-channel-list: Theme.empty-dropdown-value;
+    in property <[string]> output-sample-rate-list: Theme.empty-dropdown-value;
+    in property <int> current-output-device-index: 0;
+    in property <int> current-output-left-channel-index: 0;
+    in property <int> current-output-right-channel-index: 0;
+    in property <int> current-sample-rate-index: 0;
+    in property <[string]> input-port-list: Theme.empty-dropdown-value;
+    in property <int> current-input-port-index: 0;
+    in property <int> current-input-channel-index: 0;
+
+    callback audio-output-device-changed(string);
+    callback audio-output-left-channel-changed(string);
+    callback audio-output-right-channel-changed(string);
+    callback audio-sample-rate-changed(string);
+    callback midi-input-port-changed(string);
+    callback midi-input-channel-changed(string);
+
     height: Theme.header-panel-height;
     background: Theme.header-panel-background;
 
-    settings := SettingsWindow { }
+    settings := SettingsWindow {
+
+        audio-output-device-changed(device) => {
+            audio-output-device-changed(device);
+        }
+        audio-output-left-channel-changed(left) => {
+            audio-output-left-channel-changed(left);
+        }
+        audio-output-right-channel-changed(right) => {
+            audio-output-right-channel-changed(right);
+        }
+        audio-sample-rate-changed(rate) => {
+            audio-sample-rate-changed(rate);
+        }
+        midi-input-port-changed(port) => {
+            midi-input-port-changed(port);
+        }
+        midi-input-channel-changed(channel) => {
+            midi-input-channel-changed(channel);
+        }
+    }
 
     HorizontalLayout {
         padding: Theme.header-panel-padding;
@@ -31,7 +71,9 @@ export component HeaderPanel inherits Panel {
 
         header-spacer := Rectangle { }
 
-        Version { }
+        Version {
+            version: version;
+        }
 
         VerticalSpacer { }
 

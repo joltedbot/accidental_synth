@@ -204,18 +204,20 @@ export component MomentaryButton inherits VerticalLayout {
 export component HorizontalParameterSlider inherits VerticalLayout {
     in property <string> label: Theme.control-label-default-string;
     in property <string> value-units;
-    in property <float> default-value;
+    in-out property <float> value;
+    in property <string> display-value: 0;
     in property <length> slider-width: 100px;
     in property <length> slider-height: 30px;
     in property <bool> enabled: true;
     in property <bool> show-value: false;
+
     callback horizontal-parameter-slider-changed(float);
 
     spacing: 5px;
 
     hslider-label := HorizontalControlLabel {
         label: label;
-        value: default-value;
+        value: display-value;
         value-units: value-units;
         show-value: show-value;
         enabled: enabled;
@@ -224,7 +226,7 @@ export component HorizontalParameterSlider inherits VerticalLayout {
     hslider := HorzontalSlider {
         height: slider-height;
         width: slider-width;
-        default-value: default-value;
+        value: value;
         enabled: enabled;
 
         updated(value) => {
@@ -270,7 +272,7 @@ export component FilterSlider inherits VerticalLayout {
     in property <float> minimum: 0;
     in property <float> maximum: 100;
     in property <bool> inverse: false;
-    in property <float> default-value: 0;
+    in property <float> value: 0;
     in property <length> slider-width: 25px;
     in property <length> slider-height: 100px;
     in property <bool> enabled: true;
@@ -288,7 +290,7 @@ export component FilterSlider inherits VerticalLayout {
         fslider := VerticalSlider {
             height: slider-height;
             width: slider-width;
-            default-value: default-value;
+            value: value;
             enabled: root.enabled;
             updated(value) => {
                 filter-slider-changed(value)
@@ -300,7 +302,7 @@ export component FilterSlider inherits VerticalLayout {
 export component IntSpinBox inherits VerticalLayout {
     in property <string> label;
     in property <string> value-units;
-    in property <float> default-value;
+    in property <float> value;
     in property <int> step;
     in property <int> minimum;
     in property <int> maximum;
@@ -327,7 +329,7 @@ export component IntSpinBox inherits VerticalLayout {
         minimum: minimum;
         maximum: maximum;
         enabled: enabled;
-        value: default-value;
+        value: value;
 
         changed value => {
             spinbox-changed((self.value - minimum) / range);
@@ -389,7 +391,7 @@ export component MixerMute inherits VerticalLayout {
 }
 
 export component MixerBalance inherits VerticalLayout {
-    in property <float> default-value: Constant.DEFAULT_BALANCE;
+    in property <float> value: Constant.DEFAULT_BALANCE;
     callback mixer-balance-update(float);
 
     Text {
@@ -409,7 +411,7 @@ export component MixerBalance inherits VerticalLayout {
 }
 
 export component MixerLevel inherits VerticalLayout {
-    in property <float> default-value: 0.0;
+    in property <float> value: 0.0;
     in property <length> slider-height: 100px;
     callback mixer-level-update(float);
 
@@ -419,7 +421,7 @@ export component MixerLevel inherits VerticalLayout {
     }
 
     VerticalSlider {
-        default-value: default-value;
+        value: value;
         height: slider-height;
         updated(value) => {
             mixer-level-update(value);
@@ -444,7 +446,7 @@ export component EnvelopeSection inherits VerticalLayout {
 
         filter_attack := FilterSlider {
             label: Theme.filter-label-envelope-attack;
-            default-value: Constant.DEFAULT_EG_MILLISECONDS_STAGE_NORMAL;
+            value: Constant.DEFAULT_EG_MILLISECONDS_STAGE_NORMAL;
             slider-height: 90px;
             filter-slider-changed(milliseconds) => {
                 envelope-attack-changed(milliseconds);
@@ -453,7 +455,7 @@ export component EnvelopeSection inherits VerticalLayout {
 
         filter_decay := FilterSlider {
             label: Theme.filter-label-envelope-decay;
-            default-value: Constant.DEFAULT_EG_MILLISECONDS_STAGE_NORMAL;
+            value: Constant.DEFAULT_EG_MILLISECONDS_STAGE_NORMAL;
             slider-height: 90px;
             filter-slider-changed(milliseconds) => {
                 envelope-decay-changed(milliseconds);
@@ -462,7 +464,7 @@ export component EnvelopeSection inherits VerticalLayout {
 
         filter_sustain := FilterSlider {
             label: Theme.filter-label-envelope-sustain;
-            default-value: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL;
+            value: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL;
             slider-height: 90px;
             filter-slider-changed(level) => {
                 envelope-sustain-changed(level);
@@ -471,7 +473,7 @@ export component EnvelopeSection inherits VerticalLayout {
 
         filter_release := FilterSlider {
             label: Theme.filter-label-envelope-release;
-            default-value: Constant.DEFAULT_EG_MILLISECONDS_STAGE_NORMAL;
+            value: Constant.DEFAULT_EG_MILLISECONDS_STAGE_NORMAL;
             slider-height: 90px;
             filter-slider-changed(milliseconds) => {
                 envelope-release-changed(milliseconds);
@@ -488,6 +490,7 @@ export component EnvelopeSection inherits VerticalLayout {
 }
 
 export component FixedCenterLFOSection inherits VerticalLayout {
+    in-out property <float> phase-degrees: 0;
     callback lfo-frequency-changed(float);
     callback lfo-shape-changed(string);
     callback lfo-phase-changed(float);
@@ -506,7 +509,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
 
             frequency := HorizontalParameterSlider {
                 label: Theme.filter-label-lfo-frequency;
-                default-value: 0;
+                value: phase-degrees;
                 show-value: true;
                 value-units: Theme.display-units-hertz;
                 slider-width: Theme.global-panel-widget-width;
@@ -533,11 +536,13 @@ export component FixedCenterLFOSection inherits VerticalLayout {
 
             phase := HorizontalParameterSlider {
                 label: Theme.filter-label-lfo-phase;
-                default-value: 0;
+                value: phase-degrees;
                 show-value: true;
                 value-units: Theme.display-units-degrees;
                 slider-width: Theme.global-panel-widget-width;
                 horizontal-parameter-slider-changed(degrees) => {
+                    let new_display_value = degrees * Constant.LFO_MAX_PHASE_DEGREES;
+                    self.display-value = new_display_value.ceil();
                     lfo-phase-changed(degrees);
                 }
             }

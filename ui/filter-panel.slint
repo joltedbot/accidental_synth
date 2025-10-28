@@ -13,7 +13,7 @@ export component FilterCutoffSection inherits HorizontalLayout {
 
     cutoff := FilterSlider {
         label: Theme.filter-label-cutoff;
-        default-value: Constant.DEFAULT_FILTER_CUTOFF_NORMAL;
+        value: Constant.DEFAULT_FILTER_CUTOFF_NORMAL;
         slider-height: 220px;
         slider-width: 50px;
         filter-slider-changed(frequency) => {
@@ -23,7 +23,7 @@ export component FilterCutoffSection inherits HorizontalLayout {
 
     resonance := FilterSlider {
         label: Theme.filter-label-resonance;
-        default-value: Constant.DEFAULT_FILTER_RESONANCE_NORMAL;
+        value: Constant.DEFAULT_FILTER_RESONANCE_NORMAL;
         slider-width: 50px;
         slider-height: 220px;
         filter-slider-changed(amount) => {
@@ -48,7 +48,7 @@ export component FilterOptionsSection inherits VerticalLayout {
         step: 1;
         minimum: 1;
         maximum: 4;
-        default-value: Constant.DEFAULT_FILTER_POLES;
+        value: Constant.DEFAULT_FILTER_POLES;
         spinbox-width: Theme.filter-panel-widget-width;
         spinbox-changed(poles) => {
             filter-poles-changed(poles);
@@ -65,7 +65,7 @@ export component FilterOptionsSection inherits VerticalLayout {
 
     eg_amount := HorizontalParameterSlider {
         label: Theme.filter-label-envelope-amount;
-        default-value: 0;
+        value: 0;
         slider-width: Theme.filter-panel-widget-width;
         horizontal-parameter-slider-changed(amount) => {
             filter-eg-amount-changed(amount);
@@ -74,7 +74,7 @@ export component FilterOptionsSection inherits VerticalLayout {
 
     lfo_amount := HorizontalParameterSlider {
         label: Theme.filter-label-lfo-amount;
-        default-value: 0;
+        value: 0;
         slider-width: Theme.filter-panel-widget-width;
         horizontal-parameter-slider-changed(amount) => {
             filter-lfo-amount-changed(amount);
@@ -135,7 +135,6 @@ export component FilterPanel inherits Panel {
     callback lfo-shape-changed(int, string);
     callback lfo-phase-changed(int, float);
     callback lfo-phase-reset(int);
-
 
     VerticalLayout {
         padding: Theme.osc-controls-panel-padding;

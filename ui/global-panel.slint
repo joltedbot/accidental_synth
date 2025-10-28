@@ -8,7 +8,7 @@ import { ComboBox, TextEdit } from "std-widgets.slint";
 
 export component MixerStrip inherits VerticalLayout {
     in-out property <string> label;
-    in property <float> default-value: 0.0;
+    in property <float> value: 0.0;
     callback mixer-level-update(float);
     callback mixer-balance-update(float);
     callback mixer_mute_update(bool);
@@ -34,7 +34,7 @@ export component MixerStrip inherits VerticalLayout {
         }
 
         MixerLevel {
-            default-value: default-value;
+            value: value;
             slider-height: 100px;
 
             mixer-level-update(value) => {
@@ -61,7 +61,7 @@ export component OutputMixer inherits VerticalLayout {
 
     output := MixerStrip {
         label: Theme.output-mixer-label;
-        default-value: default-level;
+        value: default-level;
         mixer-balance-update(balance) => {
             output-balance-update(balance);
         }
@@ -85,7 +85,7 @@ export component OscillatorMixer inherits VerticalLayout {
 
         osc1-mix := MixerStrip {
             label: Theme.osc-mixer-title-1;
-            default-value: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL;
+            value: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL;
             mixer-balance-update(balance) => {
                 osc-mixer-balance-update(1, balance);
             }
@@ -101,7 +101,7 @@ export component OscillatorMixer inherits VerticalLayout {
 
         osc2-mix := MixerStrip {
             label: Theme.osc-mixer-title-2;
-            default-value: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL;
+            value: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL;
             mixer-balance-update(balance) => {
                 osc-mixer-balance-update(2, balance);
             }
@@ -117,7 +117,7 @@ export component OscillatorMixer inherits VerticalLayout {
 
         osc3-mix := MixerStrip {
             label: Theme.osc-mixer-title-3;
-            default-value: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL;
+            value: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL;
             mixer-balance-update(balance) => {
                 osc-mixer-balance-update(3, balance);
             }
@@ -133,7 +133,7 @@ export component OscillatorMixer inherits VerticalLayout {
 
         sub-mix := MixerStrip {
             label: Theme.osc-mixer-title-sub;
-            default-value: Constant.DEFAULT_SUB_OSCILLATOR_LEVEL_NORMAL;
+            value: Constant.DEFAULT_SUB_OSCILLATOR_LEVEL_NORMAL;
             mixer-balance-update(balance) => {
                 osc-mixer-balance-update(0, balance);
             }
@@ -173,13 +173,13 @@ export component MixerSection inherits VerticalLayout {
 
             outout-mixer := OutputMixer {
                 output-balance-update(value) => {
-                   output-balance-update(value);
+                    output-balance-update(value);
                 }
                 output-level-update(value) => {
                     output-level-update(value);
                 }
                 output-mute-update(bool) => {
-                   output-mute-update(bool);
+                    output-mute-update(bool);
                 }
             }
 
@@ -201,6 +201,13 @@ export component MixerSection inherits VerticalLayout {
 }
 
 export component OscillatorSection inherits VerticalLayout {
+    callback portamento-enabled(bool);
+    callback portamento-time-changed(float);
+    callback pitch-bend-range-changed(float);
+    callback velocity-curve-changed(float);
+    callback hard-sync-enabled(bool);
+    callback key-sync-enabled(bool);
+
     alignment: start;
 
     HorizontalLayout {
@@ -217,12 +224,18 @@ export component OscillatorSection inherits VerticalLayout {
 
                 ToggleSwitch {
                     label: Theme.osc-options-portamento-label;
+                    toggle_switch_updated(is_enabled) => {
+                        portamento-enabled(is_enabled);
+                    }
                 }
 
                 HorizontalParameterSlider {
                     label: Theme.osc-options-portamento-time-label;
                     value-units: Theme.osc-options-portamento-time-postfix;
-                    default-value: 0;
+                    value: 0;
+                    horizontal-parameter-slider-changed(milliseconds) => {
+                        portamento-time-changed(milliseconds);
+                    }
                 }
             }
 
@@ -238,15 +251,20 @@ export component OscillatorSection inherits VerticalLayout {
 
                     IntSpinBox {
                         label: Theme.osc-options-pitch-bend-range;
-                        default-value: 12;
+                        value: 12;
                         step: 1;
                         width: 120px;
+                        spinbox-changed(range) => {
+                            pitch-bend-range-changed(range);
+                        }
                     }
 
                     CenteredParameterSlider {
                         label: Theme.osc-options-velocity-curve;
-                        value: 0;
                         width: 120px;
+                        centered-parameter-slider-changed(curve) => {
+                            velocity-curve-changed(curve);
+                        }
                     }
                 }
 
@@ -255,12 +273,18 @@ export component OscillatorSection inherits VerticalLayout {
                 VerticalLayout {
                     alignment: space-between;
 
-                    ToggleSwitch {
+                    hard_sync := ToggleSwitch {
                         label: Theme.osc-options-hard-sync;
+                        toggle_switch_updated(is_enabled) => {
+                            hard-sync-enabled(is_enabled);
+                        }
                     }
 
-                    ToggleSwitch {
+                    key_sync := ToggleSwitch {
                         label: Theme.osc-options-key-sync;
+                        toggle_switch_updated(is_enabled) => {
+                            key-sync-enabled(is_enabled);
+                        }
                     }
                 }
 
@@ -347,13 +371,44 @@ export component GlobalPanel inherits Panel {
     callback lfo-shape-changed(int, string);
     callback lfo-phase-changed(int, float);
     callback lfo-phase-reset(int);
+    callback portamento-enabled(bool);
+    callback portamento-time-changed(float);
+    callback pitch-bend-range-changed(float);
+    callback velocity-curve-changed(float);
+    callback hard-sync-enabled(bool);
+    callback key-sync-enabled(bool);
+    callback output-balance-update(float);
+    callback output-level-update(float);
+    callback output-mute-update(bool);
+    callback osc-mixer-balance-update(int, float);
+    callback osc-mixer-level-update(int, float);
+    callback osc-mixer-mute-update(int, bool);
 
     height: Theme.global-panel-height;
     width: Theme.global-panel-width;
 
     HorizontalLayout {
         width: parent.width;
-        mixer-section := MixerSection { }
+        mixer-section := MixerSection {
+            output-balance-update(value) => {
+                output-balance-update(value);
+            }
+            output-level-update(value) => {
+                output-level-update(value);
+            }
+            output-mute-update(bool) => {
+                output-mute-update(bool);
+            }
+            osc-mixer-balance-update(oscillator, balance) => {
+                osc-mixer-balance-update(oscillator, balance);
+            }
+            osc-mixer-level-update(oscillator, level) => {
+                osc-mixer-level-update(oscillator, level);
+            }
+            osc-mixer-mute-update(oscillator, is_muted) => {
+                osc-mixer-mute-update(oscillator, is_muted);
+            }
+        }
 
         VerticalLayout {
             alignment: start;
@@ -395,7 +450,26 @@ export component GlobalPanel inherits Panel {
 
             HorizontalSpacer { }
 
-            osc-section := OscillatorSection { }
+            osc-section := OscillatorSection {
+                portamento-enabled(is_enabled) => {
+                    portamento-enabled(is_enabled);
+                }
+                portamento-time-changed(milliseconds) => {
+                    portamento-time-changed(milliseconds);
+                }
+                pitch-bend-range-changed(range) => {
+                    pitch-bend-range-changed(range);
+                }
+                velocity-curve-changed(curve) => {
+                    velocity-curve-changed(curve);
+                }
+                hard-sync-enabled(is_enabled) => {
+                    hard-sync-enabled(is_enabled);
+                }
+                key-sync-enabled(is_enabled) => {
+                    key-sync-enabled(is_enabled);
+                }
+            }
         }
     }
 }

@@ -19,6 +19,26 @@ export component AccidentalSynth inherits Window {
     default-font-size: Theme.default-text-size;
     default-font-family: Theme.default-font-family;
     default-font-weight: Theme.default-font-weight;
+    
+    // Header/Settings Panel Properties and Callbacks
+    in property <string> version; // TODO - Update this with the version from Cargo.toml once the ui modules is created
+    in property <[string]> output-device-list: Theme.empty-dropdown-value;
+    in property <[string]> output-left-channel-list: Theme.empty-dropdown-value;
+    in property <[string]> output-right-channel-list: Theme.empty-dropdown-value;
+    in property <[string]> output-sample-rate-list: Theme.empty-dropdown-value;
+    in property <int> current-output-device-index: 0;
+    in property <int> current-output-left-channel-index: 0;
+    in property <int> current-output-right-channel-index: 0;
+    in property <int> current-sample-rate-index: 0;
+    in property <[string]> input-port-list: Theme.empty-dropdown-value;
+    in property <int> current-input-port-index: 0;
+    in property <int> current-input-channel-index: 0;
+    callback audio-output-device-changed(string);
+    callback audio-output-left-channel-changed(string);
+    callback audio-output-right-channel-changed(string);
+    callback audio-sample-rate-changed(string);
+    callback midi-input-port-changed(string);
+    callback midi-input-channel-changed(string);
 
     // Oscillator Panel Properties & Callbacks
     in property <int> osc-osc1-fine-tune-cents: 0;
@@ -49,6 +69,20 @@ export component AccidentalSynth inherits Window {
     callback lfo-phase-changed(int, float);
     callback lfo-phase-reset(int);
 
+    // Global Panel Properties & Callbacks
+    callback portamento-enabled(bool);
+    callback portamento-time-changed(float);
+    callback pitch-bend-range-changed(float);
+    callback velocity-curve-changed(float);
+    callback hard-sync-enabled(bool);
+    callback key-sync-enabled(bool);
+    callback output-balance-update(float);
+    callback output-level-update(float);
+    callback output-mute-update(bool);
+    callback osc-mixer-balance-update(int, float);
+    callback osc-mixer-level-update(int, float);
+    callback osc-mixer-mute-update(int, bool);
+
     top-level := Rectangle {
         background: Theme.window-background;
         border-width: Theme.window-border-width;
@@ -64,6 +98,37 @@ export component AccidentalSynth inherits Window {
 
             header-panel := HeaderPanel {
                 width: Theme.window-width;
+                version: version;
+                output-device-list: output-device-list;
+                output-left-channel-list: output-left-channel-list;
+                output-right-channel-list: output-right-channel-list;
+                output-sample-rate-list: output-sample-rate-list;
+                current-output-device-index: current-output-device-index;
+                current-output-left-channel-index: current-output-left-channel-index;
+                current-output-right-channel-index: current-output-right-channel-index;
+                current-sample-rate-index: current-sample-rate-index;
+                input-port-list: input-port-list;
+                current-input-port-index: current-input-port-index;
+                current-input-channel-index: current-input-channel-index;
+
+                audio-output-device-changed(device) => {
+                    audio-output-device-changed(device);
+                }
+                audio-output-left-channel-changed(left) => {
+                    audio-output-left-channel-changed(left);
+                }
+                audio-output-right-channel-changed(right) => {
+                    audio-output-right-channel-changed(right);
+                }
+                audio-sample-rate-changed(rate) => {
+                    audio-sample-rate-changed(rate);
+                }
+                midi-input-port-changed(port) => {
+                    midi-input-port-changed(port);
+                }
+                midi-input-channel-changed(channel) => {
+                    midi-input-channel-changed(channel);
+                }
             }
 
             tab-bar := TabWidget {
@@ -126,6 +191,42 @@ export component AccidentalSynth inherits Window {
                                 }
                                 lfo-phase-reset(lfo_index) => {
                                     lfo-phase-reset(lfo_index);
+                                }
+                                portamento-enabled(is_enabled) => {
+                                    portamento-enabled(is_enabled);
+                                }
+                                portamento-time-changed(milliseconds) => {
+                                    portamento-time-changed(milliseconds);
+                                }
+                                pitch-bend-range-changed(range) => {
+                                    pitch-bend-range-changed(range);
+                                }
+                                velocity-curve-changed(curve) => {
+                                    velocity-curve-changed(curve);
+                                }
+                                hard-sync-enabled(is_enabled) => {
+                                    hard-sync-enabled(is_enabled);
+                                }
+                                key-sync-enabled(is_enabled) => {
+                                    key-sync-enabled(is_enabled);
+                                }
+                                output-balance-update(value) => {
+                                    output-balance-update(value);
+                                }
+                                output-level-update(value) => {
+                                    output-level-update(value);
+                                }
+                                output-mute-update(bool) => {
+                                    output-mute-update(bool);
+                                }
+                                osc-mixer-balance-update(oscillator, balance) => {
+                                    osc-mixer-balance-update(oscillator, balance);
+                                }
+                                osc-mixer-level-update(oscillator, level) => {
+                                    osc-mixer-level-update(oscillator, level);
+                                }
+                                osc-mixer-mute-update(oscillator, is_muted) => {
+                                    osc-mixer-mute-update(oscillator, is_muted);
                                 }
                             }
                         }

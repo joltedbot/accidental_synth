@@ -43,7 +43,7 @@ export component OscControlsPanel inherits Panel {
                 step: 1;
                 minimum: Constant.MIN_COURSE_TUNE_SEMITONES;
                 maximum: Constant.MAX_COURSE_TUNE_SEMITONES;
-                default-value: 0;
+                value: 0;
                 spinbox-width: Theme.oscillator-panel-widget-width;
                 spinbox-changed(semitones) => {
                     course-tune-changed(semitones);
@@ -70,7 +70,7 @@ export component OscControlsPanel inherits Panel {
             }
 
             param1 := HorizontalParameterSlider {
-                default-value: 0;
+                value: 0;
                 slider-width: Theme.oscillator-panel-widget-width;
                 horizontal-parameter-slider-changed(value) => {
                     parameter1-changed(value);
@@ -78,7 +78,7 @@ export component OscControlsPanel inherits Panel {
             }
 
             param2 := HorizontalParameterSlider {
-                default-value: 0;
+                value: 0;
                 slider-width: Theme.oscillator-panel-widget-width;
                 horizontal-parameter-slider-changed(value) => {
                     parameter2-changed(value);
@@ -99,7 +99,6 @@ export component OscillatorsPanel inherits Panel {
     callback clipper-boost-changed(int, float);
     callback parameter1-changed(int, float);
     callback parameter2-changed(int, float);
-
 
     HorizontalLayout {
         padding: Theme.oscillator-panel-padding;
