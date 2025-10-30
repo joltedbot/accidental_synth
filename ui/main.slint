@@ -1,14 +1,14 @@
 import "../../fonts/HackNerdFontMono-Regular.ttf";
 import "../../fonts/HackNerdFontMono-Bold.ttf";
 import { Theme } from "theme.slint";
+import { Constant } from "constants.slint";
 import { TabWidget, Slider, VerticalBox, SpinBox } from "std-widgets.slint";
-import { Panel } from "components.slint";
+import { Panel, Envelope, LFO } from "components.slint";
 import { GlobalPanel } from "global-panel.slint";
 import { HeaderPanel } from "header-panel.slint";
-import { FilterPanel } from "filter-panel.slint";
-import { OscillatorsPanel } from "oscillator-panel.slint";
+import { FilterPanel, FilterCutoff, FilterOptions } from "filter-panel.slint";
+import { OscillatorsPanel, Oscillator } from "oscillator-panel.slint";
 import { EffectsPanel } from "effects.slint";
-
 
 export component AccidentalSynth inherits Window {
     title: Theme.window-title;
@@ -19,7 +19,8 @@ export component AccidentalSynth inherits Window {
     default-font-size: Theme.default-text-size;
     default-font-family: Theme.default-font-family;
     default-font-weight: Theme.default-font-weight;
-    
+
+
     // Header/Settings Panel Properties and Callbacks
     in property <string> version; // TODO - Update this with the version from Cargo.toml once the ui modules is created
     in property <[string]> output-device-list: Theme.empty-dropdown-value;
@@ -40,11 +41,16 @@ export component AccidentalSynth inherits Window {
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
 
+
+
     // Oscillator Panel Properties & Callbacks
-    in property <int> osc-osc1-fine-tune-cents: 0;
-    in property <int> osc-osc2-fine-tune-cents: 0;
-    in property <int> osc-osc3-fine-tune-cents: 0;
-    in property <int> osc-sub-fine-tune-cents: 0;
+    in-out property <[Oscillator]> oscillators: [
+        { title: Theme.osc-controls-panel-title-sub, fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
+        { title: Theme.osc-controls-panel-title-1, fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
+        { title: Theme.osc-controls-panel-title-2, fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
+        { title: Theme.osc-controls-panel-title-3, fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
+    ];
+
     callback osc-wave_shape_changed(int, string);
     callback osc-course-tune-changed(int, float);
     callback osc-fine-tune-changed(int, float);
@@ -53,6 +59,13 @@ export component AccidentalSynth inherits Window {
     callback osc-parameter2-changed(int, float);
 
     // Filter Panel Properties & Callbacks
+    in-out property <FilterCutoff> filter-cutoff-values: { cutoff: Constant.DEFAULT_FILTER_CUTOFF_NORMAL, resonance: Constant
+    .DEFAULT_FILTER_RESONANCE_NORMAL };
+    in-out property <FilterOptions> filter-options-values: { poles: Constant.DEFAULT_FILTER_POLES, key-track: Constant.DEFAULT_KEY_TRACKING_NORMAL };
+    in-out property <Envelope> filter-eq-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
+    in-out property <LFO> filter-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
+
+
     callback filter-cutoff-changed(float);
     callback filter-resonance-changed(float);
     callback filter-poles-changed(float);
@@ -139,10 +152,7 @@ export component AccidentalSynth inherits Window {
 
                         VerticalLayout {
                             oscillator-panel := OscillatorsPanel {
-                                osc1-fine-tune-cents: osc-osc1-fine-tune-cents;
-                                osc2-fine-tune-cents: osc-osc2-fine-tune-cents;
-                                osc3-fine-tune-cents: osc-osc3-fine-tune-cents;
-                                sub-fine-tune-cents: osc-sub-fine-tune-cents;
+                                oscillators: oscillators;
 
                                 wave_shape_changed(oscillator, shape) => {
                                     osc-wave_shape_changed(oscillator, shape);
@@ -233,6 +243,9 @@ export component AccidentalSynth inherits Window {
 
                         filter-panel := FilterPanel {
                             width: Theme.filter-panel-width;
+
+                            filter-cutoff-values: filter-cutoff-values;
+                            filter-options-values: filter-options-values;
 
                             filter-cutoff-changed(frequency) => {
                                 filter-cutoff-changed(frequency);

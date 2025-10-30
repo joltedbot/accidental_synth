@@ -165,17 +165,21 @@ export component BalanceTrack inherits Rectangle {
 
 export component BalanceSlider inherits Rectangle {
     in property <bool> enabled: true;
+    in property <float> value: 0;
     callback updated(float);
 
     width: 100px;
     height: 50px;
 
-    property <length> indicator-default-position: 0px;
+    property <length> indicator-default-position: get_position_from_normal_value(value);
     property <length> minimum-position: -self.width / 2;
 
     function get_output_value(position: length) -> float {
-        let scaled_value = (position - minimum-position) / self.width;
-        return scaled_value;
+        return (position - minimum-position) / self.width;
+    }
+
+    function get_position_from_normal_value(normal-value: float) -> length {
+        minimum-position + (normal-value * self.width)
     }
 
     function get_handle_position(position: length) -> length {

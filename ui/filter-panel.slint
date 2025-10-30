@@ -1,38 +1,53 @@
-import { Panel, FilterSlider, IntSpinBox, CenteredParameterSlider, HorizontalParameterSlider, PanelLabel, VerticalSpacer, HorizontalSpacer,
-SectionLabel, ToggleSwitch, DropDownMenu, MomentaryButton, EnvelopeSection, FixedCenterLFOSection } from "components.slint";
+import { Panel, LabeledVerticalSlider, IntSpinBox, CenteredParameterSlider, HorizontalParameterSlider, PanelLabel, VerticalSpacer, HorizontalSpacer,
+SectionLabel, ToggleSwitch, DropDownMenu, MomentaryButton, EnvelopeSection, FixedCenterLFOSection, Envelope, LFO } from "components.slint";
 import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.slint";
 import { Switch } from "std-widgets.slint";
 import { Theme } from "theme.slint";
 import { Constant } from "constants.slint";
 
+export struct FilterCutoff  {
+    cutoff: float,
+    resonance: float,
+}
+
+export struct FilterOptions  {
+    poles: int,
+    key-track: float,
+    eg-amount: float,
+    lfo-amount: float,
+}
+
 export component FilterCutoffSection inherits HorizontalLayout {
+    in property <FilterCutoff> filter-cutoff-values;
     callback filter-cutoff-changed(float);
     callback filter-resonance-changed(float);
 
     alignment: start;
 
-    cutoff := FilterSlider {
+    LabeledVerticalSlider {
         label: Theme.filter-label-cutoff;
-        value: Constant.DEFAULT_FILTER_CUTOFF_NORMAL;
         slider-height: 220px;
         slider-width: 50px;
-        filter-slider-changed(frequency) => {
+        value: filter-cutoff-values.cutoff;
+        vertical-slider-changed(frequency) => {
             filter-cutoff-changed(frequency);
         }
     }
 
-    resonance := FilterSlider {
+    LabeledVerticalSlider {
         label: Theme.filter-label-resonance;
-        value: Constant.DEFAULT_FILTER_RESONANCE_NORMAL;
         slider-width: 50px;
         slider-height: 220px;
-        filter-slider-changed(amount) => {
+        value: filter-cutoff-values.resonance;
+        vertical-slider-changed(amount) => {
             filter-resonance-changed(amount);
         }
     }
 }
 
 export component FilterOptionsSection inherits VerticalLayout {
+    in-out property <FilterOptions> filter-options-values;
+
     callback filter-poles-changed(float);
     callback filter-key-tracking-changed(float);
     callback filter-eg-amount-changed(float);
@@ -48,7 +63,7 @@ export component FilterOptionsSection inherits VerticalLayout {
         step: 1;
         minimum: 1;
         maximum: 4;
-        value: Constant.DEFAULT_FILTER_POLES;
+        value: filter-options-values.poles;
         spinbox-width: Theme.filter-panel-widget-width;
         spinbox-changed(poles) => {
             filter-poles-changed(poles);
@@ -58,6 +73,7 @@ export component FilterOptionsSection inherits VerticalLayout {
     keytrack := CenteredParameterSlider {
         label: Theme.filter-label-key-tracking;
         slider-width: Theme.filter-panel-widget-width;
+        value: filter-options-values.key-track;
         centered-parameter-slider-changed(amount) => {
             filter-key-tracking-changed(amount);
         }
@@ -65,7 +81,7 @@ export component FilterOptionsSection inherits VerticalLayout {
 
     eg_amount := HorizontalParameterSlider {
         label: Theme.filter-label-envelope-amount;
-        value: 0;
+        value: filter-options-values.eg-amount;
         slider-width: Theme.filter-panel-widget-width;
         horizontal-parameter-slider-changed(amount) => {
             filter-eg-amount-changed(amount);
@@ -74,7 +90,7 @@ export component FilterOptionsSection inherits VerticalLayout {
 
     lfo_amount := HorizontalParameterSlider {
         label: Theme.filter-label-lfo-amount;
-        value: 0;
+        value: filter-options-values.lfo-amount;
         slider-width: Theme.filter-panel-widget-width;
         horizontal-parameter-slider-changed(amount) => {
             filter-lfo-amount-changed(amount);
@@ -83,6 +99,9 @@ export component FilterOptionsSection inherits VerticalLayout {
 }
 
 export component FilterEGSection inherits VerticalLayout {
+
+    in-out property <Envelope> filter-eg;
+
     callback envelope-attack-changed(float);
     callback envelope-decay-changed(float);
     callback envelope-sustain-changed(float);
@@ -120,6 +139,12 @@ export component FilterEGSection inherits VerticalLayout {
 }
 
 export component FilterPanel inherits Panel {
+
+    in-out property <FilterCutoff> filter-cutoff-values;
+    in-out property <FilterOptions> filter-options-values;
+    in-out property <Envelope> filter-eq;
+    in-out property <LFO> filter-lfo;
+
     callback filter-cutoff-changed(float);
     callback filter-resonance-changed(float);
     callback filter-poles-changed(float);
@@ -147,6 +172,7 @@ export component FilterPanel inherits Panel {
 
         HorizontalLayout {
             FilterCutoffSection {
+                filter-cutoff-values: filter-cutoff-values;
                 filter-cutoff-changed(frequency) => {
                     filter-cutoff-changed(frequency);
                 }
@@ -158,6 +184,7 @@ export component FilterPanel inherits Panel {
             VerticalSpacer { }
 
             FilterOptionsSection {
+                filter-options-values: filter-options-values;
                 filter-poles-changed(poles) => {
                     filter-poles-changed(poles);
                 }
@@ -176,6 +203,7 @@ export component FilterPanel inherits Panel {
         HorizontalSpacer { }
 
         FilterEGSection {
+            filter-eg: filter-eq;
             envelope-attack-changed(milliseconds) => {
                 envelope-attack-changed(Constant.ENVELOPE_FILTER_INDEX, milliseconds);
             }
@@ -196,6 +224,8 @@ export component FilterPanel inherits Panel {
         HorizontalSpacer { }
 
         FixedCenterLFOSection {
+            lfo-values: filter-lfo;
+
             lfo-frequency-changed(frequency) => {
                 lfo-frequency-changed(Constant.LFO_FILTER_INDEX, frequency);
             }

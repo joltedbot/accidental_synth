@@ -3,7 +3,20 @@ import { Constant } from "constants.slint";
 import { Slider, SpinBox, ComboBox, Switch, Palette, StyleMetrics, Button } from "std-widgets.slint";
 import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.slint";
 
+// Component Structs
+export struct LFO  {
+    frequency: float,
+    phase: float,
+    wave-shape-index: int,
+}
 
+export struct Envelope  {
+    attack: float,
+    decay: float,
+    sustain: float,
+    release: float,
+    inverted: bool,
+}
 
 export component Panel inherits Rectangle {
     border-width: Theme.panel-border-width;
@@ -237,12 +250,14 @@ export component HorizontalParameterSlider inherits VerticalLayout {
 
 export component CenteredParameterSlider inherits VerticalLayout {
     in property <string> label;
-    in property <float> value;
+    in property <float> display-value;
     in property <string> value-units;
+    in property <float> value;
     in property <bool> show-value: false;
     in property <length> slider-width: 100px;
     in property <length> slider-height: 25px;
     in property <bool> enabled: true;
+
     callback centered-parameter-slider-changed(float);
 
     alignment: start;
@@ -251,7 +266,7 @@ export component CenteredParameterSlider inherits VerticalLayout {
     hslider-label := HorizontalControlLabel {
         label: label;
         enabled: enabled;
-        value: value;
+        value: display-value;
         value-units: value-units;
         show-value: show-value;
     }
@@ -260,6 +275,7 @@ export component CenteredParameterSlider inherits VerticalLayout {
         height: slider-height;
         width: slider-width;
         enabled: enabled;
+        value: value;
 
         updated(value) => {
             centered-parameter-slider-changed(value);
@@ -267,7 +283,7 @@ export component CenteredParameterSlider inherits VerticalLayout {
     }
 }
 
-export component FilterSlider inherits VerticalLayout {
+export component LabeledVerticalSlider inherits VerticalLayout {
     in property <string> label;
     in property <float> minimum: 0;
     in property <float> maximum: 100;
@@ -276,7 +292,7 @@ export component FilterSlider inherits VerticalLayout {
     in property <length> slider-width: 25px;
     in property <length> slider-height: 100px;
     in property <bool> enabled: true;
-    callback filter-slider-changed(float);
+    callback vertical-slider-changed(float);
 
     spacing: 10px;
 
@@ -293,7 +309,7 @@ export component FilterSlider inherits VerticalLayout {
             value: value;
             enabled: root.enabled;
             updated(value) => {
-                filter-slider-changed(value)
+                vertical-slider-changed(value)
             }
         }
     }
@@ -444,44 +460,44 @@ export component EnvelopeSection inherits VerticalLayout {
         spacing: Theme.osc-controls-panel-spacing;
         alignment: space-between;
 
-        filter_attack := FilterSlider {
-            label: Theme.filter-label-envelope-attack;
+        attack := LabeledVerticalSlider {
+            label: Theme.envelope-label-attack;
             value: Constant.DEFAULT_EG_MILLISECONDS_STAGE_NORMAL;
             slider-height: 90px;
-            filter-slider-changed(milliseconds) => {
+            vertical-slider-changed(milliseconds) => {
                 envelope-attack-changed(milliseconds);
             }
         }
 
-        filter_decay := FilterSlider {
-            label: Theme.filter-label-envelope-decay;
+        decay := LabeledVerticalSlider {
+            label: Theme.envelope-label-decay;
             value: Constant.DEFAULT_EG_MILLISECONDS_STAGE_NORMAL;
             slider-height: 90px;
-            filter-slider-changed(milliseconds) => {
+            vertical-slider-changed(milliseconds) => {
                 envelope-decay-changed(milliseconds);
             }
         }
 
-        filter_sustain := FilterSlider {
-            label: Theme.filter-label-envelope-sustain;
+        sustain := LabeledVerticalSlider {
+            label: Theme.envelope-label-sustain;
             value: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL;
             slider-height: 90px;
-            filter-slider-changed(level) => {
+            vertical-slider-changed(level) => {
                 envelope-sustain-changed(level);
             }
         }
 
-        filter_release := FilterSlider {
-            label: Theme.filter-label-envelope-release;
+        release := LabeledVerticalSlider {
+            label: Theme.envelope-label-release;
             value: Constant.DEFAULT_EG_MILLISECONDS_STAGE_NORMAL;
             slider-height: 90px;
-            filter-slider-changed(milliseconds) => {
+            vertical-slider-changed(milliseconds) => {
                 envelope-release-changed(milliseconds);
             }
         }
 
         ToggleSwitch {
-            label: Theme.filter-label-envelope-inverted;
+            label: Theme.envelope-label-inverted;
             toggle_switch_updated(is_active) => {
                 envelope-invert-changed(is_active);
             }
@@ -490,7 +506,8 @@ export component EnvelopeSection inherits VerticalLayout {
 }
 
 export component FixedCenterLFOSection inherits VerticalLayout {
-    in-out property <float> phase-degrees: 0;
+    in-out property <LFO> lfo-values;
+
     callback lfo-frequency-changed(float);
     callback lfo-shape-changed(string);
     callback lfo-phase-changed(float);
@@ -508,8 +525,8 @@ export component FixedCenterLFOSection inherits VerticalLayout {
             alignment: start;
 
             frequency := HorizontalParameterSlider {
-                label: Theme.filter-label-lfo-frequency;
-                value: phase-degrees;
+                label: Theme.lfo-label-frequency;
+                value: lfo-values.frequency;
                 show-value: true;
                 value-units: Theme.display-units-hertz;
                 slider-width: Theme.global-panel-widget-width;
@@ -520,8 +537,9 @@ export component FixedCenterLFOSection inherits VerticalLayout {
             }
 
             wave-shape := DropDownMenu {
-                label: Theme.filter-label-lfo-wave-shape;
+                label: Theme.lfo-label-wave-shape;
                 value-list: Constant.LFO_WAVE_SHAPES;
+                value-index: lfo-values.wave-shape-index;
                 dropdown-width: Theme.global-panel-widget-width;
                 drop_down_changed(string) => {
                     lfo-shape-changed(string);
@@ -535,8 +553,8 @@ export component FixedCenterLFOSection inherits VerticalLayout {
             alignment: start;
 
             phase := HorizontalParameterSlider {
-                label: Theme.filter-label-lfo-phase;
-                value: phase-degrees;
+                label: Theme.lfo-label-phase;
+                value: lfo-values.phase;
                 show-value: true;
                 value-units: Theme.display-units-degrees;
                 slider-width: Theme.global-panel-widget-width;
@@ -548,7 +566,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
             }
 
             reset := MomentaryButton {
-                label: Theme.filter-label-lfo-reset;
+                label: Theme.lfo-label-reset;
                 button-width: 100px;
                 button-height: 27px;
                 momentary-button-pressed => {
