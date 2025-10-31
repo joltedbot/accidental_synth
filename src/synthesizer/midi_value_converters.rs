@@ -1,8 +1,14 @@
+use crate::math::f32s_are_equal;
 use crate::modules::filter::NUMBER_OF_FILER_POLES;
 use crate::modules::oscillator::{NUMBER_OF_WAVE_SHAPES, OscillatorParameters};
-use crate::synthesizer::constants::{CENTS_PER_SEMITONE, ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS, EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT, LEVEL_CURVE_LINEAR_RANGE, LINEAR_VELOCITY_CURVE_EXPONENT, MAX_MIDI_KEY_VELOCITY, MAX_VELOCITY_CURVE_EXPONENT, MIN_VELOCITY_CURVE_EXPONENT, NORMAL_TO_BOOL_SWITCH_ON_VALUE, PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT};
+use crate::synthesizer::constants::{
+    CENTS_PER_SEMITONE, ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS,
+    EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT,
+    LEVEL_CURVE_LINEAR_RANGE, LINEAR_VELOCITY_CURVE_EXPONENT, MAX_MIDI_KEY_VELOCITY,
+    MAX_VELOCITY_CURVE_EXPONENT, MIN_VELOCITY_CURVE_EXPONENT, NORMAL_TO_BOOL_SWITCH_ON_VALUE,
+    PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT,
+};
 use std::sync::atomic::Ordering::Relaxed;
-use crate::math::f32s_are_equal;
 /*
 
     midi module:
@@ -74,7 +80,9 @@ pub fn normal_value_to_envelope_milliseconds(normal_value: f32) -> u32 {
 }
 
 pub fn normal_value_to_number_of_filter_poles(normal_value: f32) -> u8 {
-    (NUMBER_OF_FILER_POLES * normal_value).ceil().clamp(1.0, NUMBER_OF_FILER_POLES) as u8
+    (NUMBER_OF_FILER_POLES * normal_value)
+        .ceil()
+        .clamp(1.0, NUMBER_OF_FILER_POLES) as u8
 }
 
 pub fn normal_value_to_wave_shape_index(normal_value: f32) -> u8 {
@@ -123,7 +131,6 @@ fn exponential_curve_from_normal_value_and_coefficient(
 }
 
 pub fn velocity_curve_from_normal_value(normal_value: f32) -> f32 {
-
     if normal_value == 0.0 {
         return 0.0;
     }
@@ -131,19 +138,23 @@ pub fn velocity_curve_from_normal_value(normal_value: f32) -> f32 {
     let linear_normal_value = 0.5;
 
     if normal_value <= linear_normal_value {
-        let renormaled_value = normal_value/linear_normal_value;
-        normal_value_to_f32_range(renormaled_value, MIN_VELOCITY_CURVE_EXPONENT, LINEAR_VELOCITY_CURVE_EXPONENT)
+        let renormaled_value = normal_value / linear_normal_value;
+        normal_value_to_f32_range(
+            renormaled_value,
+            MIN_VELOCITY_CURVE_EXPONENT,
+            LINEAR_VELOCITY_CURVE_EXPONENT,
+        )
     } else {
-        let renormaled_value = (normal_value - 0.5)/linear_normal_value;
-        normal_value_to_f32_range(renormaled_value, LINEAR_VELOCITY_CURVE_EXPONENT, MAX_VELOCITY_CURVE_EXPONENT)
-
+        let renormaled_value = (normal_value - 0.5) / linear_normal_value;
+        normal_value_to_f32_range(
+            renormaled_value,
+            LINEAR_VELOCITY_CURVE_EXPONENT,
+            MAX_VELOCITY_CURVE_EXPONENT,
+        )
     }
 }
 
-pub fn scaled_velocity_from_normal_value(
-    velocity_curve: f32,
-    velocity: f32,
-) -> f32 {
+pub fn scaled_velocity_from_normal_value(velocity_curve: f32, velocity: f32) -> f32 {
     if f32s_are_equal(velocity_curve, 1.0) {
         return velocity;
     }

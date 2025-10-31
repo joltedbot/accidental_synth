@@ -6,9 +6,9 @@ mod set_parameters;
 
 use self::constants::{
     DEFAULT_FILTER_ENVELOPE_AMOUNT, DEFAULT_OUTPUT_BALANCE, DEFAULT_OUTPUT_LEVEL,
-    DEFAULT_VELOCITY_CURVE, DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY,
-    DEFAULT_VIBRATO_LFO_DEPTH, DEFAULT_VIBRATO_LFO_RATE, MAX_MIDI_KEY_VELOCITY,
-    QUAD_MIX_DEFAULT_BALANCE, QUAD_MIX_DEFAULT_INPUT_LEVEL, QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
+    DEFAULT_VELOCITY_CURVE, DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY, DEFAULT_VIBRATO_LFO_DEPTH,
+    DEFAULT_VIBRATO_LFO_RATE, MAX_MIDI_KEY_VELOCITY, QUAD_MIX_DEFAULT_BALANCE,
+    QUAD_MIX_DEFAULT_INPUT_LEVEL, QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
 };
 
 use crate::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
@@ -116,7 +116,7 @@ impl Synthesizer {
         let velocity = AtomicU32::new(0);
         store_f32_as_atomic_u32(&velocity, MAX_MIDI_KEY_VELOCITY);
 
-        let velocity_curve =  AtomicU32::new(0);
+        let velocity_curve = AtomicU32::new(0);
         store_f32_as_atomic_u32(&velocity_curve, DEFAULT_VELOCITY_CURVE);
         let current_note = CurrentNote {
             midi_note: AtomicU8::new(60),

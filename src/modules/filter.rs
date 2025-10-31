@@ -250,10 +250,15 @@ impl Filter {
 }
 
 fn get_tracking_offset_from_midi_note_number(midi_note: u8, key_tracking_amount: f32) -> f32 {
+    if key_tracking_amount == DEFAULT_KEY_TRACKING_AMOUNT {
+        return DEFAULT_KEY_TRACKING_FREQUENCY_OFFSET;
+    }
+
     let delta_from_tracking_reference_note =
         f32::from(midi_note) - f32::from(MIDI_CENTER_NOTE_NUMBER);
-    (2.0_f32 * key_tracking_amount).powf(delta_from_tracking_reference_note)
-        / f32::from(NOTES_PER_OCTAVE)
+
+    (2.0_f32 * key_tracking_amount)
+        .powf(delta_from_tracking_reference_note / f32::from(NOTES_PER_OCTAVE))
 }
 
 fn calculate_non_linear_saturation(stage4_output: f32) -> f32 {

@@ -13,7 +13,15 @@ use crate::synthesizer::constants::{
     OSCILLATOR_COURSE_TUNE_MIN_INTERVAL, OSCILLATOR_FINE_TUNE_MAX_CENTS,
     OSCILLATOR_FINE_TUNE_MIN_CENTS,
 };
-use crate::synthesizer::midi_value_converters::{exponential_curve_filter_cutoff_from_midi_value, exponential_curve_level_adjustment_from_normal_value, exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool, normal_value_to_envelope_milliseconds, normal_value_to_f32_range, normal_value_to_integer_range, normal_value_to_number_of_filter_poles, normal_value_to_unsigned_integer_range, normal_value_to_wave_shape_index, velocity_curve_from_normal_value};
+use crate::synthesizer::midi_value_converters::{
+    exponential_curve_filter_cutoff_from_midi_value,
+    exponential_curve_level_adjustment_from_normal_value,
+    exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool,
+    normal_value_to_envelope_milliseconds, normal_value_to_f32_range,
+    normal_value_to_integer_range, normal_value_to_number_of_filter_poles,
+    normal_value_to_unsigned_integer_range, normal_value_to_wave_shape_index,
+    velocity_curve_from_normal_value,
+};
 use crate::synthesizer::{CurrentNote, KeyboardParameters, MixerParameters, OscillatorIndex};
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
