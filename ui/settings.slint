@@ -3,16 +3,28 @@ import { Constant } from "constants.slint";
 import { MomentaryButton, Panel, PanelLabel, ComponentLabel, DropDownMenu, HorizontalSpacer, VerticalControlLabel } from "components.slint";
 import { Button, StandardButton } from "std-widgets.slint";
 
+export struct AudioDevice {
+    output-devices: [string],
+    output-device-index: int,
+    left-channels: [string],
+    left-channel-index: int,
+    right-channels: [string],
+    right-channel-index: int,
+    sample-rates: [string],
+    sample-rate-index: int,
+}
+
+export struct MidiPort {
+    input-ports: [string],
+    input-port-index: int,
+    channels: [string],
+    channel-index: int,
+}
 
 export component AudioSettings inherits VerticalLayout {
-    in property <[string]> output-device-list: Theme.empty-dropdown-value;
-    in property <[string]> output-left-channel-list: Theme.empty-dropdown-value;
-    in property <[string]> output-right-channel-list: Theme.empty-dropdown-value;
-    in property <[string]> output-sample-rate-list: Theme.empty-dropdown-value;
-    in property <int> current-output-device-index: 0;
-    in property <int> current-output-left-channel-index: 0;
-    in property <int> current-output-right-channel-index: 0;
-    in property <int> current-sample-rate-index: 0;
+
+    in property <AudioDevice> audio-device-values;
+
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
     callback audio-output-right-channel-changed(string);
@@ -24,8 +36,8 @@ export component AudioSettings inherits VerticalLayout {
     device := DropDownMenu {
         label: "Output Device";
         dropdown-width: Theme.oscillator-panel-widget-width;
-        value-list: output-device-list;
-        value-index: current-output-device-index;
+        value-list: audio-device-values.output-devices;
+        value-index: audio-device-values.output-device-index;
         drop_down_changed(device) => {
             audio-output-device-changed(device);
         }
@@ -37,8 +49,8 @@ export component AudioSettings inherits VerticalLayout {
 
         left := DropDownMenu {
             label: "Left Channel";
-            value-list: output-left-channel-list;
-            value-index: current-output-left-channel-index;
+            value-list: audio-device-values.left-channels;
+            value-index: audio-device-values.left-channel-index;
             drop_down_changed(left) => {
                 audio-output-left-channel-changed(left);
             }
@@ -46,8 +58,8 @@ export component AudioSettings inherits VerticalLayout {
 
         right := DropDownMenu {
             label: "Right Channel";
-            value-list: output-right-channel-list;
-            value-index: current-output-right-channel-index;
+            value-list: audio-device-values.right-channels;
+            value-index: audio-device-values.right-channel-index;
             drop_down_changed(right) => {
                 audio-output-left-channel-changed(right);
             }
@@ -57,8 +69,8 @@ export component AudioSettings inherits VerticalLayout {
     sample := DropDownMenu {
         label: "Sample Rate";
         dropdown-width: Theme.oscillator-panel-widget-width;
-        value-list: output-sample-rate-list;
-        value-index: current-sample-rate-index;
+        value-list: audio-device-values.sample-rates;
+        value-index: audio-device-values.sample-rate-index;
         drop_down_changed(rate) => {
             audio-sample-rate-changed(rate);
         }
@@ -66,9 +78,8 @@ export component AudioSettings inherits VerticalLayout {
 }
 
 export component MidiSettings inherits VerticalLayout {
-    in property <[string]> input-port-list: Theme.empty-dropdown-value;
-    in property <int> current-input-port-index: 0;
-    in property <int> current-input-channel-index: 0;
+    in property <MidiPort> midi-port-values;
+
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
 
@@ -77,8 +88,8 @@ export component MidiSettings inherits VerticalLayout {
 
     port := DropDownMenu {
         label: "Input Port";
-        value-list: input-port-list;
-        value-index: current-input-port-index;
+        value-list: midi-port-values.input-ports;
+        value-index: midi-port-values.input-port-index;
         dropdown-width: Theme.oscillator-panel-widget-width;
         drop_down_changed(left) => {
             midi-input-port-changed(left);
@@ -87,8 +98,8 @@ export component MidiSettings inherits VerticalLayout {
 
     channel := DropDownMenu {
         label: "Channel";
-        value-list: Constant.MIDI_CHANNELS;
-        value-index: current-input-channel-index;
+        value-list: midi-port-values.channels;
+        value-index: midi-port-values.channel-index;
         dropdown-width: Theme.oscillator-panel-widget-width;
         drop_down_changed(left) => {
             midi-input-channel-changed(left);
@@ -113,17 +124,8 @@ export component SettingsIcon inherits Image {
 }
 
 export component SettingsWindow inherits PopupWindow {
-    in property <[string]> output-device-list: Theme.empty-dropdown-value;
-    in property <[string]> output-left-channel-list: Theme.empty-dropdown-value;
-    in property <[string]> output-right-channel-list: Theme.empty-dropdown-value;
-    in property <[string]> output-sample-rate-list: Theme.empty-dropdown-value;
-    in property <int> current-output-device-index: 0;
-    in property <int> current-output-left-channel-index: 0;
-    in property <int> current-output-right-channel-index: 0;
-    in property <int> current-sample-rate-index: 0;
-    in property <[string]> input-port-list: Theme.empty-dropdown-value;
-    in property <int> current-input-port-index: 0;
-    in property <int> current-input-channel-index: 0;
+    in property <AudioDevice> audio-device-values;
+    in property <MidiPort> midi-port-values;
 
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
@@ -167,6 +169,8 @@ export component SettingsWindow inherits PopupWindow {
                     }
 
                     AudioSettings {
+                        audio-device-values: audio-device-values;
+
                         audio-output-device-changed(device) => {
                             audio-output-device-changed(device);
                         }
@@ -192,6 +196,7 @@ export component SettingsWindow inherits PopupWindow {
                     }
 
                     MidiSettings {
+                        midi-port-values: midi-port-values;
                         midi-input-port-changed(port) => {
                             midi-input-port-changed(port);
                         }

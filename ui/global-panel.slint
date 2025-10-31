@@ -6,9 +6,17 @@ import { Constant } from "constants.slint";
 import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.slint";
 import { ComboBox, TextEdit } from "std-widgets.slint";
 
+export struct Mixer {
+    level: float,
+    balance: float,
+    is_muted: bool,
+}
+
+
 export component MixerStrip inherits VerticalLayout {
-    in-out property <string> label;
-    in property <float> value: 0.0;
+    in property <Mixer> mixer-strip-values;
+    in property <string> label;
+
     callback mixer-level-update(float);
     callback mixer-balance-update(float);
     callback mixer_mute_update(bool);
@@ -28,13 +36,14 @@ export component MixerStrip inherits VerticalLayout {
         alignment: space-between;
 
         MixerBalance {
+            value: mixer-strip-values.balance;
             mixer-balance-update(value) => {
                 root.mixer-balance-update(value);
             }
         }
 
         MixerLevel {
-            value: value;
+            value: mixer-strip-values.level;
             slider-height: 100px;
 
             mixer-level-update(value) => {
@@ -43,6 +52,7 @@ export component MixerStrip inherits VerticalLayout {
         }
 
         MixerMute {
+            is_muted: mixer-strip-values.is_muted;
             mixer_mute_update(is_muted) => {
                 root.mixer_mute_update(is_muted);
             }
@@ -51,7 +61,7 @@ export component MixerStrip inherits VerticalLayout {
 }
 
 export component OutputMixer inherits VerticalLayout {
-    in property <float> default-level: Constant.DEFAULT_OUTPUT_MIXER_LEVEL_NORMAL;
+    in property <Mixer> output-mixer-values;
     callback output-level-update(float);
     callback output-balance-update(float);
     callback output-mute-update(bool);
@@ -61,7 +71,8 @@ export component OutputMixer inherits VerticalLayout {
 
     output := MixerStrip {
         label: Theme.output-mixer-label;
-        value: default-level;
+        mixer-strip-values: output-mixer-values;
+
         mixer-balance-update(balance) => {
             output-balance-update(balance);
         }
@@ -75,6 +86,8 @@ export component OutputMixer inherits VerticalLayout {
 }
 
 export component OscillatorMixer inherits VerticalLayout {
+    in property <[Mixer]> oscillator-mixer-values;
+
     callback osc-mixer-level-update(int, float);
     callback osc-mixer-balance-update(int, float);
     callback osc-mixer-mute-update(int, bool);
@@ -83,73 +96,31 @@ export component OscillatorMixer inherits VerticalLayout {
         padding: Theme.global-panel-padding;
         spacing: Theme.global-panel-spacing;
 
-        osc1-mix := MixerStrip {
-            label: Theme.osc-mixer-title-1;
-            value: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL;
-            mixer-balance-update(balance) => {
-                osc-mixer-balance-update(1, balance);
+        for mixer-strip[index] in oscillator-mixer-values: HorizontalLayout {
+
+            MixerStrip {
+                label: Theme.osc-mixer-titles[index];
+                mixer-strip-values: mixer-strip;
+    
+                mixer-balance-update(balance) => {
+                    osc-mixer-balance-update(index, balance);
+                }
+                mixer-level-update(level) => {
+                    osc-mixer-level-update(index, level);
+                }
+                mixer_mute_update(is_muted) => {
+                    osc-mixer-mute-update(index, is_muted);
+                }
             }
-            mixer-level-update(level) => {
-                osc-mixer-level-update(1, level);
-            }
-            mixer_mute_update(is_muted) => {
-                osc-mixer-mute-update(1, is_muted);
-            }
+            VerticalSpacer {}
         }
-
-        VerticalSpacer { }
-
-        osc2-mix := MixerStrip {
-            label: Theme.osc-mixer-title-2;
-            value: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL;
-            mixer-balance-update(balance) => {
-                osc-mixer-balance-update(2, balance);
-            }
-            mixer-level-update(level) => {
-                osc-mixer-level-update(2, level);
-            }
-            mixer_mute_update(is_muted) => {
-                osc-mixer-mute-update(2, is_muted);
-            }
-        }
-
-        VerticalSpacer { }
-
-        osc3-mix := MixerStrip {
-            label: Theme.osc-mixer-title-3;
-            value: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL;
-            mixer-balance-update(balance) => {
-                osc-mixer-balance-update(3, balance);
-            }
-            mixer-level-update(level) => {
-                osc-mixer-level-update(3, level);
-            }
-            mixer_mute_update(is_muted) => {
-                osc-mixer-mute-update(3, is_muted);
-            }
-        }
-
-        VerticalSpacer { }
-
-        sub-mix := MixerStrip {
-            label: Theme.osc-mixer-title-sub;
-            value: Constant.DEFAULT_SUB_OSCILLATOR_LEVEL_NORMAL;
-            mixer-balance-update(balance) => {
-                osc-mixer-balance-update(0, balance);
-            }
-            mixer-level-update(level) => {
-                osc-mixer-level-update(0, level);
-            }
-            mixer_mute_update(is_muted) => {
-                osc-mixer-mute-update(0, is_muted);
-            }
-        }
-
-        VerticalSpacer { }
     }
 }
 
 export component MixerSection inherits VerticalLayout {
+    in property <Mixer> output-mixer-values;
+    in property <[Mixer]> oscillator-mixer-values;
+
     callback output-balance-update(float);
     callback output-level-update(float);
     callback output-mute-update(bool);
@@ -172,6 +143,7 @@ export component MixerSection inherits VerticalLayout {
             VerticalSpacer { }
 
             outout-mixer := OutputMixer {
+                output-mixer-values: output-mixer-values;
                 output-balance-update(value) => {
                     output-balance-update(value);
                 }
@@ -186,6 +158,7 @@ export component MixerSection inherits VerticalLayout {
             VerticalSpacer { }
 
             oscillator-mixer := OscillatorMixer {
+                oscillator-mixer-values: oscillator-mixer-values;
                 osc-mixer-balance-update(oscillator, balance) => {
                     osc-mixer-balance-update(oscillator, balance);
                 }
@@ -201,6 +174,13 @@ export component MixerSection inherits VerticalLayout {
 }
 
 export component OscillatorSection inherits VerticalLayout {
+    in property <bool> portamento-is-enabled;
+    in property <float> portamento-time;
+    in property <int> pitch-bend-range;
+    in property <float> velocity-curve-slope;
+    in property <bool> hard-sync-is-enabled;
+    in property <bool> key-sync-is-enabled;
+
     callback portamento-enabled(bool);
     callback portamento-time-changed(float);
     callback pitch-bend-range-changed(float);
@@ -223,6 +203,7 @@ export component OscillatorSection inherits VerticalLayout {
                 alignment: space-between;
 
                 ToggleSwitch {
+                    is_enabled: portamento-is-enabled;
                     label: Theme.osc-options-portamento-label;
                     toggle_switch_updated(is_enabled) => {
                         portamento-enabled(is_enabled);
@@ -231,8 +212,7 @@ export component OscillatorSection inherits VerticalLayout {
 
                 HorizontalParameterSlider {
                     label: Theme.osc-options-portamento-time-label;
-                    value-units: Theme.osc-options-portamento-time-postfix;
-                    value: 0;
+                    value: portamento-time;
                     horizontal-parameter-slider-changed(milliseconds) => {
                         portamento-time-changed(milliseconds);
                     }
@@ -251,7 +231,7 @@ export component OscillatorSection inherits VerticalLayout {
 
                     IntSpinBox {
                         label: Theme.osc-options-pitch-bend-range;
-                        value: 12;
+                        value: pitch-bend-range;
                         step: 1;
                         width: 120px;
                         spinbox-changed(range) => {
@@ -261,6 +241,7 @@ export component OscillatorSection inherits VerticalLayout {
 
                     CenteredParameterSlider {
                         label: Theme.osc-options-velocity-curve;
+                        value: velocity-curve-slope;
                         width: 120px;
                         centered-parameter-slider-changed(curve) => {
                             velocity-curve-changed(curve);
@@ -275,6 +256,7 @@ export component OscillatorSection inherits VerticalLayout {
 
                     hard_sync := ToggleSwitch {
                         label: Theme.osc-options-hard-sync;
+                        is_enabled: hard-sync-is-enabled;
                         toggle_switch_updated(is_enabled) => {
                             hard-sync-enabled(is_enabled);
                         }
@@ -282,6 +264,7 @@ export component OscillatorSection inherits VerticalLayout {
 
                     key_sync := ToggleSwitch {
                         label: Theme.osc-options-key-sync;
+                        is_enabled: hard-sync-is-enabled;
                         toggle_switch_updated(is_enabled) => {
                             key-sync-enabled(is_enabled);
                         }
@@ -362,6 +345,16 @@ export component ModWheelSection inherits VerticalLayout {
 }
 
 export component GlobalPanel inherits Panel {
+    in property <Mixer> output-mixer-values;
+    in property <[Mixer]> oscillator-mixer-values;
+    in property <bool> portamento-is-enabled;
+    in property <float> portamento-time;
+    in property <int> pitch-bend-range;
+    in property <float> velocity-curve-slope;
+    in property <bool> hard-sync-is-enabled;
+    in property <bool> key-sync-is-enabled;
+
+
     callback envelope-attack-changed(int, float);
     callback envelope-decay-changed(int, float);
     callback envelope-sustain-changed(int, float);
@@ -390,6 +383,9 @@ export component GlobalPanel inherits Panel {
     HorizontalLayout {
         width: parent.width;
         mixer-section := MixerSection {
+            output-mixer-values: output-mixer-values;
+            oscillator-mixer-values: oscillator-mixer-values;
+                        
             output-balance-update(value) => {
                 output-balance-update(value);
             }
@@ -451,6 +447,13 @@ export component GlobalPanel inherits Panel {
             HorizontalSpacer { }
 
             osc-section := OscillatorSection {
+                portamento-is-enabled: portamento-is-enabled;
+                portamento-time: portamento-time;
+                pitch-bend-range: pitch-bend-range;
+                velocity-curve-slope: velocity-curve-slope;
+                hard-sync-is-enabled: hard-sync-is-enabled;
+                key-sync-is-enabled: key-sync-is-enabled;
+
                 portamento-enabled(is_enabled) => {
                     portamento-enabled(is_enabled);
                 }

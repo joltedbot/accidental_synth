@@ -6,8 +6,10 @@ import { TabWidget, Slider, VerticalBox, SpinBox } from "std-widgets.slint";
 import { Panel, Envelope, LFO } from "components.slint";
 import { GlobalPanel } from "global-panel.slint";
 import { HeaderPanel } from "header-panel.slint";
+import { AudioDevice, MidiPort } from "settings.slint";
 import { FilterPanel, FilterCutoff, FilterOptions } from "filter-panel.slint";
 import { OscillatorsPanel, Oscillator } from "oscillator-panel.slint";
+import { Mixer } from "global-panel.slint";
 import { EffectsPanel } from "effects.slint";
 
 export component AccidentalSynth inherits Window {
@@ -20,20 +22,14 @@ export component AccidentalSynth inherits Window {
     default-font-family: Theme.default-font-family;
     default-font-weight: Theme.default-font-weight;
 
-
     // Header/Settings Panel Properties and Callbacks
     in property <string> version; // TODO - Update this with the version from Cargo.toml once the ui modules is created
-    in property <[string]> output-device-list: Theme.empty-dropdown-value;
-    in property <[string]> output-left-channel-list: Theme.empty-dropdown-value;
-    in property <[string]> output-right-channel-list: Theme.empty-dropdown-value;
-    in property <[string]> output-sample-rate-list: Theme.empty-dropdown-value;
-    in property <int> current-output-device-index: 0;
-    in property <int> current-output-left-channel-index: 0;
-    in property <int> current-output-right-channel-index: 0;
-    in property <int> current-sample-rate-index: 0;
-    in property <[string]> input-port-list: Theme.empty-dropdown-value;
-    in property <int> current-input-port-index: 0;
-    in property <int> current-input-channel-index: 0;
+    in property <AudioDevice> audio-device-values: {
+        output-devices: Theme.empty-dropdown-value,
+        left-channels: Theme.empty-dropdown-value,
+        right-channels: Theme.empty-dropdown-value
+    };
+    in property <MidiPort> midi-port-values: { input-ports: Theme.empty-dropdown-value, channels: Theme.empty-dropdown-value };
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
     callback audio-output-right-channel-changed(string);
@@ -41,14 +37,12 @@ export component AccidentalSynth inherits Window {
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
 
-
-
     // Oscillator Panel Properties & Callbacks
     in-out property <[Oscillator]> oscillators: [
-        { title: Theme.osc-controls-panel-title-sub, fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
-        { title: Theme.osc-controls-panel-title-1, fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
-        { title: Theme.osc-controls-panel-title-2, fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
-        { title: Theme.osc-controls-panel-title-3, fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
+        { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
+        { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
+        { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
+        { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
     ];
 
     callback osc-wave_shape_changed(int, string);
@@ -59,12 +53,16 @@ export component AccidentalSynth inherits Window {
     callback osc-parameter2-changed(int, float);
 
     // Filter Panel Properties & Callbacks
-    in-out property <FilterCutoff> filter-cutoff-values: { cutoff: Constant.DEFAULT_FILTER_CUTOFF_NORMAL, resonance: Constant
-    .DEFAULT_FILTER_RESONANCE_NORMAL };
-    in-out property <FilterOptions> filter-options-values: { poles: Constant.DEFAULT_FILTER_POLES, key-track: Constant.DEFAULT_KEY_TRACKING_NORMAL };
+    in-out property <FilterCutoff> filter-cutoff-values: {
+        cutoff: Constant.DEFAULT_FILTER_CUTOFF_NORMAL,
+        resonance: Constant.DEFAULT_FILTER_RESONANCE_NORMAL
+    };
+    in-out property <FilterOptions> filter-options-values: {
+        poles: Constant.DEFAULT_FILTER_POLES,
+        key-track: Constant.DEFAULT_KEY_TRACKING_NORMAL
+    };
     in-out property <Envelope> filter-eq-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
     in-out property <LFO> filter-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
-
 
     callback filter-cutoff-changed(float);
     callback filter-resonance-changed(float);
@@ -83,6 +81,20 @@ export component AccidentalSynth inherits Window {
     callback lfo-phase-reset(int);
 
     // Global Panel Properties & Callbacks
+    in property <Mixer> output-mixer-values: { balance: Constant.DEFAULT_BALANCE_NORMAL };
+    in property <[Mixer]> oscillator-mixer-values: [
+        { balance: Constant.DEFAULT_BALANCE_NORMAL },
+        { balance: Constant.DEFAULT_BALANCE_NORMAL },
+        { balance: Constant.DEFAULT_BALANCE_NORMAL },
+        { balance: Constant.DEFAULT_BALANCE_NORMAL }
+    ];
+    in property <bool> portamento-is-enabled;
+    in property <float> portamento-time;
+    in property <int> pitch-bend-range: Constant.DEFAULT_PITCH_BEND_RANGE;
+    in property <float> velocity-curve-slope: Constant.DEFAULT_VELOCITY_CURVE_SLOPE;
+    in property <bool> hard-sync-is-enabled;
+    in property <bool> key-sync-is-enabled;
+
     callback portamento-enabled(bool);
     callback portamento-time-changed(float);
     callback pitch-bend-range-changed(float);
@@ -112,17 +124,9 @@ export component AccidentalSynth inherits Window {
             header-panel := HeaderPanel {
                 width: Theme.window-width;
                 version: version;
-                output-device-list: output-device-list;
-                output-left-channel-list: output-left-channel-list;
-                output-right-channel-list: output-right-channel-list;
-                output-sample-rate-list: output-sample-rate-list;
-                current-output-device-index: current-output-device-index;
-                current-output-left-channel-index: current-output-left-channel-index;
-                current-output-right-channel-index: current-output-right-channel-index;
-                current-sample-rate-index: current-sample-rate-index;
-                input-port-list: input-port-list;
-                current-input-port-index: current-input-port-index;
-                current-input-channel-index: current-input-channel-index;
+
+                audio-device-values: audio-device-values;
+                midi-port-values: midi-port-values;
 
                 audio-output-device-changed(device) => {
                     audio-output-device-changed(device);
@@ -175,6 +179,15 @@ export component AccidentalSynth inherits Window {
                             }
 
                             global-panel := GlobalPanel {
+                                output-mixer-values: output-mixer-values;
+                                oscillator-mixer-values: oscillator-mixer-values;
+                                portamento-is-enabled: portamento-is-enabled;
+                                portamento-time: portamento-time;
+                                pitch-bend-range: pitch-bend-range;
+                                velocity-curve-slope: velocity-curve-slope;
+                                hard-sync-is-enabled: hard-sync-is-enabled;
+                                key-sync-is-enabled: key-sync-is-enabled;
+
                                 envelope-attack-changed(envelope_index, milliseconds) => {
                                     envelope-attack-changed(envelope_index, milliseconds);
                                 }

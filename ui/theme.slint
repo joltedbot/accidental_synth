@@ -112,12 +112,9 @@ export global Theme {
     out property <length> global-panel-widget-width: 120px;
     out property <string> output-mixer-label: "Output";
     out property <string> osc-mixer-label: "Mixer";
-    out property <string> osc-mixer-title-1: "Osc 1";
-    out property <string> osc-mixer-title-2: "Osc 2";
-    out property <string> osc-mixer-title-3: "Osc 3";
-    out property <string> osc-mixer-title-sub: "Sub";
+    out property <[string]> osc-mixer-titles: ["Sub", "Osc 1", "Osc 2", "Osc 3"];
     out property <string> mixer-level-label: "Level";
-    out property <string> mixer-balance-label: "Pan";
+    out property <string> mixer-balance-label: "Balance";
     out property <string> mixer-mute-label: "Mute";
     out property <string> osc-options-section-label: "Oscillator Options";
     out property <string> osc-options-portamento-label: "Portamento";
@@ -133,10 +130,7 @@ export global Theme {
     // Osciallator Controls Panel
     out property <length> osc-controls-panel-padding: 8px;
     out property <length> osc-controls-panel-spacing: 15px;
-    out property <string> osc-controls-panel-title-sub: "Sub Oscillator";
-    out property <string> osc-controls-panel-title-1: "Oscillator 1";
-    out property <string> osc-controls-panel-title-2: "Oscillator 2";
-    out property <string> osc-controls-panel-title-3: "Oscillator 3";
+    out property <[string]> osc-controls-panel-titles: ["Sub Oscillator", "Oscillator 1", "Oscillator 2", "Oscillator 3"];
     out property <string> osc-controls-wave-shape: "Wave Shape";
     out property <string> osc-controls-fine-tune: "Fine Tune";
     out property <string> osc-controls-course-tune: "Course Tune";

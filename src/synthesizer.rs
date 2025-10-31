@@ -7,7 +7,7 @@ use self::constants::{
     DEFAULT_FILTER_ENVELOPE_AMOUNT, DEFAULT_OUTPUT_BALANCE, DEFAULT_OUTPUT_LEVEL,
     DEFAULT_VELOCITY_CURVE_MIDI_VALUE, DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY,
     DEFAULT_VIBRATO_LFO_DEPTH, DEFAULT_VIBRATO_LFO_RATE, MAX_MIDI_KEY_VELOCITY,
-    QUAD_MIX_DEFAULT_BALANCE, QUAD_MIX_DEFAULT_INPUT_LEVEL, QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
+    QUAD_MIX_DEFAULT_BALANCE_NORMAL, QUAD_MIX_DEFAULT_INPUT_LEVEL, QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
 };
 use crate::audio::OutputDevice;
 use crate::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
@@ -71,7 +71,7 @@ impl Default for QuadMixerInput {
     fn default() -> Self {
         Self {
             level: AtomicU32::new(QUAD_MIX_DEFAULT_INPUT_LEVEL.to_bits()),
-            balance: AtomicU32::new(QUAD_MIX_DEFAULT_BALANCE.to_bits()),
+            balance: AtomicU32::new(QUAD_MIX_DEFAULT_BALANCE_NORMAL.to_bits()),
             mute: AtomicBool::new(false),
         }
     }

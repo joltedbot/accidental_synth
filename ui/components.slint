@@ -166,7 +166,7 @@ export component FilterControlLabel inherits Rectangle {
 }
 
 export component ToggleSwitch inherits VerticalLayout {
-    in-out property <bool> is_on: false;
+    in-out property <bool> is_enabled: false;
     in-out property <length> switch-height: 30px;
     in-out property <string> label;
     callback toggle_switch_updated(bool);
@@ -183,7 +183,7 @@ export component ToggleSwitch inherits VerticalLayout {
         alignment: center;
         Switch {
             height: switch-height;
-            checked: is_on;
+            checked: is_enabled;
             toggled() => {
                 toggle_switch_updated(self.checked);
             }
@@ -288,7 +288,7 @@ export component LabeledVerticalSlider inherits VerticalLayout {
     in property <float> minimum: 0;
     in property <float> maximum: 100;
     in property <bool> inverse: false;
-    in property <float> value: 0;
+    in property <int> value: 0;
     in property <length> slider-width: 25px;
     in property <length> slider-height: 100px;
     in property <bool> enabled: true;
@@ -407,19 +407,21 @@ export component MixerMute inherits VerticalLayout {
 }
 
 export component MixerBalance inherits VerticalLayout {
-    in property <float> value: Constant.DEFAULT_BALANCE;
+    in property <float> value: Constant.DEFAULT_BALANCE_NORMAL;
     callback mixer-balance-update(float);
 
     Text {
         horizontal-alignment: center;
+        width: slider.width;
         font-size: Theme.section-label-font-size;
         font-weight: Theme.section-label-font-weight;
         text: Theme.mixer-balance-label;
     }
 
-    BalanceSlider {
+    slider := BalanceSlider {
         height: 25px;
         width: 50px;
+        value: value;
         updated(value) => {
             mixer-balance-update(value);
         }

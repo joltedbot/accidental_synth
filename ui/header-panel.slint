@@ -1,7 +1,7 @@
 import { Panel, VerticalSpacer } from "components.slint";
 import { Theme } from "theme.slint";
 import { Button } from "std-widgets.slint";
-import { SettingsIcon, SettingsWindow } from "settings.slint";
+import { SettingsIcon, SettingsWindow, AudioDevice, MidiPort } from "settings.slint";
 
 export component Version inherits Text {
     in property <string> version;
@@ -18,17 +18,8 @@ export component Logo inherits Image {
 
 export component HeaderPanel inherits Panel {
     in property <string> version;
-    in property <[string]> output-device-list: Theme.empty-dropdown-value;
-    in property <[string]> output-left-channel-list: Theme.empty-dropdown-value;
-    in property <[string]> output-right-channel-list: Theme.empty-dropdown-value;
-    in property <[string]> output-sample-rate-list: Theme.empty-dropdown-value;
-    in property <int> current-output-device-index: 0;
-    in property <int> current-output-left-channel-index: 0;
-    in property <int> current-output-right-channel-index: 0;
-    in property <int> current-sample-rate-index: 0;
-    in property <[string]> input-port-list: Theme.empty-dropdown-value;
-    in property <int> current-input-port-index: 0;
-    in property <int> current-input-channel-index: 0;
+    in property <AudioDevice> audio-device-values;
+    in property <MidiPort> midi-port-values;
 
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
@@ -41,6 +32,8 @@ export component HeaderPanel inherits Panel {
     background: Theme.header-panel-background;
 
     settings := SettingsWindow {
+        audio-device-values: audio-device-values;
+        midi-port-values: midi-port-values;
 
         audio-output-device-changed(device) => {
             audio-output-device-changed(device);

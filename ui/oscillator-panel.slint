@@ -5,7 +5,6 @@ import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.s
 import { Theme } from "theme.slint";
 
 export struct Oscillator  {
-    title: string,
     wave-shape-index: int,
     fine-tune: float,
     fine-tune-cents: int,
@@ -17,7 +16,8 @@ export struct Oscillator  {
 
 
 export component OscControlsPanel inherits Panel {
-    in-out property <Oscillator> oscillator;
+    in property <Oscillator> oscillator;
+    in property <string> title;
 
     callback wave_shape_changed(string);
     callback course-tune-changed(float);
@@ -34,7 +34,7 @@ export component OscControlsPanel inherits Panel {
             alignment: start;
 
             PanelLabel {
-                label: oscillator.title;
+                label: title;
             }
 
             wave-shape := DropDownMenu {
@@ -117,6 +117,7 @@ export component OscillatorsPanel inherits Panel {
 
             width: Theme.oscillator-panel-section-width;
             oscillator: oscillator;
+            title: Theme.osc-controls-panel-titles[index];
 
             wave_shape_changed(string) => {
                 wave_shape_changed(index, string);
