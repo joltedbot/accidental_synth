@@ -6,11 +6,11 @@ import { TabWidget, Slider, VerticalBox, SpinBox } from "std-widgets.slint";
 import { Panel, Envelope, LFO } from "components.slint";
 import { GlobalPanel } from "global-panel.slint";
 import { HeaderPanel } from "header-panel.slint";
-import { AudioDevice, MidiPort } from "settings.slint";
+import { AudioDevice, MidiPort } from "settings-panel.slint";
 import { FilterPanel, FilterCutoff, FilterOptions } from "filter-panel.slint";
 import { OscillatorsPanel, Oscillator } from "oscillator-panel.slint";
 import { Mixer } from "global-panel.slint";
-import { EffectsPanel } from "effects.slint";
+import { EffectsPanel } from "effects-panel.slint";
 
 export component AccidentalSynth inherits Window {
     title: Theme.window-title;
@@ -38,7 +38,7 @@ export component AccidentalSynth inherits Window {
     callback midi-input-channel-changed(string);
 
     // Oscillator Panel Properties & Callbacks
-    in-out property <[Oscillator]> oscillators: [
+    in property <[Oscillator]> oscillators: [
         { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
         { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
         { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
@@ -53,16 +53,16 @@ export component AccidentalSynth inherits Window {
     callback osc-parameter2-changed(int, float);
 
     // Filter Panel Properties & Callbacks
-    in-out property <FilterCutoff> filter-cutoff-values: {
+    in property <FilterCutoff> filter-cutoff-values: {
         cutoff: Constant.DEFAULT_FILTER_CUTOFF_NORMAL,
         resonance: Constant.DEFAULT_FILTER_RESONANCE_NORMAL
     };
-    in-out property <FilterOptions> filter-options-values: {
+    in property <FilterOptions> filter-options-values: {
         poles: Constant.DEFAULT_FILTER_POLES,
         key-track: Constant.DEFAULT_KEY_TRACKING_NORMAL
     };
-    in-out property <Envelope> filter-eq-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
-    in-out property <LFO> filter-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
+    in property <Envelope> filter-eq-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
+    in property <LFO> filter-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
 
     callback filter-cutoff-changed(float);
     callback filter-resonance-changed(float);
@@ -81,13 +81,30 @@ export component AccidentalSynth inherits Window {
     callback lfo-phase-reset(int);
 
     // Global Panel Properties & Callbacks
-    in property <Mixer> output-mixer-values: { balance: Constant.DEFAULT_BALANCE_NORMAL };
+    in property <Mixer> output-mixer-values: {
+        balance: Constant.DEFAULT_BALANCE_NORMAL,
+        level: Constant.DEFAULT_OUTPUT_MIXER_LEVEL_NORMAL
+    };
     in property <[Mixer]> oscillator-mixer-values: [
-        { balance: Constant.DEFAULT_BALANCE_NORMAL },
-        { balance: Constant.DEFAULT_BALANCE_NORMAL },
-        { balance: Constant.DEFAULT_BALANCE_NORMAL },
-        { balance: Constant.DEFAULT_BALANCE_NORMAL }
+        {
+            balance: Constant.DEFAULT_BALANCE_NORMAL,
+            level: Constant.DEFAULT_SUB_OSCILLATOR_LEVEL_NORMAL
+        },
+        {
+            balance: Constant.DEFAULT_BALANCE_NORMAL,
+            level: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL
+        },
+        {
+            balance: Constant.DEFAULT_BALANCE_NORMAL,
+            level: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL
+        },
+        {
+            balance: Constant.DEFAULT_BALANCE_NORMAL,
+            level: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL
+        }
     ];
+    in property <Envelope> amp-eq-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
+    in property <LFO> mod-wheel-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
     in property <bool> portamento-is-enabled;
     in property <float> portamento-time;
     in property <int> pitch-bend-range: Constant.DEFAULT_PITCH_BEND_RANGE;
@@ -181,6 +198,8 @@ export component AccidentalSynth inherits Window {
                             global-panel := GlobalPanel {
                                 output-mixer-values: output-mixer-values;
                                 oscillator-mixer-values: oscillator-mixer-values;
+                                amp-eq-values: amp-eq-values;
+                                mod-wheel-lfo-values: mod-wheel-lfo-values;
                                 portamento-is-enabled: portamento-is-enabled;
                                 portamento-time: portamento-time;
                                 pitch-bend-range: pitch-bend-range;
@@ -259,6 +278,8 @@ export component AccidentalSynth inherits Window {
 
                             filter-cutoff-values: filter-cutoff-values;
                             filter-options-values: filter-options-values;
+                            filter-eq-values: filter-eq-values;
+                            filter-lfo-values: filter-lfo-values;
 
                             filter-cutoff-changed(frequency) => {
                                 filter-cutoff-changed(frequency);

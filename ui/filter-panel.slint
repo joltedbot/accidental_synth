@@ -46,7 +46,7 @@ export component FilterCutoffSection inherits HorizontalLayout {
 }
 
 export component FilterOptionsSection inherits VerticalLayout {
-    in-out property <FilterOptions> filter-options-values;
+    in property <FilterOptions> filter-options-values;
 
     callback filter-poles-changed(float);
     callback filter-key-tracking-changed(float);
@@ -100,7 +100,7 @@ export component FilterOptionsSection inherits VerticalLayout {
 
 export component FilterEGSection inherits VerticalLayout {
 
-    in-out property <Envelope> filter-eg;
+    in property <Envelope> filter-eg-values;
 
     callback envelope-attack-changed(float);
     callback envelope-decay-changed(float);
@@ -120,6 +120,7 @@ export component FilterEGSection inherits VerticalLayout {
     HorizontalSpacer { }
 
     EnvelopeSection {
+        envelope-values: filter-eg-values;
         envelope-attack-changed(milliseconds) => {
             envelope-attack-changed(milliseconds);
         }
@@ -140,10 +141,10 @@ export component FilterEGSection inherits VerticalLayout {
 
 export component FilterPanel inherits Panel {
 
-    in-out property <FilterCutoff> filter-cutoff-values;
-    in-out property <FilterOptions> filter-options-values;
-    in-out property <Envelope> filter-eq;
-    in-out property <LFO> filter-lfo;
+    in property <FilterCutoff> filter-cutoff-values;
+    in property <FilterOptions> filter-options-values;
+    in property <Envelope> filter-eq-values;
+    in property <LFO> filter-lfo-values;
 
     callback filter-cutoff-changed(float);
     callback filter-resonance-changed(float);
@@ -203,7 +204,7 @@ export component FilterPanel inherits Panel {
         HorizontalSpacer { }
 
         FilterEGSection {
-            filter-eg: filter-eq;
+            filter-eg-values: filter-eq-values;
             envelope-attack-changed(milliseconds) => {
                 envelope-attack-changed(Constant.ENVELOPE_FILTER_INDEX, milliseconds);
             }
@@ -224,7 +225,7 @@ export component FilterPanel inherits Panel {
         HorizontalSpacer { }
 
         FixedCenterLFOSection {
-            lfo-values: filter-lfo;
+            lfo-values: filter-lfo-values;
 
             lfo-frequency-changed(frequency) => {
                 lfo-frequency-changed(Constant.LFO_FILTER_INDEX, frequency);

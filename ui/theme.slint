@@ -17,8 +17,8 @@ export global Theme {
 
     // Main Window
     out property <string> window-title: "Accidental Synthesizer";
-    in-out property <image> icon: @image-url("images/icon.png");
-    in-out property <image> settings-image: @image-url("images/gear.png");
+    in property <image> icon: @image-url("images/icon.png");
+    in property <image> settings-image: @image-url("images/gear.png");
     out property <length> window-width: 1300px;
     out property <length> window-height: 800px;
     out property <length> window-border-width: 2px;
@@ -49,7 +49,7 @@ export global Theme {
     out property <length> spacer-thickness: 3px;
 
     // Header Panel
-    in-out property <image> header-logo: @image-url("images/header.png");
+    in property <image> header-logo: @image-url("images/header.png");
     out property <length> header-logo-height: 20px;
     out property <ImageHorizontalAlignment> header-logo-alignment: left;
     out property <length> header-panel-padding: 10px;

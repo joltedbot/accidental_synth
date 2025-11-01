@@ -19,9 +19,9 @@ export component SliderHandle inherits Rectangle {
 
 export component SliderTrack inherits Rectangle {
     in property <Orientation> orientation: vertical;
-    in-out property <length> track-width: orientation == Orientation.vertical ? Theme.slider-track-width : Theme.slider-track-height;
-    in-out property <length> track-height: orientation == Orientation.vertical ? Theme.slider-track-height : Theme.slider-track-width;
-    in-out property <length> position: orientation == Orientation.vertical ? Theme.slider-track-height : self.x + Theme.slider-track-width;
+    in property <length> track-width: orientation == Orientation.vertical ? Theme.slider-track-width : Theme.slider-track-height;
+    in property <length> track-height: orientation == Orientation.vertical ? Theme.slider-track-height : Theme.slider-track-width;
+    in property <length> position: orientation == Orientation.vertical ? Theme.slider-track-height : self.x + Theme.slider-track-width;
 
     width: track-width;
     height: track-height;
@@ -38,7 +38,7 @@ export component SliderTrack inherits Rectangle {
 }
 
 export component VerticalSlider inherits Rectangle {
-    in-out property <float> value: 0.0;
+    in property <float> value: 0.0;
     in property <bool> enabled: true;
     callback updated(float);
 
@@ -136,10 +136,10 @@ export component HorzontalSlider inherits Rectangle {
 }
 
 export component BalanceTrack inherits Rectangle {
-    in-out property <length> track-width: Theme.slider-track-height;
-    in-out property <length> track-height: Theme.slider-track-width;
+    in property <length> track-width: Theme.slider-track-height;
+    in property <length> track-height: Theme.slider-track-width;
     out property <length> track-center: track-width / 2;
-    in-out property <length> position: track-center;
+    in property <length> position: track-center;
 
     width: track-width;
     height: track-height;

@@ -166,9 +166,9 @@ export component FilterControlLabel inherits Rectangle {
 }
 
 export component ToggleSwitch inherits VerticalLayout {
-    in-out property <bool> is_enabled: false;
-    in-out property <length> switch-height: 30px;
-    in-out property <string> label;
+    in property <bool> is_enabled: false;
+    in property <length> switch-height: 30px;
+    in property <string> label;
     callback toggle_switch_updated(bool);
     alignment: start;
 
@@ -217,7 +217,7 @@ export component MomentaryButton inherits VerticalLayout {
 export component HorizontalParameterSlider inherits VerticalLayout {
     in property <string> label: Theme.control-label-default-string;
     in property <string> value-units;
-    in-out property <float> value;
+    in property <float> value;
     in property <string> display-value: 0;
     in property <length> slider-width: 100px;
     in property <length> slider-height: 30px;
@@ -288,7 +288,7 @@ export component LabeledVerticalSlider inherits VerticalLayout {
     in property <float> minimum: 0;
     in property <float> maximum: 100;
     in property <bool> inverse: false;
-    in property <int> value: 0;
+    in property <float> value;
     in property <length> slider-width: 25px;
     in property <length> slider-height: 100px;
     in property <bool> enabled: true;
@@ -383,8 +383,8 @@ export component DropDownMenu inherits VerticalLayout {
 }
 
 export component MixerMute inherits VerticalLayout {
-    in-out property <bool> is_muted;
-    in-out property <length> switch-height: 25px;
+    in property <bool> is_muted;
+    in property <length> switch-height: 25px;
     callback mixer_mute_update(bool);
 
     Text {
@@ -448,6 +448,8 @@ export component MixerLevel inherits VerticalLayout {
 }
 
 export component EnvelopeSection inherits VerticalLayout {
+    in property <Envelope> envelope-values;
+
     callback envelope-attack-changed(float);
     callback envelope-decay-changed(float);
     callback envelope-sustain-changed(float);
@@ -464,7 +466,7 @@ export component EnvelopeSection inherits VerticalLayout {
 
         attack := LabeledVerticalSlider {
             label: Theme.envelope-label-attack;
-            value: Constant.DEFAULT_EG_MILLISECONDS_STAGE_NORMAL;
+            value: envelope-values.attack;
             slider-height: 90px;
             vertical-slider-changed(milliseconds) => {
                 envelope-attack-changed(milliseconds);
@@ -473,7 +475,7 @@ export component EnvelopeSection inherits VerticalLayout {
 
         decay := LabeledVerticalSlider {
             label: Theme.envelope-label-decay;
-            value: Constant.DEFAULT_EG_MILLISECONDS_STAGE_NORMAL;
+            value: envelope-values.decay;
             slider-height: 90px;
             vertical-slider-changed(milliseconds) => {
                 envelope-decay-changed(milliseconds);
@@ -482,7 +484,7 @@ export component EnvelopeSection inherits VerticalLayout {
 
         sustain := LabeledVerticalSlider {
             label: Theme.envelope-label-sustain;
-            value: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL;
+            value: envelope-values.sustain;
             slider-height: 90px;
             vertical-slider-changed(level) => {
                 envelope-sustain-changed(level);
@@ -491,7 +493,7 @@ export component EnvelopeSection inherits VerticalLayout {
 
         release := LabeledVerticalSlider {
             label: Theme.envelope-label-release;
-            value: Constant.DEFAULT_EG_MILLISECONDS_STAGE_NORMAL;
+            value: envelope-values.release;
             slider-height: 90px;
             vertical-slider-changed(milliseconds) => {
                 envelope-release-changed(milliseconds);
@@ -500,6 +502,7 @@ export component EnvelopeSection inherits VerticalLayout {
 
         ToggleSwitch {
             label: Theme.envelope-label-inverted;
+            is_enabled: envelope-values.inverted;
             toggle_switch_updated(is_active) => {
                 envelope-invert-changed(is_active);
             }
@@ -508,7 +511,7 @@ export component EnvelopeSection inherits VerticalLayout {
 }
 
 export component FixedCenterLFOSection inherits VerticalLayout {
-    in-out property <LFO> lfo-values;
+    in property <LFO> lfo-values;
 
     callback lfo-frequency-changed(float);
     callback lfo-shape-changed(string);

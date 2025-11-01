@@ -2,7 +2,7 @@ import { Theme } from "theme.slint";
 import { Panel, PanelLabel } from "components.slint";
 
 export component EffectsPanel inherits Panel {
-    in-out property <string> title;
+    in property <string> title;
 
     VerticalLayout {
         padding: Theme.osc-controls-panel-padding;

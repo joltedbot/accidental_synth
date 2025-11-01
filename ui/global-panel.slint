@@ -1,6 +1,6 @@
 import { Panel, VerticalSpacer, SectionLabel, CenteredParameterSlider, PanelLabel, HorizontalSpacer, ComponentLabel, MixerLevel, MixerBalance,
 MixerMute,
-ToggleSwitch, HorizontalParameterSlider, IntSpinBox, EnvelopeSection, FixedCenterLFOSection } from "components.slint";
+ToggleSwitch, HorizontalParameterSlider, IntSpinBox, EnvelopeSection, FixedCenterLFOSection, Envelope, LFO } from "components.slint";
 import { Theme } from "theme.slint";
 import { Constant } from "constants.slint";
 import { VerticalSlider, HorzontalSlider, BalanceSlider } from "custom-widgets.slint";
@@ -44,8 +44,6 @@ export component MixerStrip inherits VerticalLayout {
 
         MixerLevel {
             value: mixer-strip-values.level;
-            slider-height: 100px;
-
             mixer-level-update(value) => {
                 root.mixer-level-update(value);
             }
@@ -101,7 +99,6 @@ export component OscillatorMixer inherits VerticalLayout {
             MixerStrip {
                 label: Theme.osc-mixer-titles[index];
                 mixer-strip-values: mixer-strip;
-    
                 mixer-balance-update(balance) => {
                     osc-mixer-balance-update(index, balance);
                 }
@@ -112,7 +109,8 @@ export component OscillatorMixer inherits VerticalLayout {
                     osc-mixer-mute-update(index, is_muted);
                 }
             }
-            VerticalSpacer {}
+
+            VerticalSpacer { }
         }
     }
 }
@@ -278,6 +276,7 @@ export component OscillatorSection inherits VerticalLayout {
 }
 
 export component AmpEnvelopeSection inherits VerticalLayout {
+    in property <Envelope> amp-eq-values;
     callback envelope-attack-changed(float);
     callback envelope-decay-changed(float);
     callback envelope-sustain-changed(float);
@@ -292,6 +291,7 @@ export component AmpEnvelopeSection inherits VerticalLayout {
     }
 
     EnvelopeSection {
+        envelope-values: amp-eq-values;
         envelope-attack-changed(milliseconds) => {
             envelope-attack-changed(milliseconds);
         }
@@ -311,6 +311,7 @@ export component AmpEnvelopeSection inherits VerticalLayout {
 }
 
 export component ModWheelSection inherits VerticalLayout {
+    in property <LFO> mod-wheel-lfo-values;
     callback lfo-frequency-changed(int, float);
     callback lfo-shape-changed(int, string);
     callback lfo-phase-changed(int, float);
@@ -328,6 +329,7 @@ export component ModWheelSection inherits VerticalLayout {
         VerticalSpacer { }
 
         FixedCenterLFOSection {
+            lfo-values: mod-wheel-lfo-values;
             lfo-frequency-changed(frequency) => {
                 lfo-frequency-changed(Constant.LFO_MOD_WHEEL_INDEX, frequency);
             }
@@ -345,6 +347,9 @@ export component ModWheelSection inherits VerticalLayout {
 }
 
 export component GlobalPanel inherits Panel {
+    in property <Envelope> amp-eq-values;
+    in property <LFO> mod-wheel-lfo-values;
+
     in property <Mixer> output-mixer-values;
     in property <[Mixer]> oscillator-mixer-values;
     in property <bool> portamento-is-enabled;
@@ -353,7 +358,6 @@ export component GlobalPanel inherits Panel {
     in property <float> velocity-curve-slope;
     in property <bool> hard-sync-is-enabled;
     in property <bool> key-sync-is-enabled;
-
 
     callback envelope-attack-changed(int, float);
     callback envelope-decay-changed(int, float);
@@ -385,7 +389,7 @@ export component GlobalPanel inherits Panel {
         mixer-section := MixerSection {
             output-mixer-values: output-mixer-values;
             oscillator-mixer-values: oscillator-mixer-values;
-                        
+
             output-balance-update(value) => {
                 output-balance-update(value);
             }
@@ -411,6 +415,7 @@ export component GlobalPanel inherits Panel {
             HorizontalLayout {
                 alignment: start;
                 amp-section := AmpEnvelopeSection {
+                    amp-eq-values: amp-eq-values;
                     envelope-attack-changed(milliseconds) => {
                         envelope-attack-changed(Constant.ENVELOPE_AMP_INDEX, milliseconds);
                     }
@@ -429,6 +434,7 @@ export component GlobalPanel inherits Panel {
                 }
 
                 mod-wheel-section := ModWheelSection {
+                    mod-wheel-lfo-values: mod-wheel-lfo-values;
                     lfo-frequency-changed(lfo_index, frequency) => {
                         lfo-frequency-changed(lfo_index, frequency);
                     }
