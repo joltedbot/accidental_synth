@@ -36,8 +36,6 @@ pub const QUAD_MIX_DEFAULT_BALANCE: f32 = 0.0;
 // Filter Constants
 pub const MIN_FILTER_RESONANCE: f32 = 0.0;
 pub const MAX_FILTER_RESONANCE: f32 = 0.90;
-pub const MIN_KEY_TRACKING_AMOUNT: f32 = 0.01;
-pub const MAX_KEY_TRACKING_AMOUNT: f32 = 2.0;
 
 // LFO Constants
 pub const DEFAULT_VIBRATO_LFO_RATE: f32 = 10.0;

@@ -8,8 +8,8 @@ use crate::modules::oscillator::constants::{
     MIN_PORTAMENTO_SPEED_IN_BUFFERS,
 };
 use crate::synthesizer::constants::{
-    MAX_FILTER_RESONANCE, MAX_KEY_TRACKING_AMOUNT, MAX_PITCH_BEND_RANGE, MIN_FILTER_RESONANCE,
-    MIN_KEY_TRACKING_AMOUNT, MIN_PITCH_BEND_RANGE, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL,
+    MAX_FILTER_RESONANCE, MAX_PITCH_BEND_RANGE, MIN_FILTER_RESONANCE,
+    MIN_PITCH_BEND_RANGE, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL,
     OSCILLATOR_COURSE_TUNE_MIN_INTERVAL, OSCILLATOR_FINE_TUNE_MAX_CENTS,
     OSCILLATOR_FINE_TUNE_MIN_CENTS,
 };
@@ -55,12 +55,7 @@ pub fn lfo_reset(parameters: &LfoParameters) {
 }
 
 pub fn set_key_tracking_amount(filter_parameters: &FilterParameters, normal_value: f32) {
-    let amount = normal_value_to_f32_range(
-        normal_value,
-        MIN_KEY_TRACKING_AMOUNT,
-        MAX_KEY_TRACKING_AMOUNT,
-    );
-    store_f32_as_atomic_u32(&filter_parameters.key_tracking_amount, amount);
+    store_f32_as_atomic_u32(&filter_parameters.key_tracking_amount, normal_value);
 }
 
 pub fn set_envelope_amount(envelope_parameters: &EnvelopeParameters, normal_value: f32) {
