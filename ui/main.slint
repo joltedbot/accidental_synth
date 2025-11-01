@@ -1,0 +1,342 @@
+import "../../fonts/HackNerdFontMono-Regular.ttf";
+import "../../fonts/HackNerdFontMono-Bold.ttf";
+import { Theme } from "theme.slint";
+import { Constant } from "constants.slint";
+import { TabWidget, Slider, VerticalBox, SpinBox } from "std-widgets.slint";
+import { Panel, Envelope, LFO } from "components.slint";
+import { GlobalPanel } from "global-panel.slint";
+import { HeaderPanel } from "header-panel.slint";
+import { AudioDevice, MidiPort } from "settings-panel.slint";
+import { FilterPanel, FilterCutoff, FilterOptions } from "filter-panel.slint";
+import { OscillatorsPanel, Oscillator } from "oscillator-panel.slint";
+import { Mixer } from "global-panel.slint";
+import { EffectsPanel } from "effects-panel.slint";
+
+export component AccidentalSynth inherits Window {
+    title: Theme.window-title;
+    icon: Theme.icon;
+    background: transparent;
+    width: Theme.window-width;
+    height: Theme.window-height;
+    default-font-size: Theme.default-text-size;
+    default-font-family: Theme.default-font-family;
+    default-font-weight: Theme.default-font-weight;
+
+    // Header/Settings Panel Properties and Callbacks
+    in property <string> version; // TODO - Update this with the version from Cargo.toml once the ui modules is created
+    in property <AudioDevice> audio-device-values: {
+        output-devices: Theme.empty-dropdown-value,
+        left-channels: Theme.empty-dropdown-value,
+        right-channels: Theme.empty-dropdown-value
+    };
+    in property <MidiPort> midi-port-values: { input-ports: Theme.empty-dropdown-value, channels: Theme.empty-dropdown-value };
+    callback audio-output-device-changed(string);
+    callback audio-output-left-channel-changed(string);
+    callback audio-output-right-channel-changed(string);
+    callback audio-sample-rate-changed(string);
+    callback midi-input-port-changed(string);
+    callback midi-input-channel-changed(string);
+
+    // Oscillator Panel Properties & Callbacks
+    in property <[Oscillator]> oscillators: [
+        { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
+        { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
+        { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
+        { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
+    ];
+
+    callback osc-wave_shape_changed(int, string);
+    callback osc-course-tune-changed(int, float);
+    callback osc-fine-tune-changed(int, float);
+    callback osc-clipper-boost-changed(int, float);
+    callback osc-parameter1-changed(int, float);
+    callback osc-parameter2-changed(int, float);
+
+    // Filter Panel Properties & Callbacks
+    in property <FilterCutoff> filter-cutoff-values: {
+        cutoff: Constant.DEFAULT_FILTER_CUTOFF_NORMAL,
+        resonance: Constant.DEFAULT_FILTER_RESONANCE_NORMAL
+    };
+    in property <FilterOptions> filter-options-values: {
+        poles: Constant.DEFAULT_FILTER_POLES,
+        key-track: Constant.DEFAULT_KEY_TRACKING_NORMAL
+    };
+    in property <Envelope> filter-eq-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
+    in property <LFO> filter-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
+
+    callback filter-cutoff-changed(float);
+    callback filter-resonance-changed(float);
+    callback filter-poles-changed(float);
+    callback filter-key-tracking-changed(float);
+    callback filter-eg-amount-changed(float);
+    callback filter-lfo-amount-changed(float);
+    callback envelope-attack-changed(int, float);
+    callback envelope-decay-changed(int, float);
+    callback envelope-sustain-changed(int, float);
+    callback envelope-release-changed(int, float);
+    callback envelope-invert-changed(int, bool);
+    callback lfo-frequency-changed(int, float);
+    callback lfo-shape-changed(int, string);
+    callback lfo-phase-changed(int, float);
+    callback lfo-phase-reset(int);
+
+    // Global Panel Properties & Callbacks
+    in property <Mixer> output-mixer-values: {
+        balance: Constant.DEFAULT_BALANCE_NORMAL,
+        level: Constant.DEFAULT_OUTPUT_MIXER_LEVEL_NORMAL
+    };
+    in property <[Mixer]> oscillator-mixer-values: [
+        {
+            balance: Constant.DEFAULT_BALANCE_NORMAL,
+            level: Constant.DEFAULT_SUB_OSCILLATOR_LEVEL_NORMAL
+        },
+        {
+            balance: Constant.DEFAULT_BALANCE_NORMAL,
+            level: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL
+        },
+        {
+            balance: Constant.DEFAULT_BALANCE_NORMAL,
+            level: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL
+        },
+        {
+            balance: Constant.DEFAULT_BALANCE_NORMAL,
+            level: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL
+        }
+    ];
+    in property <Envelope> amp-eq-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
+    in property <LFO> mod-wheel-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
+    in property <bool> portamento-is-enabled;
+    in property <float> portamento-time;
+    in property <int> pitch-bend-range: Constant.DEFAULT_PITCH_BEND_RANGE;
+    in property <float> velocity-curve-slope: Constant.DEFAULT_VELOCITY_CURVE_SLOPE;
+    in property <bool> hard-sync-is-enabled;
+    in property <bool> key-sync-is-enabled;
+
+    callback portamento-enabled(bool);
+    callback portamento-time-changed(float);
+    callback pitch-bend-range-changed(float);
+    callback velocity-curve-changed(float);
+    callback hard-sync-enabled(bool);
+    callback key-sync-enabled(bool);
+    callback output-balance-update(float);
+    callback output-level-update(float);
+    callback output-mute-update(bool);
+    callback osc-mixer-balance-update(int, float);
+    callback osc-mixer-level-update(int, float);
+    callback osc-mixer-mute-update(int, bool);
+
+    top-level := Rectangle {
+        background: Theme.window-background;
+        border-width: Theme.window-border-width;
+        border-color: Theme.window-border-colour;
+        border-bottom-left-radius: Theme.window-border-radius;
+        border-bottom-right-radius: Theme.window-border-radius;
+        height: parent.height;
+
+        VerticalLayout {
+            padding: 0px;
+            spacing: 0px;
+            alignment: start;
+
+            header-panel := HeaderPanel {
+                width: Theme.window-width;
+                version: version;
+
+                audio-device-values: audio-device-values;
+                midi-port-values: midi-port-values;
+
+                audio-output-device-changed(device) => {
+                    audio-output-device-changed(device);
+                }
+                audio-output-left-channel-changed(left) => {
+                    audio-output-left-channel-changed(left);
+                }
+                audio-output-right-channel-changed(right) => {
+                    audio-output-right-channel-changed(right);
+                }
+                audio-sample-rate-changed(rate) => {
+                    audio-sample-rate-changed(rate);
+                }
+                midi-input-port-changed(port) => {
+                    midi-input-port-changed(port);
+                }
+                midi-input-channel-changed(channel) => {
+                    midi-input-channel-changed(channel);
+                }
+            }
+
+            tab-bar := TabWidget {
+                height: parent.height;
+                Tab {
+                    title: Theme.tab-title-oscillators;
+                    HorizontalLayout {
+
+                        VerticalLayout {
+                            oscillator-panel := OscillatorsPanel {
+                                oscillators: oscillators;
+
+                                wave_shape_changed(oscillator, shape) => {
+                                    osc-wave_shape_changed(oscillator, shape);
+                                }
+                                course-tune-changed(oscillator, semitones) => {
+                                    osc-course-tune-changed(oscillator, semitones);
+                                }
+                                fine-tune-changed(oscillator, cents) => {
+                                    osc-fine-tune-changed(oscillator, cents);
+                                }
+                                clipper-boost-changed(oscillator, boost) => {
+                                    osc-clipper-boost-changed(oscillator, boost);
+                                }
+                                parameter1-changed(oscillator, value) => {
+                                    osc-parameter1-changed(oscillator, value);
+                                }
+                                parameter2-changed(oscillator, value) => {
+                                    osc-parameter2-changed(oscillator, value);
+                                }
+                            }
+
+                            global-panel := GlobalPanel {
+                                output-mixer-values: output-mixer-values;
+                                oscillator-mixer-values: oscillator-mixer-values;
+                                amp-eq-values: amp-eq-values;
+                                mod-wheel-lfo-values: mod-wheel-lfo-values;
+                                portamento-is-enabled: portamento-is-enabled;
+                                portamento-time: portamento-time;
+                                pitch-bend-range: pitch-bend-range;
+                                velocity-curve-slope: velocity-curve-slope;
+                                hard-sync-is-enabled: hard-sync-is-enabled;
+                                key-sync-is-enabled: key-sync-is-enabled;
+
+                                envelope-attack-changed(envelope_index, milliseconds) => {
+                                    envelope-attack-changed(envelope_index, milliseconds);
+                                }
+                                envelope-decay-changed(envelope_index, milliseconds) => {
+                                    envelope-decay-changed(envelope_index, milliseconds);
+                                }
+                                envelope-sustain-changed(envelope_index, level) => {
+                                    envelope-sustain-changed(envelope_index, level);
+                                }
+                                envelope-release-changed(envelope_index, milliseconds) => {
+                                    envelope-release-changed(envelope_index, milliseconds);
+                                }
+                                envelope-invert-changed(envelope_index, is_active) => {
+                                    envelope-invert-changed(envelope_index, is_active);
+                                }
+                                lfo-frequency-changed(lfo_index, frequency) => {
+                                    lfo-frequency-changed(lfo_index, frequency);
+                                }
+                                lfo-shape-changed(lfo_index, shape) => {
+                                    lfo-shape-changed(lfo_index, shape);
+                                }
+                                lfo-phase-changed(lfo_index, phase) => {
+                                    lfo-phase-changed(lfo_index, phase);
+                                }
+                                lfo-phase-reset(lfo_index) => {
+                                    lfo-phase-reset(lfo_index);
+                                }
+                                portamento-enabled(is_enabled) => {
+                                    portamento-enabled(is_enabled);
+                                }
+                                portamento-time-changed(milliseconds) => {
+                                    portamento-time-changed(milliseconds);
+                                }
+                                pitch-bend-range-changed(range) => {
+                                    pitch-bend-range-changed(range);
+                                }
+                                velocity-curve-changed(curve) => {
+                                    velocity-curve-changed(curve);
+                                }
+                                hard-sync-enabled(is_enabled) => {
+                                    hard-sync-enabled(is_enabled);
+                                }
+                                key-sync-enabled(is_enabled) => {
+                                    key-sync-enabled(is_enabled);
+                                }
+                                output-balance-update(value) => {
+                                    output-balance-update(value);
+                                }
+                                output-level-update(value) => {
+                                    output-level-update(value);
+                                }
+                                output-mute-update(bool) => {
+                                    output-mute-update(bool);
+                                }
+                                osc-mixer-balance-update(oscillator, balance) => {
+                                    osc-mixer-balance-update(oscillator, balance);
+                                }
+                                osc-mixer-level-update(oscillator, level) => {
+                                    osc-mixer-level-update(oscillator, level);
+                                }
+                                osc-mixer-mute-update(oscillator, is_muted) => {
+                                    osc-mixer-mute-update(oscillator, is_muted);
+                                }
+                            }
+                        }
+
+                        filter-panel := FilterPanel {
+                            width: Theme.filter-panel-width;
+
+                            filter-cutoff-values: filter-cutoff-values;
+                            filter-options-values: filter-options-values;
+                            filter-eq-values: filter-eq-values;
+                            filter-lfo-values: filter-lfo-values;
+
+                            filter-cutoff-changed(frequency) => {
+                                filter-cutoff-changed(frequency);
+                            }
+                            filter-resonance-changed(resonance) => {
+                                filter-resonance-changed(resonance);
+                            }
+                            filter-poles-changed(poles) => {
+                                filter-poles-changed(poles);
+                            }
+                            filter-key-tracking-changed(amount) => {
+                                filter-key-tracking-changed(amount);
+                            }
+                            filter-eg-amount-changed(amount) => {
+                                filter-eg-amount-changed(amount);
+                            }
+                            filter-lfo-amount-changed(amount) => {
+                                filter-lfo-amount-changed(amount);
+                            }
+                            envelope-attack-changed(envelope_index, milliseconds) => {
+                                envelope-attack-changed(envelope_index, milliseconds);
+                            }
+                            envelope-decay-changed(envelope_index, milliseconds) => {
+                                envelope-decay-changed(envelope_index, milliseconds);
+                            }
+                            envelope-sustain-changed(envelope_index, level) => {
+                                envelope-sustain-changed(envelope_index, level);
+                            }
+                            envelope-release-changed(envelope_index, milliseconds) => {
+                                envelope-release-changed(envelope_index, milliseconds);
+                            }
+                            envelope-invert-changed(envelope_index, is_active) => {
+                                envelope-invert-changed(envelope_index, is_active);
+                            }
+                            lfo-frequency-changed(lfo_index, frequency) => {
+                                lfo-frequency-changed(lfo_index, frequency);
+                            }
+                            lfo-shape-changed(lfo_index, shape) => {
+                                lfo-shape-changed(lfo_index, shape);
+                            }
+                            lfo-phase-changed(lfo_index, phase) => {
+                                lfo-phase-changed(lfo_index, phase);
+                            }
+                            lfo-phase-reset(lfo_index) => {
+                                lfo-phase-reset(lfo_index);
+                            }
+                        }
+                    }
+                }
+
+                Tab {
+                    title: Theme.tab-title-effects;
+                    EffectsPanel {
+                        title: "TBD";
+                    }
+                }
+            }
+        }
+    }
+}

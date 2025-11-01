@@ -1,0 +1,84 @@
+import { Panel, VerticalSpacer } from "components.slint";
+import { Theme } from "theme.slint";
+import { Button } from "std-widgets.slint";
+import {
+    SettingsIcon,
+    SettingsWindow,
+    AudioDevice,
+    MidiPort,
+} from "settings-panel.slint";
+
+export component Version inherits Text {
+    in property <string> version;
+    vertical-alignment: bottom;
+    font-size: Theme.header-version-font-size;
+    text: Theme.header-version-prefix + version;
+}
+
+export component Logo inherits Image {
+    source: Theme.header-logo;
+    horizontal-alignment: Theme.header-logo-alignment;
+    height: Theme.header-logo-height;
+}
+
+export component HeaderPanel inherits Panel {
+    in property <string> version;
+    in property <AudioDevice> audio-device-values;
+    in property <MidiPort> midi-port-values;
+
+    callback audio-output-device-changed(string);
+    callback audio-output-left-channel-changed(string);
+    callback audio-output-right-channel-changed(string);
+    callback audio-sample-rate-changed(string);
+    callback midi-input-port-changed(string);
+    callback midi-input-channel-changed(string);
+
+    height: Theme.header-panel-height;
+    background: Theme.header-panel-background;
+
+    settings := SettingsWindow {
+        audio-device-values: audio-device-values;
+        midi-port-values: midi-port-values;
+
+        audio-output-device-changed(device) => {
+            audio-output-device-changed(device);
+        }
+        audio-output-left-channel-changed(left) => {
+            audio-output-left-channel-changed(left);
+        }
+        audio-output-right-channel-changed(right) => {
+            audio-output-right-channel-changed(right);
+        }
+        audio-sample-rate-changed(rate) => {
+            audio-sample-rate-changed(rate);
+        }
+        midi-input-port-changed(port) => {
+            midi-input-port-changed(port);
+        }
+        midi-input-channel-changed(channel) => {
+            midi-input-channel-changed(channel);
+        }
+    }
+
+    HorizontalLayout {
+        padding: Theme.header-panel-padding;
+        spacing: Theme.header-panel-spacing;
+        alignment: space-between;
+
+        Logo { }
+
+        header-spacer := Rectangle { }
+
+        Version {
+            version: version;
+        }
+
+        VerticalSpacer { }
+
+        SettingsIcon {
+            open-settings => {
+                settings.show();
+            }
+        }
+    }
+}
