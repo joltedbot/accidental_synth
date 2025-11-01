@@ -1,0 +1,156 @@
+import { Constant } from "constants.slint";
+import {
+    Panel,
+    PanelLabel,
+    VerticalSpacer,
+    HorizontalParameterSlider,
+    CenteredParameterSlider,
+    LabeledVerticalSlider,
+    IntSpinBox,
+    DropDownMenu,
+    HorizontalSpacer,
+    SectionLabel,
+} from "components.slint";
+import {
+    VerticalSlider,
+    HorzontalSlider,
+    BalanceSlider,
+} from "custom-widgets.slint";
+import { Theme } from "theme.slint";
+
+export struct Oscillator  {
+    wave-shape-index: int,
+    fine-tune: float,
+    fine-tune-cents: int,
+    course-tune: int,
+    clipper-boost: float,
+    parameter1: float,
+    parameter2: float,
+}
+
+
+export component OscControlsPanel inherits Panel {
+    in property <Oscillator> oscillator;
+    in property <string> title;
+
+    callback wave_shape_changed(string);
+    callback course-tune-changed(float);
+    callback fine-tune-changed(float);
+    callback clipper-boost-changed(float);
+    callback parameter1-changed(float);
+    callback parameter2-changed(float);
+
+    HorizontalLayout {
+        alignment: center;
+        VerticalLayout {
+            padding: Theme.osc-controls-panel-padding;
+            spacing: Theme.osc-controls-panel-spacing;
+            alignment: start;
+
+            PanelLabel {
+                label: title;
+            }
+
+            wave-shape := DropDownMenu {
+                label: Theme.osc-controls-wave-shape;
+                value-list: Constant.OSC_WAVE_SHAPES;
+                value-index: oscillator.wave-shape-index;
+                dropdown-width: Theme.oscillator-panel-widget-width;
+                drop_down_changed(shape) => {
+                    wave_shape_changed(shape);
+                }
+            }
+
+            course-tune := IntSpinBox {
+                label: Theme.osc-controls-course-tune;
+                value-units: Theme.osc-controls-semitones;
+                step: 1;
+                minimum: Constant.MIN_COURSE_TUNE_SEMITONES;
+                maximum: Constant.MAX_COURSE_TUNE_SEMITONES;
+                value: oscillator.course-tune;
+                spinbox-width: Theme.oscillator-panel-widget-width;
+                spinbox-changed(semitones) => {
+                    course-tune-changed(semitones);
+                }
+            }
+
+            fine-tune := CenteredParameterSlider {
+                label: Theme.osc-controls-fine-tune;
+                value: oscillator.fine-tune;
+                value-units: Theme.osc-controls-cents;
+                show-value: true;
+                slider-width: Theme.oscillator-panel-widget-width;
+                centered-parameter-slider-changed(cents) => {
+                    fine-tune-changed(cents);
+                }
+            }
+
+            clip-boost := HorizontalParameterSlider {
+                label: Theme.osc-controls-clipper-boost;
+                slider-width: Theme.oscillator-panel-widget-width;
+                value: oscillator.clipper-boost;
+                horizontal-parameter-slider-changed(boost) => {
+                    clipper-boost-changed(boost);
+                }
+            }
+
+            param1 := HorizontalParameterSlider {
+                slider-width: Theme.oscillator-panel-widget-width;
+                value: oscillator.parameter1;
+                horizontal-parameter-slider-changed(value) => {
+                    parameter1-changed(value);
+                }
+            }
+
+            param2 := HorizontalParameterSlider {
+                slider-width: Theme.oscillator-panel-widget-width;
+                value: oscillator.parameter1;
+                horizontal-parameter-slider-changed(value) => {
+                    parameter2-changed(value);
+                }
+            }
+        }
+    }
+}
+
+export component OscillatorsPanel inherits Panel {
+    in property <[Oscillator]> oscillators;
+
+    callback wave_shape_changed(int, string);
+    callback course-tune-changed(int, float);
+    callback fine-tune-changed(int, float);
+    callback clipper-boost-changed(int, float);
+    callback parameter1-changed(int, float);
+    callback parameter2-changed(int, float);
+
+    HorizontalLayout {
+        padding: Theme.oscillator-panel-padding;
+        spacing: Theme.oscillator-panel-spacing;
+
+        for oscillator[index] in oscillators: OscControlsPanel {
+
+            width: Theme.oscillator-panel-section-width;
+            oscillator: oscillator;
+            title: Theme.osc-controls-panel-titles[index];
+
+            wave_shape_changed(string) => {
+                wave_shape_changed(index, string);
+            }
+            course-tune-changed(float) => {
+                course-tune-changed(index, float);
+            }
+            fine-tune-changed(float) => {
+                fine-tune-changed(index, float);
+            }
+            clipper-boost-changed(float) => {
+                clipper-boost-changed(index, float);
+            }
+            parameter1-changed(float) => {
+                parameter1-changed(index, float);
+            }
+            parameter2-changed(float) => {
+                parameter2-changed(index, float);
+            }
+        }
+    }
+}
