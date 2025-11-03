@@ -13,7 +13,7 @@ pub mod triangle;
 
 use self::am::AM;
 use self::constants::{
-    DEFAULT_KEY_SYNC_ENABLED, DEFAULT_NOTE_FREQUENCY, DEFAULT_PORTAMENTO_SPEED_IN_BUFFERS,
+    DEFAULT_KEY_SYNC_ENABLED, DEFAULT_NOTE_FREQUENCY, DEFAULT_PORTAMENTO_TIME_IN_BUFFERS,
     MAX_MIDI_NOTE_NUMBER, MAX_NOTE_FREQUENCY, MIDI_NOTE_FREQUENCIES, MIN_MIDI_NOTE_NUMBER,
     MIN_NOTE_FREQUENCY,
 };
@@ -87,7 +87,7 @@ pub struct OscillatorParameters {
     pub key_sync_enabled: AtomicBool,
     pub hard_sync_enabled: AtomicBool,
     pub portamento_is_enabled: AtomicBool,
-    pub portamento_speed: AtomicU16,
+    pub portamento_time: AtomicU16,
     pub clipper_boost: AtomicU8,
 }
 
@@ -104,7 +104,7 @@ impl Default for OscillatorParameters {
             key_sync_enabled: AtomicBool::new(DEFAULT_KEY_SYNC_ENABLED),
             hard_sync_enabled: AtomicBool::new(false),
             portamento_is_enabled: AtomicBool::new(false),
-            portamento_speed: AtomicU16::new(DEFAULT_PORTAMENTO_SPEED_IN_BUFFERS),
+            portamento_time: AtomicU16::new(DEFAULT_PORTAMENTO_TIME_IN_BUFFERS),
             clipper_boost: AtomicU8::new(0),
         }
     }
@@ -113,7 +113,7 @@ impl Default for OscillatorParameters {
 #[derive(Default, Debug, Copy, Clone)]
 struct Portamento {
     is_enabled: bool,
-    speed: u16,
+    time: u16,
     target_frequency: f32,
     increment: f32,
     recalculate_increment: bool,
@@ -154,7 +154,7 @@ impl Oscillator {
         let portamento = Portamento {
             is_enabled: false,
             target_frequency: DEFAULT_NOTE_FREQUENCY,
-            speed: DEFAULT_PORTAMENTO_SPEED_IN_BUFFERS,
+            time: DEFAULT_PORTAMENTO_TIME_IN_BUFFERS,
             recalculate_increment: false,
             ..Portamento::default()
         };
@@ -196,7 +196,7 @@ impl Oscillator {
         self.set_hard_sync_enabled(parameters.hard_sync_enabled.load(Relaxed));
         self.set_portamento(
             parameters.portamento_is_enabled.load(Relaxed),
-            parameters.portamento_speed.load(Relaxed),
+            parameters.portamento_time.load(Relaxed),
         );
         self.set_gate(&parameters.gate_flag);
         self.set_clipper_boost(parameters.clipper_boost.load(Relaxed));
@@ -338,7 +338,7 @@ impl Oscillator {
     }
 
     fn recalculate_portamento_increment(&mut self, new_frequency: f32) {
-        let increment = (new_frequency - self.tuning.frequency) / f32::from(self.portamento.speed);
+        let increment = (new_frequency - self.tuning.frequency) / f32::from(self.portamento.time);
         self.portamento.increment = increment;
         self.portamento.target_frequency = new_frequency;
         self.portamento.recalculate_increment = false;
@@ -357,9 +357,9 @@ impl Oscillator {
         }
     }
 
-    fn set_portamento(&mut self, is_enabled: bool, speed: u16) {
+    fn set_portamento(&mut self, is_enabled: bool, time: u16) {
         self.portamento.is_enabled = is_enabled;
-        self.portamento.speed = speed;
+        self.portamento.time = time;
     }
 
     fn set_key_sync_enabled(&mut self, key_sync_enabled: bool) {

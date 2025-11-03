@@ -4,14 +4,12 @@ use crate::modules::filter::FilterParameters;
 use crate::modules::lfo::{LfoParameters, MAX_LFO_CENTER_VALUE, MIN_LFO_CENTER_VALUE};
 use crate::modules::oscillator::OscillatorParameters;
 use crate::modules::oscillator::constants::{
-    MAX_CLIP_BOOST, MAX_PORTAMENTO_SPEED_IN_BUFFERS, MIN_CLIP_BOOST,
-    MIN_PORTAMENTO_SPEED_IN_BUFFERS,
+    MAX_CLIP_BOOST, MAX_PORTAMENTO_TIME_IN_BUFFERS, MIN_CLIP_BOOST, MIN_PORTAMENTO_TIME_IN_BUFFERS,
 };
 use crate::synthesizer::constants::{
-    MAX_FILTER_RESONANCE, MAX_PITCH_BEND_RANGE, MIN_FILTER_RESONANCE,
-    MIN_PITCH_BEND_RANGE, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL,
-    OSCILLATOR_COURSE_TUNE_MIN_INTERVAL, OSCILLATOR_FINE_TUNE_MAX_CENTS,
-    OSCILLATOR_FINE_TUNE_MIN_CENTS,
+    MAX_FILTER_RESONANCE, MAX_PITCH_BEND_RANGE, MIN_FILTER_RESONANCE, MIN_PITCH_BEND_RANGE,
+    OSCILLATOR_COURSE_TUNE_MAX_INTERVAL, OSCILLATOR_COURSE_TUNE_MIN_INTERVAL,
+    OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS,
 };
 use crate::synthesizer::midi_value_converters::{
     exponential_curve_filter_cutoff_from_midi_value,
@@ -159,12 +157,12 @@ pub fn set_oscillator_hard_sync(parameters: &[OscillatorParameters; 4], normal_v
 pub fn set_portamento_time(parameters: &[OscillatorParameters; 4], normal_value: f32) {
     let speed = normal_value_to_integer_range(
         normal_value,
-        u32::from(MIN_PORTAMENTO_SPEED_IN_BUFFERS),
-        u32::from(MAX_PORTAMENTO_SPEED_IN_BUFFERS),
+        u32::from(MIN_PORTAMENTO_TIME_IN_BUFFERS),
+        u32::from(MAX_PORTAMENTO_TIME_IN_BUFFERS),
     ) as u16;
 
     for parameters in parameters {
-        parameters.portamento_speed.store(speed, Relaxed);
+        parameters.portamento_time.store(speed, Relaxed);
     }
 }
 

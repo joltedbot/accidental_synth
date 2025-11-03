@@ -28,11 +28,28 @@ impl DeviceMonitor {
         self.input_port_receiver.clone()
     }
 
-    pub fn run(&mut self) -> Result<()> {
+    pub fn run(&mut self, show_menu: bool) -> Result<()> {
         let input_port_sender = self.input_port_sender.clone();
         let midi_input = MidiInput::new(MIDI_INPUT_CLIENT_NAME)?;
         let mut current_port_list = MidiInputPorts::new();
         let mut current_port: Option<MidiInputPort> = None;
+
+        // THIS IS ONLY FOR TEST REMOVE WHEN UI CAN SET DEVICES
+        let temp_index = if show_menu {
+            let ports = midi_input.ports();
+            println!("Midi Devices Found");
+            ports.iter().enumerate().for_each(|(i, port)| {
+                println!("[{}] {}", i, midi_input.port_name(port).unwrap());
+            });
+            println!("Choose Midi Input Device");
+            let line = std::io::stdin().lines().next().unwrap()?;
+            let index: usize = line.trim().parse()?;
+            println!("You chose: {index}");
+            Some(index)
+        } else {
+            None
+        };
+        // END TEST BLOCK
 
         thread::spawn(move || {
             loop {
@@ -40,7 +57,11 @@ impl DeviceMonitor {
                     update_current_port_list_if_changed(&midi_input, &mut current_port_list);
 
                 if is_changed
-                    && update_current_port_if_changed(&current_port_list, &mut current_port)
+                    && update_current_port_if_changed(
+                        &current_port_list,
+                        &mut current_port,
+                        temp_index,
+                    )
                 {
                     input_port_sender.send(current_port.clone()).expect(
                         "run(): Could not send device update to the input port sender. Exiting. ",
@@ -73,6 +94,7 @@ fn update_current_port_list_if_changed(
 fn update_current_port_if_changed(
     current_port_list: &[MidiInputPort],
     current_input_port: &mut Option<MidiInputPort>,
+    temp_index: Option<usize>,
 ) -> bool {
     if current_port_list.is_empty() {
         return if current_input_port.is_none() {
@@ -86,7 +108,14 @@ fn update_current_port_if_changed(
     if matches!(current_input_port,Some(input_port) if current_port_list.contains(input_port)) {
         false
     } else {
-        let default_port = current_port_list[DEFAULT_MIDI_PORT_INDEX].clone();
+        //  let default_port = current_port_list[DEFAULT_MIDI_PORT_INDEX].clone();
+
+        let default_port = if let Some(index) = temp_index {
+            current_port_list[index].clone()
+        } else {
+            current_port_list[DEFAULT_MIDI_PORT_INDEX].clone()
+        };
+
         log::info!(
             "Midi Input Port Changed. Using Default Port: {}.",
             get_input_port_name(&default_port)

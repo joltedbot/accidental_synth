@@ -1,9 +1,9 @@
 use midir::Ignore;
 
+pub const DEFAULT_MIDI_PORT_INDEX: usize = 0;
 pub const CC_MESSAGE_NUMBER_BYTE_INDEX: usize = 1;
 pub const CC_MESSAGE_VALUE_BYTE_INDEX: usize = 2;
 pub const CHANNEL_PRESSURE_VALUE_BYTE_INDEX: usize = 1;
-pub const DEFAULT_MIDI_PORT_INDEX: usize = 0;
 pub const DEVICE_LIST_POLLING_INTERVAL: u64 = 2000;
 pub const INPUT_PORT_SENDER_CAPACITY: usize = 5;
 pub const MESSAGE_TYPE_IGNORE_LIST: Ignore = Ignore::SysexAndTime;

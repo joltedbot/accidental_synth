@@ -61,7 +61,7 @@ impl Midi {
         self.message_receiver.clone()
     }
 
-    pub fn run(&mut self) -> Result<()> {
+    pub fn run(&mut self, show_menu: bool) -> Result<()> {
         log::debug!("Creating MIDI input port monitor.");
         let mut device_monitor = device_monitor::DeviceMonitor::new();
 
@@ -70,7 +70,7 @@ impl Midi {
         self.create_control_listener(input_port_receiver);
 
         log::debug!("run(): Running the midi device monitor");
-        device_monitor.run()?;
+        device_monitor.run(show_menu)?;
 
         Ok(())
     }

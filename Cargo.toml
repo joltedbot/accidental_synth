@@ -17,6 +17,7 @@ panic = "abort"
 
 [dependencies]
 anyhow = "1.0.98"
+clap = { version = "4.5.51", features = ["derive"] }
 core-foundation = "0.10.1"
 cpal = "0.16.0"
 crossbeam-channel = "0.5.15"

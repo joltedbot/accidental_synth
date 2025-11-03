@@ -3,15 +3,11 @@ use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{Device, Host, Stream, default_host};
 use crossbeam_channel::{Receiver, Sender, bounded};
 use rtrb::{Consumer, Producer, RingBuffer};
-use std::thread;
-use std::thread::sleep;
-use std::time::Duration;
 use thiserror::Error;
 
-const DEFAULT_AUDIO_DEVICE_INDEX: usize = 0;
+pub(crate) const DEFAULT_AUDIO_DEVICE_INDEX: usize = 0;
 const DEFAULT_LEFT_CHANNEL_INDEX: usize = 0;
 const DEFAULT_RIGHT_CHANNEL_INDEX: usize = 1;
-const DEVICE_LIST_POLLING_INTERVAL: u64 = 2000;
 const SAMPLE_BUFFER_SENDER_CAPACITY: usize = 5;
 const SAMPLE_BUFFER_CAPACITY: usize = 8192;
 const MONO_CHANNELS: u16 = 1;
@@ -43,6 +39,7 @@ pub struct Audio {
     sample_rate: u32,
     sample_buffer_sender: Sender<Producer<f32>>,
     sample_buffer_receiver: Receiver<Producer<f32>>,
+    stream: Option<Stream>,
 }
 
 impl Audio {
@@ -50,7 +47,8 @@ impl Audio {
         log::info!("Constructing Audio Module");
         let (output_device_sender, output_device_receiver) = bounded(SAMPLE_BUFFER_SENDER_CAPACITY);
 
-        let default_output_device = default_audio_output_device()?;
+        let host = default_host();
+        let default_output_device = default_audio_output_device(&host)?;
         let sample_rate = default_output_device
             .default_output_config()?
             .sample_rate()
@@ -60,6 +58,7 @@ impl Audio {
             sample_rate,
             sample_buffer_sender: output_device_sender,
             sample_buffer_receiver: output_device_receiver,
+            stream: None,
         })
     }
 
@@ -71,48 +70,63 @@ impl Audio {
         self.sample_buffer_receiver.clone()
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self, show_menu: bool) {
         let sample_producer_sender = self.sample_buffer_sender.clone();
         let host = default_host();
         let mut current_output_device_list = Vec::new();
         let mut current_output_device = None;
 
-        thread::spawn(move || {
-            let mut audio_output_stream = None;
-            log::debug!("run(): Audio device monitor thread running");
-            loop {
-                let is_changed = update_current_output_device_list_if_changed(
-                    &host,
-                    &mut current_output_device_list,
+        // THIS IS ONLY FOR TEST REMOVE WHEN UI CAN SET DEVICES
+        let mut temp_index = if show_menu {
+            let devices = host.output_devices().unwrap();
+            println!("Audio Device Found");
+            devices.enumerate().for_each(|(i, dev)| {
+                println!("[{}] {}", i, dev.name().unwrap());
+            });
+
+            println!("Choose Audio Output Device");
+            let line = std::io::stdin().lines().next().unwrap().unwrap();
+            let index: usize = line.trim().parse().unwrap();
+            println!("You chose: {index}");
+            Some(index)
+        } else {
+            None
+        };
+        // END TEST BLOCK
+
+        // TODO: Add a thread using coreaudio-rs to listen for device updates rather than polling because CoreAudio is weird
+        let mut audio_output_stream = None;
+        log::debug!("run(): Audio device monitor thread running");
+
+        let is_changed =
+            update_current_output_device_list_if_changed(&host, &mut current_output_device_list);
+
+        if is_changed
+            && update_current_output_device_if_changed(
+                &host,
+                &current_output_device_list,
+                &mut current_output_device,
+                &mut temp_index,
+            )
+        {
+            log::debug!("run(): Output device changed. Looking for a new device.");
+            if let Some(output_device) = &current_output_device {
+                log::debug!(
+                    "run(): Output device changed. New device: {:?}",
+                    output_device.name
                 );
 
-                if is_changed
-                    && update_current_output_device_if_changed(
-                        &host,
-                        &current_output_device_list,
-                        &mut current_output_device,
-                    )
-                {
-                    if let Some(output_device) = &current_output_device {
-                        log::debug!(
-                            "run(): Output device changed. New device: {:?}",
-                            output_device.name
-                        );
-
-                        let (sample_producer, sample_consumer) =
-                            RingBuffer::<f32>::new(SAMPLE_BUFFER_CAPACITY);
-                        sample_producer_sender.send(sample_producer).expect("run(): Could not send device update to the audio output device sender. Exiting. ");
-                        drop(audio_output_stream);
-                        audio_output_stream =
-                            start_main_audio_output_loop(output_device, sample_consumer).ok();
-                    } else {
-                        audio_output_stream = None;
-                    }
-                }
-
-                sleep(Duration::from_millis(DEVICE_LIST_POLLING_INTERVAL));
+                let (sample_producer, sample_consumer) =
+                    RingBuffer::<f32>::new(SAMPLE_BUFFER_CAPACITY);
+                sample_producer_sender.send(sample_producer).expect("run(): Could not send device update to the audio output device sender. Exiting. ");
+                drop(audio_output_stream);
+                audio_output_stream =
+                    start_main_audio_output_loop(output_device, sample_consumer).ok();
+            } else {
+                audio_output_stream = None;
             }
-        });
+        }
+        self.stream = audio_output_stream;
     }
 }
 
@@ -158,8 +172,8 @@ fn start_main_audio_output_loop(
     Ok(stream)
 }
 
-fn default_audio_output_device() -> Result<Device> {
-    if let Some(device) = default_host().default_output_device() {
+fn default_audio_output_device(audio_host: &Host) -> Result<Device> {
+    if let Some(device) = audio_host.default_output_device() {
         log::debug!(
             "default_audio_output_device(): Using default audio output device: {}",
             device.name().unwrap_or("Unknown".to_string())
@@ -191,6 +205,7 @@ fn update_current_output_device_if_changed(
     host: &Host,
     current_device_list: &[String],
     current_output_device: &mut Option<OutputDevice>,
+    temp_index: &mut Option<usize>,
 ) -> bool {
     if current_device_list.is_empty() {
         return if current_output_device.is_none() {
@@ -205,7 +220,12 @@ fn update_current_output_device_if_changed(
     {
         false
     } else {
-        let default_device = current_device_list[DEFAULT_AUDIO_DEVICE_INDEX].clone();
+        let default_device = if let Some(index) = temp_index {
+            current_device_list[*index].clone()
+        } else {
+            current_device_list[DEFAULT_AUDIO_DEVICE_INDEX].clone()
+        };
+
         *current_output_device = output_device_from_name(host, &default_device);
 
         log::info!("Audio Device List Changed. Using Default Device: {default_device}.");
@@ -215,13 +235,17 @@ fn update_current_output_device_if_changed(
 }
 
 fn output_audio_device_name_list(host: &Host) -> Vec<String> {
+    let mut device_name_list: Vec<String> = Vec::new();
+
     if let Ok(device_list) = host.output_devices() {
-        device_list
-            .filter_map(|device| device.name().ok())
-            .collect()
-    } else {
-        Vec::new()
+        for device in device_list {
+            if let Ok(name) = device.name() {
+                device_name_list.push(name);
+            }
+        }
     }
+
+    device_name_list
 }
 
 fn output_device_from_name(host: &Host, name: &str) -> Option<OutputDevice> {
