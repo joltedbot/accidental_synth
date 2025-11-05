@@ -3,12 +3,14 @@ mod math;
 mod midi;
 mod modules;
 mod synthesizer;
+mod ui;
 
 use crate::audio::Audio;
 use crate::midi::Midi;
 use crate::synthesizer::Synthesizer;
 use clap::Parser;
 use core_foundation::runloop::CFRunLoop;
+use crate::ui::UI;
 
 slint::include_modules!();
 
@@ -25,6 +27,8 @@ fn main() {
 
     env_logger::init();
     log::info!("Starting Accidental Synthesizer");
+
+    let mut ui = UI::new();
 
     log::debug!("Initialize the audio module");
     let mut audio = Audio::new().expect("Could not initialize audio module. Exiting.");
@@ -45,6 +49,8 @@ fn main() {
     synthesizer
         .run(midi_message_receiver, output_device_receiver)
         .expect("Could not initialize synthesizer module. Exiting.");
+    ui.run(application.as_weak()).expect("Could build the user interface. Exiting.");
+
 
     // Temporary run loop to keep the application alive until I add the ui loop to replace it
     println!("Will Loop Forever. Press Ctrl-c to Exit");
