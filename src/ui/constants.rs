@@ -1,3 +1,5 @@
+pub const AUDIO_DEVICE_CHANNEL_NULL_VALUE:i32 = -1;
+pub const AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET:u16 = 1;
 pub const MIDI_CHANNEL_LIST: [&str; 17] = [
     "Omni",
     "1",
@@ -17,3 +19,5 @@ pub const MIDI_CHANNEL_LIST: [&str; 17] = [
     "15",
     "16",
 ];
+
+

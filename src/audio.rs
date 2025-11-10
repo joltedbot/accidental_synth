@@ -1,3 +1,4 @@
+use crate::ui::UIUpdates;
 use anyhow::{Result, anyhow};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{Device, Host, Stream, default_host};
@@ -5,7 +6,7 @@ use crossbeam_channel::{Receiver, Sender, bounded};
 use rtrb::{Consumer, Producer, RingBuffer};
 use thiserror::Error;
 
-pub(crate) const DEFAULT_AUDIO_DEVICE_INDEX: usize = 0;
+const DEFAULT_AUDIO_DEVICE_INDEX: usize = 0;
 const DEFAULT_LEFT_CHANNEL_INDEX: usize = 0;
 const DEFAULT_RIGHT_CHANNEL_INDEX: usize = 1;
 const SAMPLE_BUFFER_SENDER_CAPACITY: usize = 5;
@@ -16,7 +17,7 @@ const MONO_CHANNELS: u16 = 1;
 pub struct Channels {
     pub left: usize,
     pub right: Option<usize>,
-    pub total: u16,
+    pub count: u16,
 }
 
 #[derive(Clone)]
@@ -70,29 +71,11 @@ impl Audio {
         self.sample_buffer_receiver.clone()
     }
 
-    pub fn run(&mut self, show_menu: bool) {
+    pub fn run(&mut self, ui_update_sender: Sender<UIUpdates>) {
         let sample_producer_sender = self.sample_buffer_sender.clone();
         let host = default_host();
         let mut current_output_device_list = Vec::new();
         let mut current_output_device = None;
-
-        // THIS IS ONLY FOR TEST REMOVE WHEN UI CAN SET DEVICES
-        let mut temp_index = if show_menu {
-            let devices = host.output_devices().unwrap();
-            println!("Audio Device Found");
-            devices.enumerate().for_each(|(i, dev)| {
-                println!("[{}] {}", i, dev.name().unwrap());
-            });
-
-            println!("Choose Audio Output Device");
-            let line = std::io::stdin().lines().next().unwrap().unwrap();
-            let index: usize = line.trim().parse().unwrap();
-            println!("You chose: {index}");
-            Some(index)
-        } else {
-            None
-        };
-        // END TEST BLOCK
 
         // TODO: Add a thread using coreaudio-rs to listen for device updates rather than polling because CoreAudio is weird
         let mut audio_output_stream = None;
@@ -101,12 +84,22 @@ impl Audio {
         let is_changed =
             update_current_output_device_list_if_changed(&host, &mut current_output_device_list);
 
+        if is_changed {
+            ui_update_sender
+                .send(UIUpdates::AudioDeviceList(
+                    current_output_device_list.clone(),
+                ))
+                .expect(
+                    "run(): Could not send audio device list \
+                    update to the UI. Exiting. ",
+                );
+        }
+
         if is_changed
             && update_current_output_device_if_changed(
                 &host,
                 &current_output_device_list,
                 &mut current_output_device,
-                &mut temp_index,
             )
         {
             log::debug!("run(): Output device changed. Looking for a new device.");
@@ -119,6 +112,25 @@ impl Audio {
                 let (sample_producer, sample_consumer) =
                     RingBuffer::<f32>::new(SAMPLE_BUFFER_CAPACITY);
                 sample_producer_sender.send(sample_producer).expect("run(): Could not send device update to the audio output device sender. Exiting. ");
+
+                ui_update_sender
+                    .send(UIUpdates::AudioDeviceIndex(DEFAULT_AUDIO_DEVICE_INDEX))
+                    .expect(
+                        "run(): Could not send audio device index \
+                    update to the UI. Exiting. ",
+                    );
+
+                ui_update_sender
+                    .send(UIUpdates::AudioDeviceChannels {
+                        left: output_device.channels.left,
+                        right: output_device.channels.right,
+                        count: output_device.channels.count,
+                    })
+                    .expect(
+                        "run(): Could not send audio device channels \
+                    update to the UI. Exiting. ",
+                    );
+
                 drop(audio_output_stream);
                 audio_output_stream =
                     start_main_audio_output_loop(output_device, sample_consumer).ok();
@@ -135,7 +147,7 @@ fn start_main_audio_output_loop(
     mut sample_buffer: Consumer<f32>,
 ) -> Result<Stream> {
     let default_device_stream_config = output_device.device.default_output_config()?.config();
-    let number_of_channels = output_device.channels.total;
+    let number_of_channels = output_device.channels.count;
     let left_channel_index = output_device.channels.left;
     let right_channel_index = output_device.channels.right;
 
@@ -205,7 +217,6 @@ fn update_current_output_device_if_changed(
     host: &Host,
     current_device_list: &[String],
     current_output_device: &mut Option<OutputDevice>,
-    temp_index: &mut Option<usize>,
 ) -> bool {
     if current_device_list.is_empty() {
         return if current_output_device.is_none() {
@@ -220,16 +231,9 @@ fn update_current_output_device_if_changed(
     {
         false
     } else {
-        let default_device = if let Some(index) = temp_index {
-            current_device_list[*index].clone()
-        } else {
-            current_device_list[DEFAULT_AUDIO_DEVICE_INDEX].clone()
-        };
-
+        let default_device = current_device_list[DEFAULT_AUDIO_DEVICE_INDEX].clone();
         *current_output_device = output_device_from_name(host, &default_device);
-
         log::info!("Audio Device List Changed. Using Default Device: {default_device}.");
-
         true
     }
 }
@@ -279,7 +283,7 @@ fn default_channels_from_device(device: &Device) -> Result<Channels> {
     };
 
     Ok(Channels {
-        total: device_channels,
+        count: device_channels,
         left: DEFAULT_LEFT_CHANNEL_INDEX,
         right,
     })

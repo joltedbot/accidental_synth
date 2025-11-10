@@ -41,10 +41,11 @@ fn main() {
 
     let output_device_receiver = audio.get_sample_buffer_receiver();
     let midi_message_receiver = midi.get_midi_message_receiver();
+    let ui_update_sender = ui.get_ui_update_sender();
 
     log::debug!("Run the main modules");
-    audio.run(cli_arguments.headless);
-    midi.run(cli_arguments.headless)
+    audio.run(ui_update_sender.clone());
+    midi.run(ui_update_sender)
         .expect("Could not initialize midi module. Exiting.");
     synthesizer
         .run(midi_message_receiver, output_device_receiver)

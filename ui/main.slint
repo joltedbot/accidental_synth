@@ -23,7 +23,7 @@ export component AccidentalSynth inherits Window {
     default-font-weight: Theme.default-font-weight;
 
     // Header/Settings Panel Properties and Callbacks
-    in-out property <string> version; // TODO - Update this with the version from Cargo.toml once the ui modules is created
+    in-out property <string> version;
     in property <AudioDevice> audio-device-values: {
         output-devices: Theme.empty-dropdown-value,
         left-channels: Theme.empty-dropdown-value,

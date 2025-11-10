@@ -11,6 +11,7 @@ use crossbeam_channel::{Receiver, Sender};
 use midir::{MidiInputConnection, MidiInputPort};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::thread;
+use crate::ui::UIUpdates;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum Status {
@@ -61,7 +62,7 @@ impl Midi {
         self.message_receiver.clone()
     }
 
-    pub fn run(&mut self, show_menu: bool) -> Result<()> {
+    pub fn run(&mut self, ui_update_sender: Sender<UIUpdates>) -> Result<()> {
         log::debug!("Creating MIDI input port monitor.");
         let mut device_monitor = device_monitor::DeviceMonitor::new();
 
@@ -70,7 +71,7 @@ impl Midi {
         self.create_control_listener(input_port_receiver);
 
         log::debug!("run(): Running the midi device monitor");
-        device_monitor.run(show_menu)?;
+        device_monitor.run(ui_update_sender)?;
 
         Ok(())
     }

@@ -76,6 +76,7 @@ export component AudioSettings inherits VerticalLayout {
 
     sample := DropDownMenu {
         label: "Sample Rate";
+        enabled: false;
         dropdown-width: Theme.oscillator-panel-widget-width;
         value-list: audio-device-values.sample-rates;
         value-index: audio-device-values.sample-rate-index;
@@ -83,6 +84,7 @@ export component AudioSettings inherits VerticalLayout {
             audio-sample-rate-changed(rate);
         }
     }
+
 }
 
 export component MidiSettings inherits VerticalLayout {
