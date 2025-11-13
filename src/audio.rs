@@ -114,7 +114,9 @@ impl Audio {
                 sample_producer_sender.send(sample_producer).expect("run(): Could not send device update to the audio output device sender. Exiting. ");
 
                 ui_update_sender
-                    .send(UIUpdates::AudioDeviceIndex(DEFAULT_AUDIO_DEVICE_INDEX))
+                    .send(UIUpdates::AudioDeviceIndex(
+                        DEFAULT_AUDIO_DEVICE_INDEX as i32,
+                    ))
                     .expect(
                         "run(): Could not send audio device index \
                     update to the UI. Exiting. ",
@@ -122,8 +124,8 @@ impl Audio {
 
                 ui_update_sender
                     .send(UIUpdates::AudioDeviceChannels {
-                        left: output_device.channels.left,
-                        right: output_device.channels.right,
+                        left: output_device.channels.left as i32,
+                        right: output_device.channels.right.map(|right| right as i32),
                         count: output_device.channels.count,
                     })
                     .expect(

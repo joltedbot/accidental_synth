@@ -29,7 +29,7 @@ export component AccidentalSynth inherits Window {
         left-channels: Theme.empty-dropdown-value,
         right-channels: Theme.empty-dropdown-value
     };
-    in property <MidiPort> midi-port-values: { input-ports: Theme.empty-dropdown-value, channels: ["1", "2", "3"] };
+    in property <MidiPort> midi-port-values;
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
     callback audio-output-right-channel-changed(string);

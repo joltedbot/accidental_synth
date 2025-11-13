@@ -21,7 +21,7 @@ pub struct UIMidiPort {
 }
 
 #[derive(Clone, Default)]
-pub struct UIOscillator  {
+pub struct UIOscillator {
     pub wave_shape_index: i32,
     pub fine_tune: f32,
     pub fine_tune_cents: i32,
@@ -38,7 +38,7 @@ pub struct UIFilterCutoff {
 }
 
 #[derive(Clone, Default)]
-pub struct UIFilterOptions  {
+pub struct UIFilterOptions {
     pub poles: i32,
     pub key_track: f32,
     pub eg_amount: f32,
@@ -46,14 +46,14 @@ pub struct UIFilterOptions  {
 }
 
 #[derive(Clone, Default)]
-pub struct UILFO  {
+pub struct UILFO {
     pub frequency: f32,
     pub phase: f32,
     pub wave_shape_index: i32,
 }
 
 #[derive(Clone, Default)]
-pub struct UIEnvelope  {
+pub struct UIEnvelope {
     pub attack: f32,
     pub decay: f32,
     pub sustain: f32,

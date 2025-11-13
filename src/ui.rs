@@ -5,9 +5,10 @@ mod structs;
 use super::{AccidentalSynth, AudioDevice, MidiPort};
 use crossbeam_channel::{Receiver, Sender, bounded};
 use slint::{ModelRc, SharedString, VecModel, Weak};
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Mutex};
 use std::thread;
 
+use crate::midi::MidiDeviceEvent;
 use crate::ui::callbacks::register_callbacks;
 use crate::ui::constants::{
     AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET, AUDIO_DEVICE_CHANNEL_NULL_VALUE, MIDI_CHANNEL_LIST,
@@ -20,11 +21,13 @@ const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
 #[derive(Debug, Clone, PartialEq)]
 pub enum UIUpdates {
     MidiPortList(Vec<String>),
+    MidiPortIndex(i32),
+    MidiChannelIndex(i32),
     AudioDeviceList(Vec<String>),
-    AudioDeviceIndex(usize),
+    AudioDeviceIndex(i32),
     AudioDeviceChannels {
-        left: usize,
-        right: Option<usize>,
+        left: i32,
+        right: Option<i32>,
         count: u16,
     },
 }
@@ -68,9 +71,13 @@ impl UI {
         self.ui_update_sender.clone()
     }
 
-    pub fn run(&mut self, ui_weak: Weak<AccidentalSynth>) -> Result<()> {
+    pub fn run(
+        &mut self,
+        ui_weak: Weak<AccidentalSynth>,
+        midi_update_sender: Sender<MidiDeviceEvent>,
+    ) -> Result<()> {
         let ui_update_receiver = self.ui_update_receiver.clone();
-        register_callbacks(ui_weak.clone())?;
+        register_callbacks(ui_weak.clone(), midi_update_sender)?;
         self.set_ui_default_values(ui_weak.clone())?;
 
         self.start_ui_update_listener(ui_update_receiver, ui_weak.clone())?;
@@ -117,6 +124,12 @@ impl UI {
                     UIUpdates::MidiPortList(port_list) => {
                         set_midi_port_list(&ui_weak_thread, &midi_port_values, port_list);
                     }
+                    UIUpdates::MidiPortIndex(index) => {
+                        set_midi_port_index(&ui_weak_thread, &midi_port_values, index);
+                    }
+                    UIUpdates::MidiChannelIndex(index) => {
+                        set_midi_channel_index(&ui_weak_thread, &midi_port_values, index);
+                    }
                     UIUpdates::AudioDeviceList(device_list) => {
                         set_audio_device_list(&ui_weak_thread, &audio_device_values, device_list);
                     }
@@ -153,6 +166,36 @@ fn set_midi_port_list(
     });
 }
 
+fn set_midi_port_index(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    midi_port_values: &Arc<Mutex<UIMidiPort>>,
+    port_index: i32,
+) {
+    let mut midi_ports = midi_port_values
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    midi_ports.input_port_index = port_index;
+    let ui_midi_ports = midi_ports.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(ui_midi_ports));
+    });
+}
+
+fn set_midi_channel_index(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    midi_port_values: &Arc<Mutex<UIMidiPort>>,
+    channel_index: i32,
+) {
+    let mut midi_ports = midi_port_values
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    midi_ports.channel_index = channel_index;
+    let ui_midi_ports = midi_ports.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(ui_midi_ports));
+    });
+}
+
 fn set_audio_device_list(
     ui_weak_thread: &Weak<AccidentalSynth>,
     audio_device_values: &Arc<Mutex<UIAudioDevice>>,
@@ -171,11 +214,12 @@ fn set_audio_device_list(
 fn set_audio_device_index(
     ui_weak: &Weak<AccidentalSynth>,
     audio_device_values: &Arc<Mutex<UIAudioDevice>>,
-    audio_device_index: usize,
+    audio_device_index: i32,
 ) {
-    println!("{:?}", audio_device_index);
-    let mut audio_devices = audio_device_values.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    audio_devices.output_device_index = audio_device_index as i32;
+    let mut audio_devices = audio_device_values
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    audio_devices.output_device_index = audio_device_index;
     let ui_audio_devices = audio_devices.clone();
     let _ = ui_weak.upgrade_in_event_loop(move |ui| {
         ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(ui_audio_devices));
@@ -185,7 +229,7 @@ fn set_audio_device_index(
 fn set_audio_device_channels(
     ui_weak_thread: &Weak<AccidentalSynth>,
     audio_device_values: &Arc<Mutex<UIAudioDevice>>,
-    channels: (usize, Option<usize>, u16),
+    channels: (i32, Option<i32>, u16),
 ) {
     let mut audio_devices = audio_device_values
         .lock()
@@ -196,11 +240,11 @@ fn set_audio_device_channels(
         device_channels.push((channel + AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET).to_string());
     }
 
-    audio_devices.left_channel_index = channels.0 as i32;
+    audio_devices.left_channel_index = channels.0;
     audio_devices.left_channels = device_channels.clone();
     if let Some(channel) = channels.1 {
         audio_devices.right_channels = device_channels;
-        audio_devices.right_channel_index = channel as i32;
+        audio_devices.right_channel_index = channel;
     } else {
         audio_devices.right_channels = vec![];
         audio_devices.right_channel_index = AUDIO_DEVICE_CHANNEL_NULL_VALUE;
