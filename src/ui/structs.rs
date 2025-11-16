@@ -1,4 +1,4 @@
-use slint::{ModelRc, SharedString, VecModel};
+#![allow(dead_code)]
 
 #[derive(Clone, Default)]
 pub struct UIAudioDevice {

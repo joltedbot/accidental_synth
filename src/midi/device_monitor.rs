@@ -3,7 +3,6 @@ use crate::midi::constants::{
     DEFAULT_MIDI_PORT_INDEX, DEVICE_LIST_POLLING_INTERVAL, MIDI_INPUT_CLIENT_NAME,
     UNKNOWN_MIDI_PORT_NAME_MESSAGE,
 };
-use crate::ui::UIUpdates;
 use anyhow::Result;
 use crossbeam_channel::Sender;
 use midir::{MidiInput, MidiInputPort, MidiInputPorts};
@@ -26,7 +25,7 @@ impl DeviceMonitor {
         let input_port_sender = self.device_update_sender.clone();
         let midi_input = MidiInput::new(MIDI_INPUT_CLIENT_NAME)?;
         let mut current_port_list = MidiInputPorts::new();
-        let mut current_port: Option<(MidiInputPort, usize)> = None;
+        let mut current_port: Option<(usize, MidiInputPort)> = None;
 
         thread::spawn(move || {
             loop {
@@ -42,10 +41,7 @@ impl DeviceMonitor {
                     input_port_sender.send(MidiDeviceEvent::InputPortListUpdated(midi_port_names)).expect(
                         "run(): Could not send midi port list update to the input port sender. Exiting. ",
                     );
-                }
 
-                let port_is_changed = current_port_changed(&current_port_list, &mut current_port);
-                if port_list_changed && port_is_changed {
                     update_current_port(&current_port_list, &mut current_port);
 
                     input_port_sender.send(MidiDeviceEvent::InputPortUpdated(current_port.clone())).expect(
@@ -75,28 +71,9 @@ fn update_current_port_list_if_changed(
     false
 }
 
-fn current_port_changed(
-    current_port_list: &[MidiInputPort],
-    current_input_port: &mut Option<(MidiInputPort, usize)>,
-) -> bool {
-    if let Some(input_port) = current_input_port {
-        if let Some(index) = current_port_list
-            .iter()
-            .position(|port| port == &input_port.0)
-            && index != input_port.1
-        {
-            true
-        } else {
-            false
-        }
-    } else {
-        !current_port_list.is_empty()
-    }
-}
-
 fn update_current_port(
     current_port_list: &[MidiInputPort],
-    current_input_port: &mut Option<(MidiInputPort, usize)>,
+    current_input_port: &mut Option<(usize, MidiInputPort)>,
 ) {
     if current_port_list.is_empty() {
         *current_input_port = None;
@@ -106,9 +83,9 @@ fn update_current_port(
     if let Some(input_port) = current_input_port {
         if let Some(index) = current_port_list
             .iter()
-            .position(|port| port == &input_port.0)
+            .position(|port| port == &input_port.1)
         {
-            *current_input_port = Some((current_port_list[index].clone(), index));
+            *current_input_port = Some((index, current_port_list[index].clone()));
             return;
         }
     }
@@ -119,7 +96,7 @@ fn update_current_port(
         get_input_port_name(&default_port)
     );
 
-    *current_input_port = Some((default_port, DEFAULT_MIDI_PORT_INDEX));
+    *current_input_port = Some((DEFAULT_MIDI_PORT_INDEX, default_port));
 }
 
 fn get_input_port_name(input_port: &MidiInputPort) -> String {

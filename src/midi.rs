@@ -3,16 +3,11 @@ pub mod control_change;
 pub mod device_monitor;
 pub mod input_listener;
 
-use crate::MidiPort;
-use crate::midi::constants::{
-    DEFAULT_MIDI_PORT_INDEX, MIDI_INPUT_CLIENT_NAME, MIDI_MESSAGE_SENDER_CAPACITY,
-    UNKNOWN_MIDI_PORT_NAME_MESSAGE,
-};
+use crate::midi::constants::{MIDI_INPUT_CLIENT_NAME, MIDI_MESSAGE_SENDER_CAPACITY};
 use crate::midi::input_listener::create_midi_input_listener;
 use crate::ui::UIUpdates;
 use anyhow::Result;
 use control_change::CC;
-use cpal::traits::HostTrait;
 use crossbeam_channel::{Receiver, Sender};
 use midir::{MidiInput, MidiInputConnection, MidiInputPort};
 use std::sync::{Arc, Mutex, PoisonError};
@@ -33,7 +28,7 @@ enum Status {
 #[derive(PartialEq, Clone)]
 pub enum MidiDeviceEvent {
     InputPortListUpdated(Vec<String>),
-    InputPortUpdated(Option<(MidiInputPort, usize)>),
+    InputPortUpdated(Option<(usize, MidiInputPort)>),
     UIMidiInputPortUpdated(String),
     UIMidiInputChannelIndexUpdated(String),
 }
@@ -129,11 +124,11 @@ impl Midi {
                                 &current_channel_arc,
                                 &message_sender_arc,
                                 &current_note_arc,
-                                &port.0,
+                                &port.1,
                             );
 
                             ui_update_sender
-                                .send(UIUpdates::MidiPortIndex(port.1 as i32))
+                                .send(UIUpdates::MidiPortIndex(port.0 as i32))
                                 .expect(
                                     "run(): Could not send midi port list update to the UI. Exiting.");
                         } else {
@@ -147,8 +142,13 @@ impl Midi {
                                 &current_channel_arc,
                                 &message_sender_arc,
                                 &current_note_arc,
-                                &port,
+                                &port.1,
                             );
+
+                            ui_update_sender
+                                .send(UIUpdates::MidiPortIndex(port.0 as i32))
+                                .expect(
+                                    "run(): Could not send midi port index update to the UI. Exiting.");
                         } else {
                             close_midi_input_connection(&mut input_listener_arc);
                         };
@@ -158,6 +158,13 @@ impl Midi {
                             .lock()
                             .unwrap_or_else(PoisonError::into_inner);
                         *current_channel = channel_index.parse().ok();
+
+                        let channel_index_number = current_channel.unwrap_or(0) as i32;
+                        ui_update_sender
+                            .send(UIUpdates::MidiChannelIndex(channel_index_number))
+                            .expect(
+                                "run(): Could not send midi channel update to the UI. Exiting.",
+                            );
                     }
                 }
             }
@@ -196,11 +203,12 @@ fn close_midi_input_connection(
     log::info!("close_midi_input_connection(): MIDI input connection closed.");
 }
 
-fn midi_port_from_port_name(port_name: &str) -> Option<MidiInputPort> {
+fn midi_port_from_port_name(port_name: &str) -> Option<(usize, MidiInputPort)> {
     let midi_input = MidiInput::new(MIDI_INPUT_CLIENT_NAME).ok()?;
     midi_input
         .ports()
         .iter()
-        .find(|port| midi_input.port_name(port).unwrap_or_default() == port_name)
-        .cloned()
+        .enumerate()
+        .find(|port| midi_input.port_name(port.1).unwrap_or_default() == port_name)
+        .map(|port| (port.0, port.1.clone()))
 }

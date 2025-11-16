@@ -39,7 +39,8 @@ fn main() {
     log::debug!("Initialize the midi module");
     let mut midi = Midi::new();
 
-    let output_device_receiver = audio.get_sample_buffer_receiver();
+    let audio_sample_buffer_receiver = audio.get_sample_buffer_receiver();
+    let audio_output_device_sender = audio.get_device_update_sender();
     let midi_message_receiver = midi.get_midi_message_receiver();
     let midi_setting_update_sender = midi.get_device_update_sender();
     let ui_update_sender = ui.get_ui_update_sender();
@@ -49,10 +50,14 @@ fn main() {
     midi.run(ui_update_sender)
         .expect("Could not initialize midi module. Exiting.");
     synthesizer
-        .run(midi_message_receiver, output_device_receiver)
+        .run(midi_message_receiver, audio_sample_buffer_receiver)
         .expect("Could not initialize synthesizer module. Exiting.");
-    ui.run(application.as_weak(), midi_setting_update_sender)
-        .expect("Could build the user interface. Exiting.");
+    ui.run(
+        application.as_weak(),
+        midi_setting_update_sender,
+        audio_output_device_sender,
+    )
+    .expect("Could build the user interface. Exiting.");
 
     // Temporary run loop to keep the application alive until I add the ui loop to replace it
     println!("Will Loop Forever. Press Ctrl-c to Exit");

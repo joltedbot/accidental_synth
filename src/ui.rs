@@ -8,10 +8,12 @@ use slint::{ModelRc, SharedString, VecModel, Weak};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+use crate::audio::AudioDeviceEvent;
 use crate::midi::MidiDeviceEvent;
 use crate::ui::callbacks::register_callbacks;
 use crate::ui::constants::{
     AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET, AUDIO_DEVICE_CHANNEL_NULL_VALUE, MIDI_CHANNEL_LIST,
+    MONO_CHANNEL_COUNT,
 };
 use crate::ui::structs::{UIAudioDevice, UIMidiPort};
 use anyhow::Result;
@@ -25,11 +27,8 @@ pub enum UIUpdates {
     MidiChannelIndex(i32),
     AudioDeviceList(Vec<String>),
     AudioDeviceIndex(i32),
-    AudioDeviceChannels {
-        left: i32,
-        right: Option<i32>,
-        count: u16,
-    },
+    AudioDeviceChannelCount(u16),
+    AudioDeviceChannelIndexes { left: i32, right: i32 },
 }
 
 pub struct UI {
@@ -75,9 +74,14 @@ impl UI {
         &mut self,
         ui_weak: Weak<AccidentalSynth>,
         midi_update_sender: Sender<MidiDeviceEvent>,
+        audio_output_device_sender: Sender<AudioDeviceEvent>,
     ) -> Result<()> {
         let ui_update_receiver = self.ui_update_receiver.clone();
-        register_callbacks(ui_weak.clone(), midi_update_sender)?;
+        register_callbacks(
+            ui_weak.clone(),
+            midi_update_sender,
+            audio_output_device_sender,
+        )?;
         self.set_ui_default_values(ui_weak.clone())?;
 
         self.start_ui_update_listener(ui_update_receiver, ui_weak.clone())?;
@@ -136,11 +140,15 @@ impl UI {
                     UIUpdates::AudioDeviceIndex(index) => {
                         set_audio_device_index(&ui_weak_thread, &audio_device_values, index);
                     }
-                    UIUpdates::AudioDeviceChannels { left, right, count } => {
-                        set_audio_device_channels(
+                    UIUpdates::AudioDeviceChannelCount(count) => {
+                        set_audio_device_channel_list(&ui_weak_thread, &audio_device_values, count);
+                    }
+                    UIUpdates::AudioDeviceChannelIndexes { left, right } => {
+                        set_audio_device_channel_indexes(
                             &ui_weak_thread,
                             &audio_device_values,
-                            (left, right, count),
+                            left,
+                            right,
                         );
                     }
                 }
@@ -226,27 +234,48 @@ fn set_audio_device_index(
     });
 }
 
-fn set_audio_device_channels(
+fn set_audio_device_channel_list(
     ui_weak_thread: &Weak<AccidentalSynth>,
     audio_device_values: &Arc<Mutex<UIAudioDevice>>,
-    channels: (i32, Option<i32>, u16),
+    channel_count: u16,
 ) {
     let mut audio_devices = audio_device_values
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
     let mut device_channels: Vec<String> = vec![];
-    for channel in 0..channels.2 {
+    for channel in 0..channel_count {
         device_channels.push((channel + AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET).to_string());
     }
 
-    audio_devices.left_channel_index = channels.0;
     audio_devices.left_channels = device_channels.clone();
-    if let Some(channel) = channels.1 {
+    if channel_count > MONO_CHANNEL_COUNT {
         audio_devices.right_channels = device_channels;
-        audio_devices.right_channel_index = channel;
     } else {
         audio_devices.right_channels = vec![];
+    };
+
+    let ui_audio_devices = audio_devices.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(ui_audio_devices));
+    });
+}
+
+fn set_audio_device_channel_indexes(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    audio_device_values: &Arc<Mutex<UIAudioDevice>>,
+    left_chanel_index: i32,
+    right_channel_index: i32,
+) {
+    let mut audio_devices = audio_device_values
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    audio_devices.left_channel_index = left_chanel_index;
+
+    if right_channel_index != AUDIO_DEVICE_CHANNEL_NULL_VALUE {
+        audio_devices.right_channel_index = right_channel_index;
+    } else {
         audio_devices.right_channel_index = AUDIO_DEVICE_CHANNEL_NULL_VALUE;
     };
 
