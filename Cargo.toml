@@ -6,7 +6,7 @@ authors = ["Dave White"]
 license = "Apache-2.0"
 edition = "2024"
 publish = false
-#build = "build.rs"
+build = "build.rs"
 
 [profile.release]
 debug = false

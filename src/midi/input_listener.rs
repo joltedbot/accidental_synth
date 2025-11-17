@@ -11,6 +11,7 @@ use anyhow::Result;
 use crossbeam_channel::Sender;
 use midir::{MidiInput, MidiInputConnection, MidiInputPort};
 use std::sync::{Arc, Mutex, PoisonError};
+use midir::os::unix::VirtualInput;
 
 pub fn create_midi_input_listener(
     input_port: &MidiInputPort,
@@ -23,6 +24,31 @@ pub fn create_midi_input_listener(
 
     let connection_result = midi_input.connect(
         input_port,
+        MIDI_INPUT_CONNECTION_NAME,
+        move |_, message, ()| {
+            process_midi_message(
+                message,
+                &current_channel_arc,
+                &midi_message_sender,
+                &current_note_arc,
+            );
+        },
+        (),
+    )?;
+
+    Ok(connection_result)
+}
+
+
+pub fn create_midi_virtual_input(
+    current_channel_arc: Arc<Mutex<Option<u8>>>,
+    midi_message_sender: Sender<Event>,
+    current_note_arc: Arc<Mutex<Option<u8>>>,
+) -> Result<MidiInputConnection<()>> {
+    let mut midi_input = MidiInput::new(MIDI_INPUT_CLIENT_NAME)?;
+    midi_input.ignore(MESSAGE_TYPE_IGNORE_LIST);
+
+    let connection_result = midi_input.create_virtual(
         MIDI_INPUT_CONNECTION_NAME,
         move |_, message, ()| {
             process_midi_message(

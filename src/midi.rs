@@ -4,7 +4,7 @@ pub mod device_monitor;
 pub mod input_listener;
 
 use crate::midi::constants::MIDI_MESSAGE_SENDER_CAPACITY;
-use crate::midi::input_listener::create_midi_input_listener;
+use crate::midi::input_listener::{create_midi_input_listener, create_midi_virtual_input};
 use anyhow::Result;
 use control_change::CC;
 use crossbeam_channel::{Receiver, Sender};
@@ -37,6 +37,7 @@ pub struct Midi {
     message_sender: Sender<Event>,
     message_receiver: Receiver<Event>,
     input_listener: Arc<Mutex<Option<MidiInputConnection<()>>>>,
+    virtual_input_port: Arc<Mutex<Option<MidiInputConnection<()>>>>,
     current_note: Arc<Mutex<Option<u8>>>,
     current_channel: Arc<Mutex<Option<u8>>>,
 }
@@ -52,6 +53,7 @@ impl Midi {
             message_sender: midi_message_sender,
             message_receiver: midi_message_receiver,
             input_listener: Arc::new(Mutex::new(None)),
+            virtual_input_port: Arc::new(Mutex::new(None)),
             current_note: Arc::new(Mutex::new(None)),
             current_channel: Arc::new(Mutex::new(None)),
         }
@@ -62,15 +64,39 @@ impl Midi {
     }
 
     pub fn run(&mut self, show_menu: bool) -> Result<()> {
-        log::debug!("Creating MIDI input port monitor.");
+        log::info!("Creating MIDI input port monitor.");
         let mut device_monitor = device_monitor::DeviceMonitor::new();
 
-        log::debug!("Creating MIDI input connection listener.");
+        log::debug!("run(): Creating Virutal Midi Input Device.");
+        self.create_virtual_input_port()?;
+
+        log::info!("run(): Creating MIDI input connection listener.");
         let input_port_receiver = device_monitor.get_input_port_receiver();
         self.create_control_listener(input_port_receiver);
 
-        log::debug!("run(): Running the midi device monitor");
+        log::info!("run(): Running the midi device monitor");
         device_monitor.run(show_menu)?;
+
+        Ok(())
+    }
+
+    fn create_virtual_input_port(&self) -> Result<()> {
+        let virtual_input_port_arc = self.virtual_input_port.clone();
+        let current_channel_arc = self.current_channel.clone();
+        let message_sender_arc = self.message_sender.clone();
+        let current_note_arc = self.current_note.clone();
+
+        let new_virtual_input_port = create_midi_virtual_input(
+            current_channel_arc.clone(),
+            message_sender_arc.clone(),
+            current_note_arc.clone(),
+        )?;
+
+        let mut virtual_input_port = virtual_input_port_arc
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+
+        *virtual_input_port = Some(new_virtual_input_port);
 
         Ok(())
     }

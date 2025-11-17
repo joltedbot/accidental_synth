@@ -37,15 +37,20 @@ impl DeviceMonitor {
         // THIS IS ONLY FOR TEST REMOVE WHEN UI CAN SET DEVICES
         let temp_index = if show_menu {
             let ports = midi_input.ports();
-            println!("Midi Devices Found");
-            ports.iter().enumerate().for_each(|(i, port)| {
-                println!("[{}] {}", i, midi_input.port_name(port).unwrap());
-            });
-            println!("Choose Midi Input Device");
-            let line = std::io::stdin().lines().next().unwrap()?;
-            let index: usize = line.trim().parse()?;
-            println!("You chose: {index}");
-            Some(index)
+            if ports.is_empty() {
+                println!("No available MIDI ports. Continuing with only the virtual input port.");
+                None
+            } else {
+                println!("Midi Devices Found");
+                ports.iter().enumerate().for_each(|(i, port)| {
+                    println!("[{}] {}", i, midi_input.port_name(port).unwrap());
+                });
+                println!("Choose Midi Input Device");
+                let line = std::io::stdin().lines().next().unwrap()?;
+                let index: usize = line.trim().parse()?;
+                println!("You chose: {index}");
+                Some(index)
+            }
         } else {
             None
         };
