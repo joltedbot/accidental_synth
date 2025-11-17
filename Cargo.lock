@@ -806,15 +806,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-<<<<<<< HEAD
-version = "1.2.45"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35900b6c8d709fb1d854671ae27aeaa9eec2f8b01b364e1619a40da3e6fe2afe"
-=======
 version = "1.2.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b97463e1064cb1b1c1384ad0a0b9c8abd0988e2a91f52606c80ef14aadb63e36"
->>>>>>> refs/remotes/origin/main
 dependencies = [
  "find-msvc-tools",
  "jobserver",
@@ -5400,15 +5394,9 @@ dependencies = [
 
 [[package]]
 name = "weezl"
-<<<<<<< HEAD
-version = "0.1.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "009936b22a61d342859b5f0ea64681cbb35a358ab548e2a44a8cf0dac2d980b8"
-=======
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a28ac98ddc8b9274cb41bb4d9d4d5c425b6020c50c46f25559911905610b4a88"
->>>>>>> refs/remotes/origin/main
 
 [[package]]
 name = "winapi"

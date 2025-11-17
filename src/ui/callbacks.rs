@@ -2,7 +2,6 @@ use crate::AccidentalSynth;
 use crate::audio::AudioDeviceEvent;
 use crate::midi::MidiDeviceEvent;
 use crate::ui::constants::AUDIO_DEVICE_CHANNEL_NULL_VALUE;
-use anyhow::Result;
 use crossbeam_channel::Sender;
 use slint::Weak;
 
@@ -10,15 +9,13 @@ pub fn register_callbacks(
     ui_weak: Weak<AccidentalSynth>,
     midi_update_sender: Sender<MidiDeviceEvent>,
     audio_output_device_sender: Sender<AudioDeviceEvent>,
-) -> Result<()> {
+) {
     callback_midi_input_channel_changed(&ui_weak, midi_update_sender.clone());
     callback_midi_input_port_changed(&ui_weak, midi_update_sender);
     callback_audio_output_device_changed(&ui_weak, audio_output_device_sender.clone());
     callback_audio_output_left_channel_changed(&ui_weak, audio_output_device_sender.clone());
     callback_audio_output_right_channel_changed(&ui_weak, audio_output_device_sender.clone());
     callback_audio_sample_rate_changed(&ui_weak);
-
-    Ok(())
 }
 
 fn callback_midi_input_channel_changed(

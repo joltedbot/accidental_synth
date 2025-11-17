@@ -25,34 +25,8 @@ impl DeviceMonitor {
         let input_port_sender = self.device_update_sender.clone();
         let midi_input = MidiInput::new(MIDI_INPUT_CLIENT_NAME)?;
         let mut current_port_list = MidiInputPorts::new();
-<<<<<<< HEAD
-        let mut current_port: Option<MidiInputPort> = None;
 
-        // THIS IS ONLY FOR TEST REMOVE WHEN UI CAN SET DEVICES
-        let temp_index = if show_menu {
-            let ports = midi_input.ports();
-            if ports.is_empty() {
-                println!("No available MIDI ports. Continuing with only the virtual input port.");
-                None
-            } else {
-                println!("Midi Devices Found");
-                ports.iter().enumerate().for_each(|(i, port)| {
-                    println!("[{}] {}", i, midi_input.port_name(port).unwrap());
-                });
-                println!("Choose Midi Input Device");
-                let line = std::io::stdin().lines().next().unwrap()?;
-                let index: usize = line.trim().parse()?;
-                println!("You chose: {index}");
-                Some(index)
-            }
-        } else {
-            None
-        };
-        // END TEST BLOCK
-=======
         let mut current_port: Option<(usize, MidiInputPort)> = None;
->>>>>>> refs/remotes/origin/main
-
         thread::spawn(move || {
             loop {
                 let port_list_changed =

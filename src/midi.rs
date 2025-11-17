@@ -3,14 +3,10 @@ pub mod control_change;
 pub mod device_monitor;
 pub mod input_listener;
 
-<<<<<<< HEAD
-use crate::midi::constants::MIDI_MESSAGE_SENDER_CAPACITY;
 use crate::midi::input_listener::{create_midi_input_listener, create_midi_virtual_input};
-=======
 use crate::midi::constants::{MIDI_INPUT_CLIENT_NAME, MIDI_MESSAGE_SENDER_CAPACITY};
-use crate::midi::input_listener::create_midi_input_listener;
 use crate::ui::UIUpdates;
->>>>>>> refs/remotes/origin/main
+
 use anyhow::Result;
 use control_change::CC;
 use crossbeam_channel::{Receiver, Sender};
@@ -84,21 +80,6 @@ impl Midi {
         self.message_receiver.clone()
     }
 
-<<<<<<< HEAD
-    pub fn run(&mut self, show_menu: bool) -> Result<()> {
-        log::info!("Creating MIDI input port monitor.");
-        let mut device_monitor = device_monitor::DeviceMonitor::new();
-
-        log::debug!("run(): Creating Virutal Midi Input Device.");
-        self.create_virtual_input_port()?;
-
-        log::info!("run(): Creating MIDI input connection listener.");
-        let input_port_receiver = device_monitor.get_input_port_receiver();
-        self.create_control_listener(input_port_receiver);
-
-        log::info!("run(): Running the midi device monitor");
-        device_monitor.run(show_menu)?;
-=======
     pub fn get_device_update_sender(&self) -> Sender<MidiDeviceEvent> {
         self.device_update_sender.clone()
     }
@@ -108,17 +89,19 @@ impl Midi {
         let mut device_monitor =
             device_monitor::DeviceMonitor::new(self.get_device_update_sender());
 
+        log::debug!("run(): Creating Virutal Midi Input Device.");
+        self.create_virtual_input_port()?;
+
         log::debug!("Creating MIDI input connection listener.");
         self.create_control_listener(self.ui_update_receiver.clone(), ui_update_sender);
 
         log::debug!("run(): Running the midi device monitor");
         device_monitor.run()?;
->>>>>>> refs/remotes/origin/main
 
         Ok(())
     }
 
-<<<<<<< HEAD
+
     fn create_virtual_input_port(&self) -> Result<()> {
         let virtual_input_port_arc = self.virtual_input_port.clone();
         let current_channel_arc = self.current_channel.clone();
@@ -140,14 +123,11 @@ impl Midi {
         Ok(())
     }
 
-    fn create_control_listener(&mut self, input_port_receiver: Receiver<Option<MidiInputPort>>) {
-=======
     fn create_control_listener(
         &mut self,
         device_update_receiver: Receiver<MidiDeviceEvent>,
         ui_update_sender: Sender<UIUpdates>,
     ) {
->>>>>>> refs/remotes/origin/main
         let mut input_listener_arc = self.input_listener.clone();
         let current_channel_arc = self.current_channel.clone();
         let message_sender_arc = self.message_sender.clone();

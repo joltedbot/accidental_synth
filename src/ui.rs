@@ -81,7 +81,7 @@ impl UI {
             ui_weak.clone(),
             midi_update_sender,
             audio_output_device_sender,
-        )?;
+        );
         self.set_ui_default_values(ui_weak.clone())?;
 
         self.start_ui_update_listener(ui_update_receiver, ui_weak.clone())?;
