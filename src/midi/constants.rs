@@ -5,7 +5,6 @@ pub const CC_MESSAGE_NUMBER_BYTE_INDEX: usize = 1;
 pub const CC_MESSAGE_VALUE_BYTE_INDEX: usize = 2;
 pub const CHANNEL_PRESSURE_VALUE_BYTE_INDEX: usize = 1;
 pub const DEVICE_LIST_POLLING_INTERVAL: u64 = 2000;
-pub const INPUT_PORT_SENDER_CAPACITY: usize = 5;
 pub const MESSAGE_TYPE_IGNORE_LIST: Ignore = Ignore::SysexAndTime;
 pub const MESSAGE_STATUS_BYTE_CHANNEL_MASK: u8 = 0x0F;
 pub const MESSAGE_STATUS_BYTE_INDEX: usize = 0;

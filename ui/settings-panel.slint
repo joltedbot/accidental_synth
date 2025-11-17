@@ -37,9 +37,14 @@ export component AudioSettings inherits VerticalLayout {
     callback audio-output-left-channel-changed(string);
     callback audio-output-right-channel-changed(string);
     callback audio-sample-rate-changed(string);
+    callback reload-popupwindow();
 
     padding: Theme.osc-controls-panel-padding;
     spacing: Theme.osc-controls-panel-spacing;
+
+    changed audio-device-values => {
+        reload-popupwindow();
+    }
 
     device := DropDownMenu {
         label: "Output Device";
@@ -69,13 +74,14 @@ export component AudioSettings inherits VerticalLayout {
             value-list: audio-device-values.right-channels;
             value-index: audio-device-values.right-channel-index;
             drop_down_changed(right) => {
-                audio-output-left-channel-changed(right);
+                audio-output-right-channel-changed(right);
             }
         }
     }
 
     sample := DropDownMenu {
         label: "Sample Rate";
+        enabled: false;
         dropdown-width: Theme.oscillator-panel-widget-width;
         value-list: audio-device-values.sample-rates;
         value-index: audio-device-values.sample-rate-index;
@@ -90,6 +96,12 @@ export component MidiSettings inherits VerticalLayout {
 
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
+    callback reload-popupwindow();
+
+    changed midi-port-values => {
+        reload-popupwindow();
+    }
+
 
     padding: Theme.osc-controls-panel-padding;
     spacing: Theme.osc-controls-panel-spacing;
@@ -179,6 +191,10 @@ export component SettingsWindow inherits PopupWindow {
                     AudioSettings {
                         audio-device-values: audio-device-values;
 
+                        reload-popupwindow() => {
+                            root.show();
+                        }
+
                         audio-output-device-changed(device) => {
                             audio-output-device-changed(device);
                         }
@@ -205,6 +221,11 @@ export component SettingsWindow inherits PopupWindow {
 
                     MidiSettings {
                         midi-port-values: midi-port-values;
+
+                        reload-popupwindow() => {
+                            root.show();
+                        }
+
                         midi-input-port-changed(port) => {
                             midi-input-port-changed(port);
                         }

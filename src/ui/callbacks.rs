@@ -1,0 +1,102 @@
+use crate::AccidentalSynth;
+use crate::audio::AudioDeviceEvent;
+use crate::midi::MidiDeviceEvent;
+use crate::ui::constants::AUDIO_DEVICE_CHANNEL_NULL_VALUE;
+use anyhow::Result;
+use crossbeam_channel::Sender;
+use slint::Weak;
+
+pub fn register_callbacks(
+    ui_weak: Weak<AccidentalSynth>,
+    midi_update_sender: Sender<MidiDeviceEvent>,
+    audio_output_device_sender: Sender<AudioDeviceEvent>,
+) -> Result<()> {
+    callback_midi_input_channel_changed(&ui_weak, midi_update_sender.clone());
+    callback_midi_input_port_changed(&ui_weak, midi_update_sender);
+    callback_audio_output_device_changed(&ui_weak, audio_output_device_sender.clone());
+    callback_audio_output_left_channel_changed(&ui_weak, audio_output_device_sender.clone());
+    callback_audio_output_right_channel_changed(&ui_weak, audio_output_device_sender.clone());
+    callback_audio_sample_rate_changed(&ui_weak);
+
+    Ok(())
+}
+
+fn callback_midi_input_channel_changed(
+    ui_weak: &Weak<AccidentalSynth>,
+    midi_update_sender: Sender<MidiDeviceEvent>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_midi_input_channel_changed(move |channel| {
+            midi_update_sender.send(MidiDeviceEvent::UIMidiInputChannelIndexUpdated(channel.to_string())).expect(
+                "callback_midi_input_port_changed(): Could not send new midi port name update to the midi module. \
+                Exiting. ",
+            );
+        });
+    }
+}
+
+fn callback_midi_input_port_changed(
+    ui_weak: &Weak<AccidentalSynth>,
+    midi_update_sender: Sender<MidiDeviceEvent>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_midi_input_port_changed(move |port|{
+            midi_update_sender.send(MidiDeviceEvent::UIMidiInputPortUpdated(port.to_string())).expect(
+                "callback_midi_input_port_changed(): Could not send new midi port name update to the midi module. \
+                Exiting. ",
+            );
+        });
+    }
+}
+
+fn callback_audio_output_device_changed(
+    ui_weak: &Weak<AccidentalSynth>,
+    audio_output_device_sender: Sender<AudioDeviceEvent>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_audio_output_device_changed(move |device| {
+            audio_output_device_sender.send(AudioDeviceEvent::UIOutputDeviceUpdate(device.to_string())).expect(
+                "callback_audio_output_device_changed(): Could not send new audio output deviceupdate to the audio module.Exiting.",
+            );
+        });
+    }
+}
+
+fn callback_audio_output_left_channel_changed(
+    ui_weak: &Weak<AccidentalSynth>,
+    audio_output_device_sender: Sender<AudioDeviceEvent>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_audio_output_left_channel_changed(move |channel| {
+            let channel_number = channel.parse::<i32>().unwrap_or(AUDIO_DEVICE_CHANNEL_NULL_VALUE);
+            audio_output_device_sender.send(AudioDeviceEvent::UIOutputDeviceLeftChannelUpdate(channel_number)).expect(
+                "callback_audio_output_device_changed(): Could not send new audio output deviceupdate to the audio module.Exiting.",
+            );
+        });
+    }
+}
+
+fn callback_audio_output_right_channel_changed(
+    ui_weak: &Weak<AccidentalSynth>,
+    audio_output_device_sender: Sender<AudioDeviceEvent>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_audio_output_right_channel_changed(move |channel| {
+            let channel_number = channel.parse::<i32>().unwrap_or(AUDIO_DEVICE_CHANNEL_NULL_VALUE);
+            audio_output_device_sender.send(AudioDeviceEvent::UIOutputDeviceRightChannelUpdate(channel_number))
+                .expect(
+                "callback_audio_output_device_changed(): Could not send new audio output deviceupdate to the audio module.Exiting.",
+            );
+        });
+    }
+}
+
+fn callback_audio_sample_rate_changed(
+    ui_weak: &Weak<AccidentalSynth>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_audio_sample_rate_changed(|channel| {
+            println!("Audio sample rate changed. {}", channel);
+        });
+    }
+}
