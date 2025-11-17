@@ -55,15 +55,8 @@ pub fn create_synthesizer(
 
     log::info!("Creating the synthesizer audio loop at sample rate: {sample_rate}");
 
-    thread::sleep(Duration::from_secs(1));
-
     thread::spawn(move || {
         loop {
-            // Check for a new sample buffer producer
-            if let Ok(new_sample_buffer) = sample_buffer_receiver.try_recv() {
-                sample_buffer = new_sample_buffer;
-            }
-
             // Process the module parameters per buffer
             amp_envelope.set_parameters(&module_parameters.amp_envelope);
             filter_envelope.set_parameters(&module_parameters.filter_envelope);
@@ -130,6 +123,21 @@ pub fn create_synthesizer(
 
             // Wait for sample_buffer to have enough capacity to accept local_buffer, then break to restart main loop
             loop {
+                if sample_buffer.is_abandoned() {
+                    log::debug!("create_synthesizer(): The sample buffer has been abandoned, Blocking till we receive a\
+                     new one");
+                    if let Ok(new_sample_buffer) = sample_buffer_receiver.recv() {
+                        sample_buffer = new_sample_buffer;
+                    }
+                    log::debug!("create_synthesizer(): Receive a new sample buffer. Continuing");
+                }
+
+                // Check for a new sample buffer producer
+                if let Ok(new_sample_buffer) = sample_buffer_receiver.try_recv() {
+                    sample_buffer = new_sample_buffer;
+                    log::debug!("create_synthesizer(): Receive a new sample buffer. Replacing the old one");
+                }
+
                 if let Ok(chunk) = sample_buffer.write_chunk_uninit(LOCAL_BUFFER_CAPACITY) {
                     _ = chunk.fill_from_iter(local_buffer);
                     break;
@@ -138,6 +146,9 @@ pub fn create_synthesizer(
                 thread::sleep(Duration::from_micros(
                     SAMPLE_PRODUCER_LOOP_SLEEP_DURATION_MICROSECONDS,
                 ));
+
+
+
             }
         }
     });
