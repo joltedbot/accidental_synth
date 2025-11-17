@@ -3,8 +3,8 @@ pub mod control_change;
 pub mod device_monitor;
 pub mod input_listener;
 
-use crate::midi::input_listener::{create_midi_input_listener, create_midi_virtual_input};
 use crate::midi::constants::{MIDI_INPUT_CLIENT_NAME, MIDI_MESSAGE_SENDER_CAPACITY};
+use crate::midi::input_listener::{create_midi_input_listener, create_midi_virtual_input};
 use crate::ui::UIUpdates;
 
 use anyhow::Result;
@@ -100,7 +100,6 @@ impl Midi {
 
         Ok(())
     }
-
 
     fn create_virtual_input_port(&self) -> Result<()> {
         let virtual_input_port_arc = self.virtual_input_port.clone();

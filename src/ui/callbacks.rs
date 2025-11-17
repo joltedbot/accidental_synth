@@ -53,7 +53,7 @@ fn callback_audio_output_device_changed(
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_audio_output_device_changed(move |device| {
             audio_output_device_sender.send(AudioDeviceEvent::UIOutputDeviceUpdate(device.to_string())).expect(
-                "callback_audio_output_device_changed(): Could not send new audio output deviceupdate to the audio module.Exiting.",
+                "callback_audio_output_device_changed(): Could not send new audio output device update to the audio module.Exiting.",
             );
         });
     }
@@ -67,7 +67,7 @@ fn callback_audio_output_left_channel_changed(
         ui.on_audio_output_left_channel_changed(move |channel| {
             let channel_number = channel.parse::<i32>().unwrap_or(AUDIO_DEVICE_CHANNEL_NULL_VALUE);
             audio_output_device_sender.send(AudioDeviceEvent::UIOutputDeviceLeftChannelUpdate(channel_number)).expect(
-                "callback_audio_output_device_changed(): Could not send new audio output deviceupdate to the audio module.Exiting.",
+                "callback_audio_output_device_changed(): Could not send new audio output device update to the audio module.Exiting.",
             );
         });
     }
@@ -82,15 +82,13 @@ fn callback_audio_output_right_channel_changed(
             let channel_number = channel.parse::<i32>().unwrap_or(AUDIO_DEVICE_CHANNEL_NULL_VALUE);
             audio_output_device_sender.send(AudioDeviceEvent::UIOutputDeviceRightChannelUpdate(channel_number))
                 .expect(
-                "callback_audio_output_device_changed(): Could not send new audio output deviceupdate to the audio module.Exiting.",
+                "callback_audio_output_device_changed(): Could not send new audio output device update to the audio module.Exiting.",
             );
         });
     }
 }
 
-fn callback_audio_sample_rate_changed(
-    ui_weak: &Weak<AccidentalSynth>,
-) {
+fn callback_audio_sample_rate_changed(ui_weak: &Weak<AccidentalSynth>) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_audio_sample_rate_changed(|channel| {
             println!("Audio sample rate changed. {}", channel);

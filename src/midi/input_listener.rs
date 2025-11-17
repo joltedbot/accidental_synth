@@ -9,9 +9,9 @@ use crate::midi::constants::{
 use crate::midi::{Event, Status, control_change};
 use anyhow::Result;
 use crossbeam_channel::Sender;
+use midir::os::unix::VirtualInput;
 use midir::{MidiInput, MidiInputConnection, MidiInputPort};
 use std::sync::{Arc, Mutex, PoisonError};
-use midir::os::unix::VirtualInput;
 
 pub fn create_midi_input_listener(
     input_port: &MidiInputPort,
@@ -38,7 +38,6 @@ pub fn create_midi_input_listener(
 
     Ok(connection_result)
 }
-
 
 pub fn create_midi_virtual_input(
     current_channel_arc: Arc<Mutex<Option<u8>>>,
