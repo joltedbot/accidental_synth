@@ -197,6 +197,11 @@ fn create_control_listener(
                         String::new()
                     };
 
+
+                    if let Some(stream) = audio_output_stream {
+                        stream.pause();
+                    }
+
                     update_the_current_channels(
                         &current_output_channels,
                         Option::from(&new_output_device),
@@ -275,6 +280,10 @@ fn create_control_listener(
                             } else {
                                 String::new()
                             };
+
+                        if let Some(stream) = audio_output_stream {
+                            stream.pause();
+                        }
 
                         update_the_current_channels(
                             &current_output_channels,
