@@ -100,9 +100,9 @@ fn map_value_from_linear_to_exponential_scale(
     let exponential_rate =
         (output_range.1.ln() - output_range.0.ln()) / (input_range.1 - input_range.0);
 
-    let scaling_coeficient = output_range.0 / (exponential_rate * input_range.0).exp();
+    let scaling_coefficient = output_range.0 / (exponential_rate * input_range.0).exp();
 
-    let output_value = scaling_coeficient * (exponential_rate * input_value).exp();
+    let output_value = scaling_coefficient * (exponential_rate * input_value).exp();
     let scaled_output_value = (output_value - output_range.0) / (output_range.1 - output_range.0);
 
     scaled_output_value.clamp(0.0, 1.0)

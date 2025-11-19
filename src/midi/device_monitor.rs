@@ -1,4 +1,4 @@
-use crate::midi::MidiDeviceEvent;
+use crate::midi::MidiDeviceUpdateEvents;
 use crate::midi::constants::{
     DEFAULT_MIDI_PORT_INDEX, DEVICE_LIST_POLLING_INTERVAL, MIDI_INPUT_CLIENT_NAME,
     UNKNOWN_MIDI_PORT_NAME_MESSAGE,
@@ -11,11 +11,11 @@ use std::thread::sleep;
 use std::time::Duration;
 
 pub struct DeviceMonitor {
-    device_update_sender: Sender<MidiDeviceEvent>,
+    device_update_sender: Sender<MidiDeviceUpdateEvents>,
 }
 
 impl DeviceMonitor {
-    pub fn new(device_update_sender: Sender<MidiDeviceEvent>) -> Self {
+    pub fn new(device_update_sender: Sender<MidiDeviceUpdateEvents>) -> Self {
         Self {
             device_update_sender,
         }
@@ -38,13 +38,13 @@ impl DeviceMonitor {
                         .filter_map(|port| midi_input.port_name(port).ok())
                         .collect::<Vec<String>>();
 
-                    input_port_sender.send(MidiDeviceEvent::InputPortListUpdated(midi_port_names)).expect(
+                    input_port_sender.send(MidiDeviceUpdateEvents::InputPortList(midi_port_names)).expect(
                         "run(): Could not send midi port list update to the input port sender. Exiting. ",
                     );
 
                     update_current_port(&current_port_list, &mut current_port);
 
-                    input_port_sender.send(MidiDeviceEvent::InputPortUpdated(current_port.clone())).expect(
+                    input_port_sender.send(MidiDeviceUpdateEvents::InputPort(current_port.clone())).expect(
                         "run(): Could not send midi port update to the input port sender. Exiting. ",
                     );
                 }

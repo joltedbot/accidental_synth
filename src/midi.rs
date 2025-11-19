@@ -27,11 +27,11 @@ enum Status {
 }
 
 #[derive(PartialEq, Clone)]
-pub enum MidiDeviceEvent {
-    InputPortListUpdated(Vec<String>),
-    InputPortUpdated(Option<(usize, MidiInputPort)>),
-    UIMidiInputPortUpdated(String),
-    UIMidiInputChannelIndexUpdated(String),
+pub enum MidiDeviceUpdateEvents {
+    InputPortList(Vec<String>),
+    InputPort(Option<(usize, MidiInputPort)>),
+    UIMidiInputPort(String),
+    UIMidiInputChannelIndex(String),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -46,8 +46,8 @@ pub enum Event {
 pub struct Midi {
     message_sender: Sender<Event>,
     message_receiver: Receiver<Event>,
-    ui_update_receiver: Receiver<MidiDeviceEvent>,
-    device_update_sender: Sender<MidiDeviceEvent>,
+    ui_update_receiver: Receiver<MidiDeviceUpdateEvents>,
+    device_update_sender: Sender<MidiDeviceUpdateEvents>,
     input_listener: Arc<Mutex<Option<MidiInputConnection<()>>>>,
     virtual_input_port: Arc<Mutex<Option<MidiInputConnection<()>>>>,
     current_note: Arc<Mutex<Option<u8>>>,
@@ -80,7 +80,7 @@ impl Midi {
         self.message_receiver.clone()
     }
 
-    pub fn get_device_update_sender(&self) -> Sender<MidiDeviceEvent> {
+    pub fn get_device_update_sender(&self) -> Sender<MidiDeviceUpdateEvents> {
         self.device_update_sender.clone()
     }
 
@@ -89,7 +89,7 @@ impl Midi {
         let mut device_monitor =
             device_monitor::DeviceMonitor::new(self.get_device_update_sender());
 
-        log::debug!("run(): Creating Virutal Midi Input Device.");
+        log::debug!("run(): Creating Virtual Midi Input Device.");
         self.create_virtual_input_port()?;
 
         log::debug!("Creating MIDI input connection listener.");
@@ -124,7 +124,7 @@ impl Midi {
 
     fn create_control_listener(
         &mut self,
-        device_update_receiver: Receiver<MidiDeviceEvent>,
+        device_update_receiver: Receiver<MidiDeviceUpdateEvents>,
         ui_update_sender: Sender<UIUpdates>,
     ) {
         let mut input_listener_arc = self.input_listener.clone();
@@ -137,14 +137,14 @@ impl Midi {
 
             while let Ok(update) = device_update_receiver.recv() {
                 match update {
-                    MidiDeviceEvent::InputPortListUpdated(input_ports) => {
+                    MidiDeviceUpdateEvents::InputPortList(input_ports) => {
                         ui_update_sender
                             .send(UIUpdates::MidiPortList(input_ports))
                             .expect(
                                 "run(): Could not send midi port list update to the UI. Exiting.",
                             );
                     }
-                    MidiDeviceEvent::InputPortUpdated(input_port) => {
+                    MidiDeviceUpdateEvents::InputPort(input_port) => {
                         if let Some(port) = input_port {
                             reload_midi_input_listener(
                                 &mut input_listener_arc,
@@ -160,9 +160,9 @@ impl Midi {
                                     "run(): Could not send midi port list update to the UI. Exiting.");
                         } else {
                             close_midi_input_connection(&mut input_listener_arc);
-                        };
+                        }
                     }
-                    MidiDeviceEvent::UIMidiInputPortUpdated(port_name) => {
+                    MidiDeviceUpdateEvents::UIMidiInputPort(port_name) => {
                         if let Some(port) = midi_port_from_port_name(&port_name) {
                             reload_midi_input_listener(
                                 &mut input_listener_arc,
@@ -178,9 +178,9 @@ impl Midi {
                                     "run(): Could not send midi port index update to the UI. Exiting.");
                         } else {
                             close_midi_input_connection(&mut input_listener_arc);
-                        };
+                        }
                     }
-                    MidiDeviceEvent::UIMidiInputChannelIndexUpdated(channel_index) => {
+                    MidiDeviceUpdateEvents::UIMidiInputChannelIndex(channel_index) => {
                         let mut current_channel = current_channel_arc
                             .lock()
                             .unwrap_or_else(PoisonError::into_inner);
@@ -207,7 +207,7 @@ fn reload_midi_input_listener(
     port: &MidiInputPort,
 ) {
     let new_input_listener = create_midi_input_listener(
-        &port,
+        port,
         current_channel_arc.clone(),
         message_sender_arc.clone(),
         current_note_arc.clone(),

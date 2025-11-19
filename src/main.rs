@@ -53,7 +53,7 @@ fn main() {
         .run(midi_message_receiver, audio_sample_buffer_receiver)
         .expect("Could not initialize synthesizer module. Exiting.");
     ui.run(
-        application.as_weak(),
+        &application.as_weak(),
         midi_setting_update_sender,
         audio_output_device_sender,
     )

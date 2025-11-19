@@ -8,8 +8,8 @@ use slint::{ModelRc, SharedString, VecModel, Weak};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-use crate::audio::AudioDeviceEvent;
-use crate::midi::MidiDeviceEvent;
+use crate::audio::AudioDeviceUpdateEvents;
+use crate::midi::MidiDeviceUpdateEvents;
 use crate::ui::callbacks::register_callbacks;
 use crate::ui::constants::{
     AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET, AUDIO_DEVICE_CHANNEL_NULL_VALUE, MIDI_CHANNEL_LIST,
@@ -47,7 +47,7 @@ impl UI {
         let midi_port_values = UIMidiPort {
             channels: MIDI_CHANNEL_LIST
                 .iter()
-                .map(|channel| channel.to_string())
+                .map(std::string::ToString::to_string)
                 .collect(),
             ..Default::default()
         };
@@ -72,9 +72,9 @@ impl UI {
 
     pub fn run(
         &mut self,
-        ui_weak: Weak<AccidentalSynth>,
-        midi_update_sender: Sender<MidiDeviceEvent>,
-        audio_output_device_sender: Sender<AudioDeviceEvent>,
+        ui_weak: &Weak<AccidentalSynth>,
+        midi_update_sender: Sender<MidiDeviceUpdateEvents>,
+        audio_output_device_sender: Sender<AudioDeviceUpdateEvents>,
     ) -> Result<()> {
         let ui_update_receiver = self.ui_update_receiver.clone();
         register_callbacks(
@@ -82,14 +82,13 @@ impl UI {
             midi_update_sender,
             audio_output_device_sender,
         );
-        self.set_ui_default_values(ui_weak.clone())?;
-
-        self.start_ui_update_listener(ui_update_receiver, ui_weak.clone())?;
+        self.set_ui_default_values(ui_weak)?;
+        self.start_ui_update_listener(ui_update_receiver, ui_weak);
 
         Ok(())
     }
 
-    fn set_ui_default_values(&self, ui_weak: Weak<AccidentalSynth>) -> Result<()> {
+    fn set_ui_default_values(&self, ui_weak: &Weak<AccidentalSynth>) -> Result<()> {
         let midi_port_values = self.midi_port_values.clone();
         let audio_device_values = self.audio_device_values.clone();
 
@@ -98,14 +97,14 @@ impl UI {
 
             let midi_ports = midi_port_values
                 .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             let audio_devices = audio_device_values
                 .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
 
-            ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(midi_ports.clone()));
+            ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(&midi_ports));
             ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(
-                audio_devices.clone(),
+                &audio_devices,
             ));
         })?;
 
@@ -115,8 +114,8 @@ impl UI {
     fn start_ui_update_listener(
         &self,
         ui_update_receiver: Receiver<UIUpdates>,
-        ui_weak: Weak<AccidentalSynth>,
-    ) -> Result<()> {
+        ui_weak: &Weak<AccidentalSynth>,
+    ) {
         let midi_port_values = self.midi_port_values.clone();
         let audio_device_values = self.audio_device_values.clone();
         let ui_weak_thread = ui_weak.clone();
@@ -154,8 +153,6 @@ impl UI {
                 }
             }
         });
-
-        Ok(())
     }
 }
 
@@ -166,11 +163,11 @@ fn set_midi_port_list(
 ) {
     let mut midi_ports = midi_port_values
         .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     midi_ports.input_ports = port_list;
     let ui_midi_ports = midi_ports.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
-        ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(ui_midi_ports));
+        ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(&ui_midi_ports));
     });
 }
 
@@ -181,11 +178,11 @@ fn set_midi_port_index(
 ) {
     let mut midi_ports = midi_port_values
         .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     midi_ports.input_port_index = port_index;
     let ui_midi_ports = midi_ports.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
-        ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(ui_midi_ports));
+        ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(&ui_midi_ports));
     });
 }
 
@@ -196,11 +193,11 @@ fn set_midi_channel_index(
 ) {
     let mut midi_ports = midi_port_values
         .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     midi_ports.channel_index = channel_index;
     let ui_midi_ports = midi_ports.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
-        ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(ui_midi_ports));
+        ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(&ui_midi_ports));
     });
 }
 
@@ -211,11 +208,11 @@ fn set_audio_device_list(
 ) {
     let mut audio_devices = audio_device_values
         .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     audio_devices.output_devices = device_list;
     let ui_audio_devices = audio_devices.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
-        ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(ui_audio_devices));
+        ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(&ui_audio_devices));
     });
 }
 
@@ -226,11 +223,11 @@ fn set_audio_device_index(
 ) {
     let mut audio_devices = audio_device_values
         .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     audio_devices.output_device_index = audio_device_index;
     let ui_audio_devices = audio_devices.clone();
     let _ = ui_weak.upgrade_in_event_loop(move |ui| {
-        ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(ui_audio_devices));
+        ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(&ui_audio_devices));
     });
 }
 
@@ -241,23 +238,23 @@ fn set_audio_device_channel_list(
 ) {
     let mut audio_devices = audio_device_values
         .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
 
     let mut device_channels: Vec<String> = vec![];
     for channel in 0..channel_count {
         device_channels.push((channel + AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET).to_string());
     }
 
-    audio_devices.left_channels = device_channels.clone();
+    audio_devices.left_channels.clone_from(&device_channels);
     if channel_count > MONO_CHANNEL_COUNT {
         audio_devices.right_channels = device_channels;
     } else {
         audio_devices.right_channels = vec![];
-    };
+    }
 
     let ui_audio_devices = audio_devices.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
-        ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(ui_audio_devices));
+        ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(&ui_audio_devices));
     });
 }
 
@@ -269,23 +266,23 @@ fn set_audio_device_channel_indexes(
 ) {
     let mut audio_devices = audio_device_values
         .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner());
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
 
     audio_devices.left_channel_index = left_chanel_index;
 
-    if right_channel_index != AUDIO_DEVICE_CHANNEL_NULL_VALUE {
-        audio_devices.right_channel_index = right_channel_index;
-    } else {
+    if right_channel_index == AUDIO_DEVICE_CHANNEL_NULL_VALUE {
         audio_devices.right_channel_index = AUDIO_DEVICE_CHANNEL_NULL_VALUE;
-    };
+    } else {
+        audio_devices.right_channel_index = right_channel_index;
+    }
 
     let ui_audio_devices = audio_devices.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
-        ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(ui_audio_devices));
+        ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(&ui_audio_devices));
     });
 }
 
-fn slint_audio_device_from_ui_audio_device(audio_device_values: UIAudioDevice) -> AudioDevice {
+fn slint_audio_device_from_ui_audio_device(audio_device_values: &UIAudioDevice) -> AudioDevice {
     AudioDevice {
         output_device_index: audio_device_values.output_device_index,
         left_channel_index: audio_device_values.left_channel_index,
@@ -298,7 +295,7 @@ fn slint_audio_device_from_ui_audio_device(audio_device_values: UIAudioDevice) -
     }
 }
 
-fn slint_midi_port_from_ui_midi_port(midi_port_values: UIMidiPort) -> MidiPort {
+fn slint_midi_port_from_ui_midi_port(midi_port_values: &UIMidiPort) -> MidiPort {
     MidiPort {
         input_ports: vec_to_modelrc(&midi_port_values.input_ports),
         channels: vec_to_modelrc(&midi_port_values.channels),
@@ -307,11 +304,11 @@ fn slint_midi_port_from_ui_midi_port(midi_port_values: UIMidiPort) -> MidiPort {
     }
 }
 
-fn vec_to_modelrc(input_values: &Vec<String>) -> ModelRc<SharedString> {
+fn vec_to_modelrc(input_values: &[String]) -> ModelRc<SharedString> {
     ModelRc::new(VecModel::from(
         input_values
             .iter()
-            .map(|value| SharedString::from(value))
+            .map(SharedString::from)
             .collect::<Vec<SharedString>>(),
     ))
 }

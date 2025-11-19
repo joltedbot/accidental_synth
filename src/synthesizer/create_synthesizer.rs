@@ -123,17 +123,6 @@ pub fn create_synthesizer(
 
             // Wait for sample_buffer to have enough capacity to accept local_buffer, then break to restart main loop
             loop {
-                if sample_buffer.is_abandoned() {
-                    log::debug!(
-                        "create_synthesizer(): The sample buffer has been abandoned, Blocking till we receive a\
-                     new one"
-                    );
-                    if let Ok(new_sample_buffer) = sample_buffer_receiver.recv() {
-                        sample_buffer = new_sample_buffer;
-                    }
-                    log::debug!("create_synthesizer(): Receive a new sample buffer. Continuing");
-                }
-
                 // Check for a new sample buffer producer
                 if let Ok(new_sample_buffer) = sample_buffer_receiver.try_recv() {
                     sample_buffer = new_sample_buffer;
@@ -154,7 +143,7 @@ pub fn create_synthesizer(
         }
     });
 
-    log::info!("Synthesizer audio  loop was successfully created.");
+    log::info!("Synthesizer audio loop was successfully created.");
 
     Ok(())
 }
