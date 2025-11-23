@@ -78,9 +78,9 @@ impl UI {
     ) -> Result<()> {
         let ui_update_receiver = self.ui_update_receiver.clone();
         register_callbacks(
-            ui_weak.clone(),
+            &ui_weak.clone(),
             midi_update_sender,
-            audio_output_device_sender,
+            &audio_output_device_sender,
         );
         self.set_ui_default_values(ui_weak)?;
         self.start_ui_update_listener(ui_update_receiver, ui_weak);
@@ -288,23 +288,23 @@ fn slint_audio_device_from_ui_audio_device(audio_device_values: &UIAudioDevice) 
         left_channel_index: audio_device_values.left_channel_index,
         right_channel_index: audio_device_values.right_channel_index,
         sample_rate_index: audio_device_values.sample_rate_index,
-        output_devices: vec_to_modelrc(&audio_device_values.output_devices),
-        left_channels: vec_to_modelrc(&audio_device_values.left_channels),
-        right_channels: vec_to_modelrc(&audio_device_values.right_channels),
-        sample_rates: vec_to_modelrc(&audio_device_values.sample_rates),
+        output_devices: vec_to_model_rc(&audio_device_values.output_devices),
+        left_channels: vec_to_model_rc(&audio_device_values.left_channels),
+        right_channels: vec_to_model_rc(&audio_device_values.right_channels),
+        sample_rates: vec_to_model_rc(&audio_device_values.sample_rates),
     }
 }
 
 fn slint_midi_port_from_ui_midi_port(midi_port_values: &UIMidiPort) -> MidiPort {
     MidiPort {
-        input_ports: vec_to_modelrc(&midi_port_values.input_ports),
-        channels: vec_to_modelrc(&midi_port_values.channels),
+        input_ports: vec_to_model_rc(&midi_port_values.input_ports),
+        channels: vec_to_model_rc(&midi_port_values.channels),
         input_port_index: midi_port_values.input_port_index,
         channel_index: midi_port_values.channel_index,
     }
 }
 
-fn vec_to_modelrc(input_values: &[String]) -> ModelRc<SharedString> {
+fn vec_to_model_rc(input_values: &[String]) -> ModelRc<SharedString> {
     ModelRc::new(VecModel::from(
         input_values
             .iter()

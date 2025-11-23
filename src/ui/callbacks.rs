@@ -6,9 +6,9 @@ use crossbeam_channel::Sender;
 use slint::Weak;
 
 pub fn register_callbacks(
-    ui_weak: Weak<AccidentalSynth>,
+    ui_weak: &Weak<AccidentalSynth>,
     midi_update_sender: Sender<MidiDeviceUpdateEvents>,
-    audio_output_device_sender: Sender<AudioDeviceUpdateEvents>,
+    audio_output_device_sender: &Sender<AudioDeviceUpdateEvents>,
 ) {
     callback_midi_input_channel_changed(&ui_weak, midi_update_sender.clone());
     callback_midi_input_port_changed(&ui_weak, midi_update_sender);

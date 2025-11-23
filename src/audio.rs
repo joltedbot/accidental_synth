@@ -1,8 +1,15 @@
+mod constants;
 mod device_monitor;
 
-use crate::audio::device_monitor::create_device_monitor;
+use crate::audio::constants::COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS;
+use crate::audio::device_monitor::{DeviceMonitor, create_device_monitor, get_audio_devices};
 use crate::ui::UIUpdates;
 use anyhow::{Result, anyhow};
+use constants::{
+    AUDIO_MESSAGE_SENDER_CAPACITY, DEFAULT_AUDIO_DEVICE_INDEX, DEFAULT_LEFT_CHANNEL_INDEX,
+    DEFAULT_RIGHT_CHANNEL_INDEX, MONO_CHANNEL_COUNT, OUTPUT_CHANNEL_DISABLED_VALUE,
+    SAMPLE_BUFFER_CAPACITY, SAMPLE_BUFFER_SENDER_CAPACITY, USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET,
+};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{Device, Host, Stream, default_host};
 use crossbeam_channel::{Receiver, Sender, bounded};
@@ -11,18 +18,8 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicI32;
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
+use std::time::Duration;
 use thiserror::Error;
-
-const DEFAULT_AUDIO_DEVICE_INDEX: usize = 0;
-const DEFAULT_LEFT_CHANNEL_INDEX: i32 = 0;
-const DEFAULT_RIGHT_CHANNEL_INDEX: i32 = 1;
-const SAMPLE_BUFFER_SENDER_CAPACITY: usize = 5;
-const AUDIO_MESSAGE_SENDER_CAPACITY: usize = 10;
-const SAMPLE_BUFFER_CAPACITY: usize = 8192;
-const OUTPUT_CHANNEL_DISABLED_VALUE: i32 = -1;
-const USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET: i32 = 1;
-const MONO_CHANNEL_COUNT: u16 = 1;
-pub const DEVICE_LIST_POLLING_INTERVAL_IN_MS: u64 = 20000;
 
 #[derive(Clone)]
 pub struct OutputDevice {
@@ -52,6 +49,7 @@ pub enum AudioDeviceUpdateEvents {
     UIOutputDeviceLeftChannel(i32),
     UIOutputDeviceRightChannel(i32),
     OutputDeviceList(Vec<String>),
+    OutputDeviceListChanged,
 }
 
 pub struct Audio {
@@ -61,6 +59,7 @@ pub struct Audio {
     ui_update_receiver: Receiver<AudioDeviceUpdateEvents>,
     device_update_sender: Sender<AudioDeviceUpdateEvents>,
     current_output_channels: Arc<OutputChannels>,
+    device_monitor: Option<DeviceMonitor>,
 }
 
 impl Audio {
@@ -87,6 +86,7 @@ impl Audio {
                 left: AtomicI32::new(DEFAULT_LEFT_CHANNEL_INDEX),
                 right: AtomicI32::new(DEFAULT_RIGHT_CHANNEL_INDEX),
             }),
+            device_monitor: None,
         })
     }
 
@@ -102,14 +102,30 @@ impl Audio {
         self.device_update_sender.clone()
     }
 
-    pub fn run(&mut self, ui_update_sender: Sender<UIUpdates>) {
+    pub fn run(&mut self, ui_update_sender: Sender<UIUpdates>) -> Result<()> {
+        #[cfg(not(target_os = "macos"))]
         create_device_monitor(self.device_update_sender.clone());
+
+        #[cfg(target_os = "macos")]
+        self.create_coreaudio_device_monitor()?;
+
         create_control_listener(
             ui_update_sender,
             self.ui_update_receiver.clone(),
             self.sample_buffer_sender.clone(),
             self.current_output_channels.clone(),
         );
+
+        Ok(())
+    }
+
+    fn create_coreaudio_device_monitor(&mut self) -> Result<()> {
+        let mut coreaudio_device_monitor = DeviceMonitor::new(self.device_update_sender.clone());
+        coreaudio_device_monitor.run().map_err(|err| {
+            anyhow!("run(): macOS Specific CoreAudio Device Monitor failed to start: {err:?}.")
+        })?;
+        self.device_monitor = Some(coreaudio_device_monitor);
+        Ok(())
     }
 }
 
@@ -177,73 +193,6 @@ fn create_control_listener(
         while let Ok(update) = ui_update_receiver.recv() {
             log::debug!("AudioDeviceEvent: Received UI update: {update:?}");
             match update {
-                AudioDeviceUpdateEvents::UIOutputDevice(name) => {
-                    log::debug!(
-                        "AudioDeviceEvent::UIOutputDeviceUpdate: Received UI update for audio output device: {name}"
-                    );
-
-                    let mut new_output_device = new_output_device_from_name(&host, &name);
-
-                    if new_output_device.is_none() {
-                        log::error!(
-                            "create_control_listener(): Could not find audio output device: {name}. Using the default device"
-                        );
-                        new_output_device = default_audio_output_device();
-                    }
-
-                    current_output_device_name = if let Some(device) = new_output_device.as_ref() {
-                        device.name.clone()
-                    } else {
-                        String::new()
-                    };
-
-
-                    if let Some(stream) = audio_output_stream {
-                        stream.pause();
-                    }
-
-                    update_the_current_channels(
-                        &current_output_channels,
-                        Option::from(&new_output_device),
-                    );
-
-                    audio_output_stream = start_new_output_device(
-                        new_output_device,
-                        &current_output_channels,
-                        &ui_update_sender,
-                        &sample_producer_sender,
-                    );
-                }
-                AudioDeviceUpdateEvents::UIOutputDeviceLeftChannel(channel) => {
-                    log::debug!(
-                        "AudioDeviceEvent::UIOutputDeviceLeftChannelUpdate: Received UI update for audio output device left channel: {channel}"
-                    );
-                    current_output_channels
-                        .left
-                        .store(channel - USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET, Relaxed);
-
-                    ui_update_sender
-                        .send(UIUpdates::AudioDeviceChannelIndexes {
-                            left: channel - USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET,
-                            right: current_output_channels.right.load(Relaxed),
-                        }).expect
-                    ("create_device_monitor(): Could not send audio device channel update to the UI. Exiting.");
-                }
-                AudioDeviceUpdateEvents::UIOutputDeviceRightChannel(channel) => {
-                    log::debug!(
-                        "AudioDeviceEvent::UIOutputDeviceRightChannelUpdate: Received UI update for audio output device right channel: {channel}"
-                    );
-                    current_output_channels
-                        .right
-                        .store(channel - USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET, Relaxed);
-
-                    ui_update_sender
-                        .send(UIUpdates::AudioDeviceChannelIndexes {
-                            left: current_output_channels.left.load(Relaxed),
-                            right: channel - USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET,
-                        }).expect
-                    ("create_device_monitor(): Could not send audio device channel update to the UI. Exiting.");
-                }
                 AudioDeviceUpdateEvents::OutputDeviceList(new_output_device_list) => {
                     log::debug!(
                         "AudioDeviceEvent::OutputDeviceListUpdate: A new audio output device list received. \
@@ -267,46 +216,170 @@ fn create_control_listener(
                             "AudioDeviceEvent::OutputDeviceListUpdate: The current device is still in the \
                         list. Updating UI with the new index: {new_device_index} and continuing"
                         );
-                    } else {
-                        log::warn!(
-                            "create_control_listener(): The current audio device {current_output_device_name} is not in the new list. {new_output_device_list:?} \
-                    Getting the default device."
-                        );
-                        let new_output_device = default_audio_output_device();
-
-                        current_output_device_name =
-                            if let Some(device) = new_output_device.as_ref() {
-                                device.name.clone()
-                            } else {
-                                String::new()
-                            };
-
-                        if let Some(stream) = audio_output_stream {
-                            stream.pause();
-                        }
-
-                        update_the_current_channels(
-                            &current_output_channels,
-                            Option::from(&new_output_device),
-                        );
-
-                        log::info!(
-                            "create_control_listener(): Restarting the audio output with the default device"
-                        );
-                        audio_output_stream = start_new_output_device(
-                            new_output_device,
-                            &current_output_channels,
-                            &ui_update_sender,
-                            &sample_producer_sender,
-                        );
+                        continue;
                     }
+
+                    log::warn!(
+                        "create_control_listener(): The current audio device {current_output_device_name} is not in the new list. {new_output_device_list:?} \
+                    Getting the default device."
+                    );
+
+                    let new_output_device = default_audio_output_device();
+
+                    update_device_properties(&current_output_channels, &mut current_output_device_name, &new_output_device);
+
+
+                    if let Some(stream) = audio_output_stream {
+                        let _ = stream.pause();
+                    }
+
+                    audio_output_stream = start_new_output_device(
+                        new_output_device,
+                        &current_output_channels,
+                        &ui_update_sender,
+                        &sample_producer_sender,
+                    );
+                }
+                AudioDeviceUpdateEvents::OutputDeviceListChanged => {
+                    log::debug!(
+                        "AudioDeviceEvent::OutputDeviceListChanged: The audio device list changed. Updating"
+                    );
+
+                    // Sleeping to give USB audio devices time to setting before requesting the new device list to
+                    // prevent HAL issues or audio glitches.
+                    thread::sleep(Duration::from_millis(
+                        COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS,
+                    ));
+
+                    // Choose the correct function to check for audio device list changes depending on the OS.
+                    #[cfg(target_os = "macos")]
+                    let new_output_device_list = get_audio_devices().expect("create_control_listener(): Could not get audio devices from CoreAudio. Exiting.");
+
+                    #[cfg(not(target_os = "macos"))]
+                    let new_output_device_list = output_audio_device_name_list(&host);
+
+                    ui_update_sender
+                        .send(UIUpdates::AudioDeviceList(
+                            new_output_device_list.clone(),
+                        ))
+                        .expect("create_device_monitor(): Could not send audio device list update to the UI. Exiting.");
+
+                    if new_output_device_list.contains(&current_output_device_name) {
+                        let new_device_index = new_output_device_list
+                            .iter()
+                            .position(|device_name| device_name == &current_output_device_name)
+                            .unwrap_or(DEFAULT_AUDIO_DEVICE_INDEX);
+
+                        ui_update_sender.send(UIUpdates::AudioDeviceIndex(new_device_index as i32)).expect("create_device_monitor(): Could not send audio device index update to the UI. Exiting.");
+                        log::debug!(
+                            "AudioDeviceEvent::OutputDeviceListUpdate: The current device is still in the \
+                        list. Updating UI with the new index: {new_device_index} and continuing"
+                        );
+
+                        // If the current device is still valid, we can just update its index in the list for the UI
+                        // and end processing this event.
+                        continue;
+                    }
+
+                    log::warn!(
+                        "create_control_listener(): The current audio device {current_output_device_name} is not in the new list. {new_output_device_list:?} \
+                    Getting the default device."
+                    );
+
+                    let new_output_device = default_audio_output_device();
+
+                    update_device_properties(&current_output_channels, &mut current_output_device_name, &new_output_device);
+
+                    if let Some(stream) = audio_output_stream {
+                        let _ = stream.pause();
+                    }
+
+                    audio_output_stream = start_new_output_device(
+                        new_output_device,
+                        &current_output_channels,
+                        &ui_update_sender,
+                        &sample_producer_sender,
+                    );
+                }
+                AudioDeviceUpdateEvents::UIOutputDevice(name) => {
+                    log::debug!(
+                        "AudioDeviceEvent::UIOutputDeviceUpdate: Received UI update for audio output device: {name}"
+                    );
+
+                    let mut new_output_device = new_output_device_from_name(&host, &name);
+
+                    if new_output_device.is_none() {
+                        log::error!(
+                            "create_control_listener(): Could not find audio output device: {name}. Using the default device"
+                        );
+                        new_output_device = default_audio_output_device();
+                    }
+
+                    update_device_properties(&current_output_channels, &mut current_output_device_name, &new_output_device);
+
+                    if let Some(stream) = audio_output_stream {
+                        let _ = stream.pause();
+                    }
+
+                    audio_output_stream = start_new_output_device(
+                        new_output_device,
+                        &current_output_channels,
+                        &ui_update_sender,
+                        &sample_producer_sender,
+                    );
+                }
+                AudioDeviceUpdateEvents::UIOutputDeviceLeftChannel(channel) => {
+                    log::debug!(
+                        "AudioDeviceEvent::UIOutputDeviceLeftChannelUpdate: Received UI update for audio output device left channel: {channel}"
+                    );
+
+                    current_output_channels
+                        .left
+                        .store(channel - USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET, Relaxed);
+
+                    ui_update_sender
+                        .send(UIUpdates::AudioDeviceChannelIndexes {
+                            left: channel - USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET,
+                            right: current_output_channels.right.load(Relaxed),
+                        }).expect
+                    ("create_device_monitor(): Could not send audio device channel update to the UI. Exiting.");
+                }
+                AudioDeviceUpdateEvents::UIOutputDeviceRightChannel(channel) => {
+                    log::debug!(
+                        "AudioDeviceEvent::UIOutputDeviceRightChannelUpdate: Received UI update for audio output device right channel: {channel}"
+                    );
+
+                    current_output_channels
+                        .right
+                        .store(channel - USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET, Relaxed);
+
+                    ui_update_sender
+                        .send(UIUpdates::AudioDeviceChannelIndexes {
+                            left: current_output_channels.left.load(Relaxed),
+                            right: channel - USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET,
+                        }).expect
+                    ("create_device_monitor(): Could not send audio device channel update to the UI. Exiting.");
                 }
             }
         }
     });
 }
 
-fn update_the_current_channels(
+fn update_device_properties(current_output_channels: &Arc<OutputChannels>, current_output_device_name: &mut String,
+                            new_output_device: &Option<OutputDevice>) {
+    *current_output_device_name = if let Some(device) = new_output_device {
+        device.name.clone()
+    } else {
+        String::new()
+    };
+
+    update_current_channels(
+        &current_output_channels,
+        Option::from(new_output_device),
+    );
+}
+
+fn update_current_channels(
     current_output_channels: &Arc<OutputChannels>,
     new_output_device: Option<&OutputDevice>,
 ) {

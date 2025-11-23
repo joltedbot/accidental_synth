@@ -46,12 +46,12 @@ fn main() {
     let ui_update_sender = ui.get_ui_update_sender();
 
     log::debug!("Run the main modules");
-    audio.run(ui_update_sender.clone());
+    audio.run(ui_update_sender.clone()).expect("Could not initialize audio module. Exiting.");
     midi.run(ui_update_sender)
         .expect("Could not initialize midi module. Exiting.");
     synthesizer
         .run(midi_message_receiver, audio_sample_buffer_receiver)
-        .expect("Could not initialize synthesizer module. Exiting.");
+        .expect("Could not initialize the synthesizer module. Exiting.");
     ui.run(
         &application.as_weak(),
         midi_setting_update_sender,

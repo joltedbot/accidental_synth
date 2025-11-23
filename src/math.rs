@@ -171,7 +171,7 @@ mod tests {
     }
 
     #[test]
-    fn f32_sample_to_dbfs_returns_correct_values_for_outof_range_input() {
+    fn f32_sample_to_dbfs_returns_correct_values_for_out_of_range_input() {
         let sample_values: [f32; 4] = [f32::NAN, f32::NEG_INFINITY, f32::EPSILON, f32::INFINITY];
         let expected_dbfs: [f32; 4] = [
             f32::NEG_INFINITY,
@@ -262,7 +262,7 @@ mod tests {
     }
 
     #[test]
-    fn atomic_load_and_store_of_atomicu32_converts_to_and_from_f32_values() {
+    fn atomic_load_and_store_of_atomic_u32_converts_to_and_from_f32_values() {
         let atomic = AtomicU32::new(0);
         let test_values = [0.0, 1.0, -1.0, f32::MAX, f32::MIN, f32::EPSILON];
 
