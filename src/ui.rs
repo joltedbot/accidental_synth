@@ -103,9 +103,7 @@ impl UI {
                 .unwrap_or_else(std::sync::PoisonError::into_inner);
 
             ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(&midi_ports));
-            ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(
-                &audio_devices,
-            ));
+            ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(&audio_devices));
         })?;
 
         Ok(())

@@ -2,7 +2,7 @@ mod constants;
 mod device_monitor;
 
 use crate::audio::constants::COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS;
-use crate::audio::device_monitor::{DeviceMonitor, create_device_monitor, get_audio_devices};
+use crate::audio::device_monitor::{DeviceMonitor, create_device_monitor, get_audio_device_list};
 use crate::ui::UIUpdates;
 use anyhow::{Result, anyhow};
 use constants::{
@@ -192,6 +192,7 @@ fn create_control_listener(
 
         while let Ok(update) = ui_update_receiver.recv() {
             log::debug!("AudioDeviceEvent: Received UI update: {update:?}");
+
             match update {
                 AudioDeviceUpdateEvents::OutputDeviceList(new_output_device_list) => {
                     log::debug!(
@@ -226,8 +227,11 @@ fn create_control_listener(
 
                     let new_output_device = default_audio_output_device();
 
-                    update_device_properties(&current_output_channels, &mut current_output_device_name, &new_output_device);
-
+                    update_device_properties(
+                        &current_output_channels,
+                        &mut current_output_device_name,
+                        &new_output_device,
+                    );
 
                     if let Some(stream) = audio_output_stream {
                         let _ = stream.pause();
@@ -253,7 +257,7 @@ fn create_control_listener(
 
                     // Choose the correct function to check for audio device list changes depending on the OS.
                     #[cfg(target_os = "macos")]
-                    let new_output_device_list = get_audio_devices().expect("create_control_listener(): Could not get audio devices from CoreAudio. Exiting.");
+                    let new_output_device_list = get_audio_device_list().expect("create_control_listener(): Could not get audio devices from CoreAudio. Exiting.");
 
                     #[cfg(not(target_os = "macos"))]
                     let new_output_device_list = output_audio_device_name_list(&host);
@@ -276,8 +280,6 @@ fn create_control_listener(
                         list. Updating UI with the new index: {new_device_index} and continuing"
                         );
 
-                        // If the current device is still valid, we can just update its index in the list for the UI
-                        // and end processing this event.
                         continue;
                     }
 
@@ -288,7 +290,11 @@ fn create_control_listener(
 
                     let new_output_device = default_audio_output_device();
 
-                    update_device_properties(&current_output_channels, &mut current_output_device_name, &new_output_device);
+                    update_device_properties(
+                        &current_output_channels,
+                        &mut current_output_device_name,
+                        &new_output_device,
+                    );
 
                     if let Some(stream) = audio_output_stream {
                         let _ = stream.pause();
@@ -315,7 +321,11 @@ fn create_control_listener(
                         new_output_device = default_audio_output_device();
                     }
 
-                    update_device_properties(&current_output_channels, &mut current_output_device_name, &new_output_device);
+                    update_device_properties(
+                        &current_output_channels,
+                        &mut current_output_device_name,
+                        &new_output_device,
+                    );
 
                     if let Some(stream) = audio_output_stream {
                         let _ = stream.pause();
@@ -365,18 +375,18 @@ fn create_control_listener(
     });
 }
 
-fn update_device_properties(current_output_channels: &Arc<OutputChannels>, current_output_device_name: &mut String,
-                            new_output_device: &Option<OutputDevice>) {
+fn update_device_properties(
+    current_output_channels: &Arc<OutputChannels>,
+    current_output_device_name: &mut String,
+    new_output_device: &Option<OutputDevice>,
+) {
     *current_output_device_name = if let Some(device) = new_output_device {
         device.name.clone()
     } else {
         String::new()
     };
 
-    update_current_channels(
-        &current_output_channels,
-        Option::from(new_output_device),
-    );
+    update_current_channels(&current_output_channels, Option::from(new_output_device));
 }
 
 fn update_current_channels(
@@ -423,6 +433,7 @@ fn start_new_output_device(
             "start_new_output_device(): Starting audio output loop with the device: {:?}",
             device.name
         );
+
         restart_main_audio_loop_with_new_device(
             ui_update_sender,
             sample_producer_sender,

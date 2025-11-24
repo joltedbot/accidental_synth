@@ -10,20 +10,16 @@ use crate::midi::Midi;
 use crate::synthesizer::Synthesizer;
 use crate::ui::UI;
 use clap::Parser;
-use core_foundation::runloop::CFRunLoop;
 
 slint::include_modules!();
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
-pub struct Arguments {
-    #[arg(long)]
-    pub headless: bool,
-}
+pub struct Arguments {}
 
 fn main() {
     let application = AccidentalSynth::new().expect("Could not initialize the UI framework.");
-    let cli_arguments = Arguments::parse();
+    let _ = Arguments::parse();
 
     env_logger::init();
     log::info!("Starting Accidental Synthesizer");
@@ -46,7 +42,9 @@ fn main() {
     let ui_update_sender = ui.get_ui_update_sender();
 
     log::debug!("Run the main modules");
-    audio.run(ui_update_sender.clone()).expect("Could not initialize audio module. Exiting.");
+    audio
+        .run(ui_update_sender.clone())
+        .expect("Could not initialize audio module. Exiting.");
     midi.run(ui_update_sender)
         .expect("Could not initialize midi module. Exiting.");
     synthesizer
@@ -59,14 +57,8 @@ fn main() {
     )
     .expect("Could build the user interface. Exiting.");
 
-    // Temporary run loop to keep the application alive until I add the ui loop to replace it
     println!("Will Loop Forever. Press Ctrl-c to Exit");
-
-    if cli_arguments.headless {
-        CFRunLoop::run_current();
-    } else {
         application
             .run()
             .expect("Could not create the user interface.");
-    }
 }

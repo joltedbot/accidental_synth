@@ -81,8 +81,10 @@ fn update_current_port(
     }
 
     if let Some(input_port) = current_input_port {
-        if let Some(index) = current_port_list.iter().position(|port|
-            port == &input_port.1) {
+        if let Some(index) = current_port_list
+            .iter()
+            .position(|port| port == &input_port.1)
+        {
             *current_input_port = Some((index, current_port_list[index].clone()));
             return;
         };
