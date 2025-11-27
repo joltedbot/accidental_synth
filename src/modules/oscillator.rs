@@ -49,14 +49,6 @@ pub enum WaveShape {
     Noise,
 }
 
-#[derive(Default, Debug)]
-pub enum HardSyncRole {
-    #[default]
-    None,
-    Source(Arc<AtomicBool>),
-    Synced(Arc<AtomicBool>),
-}
-
 impl WaveShape {
     pub fn from_index(index: u8) -> Self {
         match index {
@@ -73,6 +65,15 @@ impl WaveShape {
             _ => WaveShape::default(),
         }
     }
+}
+
+
+#[derive(Default, Debug)]
+pub enum HardSyncRole {
+    #[default]
+    None,
+    Source(Arc<AtomicBool>),
+    Synced(Arc<AtomicBool>),
 }
 
 #[derive(Debug)]

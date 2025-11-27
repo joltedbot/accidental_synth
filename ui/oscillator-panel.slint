@@ -33,7 +33,7 @@ export component OscControlsPanel inherits Panel {
     in property <Oscillator> oscillator;
     in property <string> title;
 
-    callback wave_shape_changed(string);
+    callback wave-shape-changed(int);
     callback course-tune-changed(float);
     callback fine-tune-changed(float);
     callback clipper-boost-changed(float);
@@ -57,7 +57,7 @@ export component OscControlsPanel inherits Panel {
                 value-index: oscillator.wave-shape-index;
                 dropdown-width: Theme.oscillator-panel-widget-width;
                 drop_down_changed(shape) => {
-                    wave_shape_changed(shape);
+                    wave-shape-changed(shape);
                 }
             }
 
@@ -116,7 +116,7 @@ export component OscControlsPanel inherits Panel {
 export component OscillatorsPanel inherits Panel {
     in property <[Oscillator]> oscillators;
 
-    callback wave_shape_changed(int, string);
+    callback wave-shape-changed(int, int);
     callback course-tune-changed(int, float);
     callback fine-tune-changed(int, float);
     callback clipper-boost-changed(int, float);
@@ -133,8 +133,8 @@ export component OscillatorsPanel inherits Panel {
             oscillator: oscillator;
             title: Theme.osc-controls-panel-titles[index];
 
-            wave_shape_changed(string) => {
-                wave_shape_changed(index, string);
+            wave-shape-changed(int) => {
+                wave-shape-changed(index, int);
             }
             course-tune-changed(float) => {
                 course-tune-changed(index, float);

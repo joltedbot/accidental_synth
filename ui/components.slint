@@ -372,7 +372,7 @@ export component DropDownMenu inherits VerticalLayout {
     in property <length> dropdown-width: 100px;
     in property <length> dropdown-height: 25px;
     in property <bool> enabled: true;
-    callback drop_down_changed(string);
+    callback drop_down_changed(int);
 
     spacing: 5px;
 
@@ -389,7 +389,7 @@ export component DropDownMenu inherits VerticalLayout {
         current-index: value-index;
 
         selected(value) => {
-            drop_down_changed(value);
+            drop_down_changed(self.current-index);
         }
     }
 }
@@ -526,7 +526,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
     in property <LFO> lfo-values;
 
     callback lfo-frequency-changed(float);
-    callback lfo-shape-changed(string);
+    callback lfo-shape-changed(int);
     callback lfo-phase-changed(float);
     callback lfo-phase-reset();
 
@@ -555,11 +555,11 @@ export component FixedCenterLFOSection inherits VerticalLayout {
 
             wave-shape := DropDownMenu {
                 label: Theme.lfo-label-wave-shape;
-                value-list: Constant.LFO_WAVE_SHAPES;
+                value-list: Constant.OSC_WAVE_SHAPES;
                 value-index: lfo-values.wave-shape-index;
                 dropdown-width: Theme.global-panel-widget-width;
-                drop_down_changed(string) => {
-                    lfo-shape-changed(string);
+                drop_down_changed(index) => {
+                    lfo-shape-changed(index);
                 }
             }
         }

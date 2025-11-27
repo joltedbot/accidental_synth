@@ -45,7 +45,7 @@ export component AccidentalSynth inherits Window {
         { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
     ];
 
-    callback osc-wave_shape_changed(int, string);
+    callback osc-wave-shape-changed(int, int);
     callback osc-course-tune-changed(int, float);
     callback osc-fine-tune-changed(int, float);
     callback osc-clipper-boost-changed(int, float);
@@ -76,7 +76,7 @@ export component AccidentalSynth inherits Window {
     callback envelope-release-changed(int, float);
     callback envelope-invert-changed(int, bool);
     callback lfo-frequency-changed(int, float);
-    callback lfo-shape-changed(int, string);
+    callback lfo-shape-changed(int, int);
     callback lfo-phase-changed(int, float);
     callback lfo-phase-reset(int);
 
@@ -175,8 +175,8 @@ export component AccidentalSynth inherits Window {
                             oscillator-panel := OscillatorsPanel {
                                 oscillators: oscillators;
 
-                                wave_shape_changed(oscillator, shape) => {
-                                    osc-wave_shape_changed(oscillator, shape);
+                                wave-shape-changed(oscillator, shape_index) => {
+                                    osc-wave-shape-changed(oscillator, shape_index);
                                 }
                                 course-tune-changed(oscillator, semitones) => {
                                     osc-course-tune-changed(oscillator, semitones);

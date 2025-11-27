@@ -3,7 +3,7 @@ use crate::midi::control_change::CC;
 use crate::modules::oscillator::OscillatorParameters;
 use crate::synthesizer::midi_value_converters::scaled_velocity_from_normal_value;
 use crate::synthesizer::set_parameters::{
-    lfo_reset, set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time,
+    set_lfo_phase_reset, set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time,
     set_envelope_inverted, set_envelope_release_time, set_envelope_sustain_level,
     set_filter_cutoff, set_filter_poles, set_filter_resonance, set_key_tracking_amount,
     set_lfo_center_value, set_lfo_frequency, set_lfo_phase, set_lfo_range, set_lfo_wave_shape,
@@ -337,29 +337,25 @@ pub fn process_midi_cc_values(
         }
         CC::SubOscillatorClipBoost(value) => {
             set_oscillator_clip_boost(
-                &module_parameters.oscillators,
-                OscillatorIndex::Sub,
+                &module_parameters.oscillators[OscillatorIndex::Sub as usize],
                 normalize_midi_value(value),
             );
         }
         CC::Oscillator1ClipBoost(value) => {
             set_oscillator_clip_boost(
-                &module_parameters.oscillators,
-                OscillatorIndex::One,
+                &module_parameters.oscillators[OscillatorIndex::One as usize],
                 normalize_midi_value(value),
             );
         }
         CC::Oscillator2ClipBoost(value) => {
             set_oscillator_clip_boost(
-                &module_parameters.oscillators,
-                OscillatorIndex::Two,
+                &module_parameters.oscillators[OscillatorIndex::Two as usize],
                 normalize_midi_value(value),
             );
         }
         CC::Oscillator3ClipBoost(value) => {
             set_oscillator_clip_boost(
-                &module_parameters.oscillators,
-                OscillatorIndex::Three,
+                &module_parameters.oscillators[OscillatorIndex::Three as usize],
                 normalize_midi_value(value),
             );
         }
@@ -445,7 +441,7 @@ pub fn process_midi_cc_values(
             set_lfo_phase(&module_parameters.lfo1, normalize_midi_value(value));
         }
         CC::LFO1Reset => {
-            lfo_reset(&module_parameters.lfo1);
+            set_lfo_phase_reset(&module_parameters.lfo1);
         }
         CC::FilterModLFOFrequency(value) => {
             set_lfo_frequency(&module_parameters.filter_lfo, normalize_midi_value(value));
@@ -460,7 +456,7 @@ pub fn process_midi_cc_values(
             set_lfo_phase(&module_parameters.filter_lfo, normalize_midi_value(value));
         }
         CC::FilterModLFOReset => {
-            lfo_reset(&module_parameters.filter_lfo);
+            set_lfo_phase_reset(&module_parameters.filter_lfo);
         }
         CC::AllNotesOff => {
             process_midi_note_off_message(module_parameters);

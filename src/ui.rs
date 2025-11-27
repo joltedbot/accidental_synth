@@ -17,6 +17,7 @@ use crate::ui::constants::{
 };
 use crate::ui::structs::{UIAudioDevice, UIMidiPort};
 use anyhow::Result;
+use crate::synthesizer::SynthesizerUpdateEvents;
 
 const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
 
@@ -75,12 +76,14 @@ impl UI {
         ui_weak: &Weak<AccidentalSynth>,
         midi_update_sender: Sender<MidiDeviceUpdateEvents>,
         audio_output_device_sender: Sender<AudioDeviceUpdateEvents>,
+        synthesizer_update_sender: Sender<SynthesizerUpdateEvents>
     ) -> Result<()> {
         let ui_update_receiver = self.ui_update_receiver.clone();
         register_callbacks(
             &ui_weak.clone(),
             midi_update_sender,
             &audio_output_device_sender,
+            &synthesizer_update_sender,
         );
         self.set_ui_default_values(ui_weak)?;
         self.start_ui_update_listener(ui_update_receiver, ui_weak);

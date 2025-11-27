@@ -40,7 +40,8 @@ fn main() {
     let midi_message_receiver = midi.get_midi_message_receiver();
     let midi_setting_update_sender = midi.get_device_update_sender();
     let ui_update_sender = ui.get_ui_update_sender();
-
+    let synthesizer_update_sender = synthesizer.get_ui_update_sender();
+    
     log::debug!("Run the main modules");
     audio
         .run(ui_update_sender.clone())
@@ -54,6 +55,7 @@ fn main() {
         &application.as_weak(),
         midi_setting_update_sender,
         audio_output_device_sender,
+        synthesizer_update_sender,
     )
     .expect("Could build the user interface. Exiting.");
 

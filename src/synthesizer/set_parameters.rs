@@ -48,7 +48,7 @@ pub fn set_lfo_wave_shape(parameters: &LfoParameters, normal_value: f32) {
     parameters.wave_shape.store(wave_shape_index, Relaxed);
 }
 
-pub fn lfo_reset(parameters: &LfoParameters) {
+pub fn set_lfo_phase_reset(parameters: &LfoParameters) {
     parameters.reset.store(true, Relaxed);
 }
 
@@ -167,8 +167,7 @@ pub fn set_portamento_time(parameters: &[OscillatorParameters; 4], normal_value:
 }
 
 pub fn set_oscillator_clip_boost(
-    parameters: &[OscillatorParameters; 4],
-    oscillator: OscillatorIndex,
+    parameters: &OscillatorParameters,
     normal_value: f32,
 ) {
     let boost = normal_value_to_integer_range(
@@ -176,7 +175,7 @@ pub fn set_oscillator_clip_boost(
         u32::from(MIN_CLIP_BOOST),
         u32::from(MAX_CLIP_BOOST),
     ) as u8;
-    parameters[oscillator as usize]
+    parameters
         .clipper_boost
         .store(boost, Relaxed);
 }
