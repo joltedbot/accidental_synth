@@ -25,9 +25,13 @@ pub fn quad_mix(inputs: [MixerInput; 4]) -> (f32, f32) {
     (left_input_sum, right_input_sum)
 }
 
-pub fn output_mix(left_input: f32, right_input: f32, level: f32, balance: f32) -> (f32, f32) {
-    let leveled_left_input = left_input * level;
-    let leveled_right_input = right_input * level;
+pub fn output_mix(stereo_input: (f32, f32), level: f32, balance: f32, is_muted: bool) -> (f32, f32) {
+    if is_muted {
+        return (0.0, 0.0);
+    }
+
+    let leveled_left_input = stereo_input.0 * level;
+    let leveled_right_input = stereo_input.1 * level;
     apply_balance(leveled_left_input, leveled_right_input, balance)
 }
 

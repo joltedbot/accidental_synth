@@ -3,7 +3,7 @@ mod constants;
 mod structs;
 
 use super::{AccidentalSynth, AudioDevice, MidiPort};
-use crossbeam_channel::{Receiver, Sender, bounded};
+use crossbeam_channel::{bounded, Receiver, Sender};
 use slint::{ModelRc, SharedString, VecModel, Weak};
 use std::sync::{Arc, Mutex};
 use std::thread;

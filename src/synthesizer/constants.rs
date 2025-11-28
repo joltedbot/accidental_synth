@@ -25,6 +25,7 @@ pub const OSCILLATOR_COURSE_TUNE_MIN_INTERVAL: i8 = -12;
 pub const DEFAULT_FILTER_ENVELOPE_AMOUNT: f32 = 0.0;
 pub const ENVELOPE_MAX_MILLISECONDS: u32 = 10000;
 pub const ENVELOPE_MIN_MILLISECONDS: u32 = 1;
+pub const ENVELOPE_INDEX_AMP: i32 = 0;
 pub const ENVELOPE_INDEX_FILTER: i32 = 1;
 
 // Mixer Constants
@@ -42,7 +43,9 @@ pub const MAX_FILTER_RESONANCE: f32 = 0.90;
 pub const DEFAULT_VIBRATO_LFO_RATE: f32 = 10.0;
 pub const DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY: f32 = 1.0;
 pub const DEFAULT_VIBRATO_LFO_DEPTH: f32 = 0.0;
+pub const LFO_INDEX_MOD_WHEEL: i32 = 0;
 pub const LFO_INDEX_FILTER: i32 = 1;
+
 
 
 // Audio Constants

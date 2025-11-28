@@ -251,6 +251,8 @@ export component OscillatorSection inherits VerticalLayout {
                         label: Theme.osc-options-pitch-bend-range;
                         value: pitch-bend-range;
                         step: 1;
+                        minimum: Constant.PITCH_BEND_MINIMUM;
+                        maximum: Constant.PITCH_BEND_MAXIMUM;
                         width: 120px;
                         spinbox-changed(range) => {
                             pitch-bend-range-changed(range);

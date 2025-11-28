@@ -1,0 +1,339 @@
+use crate::synthesizer::set_parameters::{
+    set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted,
+    set_envelope_release_time, set_envelope_sustain_level, set_filter_cutoff, set_filter_poles,
+    set_filter_resonance, set_key_tracking_amount, set_lfo_frequency, set_lfo_phase,
+    set_lfo_phase_reset, set_lfo_range, set_oscillator_balance, set_oscillator_clip_boost,
+    set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_hard_sync,
+    set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute,
+    set_oscillator_shape_parameter1, set_oscillator_shape_parameter2, set_output_balance,
+    set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled,
+    set_portamento_time, set_velocity_curve,
+};
+use crate::synthesizer::{CurrentNote, ModuleParameters, OscillatorIndex, SynthesizerUpdateEvents};
+use crossbeam_channel::Receiver;
+use std::sync::Arc;
+use std::sync::atomic::Ordering::Relaxed;
+use std::thread;
+use crate::synthesizer::constants::UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET;
+
+pub fn start_ui_event_listener(
+    ui_update_receiver: Receiver<SynthesizerUpdateEvents>,
+    module_parameters: Arc<ModuleParameters>,
+    mut current_note: Arc<CurrentNote>,
+) {
+    thread::spawn(move || {
+        log::debug!("start_ui_event_listener(): spawned thread to receive UI events");
+
+        while let Ok(event) = ui_update_receiver.recv() {
+            match event {
+                SynthesizerUpdateEvents::WaveShapeIndex(oscillator_index, wave_shape_index) => {
+                    if oscillator_index >= 0
+                        && oscillator_index < module_parameters.oscillators.len() as i32
+                    {
+                        let reindexed_wave_shape =
+                            (wave_shape_index + crate::synthesizer::constants::UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
+                        module_parameters.oscillators[oscillator_index as usize]
+                            .wave_shape_index
+                            .store(reindexed_wave_shape, Relaxed);
+                    } else {
+                        log::error!(
+                            "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
+                        );
+                    }
+                }
+                SynthesizerUpdateEvents::CourseTune(oscillator_index, course_tune) => {
+                    if oscillator_index >= 0
+                        && oscillator_index < module_parameters.oscillators.len() as i32
+                    {
+                        set_oscillator_course_tune(
+                            &module_parameters.oscillators[oscillator_index as usize],
+                            course_tune,
+                        );
+                    } else {
+                        log::error!(
+                            "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
+                        );
+                    }
+                }
+                SynthesizerUpdateEvents::FineTune(oscillator_index, fine_tune) => {
+                    if oscillator_index >= 0
+                        && oscillator_index < module_parameters.oscillators.len() as i32
+                    {
+                        set_oscillator_fine_tune(
+                            &module_parameters.oscillators[oscillator_index as usize],
+                            fine_tune,
+                        );
+                    } else {
+                        log::error!(
+                            "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
+                        );
+                    }
+                }
+                SynthesizerUpdateEvents::ClipperBoost(oscillator_index, boost) => {
+                    if oscillator_index >= 0
+                        && oscillator_index < module_parameters.oscillators.len() as i32
+                    {
+                        set_oscillator_clip_boost(
+                            &module_parameters.oscillators[oscillator_index as usize],
+                            boost,
+                        );
+                    } else {
+                        log::error!(
+                            "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
+                        );
+                    }
+                }
+                SynthesizerUpdateEvents::Parameter1(oscillator_index, boost) => {
+                    if oscillator_index >= 0
+                        && oscillator_index < module_parameters.oscillators.len() as i32
+                    {
+                        set_oscillator_shape_parameter1(
+                            &module_parameters.oscillators[oscillator_index as usize],
+                            boost,
+                        );
+                    } else {
+                        log::error!(
+                            "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
+                        );
+                    }
+                }
+                SynthesizerUpdateEvents::Parameter2(oscillator_index, boost) => {
+                    if oscillator_index >= 0
+                        && oscillator_index < module_parameters.oscillators.len() as i32
+                    {
+                        set_oscillator_shape_parameter2(
+                            &module_parameters.oscillators[oscillator_index as usize],
+                            boost,
+                        );
+                    } else {
+                        log::error!(
+                            "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
+                        );
+                    }
+                }
+                SynthesizerUpdateEvents::FilterCutoffFrequency(frequency) => {
+                    set_filter_cutoff(&module_parameters.filter, frequency);
+                }
+                SynthesizerUpdateEvents::FilterResonance(resonance) => {
+                    set_filter_resonance(&module_parameters.filter, resonance);
+                }
+                SynthesizerUpdateEvents::FilterPoleCount(poles) => {
+                    set_filter_poles(&module_parameters.filter, poles);
+                }
+                SynthesizerUpdateEvents::FilterKeyTrackingAmount(amount) => {
+                    set_key_tracking_amount(&module_parameters.filter, amount);
+                }
+                SynthesizerUpdateEvents::FilterEnvelopeAmount(amount) => {
+                    set_envelope_amount(&module_parameters.filter_envelope, amount);
+                }
+                SynthesizerUpdateEvents::FilterLfoAmount(amount) => {
+                    set_lfo_range(&module_parameters.filter_lfo, amount);
+                }
+                SynthesizerUpdateEvents::FilterEnvelopeAttack(envelope_index, milliseconds) => {
+                    match envelope_index {
+                        ENVELOPE_INDEX_AMP => set_envelope_attack_time(
+                            &module_parameters.amp_envelope,
+                            milliseconds,
+                        ),
+                        ENVELOPE_INDEX_FILTER => set_envelope_attack_time(
+                            &module_parameters.filter_envelope,
+                            milliseconds,
+                        ),
+                        _ => {
+                            log::error!(
+                                "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeAttack: Invalid \
+                                Envelope index: {envelope_index}"
+                            );
+                        }
+                    }
+                }
+                SynthesizerUpdateEvents::FilterEnvelopeDecay(envelope_index, milliseconds) => {
+                    match envelope_index {
+                        ENVELOPE_INDEX_AMP => set_envelope_decay_time(
+                            &module_parameters.amp_envelope,
+                            milliseconds,
+                        ),
+                            ENVELOPE_INDEX_FILTER => set_envelope_decay_time(
+                            &module_parameters.filter_envelope,
+                            milliseconds,
+                        ),
+                        _ => {
+                            log::error!(
+                                "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeDecay: Invalid \
+                                Envelope index: {envelope_index}"
+                            );
+                        }
+                    }
+                }
+                SynthesizerUpdateEvents::FilterEnvelopeSustain(envelope_index, level) => {
+                    match envelope_index {
+                        ENVELOPE_INDEX_AMP => {
+                            set_envelope_sustain_level(&module_parameters.amp_envelope, level)
+                        }
+                        ENVELOPE_INDEX_FILTER => {
+                            set_envelope_sustain_level(&module_parameters.filter_envelope, level)
+                        }
+                        _ => {
+                            log::error!(
+                                "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeSustain: Invalid \
+                                Envelope index: {envelope_index}"
+                            );
+                        }
+                    }
+                }
+                SynthesizerUpdateEvents::FilterEnvelopeRelease(envelope_index, milliseconds) => {
+                    match envelope_index {
+                        ENVELOPE_INDEX_AMP => set_envelope_release_time(
+                            &module_parameters.amp_envelope,
+                            milliseconds,
+                        ),                        
+                        ENVELOPE_INDEX_FILTER => set_envelope_release_time(
+                            &module_parameters.filter_envelope,
+                            milliseconds,
+                        ),
+                        _ => {
+                            log::error!(
+                                "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeRelease: Invalid \
+                                Envelope index: {envelope_index}"
+                            );
+                        }
+                    }
+                }
+                SynthesizerUpdateEvents::FilterEnvelopeInvert(envelope_index, is_inverted) => {
+                    match envelope_index {
+                        ENVELOPE_INDEX_FILTER => set_envelope_inverted(
+                            &module_parameters.amp_envelope,
+                            f32::from(is_inverted),
+                        ),                        
+                        ENVELOPE_INDEX_FILTER => set_envelope_inverted(
+                            &module_parameters.filter_envelope,
+                            f32::from(is_inverted),
+                        ),
+                        _ => {
+                            log::error!(
+                                "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeInvert: Invalid \
+                                Envelope index: {envelope_index}"
+                            );
+                        }
+                    }
+                }
+                SynthesizerUpdateEvents::LfoFrequency(lfo_index, frequency) => match lfo_index {
+                    LFO_INDEX_MOD_WHEEL => set_lfo_frequency(&module_parameters.lfo1, frequency),
+                    LFO_INDEX_FILTER => set_lfo_frequency(&module_parameters.filter_lfo, frequency),
+                    _ => {
+                        log::error!(
+                            "start_ui_event_listener():SynthesizerUpdateEvents::LfoFrequency: Invalid LFO index: {lfo_index}"
+                        );
+                    }
+                },
+                SynthesizerUpdateEvents::LfoShapeIndex(lfo_index, wave_shape_index) => {
+                    match lfo_index {
+                        LFO_INDEX_MOD_WHEEL => {
+                            let reindexed_wave_shape = (wave_shape_index + UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
+                            module_parameters.lfo1
+                                .wave_shape
+                                .store(reindexed_wave_shape, Relaxed);
+                        }
+                        LFO_INDEX_FILTER => {
+                            let reindexed_wave_shape = (wave_shape_index + UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
+                            module_parameters
+                                .filter_lfo
+                                .wave_shape
+                                .store(reindexed_wave_shape, Relaxed);
+                        }
+                        _ => {
+                            log::error!(
+                                "start_ui_event_listener():SynthesizerUpdateEvents::LfoShapeIndex: Invalid\
+                                 LFO index: {lfo_index}"
+                            );
+                        }
+                    }
+                }
+                SynthesizerUpdateEvents::LfoPhase(lfo_index, phase) => match lfo_index {
+                    LFO_INDEX_MOD_WHEEL => set_lfo_phase(&module_parameters.lfo1, phase),
+                    LFO_INDEX_FILTER => set_lfo_phase(&module_parameters.filter_lfo, phase),
+                    _ => {
+                        log::error!(
+                            "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhase: Invalid LFO index: {lfo_index}"
+                        );
+                    }
+                },
+                SynthesizerUpdateEvents::LfoPhaseReset(lfo_index) => match lfo_index {
+                    LFO_INDEX_MOD_WHEEL => set_lfo_phase_reset(&module_parameters.lfo1),
+                    LFO_INDEX_FILTER => set_lfo_phase_reset(&module_parameters.filter_lfo),
+                    _ => {
+                        log::error!(
+                            "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhaseReset: Invalid LFO index: {lfo_index}"
+                        );
+                    }
+                },
+                SynthesizerUpdateEvents::PortamentoEnabled(is_enabled) => {
+                    set_portamento_enabled(&module_parameters.oscillators, f32::from(is_enabled));
+                }
+                SynthesizerUpdateEvents::PortamentoTime(milliseconds) => {
+                    set_portamento_time(&module_parameters.oscillators, milliseconds);
+                }
+                SynthesizerUpdateEvents::PitchBendRange(range) => {
+                    set_pitch_bend_range(&module_parameters.keyboard, range);
+                }
+                SynthesizerUpdateEvents::VelocityCurve(curve) => {
+                    set_velocity_curve(&mut current_note, curve);
+                }
+                SynthesizerUpdateEvents::HardSyncEnabled(is_enabled) => {
+                    set_oscillator_hard_sync(&module_parameters.oscillators, f32::from(is_enabled));
+                }
+                SynthesizerUpdateEvents::KeySyncEnabled(is_enabled) => {
+                    set_oscillator_key_sync(&module_parameters.oscillators, f32::from(is_enabled));
+                }
+                SynthesizerUpdateEvents::OutputBalance(balance) => {
+                    set_output_balance(&module_parameters.mixer, balance);
+                }
+                SynthesizerUpdateEvents::OutputLevel(level) => {
+                    set_output_level(&module_parameters.mixer, level);
+                }
+                SynthesizerUpdateEvents::OutputMute(is_muted) => {
+                    set_output_mute(&module_parameters.mixer, f32::from(is_muted));
+                }
+                SynthesizerUpdateEvents::OscillatorMixerBalance(oscillator_index, balance) => {
+                    if let Some(oscillator) = OscillatorIndex::from_i32(oscillator_index) {
+                        set_oscillator_balance(
+                            &module_parameters.mixer,
+                            oscillator,
+                            f32::from(balance),
+                        );
+                    } else {
+                        log::error!(
+                            "start_ui_event_listener():SynthesizerUpdateEvents::OscillatorMixerBalance: Invalid oscillator index: {oscillator_index}"
+                        );
+                    }
+                }
+                SynthesizerUpdateEvents::OscillatorMixerLevel(oscillator_index, level) => {
+                    if let Some(oscillator) = OscillatorIndex::from_i32(oscillator_index) {
+                        set_oscillator_level(
+                            &module_parameters.mixer,
+                            oscillator,
+                            f32::from(level),
+                        );
+                    } else {
+                        log::error!(
+                            "start_ui_event_listener():SynthesizerUpdateEvents::OscillatorMixerLevel: Invalid oscillator index: {oscillator_index}"
+                        );
+                    }
+                }
+                SynthesizerUpdateEvents::OscillatorMixerMute(oscillator_index, is_muted) => {
+                    if let Some(oscillator) = OscillatorIndex::from_i32(oscillator_index) {
+                        set_oscillator_mute(
+                            &module_parameters.mixer,
+                            oscillator,
+                            f32::from(is_muted),
+                        );
+                    } else {
+                        log::error!(
+                            "start_ui_event_listener():SynthesizerUpdateEvents::OscillatorMixerMute: Invalid oscillator index: {oscillator_index}"
+                        );
+                    }
+                }
+            }
+        }
+    });
+}

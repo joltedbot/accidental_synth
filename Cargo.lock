@@ -119,6 +119,7 @@ dependencies = [
  "cpal",
  "crossbeam-channel",
  "env_logger",
+ "event-listener",
  "log",
  "midir",
  "rand",

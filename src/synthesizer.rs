@@ -1,5 +1,6 @@
 mod constants;
 mod create_synthesizer;
+mod event_listener;
 mod midi_messages;
 mod midi_value_converters;
 mod set_parameters;
@@ -8,7 +9,7 @@ use self::constants::{
     DEFAULT_FILTER_ENVELOPE_AMOUNT, DEFAULT_OUTPUT_BALANCE, DEFAULT_OUTPUT_LEVEL,
     DEFAULT_VELOCITY_CURVE, DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY, DEFAULT_VIBRATO_LFO_DEPTH,
     DEFAULT_VIBRATO_LFO_RATE, MAX_MIDI_KEY_VELOCITY, QUAD_MIX_DEFAULT_BALANCE,
-    QUAD_MIX_DEFAULT_INPUT_LEVEL, QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,LFO_INDEX_FILTER, ENVELOPE_INDEX_FILTER
+    QUAD_MIX_DEFAULT_INPUT_LEVEL, QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
 };
 
 use crate::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
@@ -18,15 +19,21 @@ use crate::modules::filter::{DEFAULT_KEY_TRACKING_AMOUNT, FilterParameters};
 use crate::modules::lfo::LfoParameters;
 use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
-use crate::synthesizer::constants::{
-    SYNTHESIZER_MESSAGE_SENDER_CAPACITY, UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET,
-};
+use crate::synthesizer::constants::SYNTHESIZER_MESSAGE_SENDER_CAPACITY;
 use crate::synthesizer::create_synthesizer::create_synthesizer;
+use crate::synthesizer::event_listener::start_ui_event_listener;
 use crate::synthesizer::midi_messages::{
     process_midi_cc_values, process_midi_channel_pressure_message, process_midi_note_off_message,
     process_midi_note_on_message, process_midi_pitch_bend_message,
 };
-use crate::synthesizer::set_parameters::{set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted, set_envelope_release_time, set_envelope_sustain_level, set_filter_cutoff, set_filter_poles, set_filter_resonance, set_key_tracking_amount, set_lfo_frequency, set_lfo_phase, set_lfo_phase_reset, set_lfo_range, set_lfo_wave_shape, set_oscillator_clip_boost, set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_shape_parameter1, set_oscillator_shape_parameter2};
+use crate::synthesizer::set_parameters::{
+    set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted,
+    set_envelope_release_time, set_envelope_sustain_level, set_filter_cutoff, set_filter_poles,
+    set_filter_resonance, set_key_tracking_amount, set_lfo_frequency, set_lfo_phase,
+    set_lfo_phase_reset, set_lfo_range, set_lfo_wave_shape, set_oscillator_clip_boost,
+    set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_shape_parameter1,
+    set_oscillator_shape_parameter2,
+};
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
 use rtrb::Producer;
@@ -58,7 +65,20 @@ pub enum SynthesizerUpdateEvents {
     LfoShapeIndex(i32, i32),
     LfoPhase(i32, f32),
     LfoPhaseReset(i32),
+    PortamentoEnabled(bool),
+    PortamentoTime(f32),
+    PitchBendRange(f32),
+    VelocityCurve(f32),
+    HardSyncEnabled(bool),
+    KeySyncEnabled(bool),
+    OutputBalance(f32),
+    OutputLevel(f32),
+    OutputMute(bool),
+    OscillatorMixerBalance(i32, f32),
+    OscillatorMixerLevel(i32, f32),
+    OscillatorMixerMute(i32, bool),
 }
+
 
 #[derive(Debug, Clone, Copy)]
 enum MidiNoteEvent {
@@ -80,6 +100,18 @@ pub enum OscillatorIndex {
     One = 1,
     Two = 2,
     Three = 3,
+}
+
+impl OscillatorIndex {
+    pub fn from_i32(index: i32) -> Option<Self> {
+       match index {
+           0 => Some(OscillatorIndex::Sub),
+           1 => Some(OscillatorIndex::One),
+           2 => Some(OscillatorIndex::Two),
+           3 => Some(OscillatorIndex::Three),
+           _ => None
+       }
+    }
 }
 
 #[derive(Default, Debug)]
@@ -117,6 +149,7 @@ impl Default for QuadMixerInput {
 struct MixerParameters {
     output_level: AtomicU32,
     output_balance: AtomicU32,
+    output_is_muted: AtomicBool,
     quad_mixer_inputs: [QuadMixerInput; 4],
 }
 
@@ -167,6 +200,7 @@ impl Synthesizer {
         let mixer_parameters = MixerParameters {
             output_level: AtomicU32::new(DEFAULT_OUTPUT_LEVEL.to_bits()),
             output_balance: AtomicU32::new(DEFAULT_OUTPUT_BALANCE.to_bits()),
+            output_is_muted: AtomicBool::new(false),
             quad_mixer_inputs: oscillator_mixer_parameters,
         };
 
@@ -235,7 +269,11 @@ impl Synthesizer {
         log::debug!("run(): Start the midi event listener thread");
         self.start_midi_event_listener(midi_message_receiver);
 
-        self.start_ui_event_listener();
+        start_ui_event_listener(
+            self.ui_update_receiver.clone(),
+            self.module_parameters.clone(),
+            self.current_note.clone(),
+        );
 
         log::info!("Creating the synthesizer audio stream");
         create_synthesizer(
@@ -288,207 +326,6 @@ impl Synthesizer {
             }
 
             log::debug!("run(): MIDI event receiver thread has exited");
-        });
-    }
-
-    fn start_ui_event_listener(&self) {
-        let ui_update_receiver = self.ui_update_receiver.clone();
-        let module_parameters = self.module_parameters.clone();
-        thread::spawn(move || {
-            log::debug!("start_ui_event_listener(): spawned thread to receive UI events");
-
-            while let Ok(event) = ui_update_receiver.recv() {
-                match event {
-                    SynthesizerUpdateEvents::WaveShapeIndex(oscillator_index, wave_shape_index) => {
-                        if oscillator_index >= 0
-                            && oscillator_index < module_parameters.oscillators.len() as i32
-                        {
-                            let reindexed_wave_shape =
-                                (wave_shape_index + UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
-                            module_parameters.oscillators[oscillator_index as usize]
-                                .wave_shape_index
-                                .store(reindexed_wave_shape, Relaxed);
-                        } else {
-                            log::error!(
-                                "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
-                            );
-                        }
-                    }
-                    SynthesizerUpdateEvents::CourseTune(oscillator_index, course_tune) => {
-                        if oscillator_index >= 0
-                            && oscillator_index < module_parameters.oscillators.len() as i32
-                        {
-                            set_oscillator_course_tune(
-                                &module_parameters.oscillators[oscillator_index as usize],
-                                course_tune,
-                            );
-                        } else {
-                            log::error!(
-                                "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
-                            );
-                        }
-                    }
-                    SynthesizerUpdateEvents::FineTune(oscillator_index, fine_tune) => {
-                        if oscillator_index >= 0
-                            && oscillator_index < module_parameters.oscillators.len() as i32
-                        {
-                            set_oscillator_fine_tune(
-                                &module_parameters.oscillators[oscillator_index as usize],
-                                fine_tune,
-                            );
-                        } else {
-                            log::error!(
-                                "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
-                            );
-                        }
-                    }
-                    SynthesizerUpdateEvents::ClipperBoost(oscillator_index, boost) => {
-                        if oscillator_index >= 0
-                            && oscillator_index < module_parameters.oscillators.len() as i32
-                        {
-                            set_oscillator_clip_boost(
-                                &module_parameters.oscillators[oscillator_index as usize],
-                                boost,
-                            );
-                        } else {
-                            log::error!(
-                                "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
-                            );
-                        }
-                    }
-                    SynthesizerUpdateEvents::Parameter1(oscillator_index, boost) => {
-                        if oscillator_index >= 0
-                            && oscillator_index < module_parameters.oscillators.len() as i32
-                        {
-                            set_oscillator_shape_parameter1(
-                                &module_parameters.oscillators[oscillator_index as usize],
-                                boost,
-                            );
-                        } else {
-                            log::error!(
-                                "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
-                            );
-                        }
-                    }
-                    SynthesizerUpdateEvents::Parameter2(oscillator_index, boost) => {
-                        if oscillator_index >= 0
-                            && oscillator_index < module_parameters.oscillators.len() as i32
-                        {
-                            set_oscillator_shape_parameter2(
-                                &module_parameters.oscillators[oscillator_index as usize],
-                                boost,
-                            );
-                        } else {
-                            log::error!(
-                                "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
-                            );
-                        }
-                    }
-                    SynthesizerUpdateEvents::FilterCutoffFrequency(frequency) => {
-                        set_filter_cutoff(&module_parameters.filter, frequency);
-                    }
-                    SynthesizerUpdateEvents::FilterResonance(resonance) => {
-                        set_filter_resonance(&module_parameters.filter, resonance);
-                    }
-                    SynthesizerUpdateEvents::FilterPoleCount(poles) => {
-                        set_filter_poles(&module_parameters.filter, poles);
-                    }
-                    SynthesizerUpdateEvents::FilterKeyTrackingAmount(amount) => {
-                        set_key_tracking_amount(&module_parameters.filter, amount);
-                    }
-                    SynthesizerUpdateEvents::FilterEnvelopeAmount(amount) => {
-                        set_envelope_amount(&module_parameters.filter_envelope, amount);
-                    }
-                    SynthesizerUpdateEvents::FilterLfoAmount(amount) => {
-                        set_lfo_range(&module_parameters.filter_lfo, amount);
-                    }
-                    SynthesizerUpdateEvents::FilterEnvelopeAttack(envelope_index, milliseconds) => {
-                        match envelope_index {
-                            ENVELOPE_INDEX_FILTER => set_envelope_attack_time(&module_parameters.filter_envelope, milliseconds),
-                            _=> {
-                                log::error!("start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeAttack: Invalid \
-                                Envelope index: {envelope_index}");
-                            }
-                        }
-                    }
-                    SynthesizerUpdateEvents::FilterEnvelopeDecay(envelope_index, milliseconds) => {
-                        match envelope_index {
-                            ENVELOPE_INDEX_FILTER => set_envelope_decay_time(&module_parameters.filter_envelope,
-                                                                             milliseconds),
-                            _=> {
-                                log::error!("start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeDecay: Invalid \
-                                Envelope index: {envelope_index}");
-                            }
-                        }
-                    }
-                    SynthesizerUpdateEvents::FilterEnvelopeSustain(envelope_index, level) => {
-                        match envelope_index {
-                            ENVELOPE_INDEX_FILTER => set_envelope_sustain_level(&module_parameters.filter_envelope,
-                                                                                level),
-                            _=> {
-                                log::error!("start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeSustain: Invalid \
-                                Envelope index: {envelope_index}");
-                            }
-                        }
-                    }
-                    SynthesizerUpdateEvents::FilterEnvelopeRelease(envelope_index, milliseconds) => {
-                        match envelope_index {
-                            ENVELOPE_INDEX_FILTER => set_envelope_release_time(&module_parameters.filter_envelope,
-                                                                               milliseconds),
-                            _=> {
-                                log::error!("start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeRelease: Invalid \
-                                Envelope index: {envelope_index}");
-                            }
-                        }
-                    }
-                    SynthesizerUpdateEvents::FilterEnvelopeInvert(envelope_index, is_inverted) => {
-                        match envelope_index {
-                            ENVELOPE_INDEX_FILTER => set_envelope_inverted(&module_parameters.filter_envelope,
-                                                                           f32::from(is_inverted)),
-                            _=> {
-                                log::error!("start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeInvert: Invalid \
-                                Envelope index: {envelope_index}");
-                            }
-                        }
-                    }
-                    SynthesizerUpdateEvents::LfoFrequency(lfo_index, frequency) => {
-                        match lfo_index {
-                            LFO_INDEX_FILTER => set_lfo_frequency(&module_parameters.filter_lfo, frequency),
-                            _=> {
-                                log::error!("start_ui_event_listener():SynthesizerUpdateEvents::LfoFrequency: Invalid LFO index: {lfo_index}");
-                            }
-                        }
-                    }
-                    SynthesizerUpdateEvents::LfoShapeIndex(lfo_index, wave_shape_index) => {
-                        match lfo_index {
-                            LFO_INDEX_FILTER => {
-                                let reindexed_wave_shape = (wave_shape_index + UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
-                                &module_parameters.filter_lfo.wave_shape.store(reindexed_wave_shape, Relaxed);
-                            }
-                            _=> {
-                                log::error!("start_ui_event_listener():SynthesizerUpdateEvents::LfoShapeIndex: Invalid\
-                                 LFO index: {lfo_index}");
-                            }
-                        }
-                    }
-                    SynthesizerUpdateEvents::LfoPhase(lfo_index, phase) => {
-                        match lfo_index {
-                            LFO_INDEX_FILTER => set_lfo_phase(&module_parameters.filter_lfo, phase),
-                            _=> {
-                                log::error!("start_ui_event_listener():SynthesizerUpdateEvents::LfoPhase: Invalid LFO index: {lfo_index}");
-                            }
-                        }
-                    }
-                    SynthesizerUpdateEvents::LfoPhaseReset(lfo_index) => {
-                        match lfo_index {
-                            LFO_INDEX_FILTER => set_lfo_phase_reset(&module_parameters.filter_lfo),
-                            _=> {
-                                log::error!("start_ui_event_listener():SynthesizerUpdateEvents::LfoPhaseReset: Invalid LFO index: {lfo_index}");
-                            }
-                        }
-                    }
-                }
-            }
         });
     }
 }

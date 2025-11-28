@@ -107,9 +107,14 @@ pub fn set_output_balance(parameters: &MixerParameters, normal_value: f32) {
     store_f32_as_atomic_u32(&parameters.output_balance, output_balance);
 }
 
-pub fn set_output_volume(parameters: &MixerParameters, normal_value: f32) {
+pub fn set_output_level(parameters: &MixerParameters, normal_value: f32) {
     let output_level = exponential_curve_level_adjustment_from_normal_value(normal_value);
     store_f32_as_atomic_u32(&parameters.output_level, output_level);
+}
+
+pub fn set_output_mute(parameters: &MixerParameters, normal_value: f32) {
+    let is_muted = normal_value_to_bool(normal_value);
+    parameters.output_is_muted.store(is_muted, Relaxed);
 }
 
 pub fn set_velocity_curve(current_note: &mut Arc<CurrentNote>, normal_value: f32) {
