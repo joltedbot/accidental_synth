@@ -46,8 +46,6 @@ pub const DEFAULT_VIBRATO_LFO_DEPTH: f32 = 0.0;
 pub const LFO_INDEX_MOD_WHEEL: i32 = 0;
 pub const LFO_INDEX_FILTER: i32 = 1;
 
-
-
 // Audio Constants
 pub const LOCAL_BUFFER_CAPACITY: usize = 512;
 pub const SAMPLE_PRODUCER_LOOP_SLEEP_DURATION_MICROSECONDS: u64 = 100;

@@ -67,7 +67,6 @@ impl WaveShape {
     }
 }
 
-
 #[derive(Default, Debug)]
 pub enum HardSyncRole {
     #[default]

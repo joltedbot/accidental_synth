@@ -26,14 +26,7 @@ use crate::synthesizer::midi_messages::{
     process_midi_cc_values, process_midi_channel_pressure_message, process_midi_note_off_message,
     process_midi_note_on_message, process_midi_pitch_bend_message,
 };
-use crate::synthesizer::set_parameters::{
-    set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted,
-    set_envelope_release_time, set_envelope_sustain_level, set_filter_cutoff, set_filter_poles,
-    set_filter_resonance, set_key_tracking_amount, set_lfo_frequency, set_lfo_phase,
-    set_lfo_phase_reset, set_lfo_range, set_lfo_wave_shape, set_oscillator_clip_boost,
-    set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_shape_parameter1,
-    set_oscillator_shape_parameter2,
-};
+
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
 use rtrb::Producer;
@@ -79,7 +72,6 @@ pub enum SynthesizerUpdateEvents {
     OscillatorMixerMute(i32, bool),
 }
 
-
 #[derive(Debug, Clone, Copy)]
 enum MidiNoteEvent {
     NoteOn = 1,
@@ -104,13 +96,13 @@ pub enum OscillatorIndex {
 
 impl OscillatorIndex {
     pub fn from_i32(index: i32) -> Option<Self> {
-       match index {
-           0 => Some(OscillatorIndex::Sub),
-           1 => Some(OscillatorIndex::One),
-           2 => Some(OscillatorIndex::Two),
-           3 => Some(OscillatorIndex::Three),
-           _ => None
-       }
+        match index {
+            0 => Some(OscillatorIndex::Sub),
+            1 => Some(OscillatorIndex::One),
+            2 => Some(OscillatorIndex::Two),
+            3 => Some(OscillatorIndex::Three),
+            _ => None,
+        }
     }
 }
 

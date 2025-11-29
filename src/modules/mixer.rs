@@ -25,7 +25,12 @@ pub fn quad_mix(inputs: [MixerInput; 4]) -> (f32, f32) {
     (left_input_sum, right_input_sum)
 }
 
-pub fn output_mix(stereo_input: (f32, f32), level: f32, balance: f32, is_muted: bool) -> (f32, f32) {
+pub fn output_mix(
+    stereo_input: (f32, f32),
+    level: f32,
+    balance: f32,
+    is_muted: bool,
+) -> (f32, f32) {
     if is_muted {
         return (0.0, 0.0);
     }

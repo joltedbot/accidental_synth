@@ -46,7 +46,7 @@ pub struct UIFilterOptions {
 }
 
 #[derive(Clone, Default)]
-pub struct UILFO {
+pub struct UILfo {
     pub frequency: f32,
     pub phase: f32,
     pub wave_shape_index: i32,

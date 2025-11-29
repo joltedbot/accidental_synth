@@ -51,7 +51,7 @@ export component AudioSettings inherits VerticalLayout {
         dropdown-width: Theme.oscillator-panel-widget-width;
         value-list: audio-device-values.output-devices;
         value-index: audio-device-values.output-device-index;
-        drop_down_changed(device) => {
+        drop_down_changed(index, device) => {
             audio-output-device-changed(device);
         }
     }
@@ -64,7 +64,7 @@ export component AudioSettings inherits VerticalLayout {
             label: "Left Channel";
             value-list: audio-device-values.left-channels;
             value-index: audio-device-values.left-channel-index;
-            drop_down_changed(left) => {
+            drop_down_changed(index, left) => {
                 audio-output-left-channel-changed(left);
             }
         }
@@ -73,7 +73,7 @@ export component AudioSettings inherits VerticalLayout {
             label: "Right Channel";
             value-list: audio-device-values.right-channels;
             value-index: audio-device-values.right-channel-index;
-            drop_down_changed(right) => {
+            drop_down_changed(index, right) => {
                 audio-output-right-channel-changed(right);
             }
         }
@@ -85,7 +85,7 @@ export component AudioSettings inherits VerticalLayout {
         dropdown-width: Theme.oscillator-panel-widget-width;
         value-list: audio-device-values.sample-rates;
         value-index: audio-device-values.sample-rate-index;
-        drop_down_changed(rate) => {
+        drop_down_changed(index, rate) => {
             audio-sample-rate-changed(rate);
         }
     }
@@ -110,7 +110,7 @@ export component MidiSettings inherits VerticalLayout {
         value-list: midi-port-values.input-ports;
         value-index: midi-port-values.input-port-index;
         dropdown-width: Theme.oscillator-panel-widget-width;
-        drop_down_changed(left) => {
+        drop_down_changed(index, left) => {
             midi-input-port-changed(left);
         }
     }
@@ -120,7 +120,7 @@ export component MidiSettings inherits VerticalLayout {
         value-list: midi-port-values.channels;
         value-index: midi-port-values.channel-index;
         dropdown-width: Theme.oscillator-panel-widget-width;
-        drop_down_changed(left) => {
+        drop_down_changed(index, left) => {
             midi-input-channel-changed(left);
         }
     }

@@ -1,8 +1,11 @@
 mod constants;
 mod device_monitor;
 
+#[cfg(not(target_os = "macos"))]
+use crate::audio::device_monitor::create_device_monitor;
+
 use crate::audio::constants::COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS;
-use crate::audio::device_monitor::{DeviceMonitor, create_device_monitor, get_audio_device_list};
+use crate::audio::device_monitor::{DeviceMonitor, get_audio_device_list};
 use crate::ui::UIUpdates;
 use anyhow::{Result, anyhow};
 use constants::{
@@ -48,8 +51,9 @@ pub enum AudioDeviceUpdateEvents {
     UIOutputDevice(String),
     UIOutputDeviceLeftChannel(i32),
     UIOutputDeviceRightChannel(i32),
-    OutputDeviceList(Vec<String>),
     OutputDeviceListChanged,
+    #[cfg(not(target_os = "macos"))]
+    OutputDeviceList(Vec<String>),
 }
 
 pub struct Audio {
@@ -194,6 +198,7 @@ fn create_control_listener(
             log::debug!("AudioDeviceEvent: Received UI update: {update:?}");
 
             match update {
+                #[cfg(not(target_os = "macos"))]
                 AudioDeviceUpdateEvents::OutputDeviceList(new_output_device_list) => {
                     log::debug!(
                         "AudioDeviceEvent::OutputDeviceListUpdate: A new audio output device list received. \
@@ -207,15 +212,10 @@ fn create_control_listener(
                         .expect("create_device_monitor(): Could not send audio device list update to the UI. Exiting.");
 
                     if new_output_device_list.contains(&current_output_device_name) {
-                        let new_device_index = new_output_device_list
-                            .iter()
-                            .position(|device_name| device_name == &current_output_device_name)
-                            .unwrap_or(DEFAULT_AUDIO_DEVICE_INDEX);
-
-                        ui_update_sender.send(UIUpdates::AudioDeviceIndex(new_device_index as i32)).expect("create_device_monitor(): Could not send audio device index update to the UI. Exiting.");
-                        log::debug!(
-                            "AudioDeviceEvent::OutputDeviceListUpdate: The current device is still in the \
-                        list. Updating UI with the new index: {new_device_index} and continuing"
+                        update_ui_with_new_device_index(
+                            &mut current_output_device_name,
+                            &ui_update_sender,
+                            &new_output_device_list,
                         );
                         continue;
                     }
@@ -269,17 +269,11 @@ fn create_control_listener(
                         .expect("create_device_monitor(): Could not send audio device list update to the UI. Exiting.");
 
                     if new_output_device_list.contains(&current_output_device_name) {
-                        let new_device_index = new_output_device_list
-                            .iter()
-                            .position(|device_name| device_name == &current_output_device_name)
-                            .unwrap_or(DEFAULT_AUDIO_DEVICE_INDEX);
-
-                        ui_update_sender.send(UIUpdates::AudioDeviceIndex(new_device_index as i32)).expect("create_device_monitor(): Could not send audio device index update to the UI. Exiting.");
-                        log::debug!(
-                            "AudioDeviceEvent::OutputDeviceListUpdate: The current device is still in the \
-                        list. Updating UI with the new index: {new_device_index} and continuing"
+                        update_ui_with_new_device_index(
+                            &mut current_output_device_name,
+                            &ui_update_sender,
+                            &new_output_device_list,
                         );
-
                         continue;
                     }
 
@@ -293,7 +287,7 @@ fn create_control_listener(
                     update_device_properties(
                         &current_output_channels,
                         &mut current_output_device_name,
-                        &new_output_device,
+                        Option::from(&new_output_device),
                     );
 
                     if let Some(stream) = audio_output_stream {
@@ -324,7 +318,7 @@ fn create_control_listener(
                     update_device_properties(
                         &current_output_channels,
                         &mut current_output_device_name,
-                        &new_output_device,
+                        Option::from(&new_output_device),
                     );
 
                     if let Some(stream) = audio_output_stream {
@@ -375,10 +369,32 @@ fn create_control_listener(
     });
 }
 
+fn update_ui_with_new_device_index(
+    current_output_device_name: &mut String,
+    ui_update_sender: &Sender<UIUpdates>,
+    new_output_device_list: &[String],
+) {
+    let new_device_index = new_output_device_list
+        .iter()
+        .position(|device_name| device_name == current_output_device_name)
+        .unwrap_or(DEFAULT_AUDIO_DEVICE_INDEX);
+
+    ui_update_sender
+        .send(UIUpdates::AudioDeviceIndex(new_device_index as i32))
+        .expect(
+            "create_device_monitor(): Could not send audio device index update to the UI. Exiting.",
+        );
+
+    log::debug!(
+        "AudioDeviceEvent::OutputDeviceListUpdate: The current device is still in the \
+                        list. Updating UI with the new index: {new_device_index} and continuing"
+    );
+}
+
 fn update_device_properties(
     current_output_channels: &Arc<OutputChannels>,
     current_output_device_name: &mut String,
-    new_output_device: &Option<OutputDevice>,
+    new_output_device: Option<&OutputDevice>,
 ) {
     *current_output_device_name = if let Some(device) = new_output_device {
         device.name.clone()
@@ -386,7 +402,7 @@ fn update_device_properties(
         String::new()
     };
 
-    update_current_channels(&current_output_channels, Option::from(new_output_device));
+    update_current_channels(current_output_channels, Option::from(new_output_device));
 }
 
 fn update_current_channels(
@@ -556,6 +572,7 @@ fn default_channels_from_device(output_device: &OutputDevice) -> Result<(i32, i3
     Ok((left_index, right_index))
 }
 
+#[cfg(not(target_os = "macos"))]
 fn update_current_output_device_list_if_changed(
     host: &Host,
     current_device_list: &mut Vec<String>,
@@ -570,6 +587,7 @@ fn update_current_output_device_list_if_changed(
     false
 }
 
+#[cfg(not(target_os = "macos"))]
 fn output_audio_device_name_list(host: &Host) -> Vec<String> {
     let mut device_name_list: Vec<String> = Vec::new();
 

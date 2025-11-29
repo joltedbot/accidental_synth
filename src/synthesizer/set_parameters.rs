@@ -171,18 +171,13 @@ pub fn set_portamento_time(parameters: &[OscillatorParameters; 4], normal_value:
     }
 }
 
-pub fn set_oscillator_clip_boost(
-    parameters: &OscillatorParameters,
-    normal_value: f32,
-) {
+pub fn set_oscillator_clip_boost(parameters: &OscillatorParameters, normal_value: f32) {
     let boost = normal_value_to_integer_range(
         normal_value,
         u32::from(MIN_CLIP_BOOST),
         u32::from(MAX_CLIP_BOOST),
     ) as u8;
-    parameters
-        .clipper_boost
-        .store(boost, Relaxed);
+    parameters.clipper_boost.store(boost, Relaxed);
 }
 
 pub fn set_portamento_enabled(parameters: &[OscillatorParameters; 4], normal_value: f32) {

@@ -138,6 +138,10 @@ impl Midi {
             while let Ok(update) = device_update_receiver.recv() {
                 match update {
                     MidiDeviceUpdateEvents::InputPortList(input_ports) => {
+                        log::debug!(
+                            "MidiDeviceUpdateEvents::InputPortList: Received a new input port list: \
+                        {input_ports:?}"
+                        );
                         ui_update_sender
                             .send(UIUpdates::MidiPortList(input_ports))
                             .expect(
@@ -145,6 +149,7 @@ impl Midi {
                             );
                     }
                     MidiDeviceUpdateEvents::InputPort(input_port) => {
+                        log::debug!("MidiDeviceUpdateEvents::InputPort: Received new input port");
                         if let Some(port) = input_port {
                             reload_midi_input_listener(
                                 &mut input_listener_arc,
@@ -163,6 +168,9 @@ impl Midi {
                         }
                     }
                     MidiDeviceUpdateEvents::UIMidiInputPort(port_name) => {
+                        log::debug!(
+                            "MidiDeviceUpdateEvents::UIMidiInputPort(): Received port name: {port_name}"
+                        );
                         if let Some(port) = midi_port_from_port_name(&port_name) {
                             reload_midi_input_listener(
                                 &mut input_listener_arc,
@@ -181,12 +189,15 @@ impl Midi {
                         }
                     }
                     MidiDeviceUpdateEvents::UIMidiInputChannelIndex(channel_index) => {
+                        log::debug!(
+                            "MidiDeviceUpdateEvents::UIMidiInputChannelIndex(): Received channel index: {channel_index}"
+                        );
                         let mut current_channel = current_channel_arc
                             .lock()
                             .unwrap_or_else(PoisonError::into_inner);
                         *current_channel = channel_index.parse().ok();
 
-                        let channel_index_number = current_channel.unwrap_or(0) as i32;
+                        let channel_index_number = i32::from(current_channel.unwrap_or(0));
                         ui_update_sender
                             .send(UIUpdates::MidiChannelIndex(channel_index_number))
                             .expect(
@@ -206,12 +217,15 @@ fn reload_midi_input_listener(
     current_note_arc: &Arc<Mutex<Option<u8>>>,
     port: &MidiInputPort,
 ) {
+    log::info!(
+        "reload_midi_input_listener(): Reloading MIDI input listener for the new input port."
+    );
     let new_input_listener = create_midi_input_listener(
         port,
         current_channel_arc.clone(),
         message_sender_arc.clone(),
         current_note_arc.clone(),
-    ).expect("create_control_listener(): FATAL ERROR: midi input connection creation failure. Exiting. Error: {err}.");
+    ).expect("reload_midi_input_listener(): FATAL ERROR: midi input connection creation failure. Exiting. Error: {err}.");
 
     let mut input_listener = input_listener_arc
         .lock()

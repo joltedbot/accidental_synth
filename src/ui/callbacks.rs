@@ -1,15 +1,15 @@
-mod oscillators;
 mod filter;
-mod modulation;
 mod global;
+mod modulation;
+mod oscillators;
 mod settings;
 
 use crate::AccidentalSynth;
 use crate::audio::AudioDeviceUpdateEvents;
 use crate::midi::MidiDeviceUpdateEvents;
+use crate::synthesizer::SynthesizerUpdateEvents;
 use crossbeam_channel::Sender;
 use slint::Weak;
-use crate::synthesizer::SynthesizerUpdateEvents;
 
 pub fn register_callbacks(
     ui_weak: &Weak<AccidentalSynth>,
@@ -20,24 +20,30 @@ pub fn register_callbacks(
     settings::callback_midi_input_channel_changed(ui_weak, midi_update_sender.clone());
     settings::callback_midi_input_port_changed(ui_weak, midi_update_sender);
     settings::callback_audio_output_device_changed(ui_weak, audio_output_device_sender.clone());
-    settings::callback_audio_output_left_channel_changed(ui_weak, audio_output_device_sender.clone());
-    settings::callback_audio_output_right_channel_changed(ui_weak, audio_output_device_sender.clone());
+    settings::callback_audio_output_left_channel_changed(
+        ui_weak,
+        audio_output_device_sender.clone(),
+    );
+    settings::callback_audio_output_right_channel_changed(
+        ui_weak,
+        audio_output_device_sender.clone(),
+    );
     settings::callback_audio_sample_rate_changed(ui_weak);
-    
+
     oscillators::callback_osc_oscillator_shape_changed(ui_weak, synthesizer_update_sender.clone());
     oscillators::callback_osc_course_tune_changed(ui_weak, synthesizer_update_sender.clone());
     oscillators::callback_osc_fine_tune_changed(ui_weak, synthesizer_update_sender.clone());
     oscillators::callback_osc_clipper_boost_changed(ui_weak, synthesizer_update_sender.clone());
     oscillators::callback_osc_parameter1_changed(ui_weak, synthesizer_update_sender.clone());
     oscillators::callback_osc_parameter2_changed(ui_weak, synthesizer_update_sender.clone());
-    
+
     filter::callback_filter_cutoff_changed(ui_weak, synthesizer_update_sender.clone());
     filter::callback_filter_resonance_changed(ui_weak, synthesizer_update_sender.clone());
     filter::callback_filter_poles_changed(ui_weak, synthesizer_update_sender.clone());
     filter::callback_filter_key_tracking_changed(ui_weak, synthesizer_update_sender.clone());
     filter::callback_filter_eg_amount_changed(ui_weak, synthesizer_update_sender.clone());
     filter::callback_filter_lfo_amount_changed(ui_weak, synthesizer_update_sender.clone());
-    
+
     modulation::callback_envelope_attack_changed(ui_weak, synthesizer_update_sender.clone());
     modulation::callback_envelope_decay_changed(ui_weak, synthesizer_update_sender.clone());
     modulation::callback_envelope_sustain_changed(ui_weak, synthesizer_update_sender.clone());
@@ -47,7 +53,7 @@ pub fn register_callbacks(
     modulation::callback_lfo_shape_changed(ui_weak, synthesizer_update_sender.clone());
     modulation::callback_lfo_phase_changed(ui_weak, synthesizer_update_sender.clone());
     modulation::callback_lfo_phase_reset(ui_weak, synthesizer_update_sender.clone());
-    
+
     global::callback_portamento_enabled(ui_weak, synthesizer_update_sender.clone());
     global::callback_portamento_time_changed(ui_weak, synthesizer_update_sender.clone());
     global::callback_pitch_bend_range_changed(ui_weak, synthesizer_update_sender.clone());
@@ -61,4 +67,3 @@ pub fn register_callbacks(
     global::callback_osc_mixer_level_update(ui_weak, synthesizer_update_sender.clone());
     global::callback_osc_mixer_mute_update(ui_weak, synthesizer_update_sender.clone());
 }
-

@@ -13,8 +13,8 @@ import {
     MomentaryButton,
     EnvelopeSection,
     FixedCenterLFOSection,
-    Envelope,
-    LFO,
+    EnvelopeValues,
+    LFOValues,
 } from "components.slint";
 import {
     VerticalSlider,
@@ -120,7 +120,7 @@ export component FilterOptionsSection inherits VerticalLayout {
 
 export component FilterEGSection inherits VerticalLayout {
 
-    in property <Envelope> filter-eg-values;
+    in property <EnvelopeValues> filter-eg-values;
 
     callback envelope-attack-changed(float);
     callback envelope-decay-changed(float);
@@ -163,8 +163,8 @@ export component FilterPanel inherits Panel {
 
     in property <FilterCutoff> filter-cutoff-values;
     in property <FilterOptions> filter-options-values;
-    in property <Envelope> filter-eq-values;
-    in property <LFO> filter-lfo-values;
+    in property <EnvelopeValues> filter-eq-values;
+    in property <LFOValues> filter-lfo-values;
 
     callback filter-cutoff-changed(float);
     callback filter-resonance-changed(float);

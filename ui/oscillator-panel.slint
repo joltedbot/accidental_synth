@@ -56,8 +56,8 @@ export component OscControlsPanel inherits Panel {
                 value-list: Constant.OSC_WAVE_SHAPES;
                 value-index: oscillator.wave-shape-index;
                 dropdown-width: Theme.oscillator-panel-widget-width;
-                drop_down_changed(shape) => {
-                    wave-shape-changed(shape);
+                drop_down_changed(index, shape) => {
+                    wave-shape-changed(index);
                 }
             }
 

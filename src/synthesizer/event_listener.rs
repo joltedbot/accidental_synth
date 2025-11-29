@@ -1,3 +1,7 @@
+use crate::synthesizer::constants::{
+    ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, LFO_INDEX_FILTER, LFO_INDEX_MOD_WHEEL,
+    UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET,
+};
 use crate::synthesizer::set_parameters::{
     set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted,
     set_envelope_release_time, set_envelope_sustain_level, set_filter_cutoff, set_filter_poles,
@@ -14,7 +18,6 @@ use crossbeam_channel::Receiver;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
-use crate::synthesizer::constants::UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET;
 
 pub fn start_ui_event_listener(
     ui_update_receiver: Receiver<SynthesizerUpdateEvents>,
@@ -31,7 +34,7 @@ pub fn start_ui_event_listener(
                         && oscillator_index < module_parameters.oscillators.len() as i32
                     {
                         let reindexed_wave_shape =
-                            (wave_shape_index + crate::synthesizer::constants::UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
+                            (wave_shape_index + UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
                         module_parameters.oscillators[oscillator_index as usize]
                             .wave_shape_index
                             .store(reindexed_wave_shape, Relaxed);
@@ -131,10 +134,9 @@ pub fn start_ui_event_listener(
                 }
                 SynthesizerUpdateEvents::FilterEnvelopeAttack(envelope_index, milliseconds) => {
                     match envelope_index {
-                        ENVELOPE_INDEX_AMP => set_envelope_attack_time(
-                            &module_parameters.amp_envelope,
-                            milliseconds,
-                        ),
+                        ENVELOPE_INDEX_AMP => {
+                            set_envelope_attack_time(&module_parameters.amp_envelope, milliseconds)
+                        }
                         ENVELOPE_INDEX_FILTER => set_envelope_attack_time(
                             &module_parameters.filter_envelope,
                             milliseconds,
@@ -149,11 +151,10 @@ pub fn start_ui_event_listener(
                 }
                 SynthesizerUpdateEvents::FilterEnvelopeDecay(envelope_index, milliseconds) => {
                     match envelope_index {
-                        ENVELOPE_INDEX_AMP => set_envelope_decay_time(
-                            &module_parameters.amp_envelope,
-                            milliseconds,
-                        ),
-                            ENVELOPE_INDEX_FILTER => set_envelope_decay_time(
+                        ENVELOPE_INDEX_AMP => {
+                            set_envelope_decay_time(&module_parameters.amp_envelope, milliseconds)
+                        }
+                        ENVELOPE_INDEX_FILTER => set_envelope_decay_time(
                             &module_parameters.filter_envelope,
                             milliseconds,
                         ),
@@ -183,10 +184,9 @@ pub fn start_ui_event_listener(
                 }
                 SynthesizerUpdateEvents::FilterEnvelopeRelease(envelope_index, milliseconds) => {
                     match envelope_index {
-                        ENVELOPE_INDEX_AMP => set_envelope_release_time(
-                            &module_parameters.amp_envelope,
-                            milliseconds,
-                        ),                        
+                        ENVELOPE_INDEX_AMP => {
+                            set_envelope_release_time(&module_parameters.amp_envelope, milliseconds)
+                        }
                         ENVELOPE_INDEX_FILTER => set_envelope_release_time(
                             &module_parameters.filter_envelope,
                             milliseconds,
@@ -201,10 +201,10 @@ pub fn start_ui_event_listener(
                 }
                 SynthesizerUpdateEvents::FilterEnvelopeInvert(envelope_index, is_inverted) => {
                     match envelope_index {
-                        ENVELOPE_INDEX_FILTER => set_envelope_inverted(
+                        ENVELOPE_INDEX_AMP => set_envelope_inverted(
                             &module_parameters.amp_envelope,
                             f32::from(is_inverted),
-                        ),                        
+                        ),
                         ENVELOPE_INDEX_FILTER => set_envelope_inverted(
                             &module_parameters.filter_envelope,
                             f32::from(is_inverted),
@@ -229,13 +229,16 @@ pub fn start_ui_event_listener(
                 SynthesizerUpdateEvents::LfoShapeIndex(lfo_index, wave_shape_index) => {
                     match lfo_index {
                         LFO_INDEX_MOD_WHEEL => {
-                            let reindexed_wave_shape = (wave_shape_index + UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
-                            module_parameters.lfo1
+                            let reindexed_wave_shape =
+                                (wave_shape_index + UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
+                            module_parameters
+                                .lfo1
                                 .wave_shape
                                 .store(reindexed_wave_shape, Relaxed);
                         }
                         LFO_INDEX_FILTER => {
-                            let reindexed_wave_shape = (wave_shape_index + UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
+                            let reindexed_wave_shape =
+                                (wave_shape_index + UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
                             module_parameters
                                 .filter_lfo
                                 .wave_shape
@@ -296,11 +299,7 @@ pub fn start_ui_event_listener(
                 }
                 SynthesizerUpdateEvents::OscillatorMixerBalance(oscillator_index, balance) => {
                     if let Some(oscillator) = OscillatorIndex::from_i32(oscillator_index) {
-                        set_oscillator_balance(
-                            &module_parameters.mixer,
-                            oscillator,
-                            f32::from(balance),
-                        );
+                        set_oscillator_balance(&module_parameters.mixer, oscillator, balance);
                     } else {
                         log::error!(
                             "start_ui_event_listener():SynthesizerUpdateEvents::OscillatorMixerBalance: Invalid oscillator index: {oscillator_index}"
@@ -309,11 +308,7 @@ pub fn start_ui_event_listener(
                 }
                 SynthesizerUpdateEvents::OscillatorMixerLevel(oscillator_index, level) => {
                     if let Some(oscillator) = OscillatorIndex::from_i32(oscillator_index) {
-                        set_oscillator_level(
-                            &module_parameters.mixer,
-                            oscillator,
-                            f32::from(level),
-                        );
+                        set_oscillator_level(&module_parameters.mixer, oscillator, level);
                     } else {
                         log::error!(
                             "start_ui_event_listener():SynthesizerUpdateEvents::OscillatorMixerLevel: Invalid oscillator index: {oscillator_index}"

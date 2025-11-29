@@ -14,8 +14,8 @@ import {
     IntSpinBox,
     EnvelopeSection,
     FixedCenterLFOSection,
-    Envelope,
-    LFO,
+    EnvelopeValues,
+    LFOValues,
 } from "components.slint";
 import { Theme } from "theme.slint";
 import { Constant } from "constants.slint";
@@ -298,7 +298,7 @@ export component OscillatorSection inherits VerticalLayout {
 }
 
 export component AmpEnvelopeSection inherits VerticalLayout {
-    in property <Envelope> amp-eq-values;
+    in property <EnvelopeValues> amp-eg-values;
     callback envelope-attack-changed(float);
     callback envelope-decay-changed(float);
     callback envelope-sustain-changed(float);
@@ -313,7 +313,7 @@ export component AmpEnvelopeSection inherits VerticalLayout {
     }
 
     EnvelopeSection {
-        envelope-values: amp-eq-values;
+        envelope-values: amp-eg-values;
         envelope-attack-changed(milliseconds) => {
             envelope-attack-changed(milliseconds);
         }
@@ -333,7 +333,7 @@ export component AmpEnvelopeSection inherits VerticalLayout {
 }
 
 export component ModWheelSection inherits VerticalLayout {
-    in property <LFO> mod-wheel-lfo-values;
+    in property <LFOValues> mod-wheel-lfo-values;
     callback lfo-frequency-changed(int, float);
     callback lfo-shape-changed(int, int);
     callback lfo-phase-changed(int, float);
@@ -369,8 +369,8 @@ export component ModWheelSection inherits VerticalLayout {
 }
 
 export component GlobalPanel inherits Panel {
-    in property <Envelope> amp-eq-values;
-    in property <LFO> mod-wheel-lfo-values;
+    in property <EnvelopeValues> amp-eg-values;
+    in property <LFOValues> mod-wheel-lfo-values;
 
     in property <Mixer> output-mixer-values;
     in property <[Mixer]> oscillator-mixer-values;
@@ -437,7 +437,7 @@ export component GlobalPanel inherits Panel {
             HorizontalLayout {
                 alignment: start;
                 amp-section := AmpEnvelopeSection {
-                    amp-eq-values: amp-eq-values;
+                    amp-eg-values: amp-eg-values;
                     envelope-attack-changed(milliseconds) => {
                         envelope-attack-changed(Constant.ENVELOPE_AMP_INDEX, milliseconds);
                     }

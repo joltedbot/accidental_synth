@@ -114,16 +114,19 @@ pub fn create_synthesizer(
                 let output_balance =
                     load_f32_from_atomic_u32(&module_parameters.mixer.output_balance);
                 let output_is_muted = module_parameters.mixer.output_is_muted.load(Relaxed);
-                
 
-                let (output_left, output_right) =
-                    output_mix((filtered_left, filtered_right), output_level, output_balance, output_is_muted);
+                let (output_left, output_right) = output_mix(
+                    (filtered_left, filtered_right),
+                    output_level,
+                    output_balance,
+                    output_is_muted,
+                );
 
                 local_buffer.push(output_left);
                 local_buffer.push(output_right);
             }
 
-            // Wait for sample_buffer to have enough capacity to accept local_buffer, then break to restart main loop
+            // Wait for sample_buffer to have enough capacity to accept local_buffer, then break to restart the main loop
             loop {
                 // Check for a new sample buffer producer
                 if let Ok(new_sample_buffer) = sample_buffer_receiver.try_recv() {

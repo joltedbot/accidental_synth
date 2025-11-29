@@ -1,9 +1,9 @@
-use slint::Weak;
-use crossbeam_channel::Sender;
 use crate::AccidentalSynth;
 use crate::audio::AudioDeviceUpdateEvents;
 use crate::midi::MidiDeviceUpdateEvents;
 use crate::ui::constants::AUDIO_DEVICE_CHANNEL_NULL_VALUE;
+use crossbeam_channel::Sender;
+use slint::Weak;
 
 pub fn callback_midi_input_channel_changed(
     ui_weak: &Weak<AccidentalSynth>,

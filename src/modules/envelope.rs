@@ -15,6 +15,7 @@ pub const DEFAULT_RELEASE_LEVEL_INCREMENT: f32 = 0.0001;
 pub const DEFAULT_ENVELOPE_AMOUNT: f32 = 1.0;
 pub const DEFAULT_ENVELOPE_SUSTAIN_LEVEL: f32 = 0.8;
 pub const DEFAULT_ENVELOPE_STAGE_MILLISECONDS: u32 = 200;
+pub const ENVELOPE_STAGE_MILLISECONDS_RANGE: u32 = 9_999;
 
 #[derive(Debug)]
 pub struct EnvelopeParameters {

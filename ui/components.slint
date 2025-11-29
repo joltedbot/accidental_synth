@@ -16,13 +16,13 @@ import {
 } from "custom-widgets.slint";
 
 // Component Structs
-export struct LFO  {
+export struct LFOValues  {
     frequency: float,
     phase: float,
     wave-shape-index: int,
 }
 
-export struct Envelope  {
+export struct EnvelopeValues  {
     attack: float,
     decay: float,
     sustain: float,
@@ -372,7 +372,7 @@ export component DropDownMenu inherits VerticalLayout {
     in property <length> dropdown-width: 100px;
     in property <length> dropdown-height: 25px;
     in property <bool> enabled: true;
-    callback drop_down_changed(int);
+    callback drop_down_changed(int, string);
 
     spacing: 5px;
 
@@ -389,7 +389,7 @@ export component DropDownMenu inherits VerticalLayout {
         current-index: value-index;
 
         selected(value) => {
-            drop_down_changed(self.current-index);
+            drop_down_changed(self.current-index, value);
         }
     }
 }
@@ -460,7 +460,7 @@ export component MixerLevel inherits VerticalLayout {
 }
 
 export component EnvelopeSection inherits VerticalLayout {
-    in property <Envelope> envelope-values;
+    in property <EnvelopeValues> envelope-values;
 
     callback envelope-attack-changed(float);
     callback envelope-decay-changed(float);
@@ -523,7 +523,7 @@ export component EnvelopeSection inherits VerticalLayout {
 }
 
 export component FixedCenterLFOSection inherits VerticalLayout {
-    in property <LFO> lfo-values;
+    in property <LFOValues> lfo-values;
 
     callback lfo-frequency-changed(float);
     callback lfo-shape-changed(int);
@@ -558,7 +558,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
                 value-list: Constant.OSC_WAVE_SHAPES;
                 value-index: lfo-values.wave-shape-index;
                 dropdown-width: Theme.global-panel-widget-width;
-                drop_down_changed(index) => {
+                drop_down_changed(index, name) => {
                     lfo-shape-changed(index);
                 }
             }

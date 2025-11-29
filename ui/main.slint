@@ -3,7 +3,7 @@ import "./fonts/HackNerdFontMono-Bold.ttf";
 import { Theme } from "theme.slint";
 import { Constant } from "constants.slint";
 import { TabWidget, Slider, VerticalBox, SpinBox } from "std-widgets.slint";
-import { Panel, Envelope, LFO } from "components.slint";
+import { Panel, EnvelopeValues, LFOValues } from "components.slint";
 import { GlobalPanel } from "global-panel.slint";
 import { HeaderPanel } from "header-panel.slint";
 import { AudioDevice, MidiPort } from "settings-panel.slint";
@@ -61,8 +61,8 @@ export component AccidentalSynth inherits Window {
         poles: Constant.DEFAULT_FILTER_POLES,
         key-track: Constant.DEFAULT_KEY_TRACKING_NORMAL
     };
-    in property <Envelope> filter-eq-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
-    in property <LFO> filter-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
+    in property <EnvelopeValues> filter-eq-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
+    in property <LFOValues> filter-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
 
     callback filter-cutoff-changed(float);
     callback filter-resonance-changed(float);
@@ -103,8 +103,8 @@ export component AccidentalSynth inherits Window {
             level: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL
         }
     ];
-    in property <Envelope> amp-eq-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
-    in property <LFO> mod-wheel-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
+    in property <EnvelopeValues> amp-eg-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
+    in property <LFOValues> mod-wheel-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
     in property <bool> portamento-is-enabled;
     in property <float> portamento-time;
     in property <int> pitch-bend-range: Constant.DEFAULT_PITCH_BEND_RANGE;
@@ -198,7 +198,7 @@ export component AccidentalSynth inherits Window {
                             global-panel := GlobalPanel {
                                 output-mixer-values: output-mixer-values;
                                 oscillator-mixer-values: oscillator-mixer-values;
-                                amp-eq-values: amp-eq-values;
+                                amp-eg-values: amp-eg-values;
                                 mod-wheel-lfo-values: mod-wheel-lfo-values;
                                 portamento-is-enabled: portamento-is-enabled;
                                 portamento-time: portamento-time;

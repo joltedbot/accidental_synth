@@ -1,5 +1,14 @@
-use crate::audio::constants::{DEVICE_LIST_POLLING_INTERVAL_IN_MS, OSSSTATUS_NO_ERROR};
-use crate::audio::{AudioDeviceUpdateEvents, update_current_output_device_list_if_changed};
+use crate::audio::constants::OSSSTATUS_NO_ERROR;
+
+#[cfg(not(target_os = "macos"))]
+use {
+    crate::audio::constants::DEVICE_LIST_POLLING_INTERVAL_IN_MS,
+    crate::audio::update_current_output_device_list_if_changed, cpal::default_host,
+    crossbeam_channel::Sender, std::ffi::c_void, std::thread, std::thread::sleep,
+    std::time::Duration,
+};
+
+use crate::audio::AudioDeviceUpdateEvents;
 use anyhow::{Result, anyhow};
 use core_foundation::base::TCFType;
 use core_foundation::string::{CFString, CFStringRef};
@@ -11,12 +20,10 @@ use coreaudio_sys::{
     kAudioObjectPropertyElementMain, kAudioObjectPropertyElementMaster,
     kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyScopeOutput, kAudioObjectSystemObject,
 };
-use cpal::default_host;
+
 use crossbeam_channel::Sender;
 use std::ffi::c_void;
-use std::thread::sleep;
-use std::time::Duration;
-use std::{ptr, thread};
+use std::ptr;
 
 #[cfg(target_os = "macos")]
 pub struct DeviceMonitor {
@@ -47,17 +54,17 @@ impl DeviceMonitor {
 
         unsafe {
             let boxed_device_update_sender = Box::new(self.device_update_sender.clone());
-            let client_data = Box::into_raw(boxed_device_update_sender) as *mut c_void;
+            let client_data = Box::into_raw(boxed_device_update_sender).cast::<c_void>();
 
             let status = AudioObjectAddPropertyListener(
                 kAudioObjectSystemObject,
-                &self.property_address as *const _,
+                &raw const self.property_address,
                 Some(device_listener_callback),
                 client_data,
             );
 
             if status != OSSSTATUS_NO_ERROR {
-                let _ = Box::from_raw(client_data as *mut Sender<AudioDeviceUpdateEvents>);
+                let _ = Box::from_raw(client_data.cast::<Sender<AudioDeviceUpdateEvents>>());
                 return Err(anyhow!("Failed to add property listener: {status}"));
             }
 
@@ -71,17 +78,17 @@ impl DeviceMonitor {
         unsafe {
             let status = AudioObjectRemovePropertyListener(
                 kAudioObjectSystemObject,
-                &self.property_address as *const _,
+                &raw const self.property_address,
                 Some(device_listener_callback),
                 self.client_data_ptr.unwrap_or(ptr::null_mut()),
             );
 
             if let Some(client_data) = self.client_data_ptr.take() {
-                let _ = Box::from_raw(client_data as *mut Sender<AudioDeviceUpdateEvents>);
+                let _ = Box::from_raw(client_data.cast::<Sender<AudioDeviceUpdateEvents>>());
             }
 
             if status != OSSSTATUS_NO_ERROR {
-                return Err(format!("Failed to remove property listener: {}", status));
+                return Err(format!("Failed to remove property listener: {status}"));
             }
         }
 
@@ -107,14 +114,14 @@ pub fn get_audio_device_list() -> Result<Vec<String>, String> {
         let mut property_size: UInt32 = 0;
         let status = AudioObjectGetPropertyDataSize(
             kAudioObjectSystemObject,
-            &property_address,
+            &raw const property_address,
             0,
             ptr::null(),
-            &mut property_size,
+            &raw mut property_size,
         );
 
         if status != OSSSTATUS_NO_ERROR {
-            return Err(format!("Failed to get the device list size: {}", status));
+            return Err(format!("Failed to get the device list size: {status}"));
         }
 
         // Get the device IDs
@@ -123,11 +130,11 @@ pub fn get_audio_device_list() -> Result<Vec<String>, String> {
 
         let status = AudioObjectGetPropertyData(
             kAudioObjectSystemObject,
-            &property_address as *const _,
+            &raw const property_address,
             0,
             ptr::null(),
-            &mut property_size as *mut _,
-            devices.as_mut_ptr() as *mut _,
+            &raw mut property_size,
+            devices.as_mut_ptr().cast(),
         );
 
         if status != OSSSTATUS_NO_ERROR {
@@ -141,11 +148,10 @@ pub fn get_audio_device_list() -> Result<Vec<String>, String> {
                     Ok(name) => {
                         result.push(name);
                     }
-                    Err(e) => {
+                    Err(err) => {
                         log::warn!(
-                            "Couldn't get the name for the audio output device {} from CoreAudio. Error: {}",
-                            device_id,
-                            e
+                            "Couldn't get the name for the audio output device {device_id} from CoreAudio. Error: \
+                            {err}",
                         );
                     }
                 }
@@ -167,18 +173,15 @@ unsafe fn is_output_device(device_id: AudioDeviceID) -> bool {
         let mut property_size: UInt32 = 0;
         let status = AudioObjectGetPropertyDataSize(
             device_id,
-            &property_address,
+            &raw const property_address,
             0,
             ptr::null(),
-            &mut property_size,
+            &raw mut property_size,
         );
 
-        if status != OSSSTATUS_NO_ERROR || property_size == 0 {
+        if status != OSSSTATUS_NO_ERROR || property_size < size_of::<UInt32>() as UInt32 {
             log::debug!(
-                "is_output_device(): Failed to get the device stream configuration size for device {}. Status: {}, Size: {}",
-                device_id,
-                status,
-                property_size
+                "is_output_device(): Failed to get the device stream configuration size for the device {device_id}. Status: {status}, Size: {property_size}"
             );
             return false;
         }
@@ -188,23 +191,28 @@ unsafe fn is_output_device(device_id: AudioDeviceID) -> bool {
 
         let status = AudioObjectGetPropertyData(
             device_id,
-            &property_address,
+            &raw const property_address,
             0,
             ptr::null(),
-            &mut property_data_size,
-            buffer.as_mut_ptr() as *mut c_void,
+            &raw mut property_data_size,
+            buffer.as_mut_ptr().cast::<c_void>(),
         );
 
         if status != OSSSTATUS_NO_ERROR {
             log::debug!(
-                "is_output_device(): Failed to get the device stream configuration for device {}. Status: {}",
-                device_id,
-                status
+                "is_output_device(): Failed to get the device stream configuration for the device {device_id}. Status: {status}"
             );
             return false;
         }
 
-        let num_buffers = *(buffer.as_ptr() as *const UInt32);
+        let num_buffers = if buffer.len() >= 4 {
+            u32::from_ne_bytes([buffer[0], buffer[1], buffer[2], buffer[3]])
+        } else {
+            log::warn!(
+                "is_output_device(): Returned buffer size is less than 4 bytes. Returning 0 and continuing."
+            );
+            0
+        };
 
         num_buffers > 0
     }
@@ -223,16 +231,16 @@ unsafe fn get_device_name(device_id: AudioDeviceID) -> Result<String, String> {
     let status = unsafe {
         AudioObjectGetPropertyData(
             device_id,
-            &property_address as *const _,
+            &raw const property_address,
             0,
             ptr::null(),
-            &mut property_size as *mut _,
-            &mut cf_string as *mut _ as *mut _,
+            &raw mut property_size,
+            (&raw mut cf_string).cast(),
         )
     };
 
     if status != OSSSTATUS_NO_ERROR {
-        return Err(format!("Failed to get device name: {}", status));
+        return Err(format!("Failed to get device name: {status}"));
     }
 
     if cf_string.is_null() {
@@ -263,6 +271,7 @@ extern "C" fn device_listener_callback(
     OSSSTATUS_NO_ERROR
 }
 
+#[cfg(not(target_os = "macos"))]
 pub fn create_device_monitor(device_update_sender: Sender<AudioDeviceUpdateEvents>) {
     let host = default_host();
     let mut current_output_device_list = Vec::new();
