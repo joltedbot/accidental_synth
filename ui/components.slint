@@ -372,6 +372,7 @@ export component DropDownMenu inherits VerticalLayout {
     in property <length> dropdown-width: 100px;
     in property <length> dropdown-height: 25px;
     in property <bool> enabled: true;
+    out property <string> current-value: dropdown.current-value;
     callback drop_down_changed(int, string);
 
     spacing: 5px;

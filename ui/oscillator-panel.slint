@@ -40,6 +40,35 @@ export component OscControlsPanel inherits Panel {
     callback parameter1-changed(float);
     callback parameter2-changed(float);
 
+    function set_parameters_from_wave_shape(shape: string) {
+        if (shape == "Pulse") {
+            param1.label = Theme.osc-controls-param1-pulse;
+            param2.label = Theme.control-label-default-string;
+            param1.enabled = true;
+            param2.enabled = false;
+        } else if (shape == "AM") {
+            param1.label = Theme.osc-controls-param1-am;
+            param2.label = Theme.osc-controls-param2-am;
+            param1.enabled = true;
+            param2.enabled = true;
+        } else if (shape == "FM") {
+            param1.label = Theme.osc-controls-param1-fm;
+            param2.label = Theme.osc-controls-param2-fm;
+            param1.enabled = true;
+            param2.enabled = true;
+        } else {
+            param1.label = Theme.control-label-default-string;
+            param2.label = Theme.control-label-default-string;
+            param1.enabled = false;
+            param2.enabled = false;
+        }
+    }
+
+    init => {
+        set_parameters_from_wave_shape(wave-shape.current-value);
+    }
+
+
     HorizontalLayout {
         alignment: center;
         VerticalLayout {
@@ -57,6 +86,7 @@ export component OscControlsPanel inherits Panel {
                 value-index: oscillator.wave-shape-index;
                 dropdown-width: Theme.oscillator-panel-widget-width;
                 drop_down_changed(index, shape) => {
+                    set_parameters_from_wave_shape(shape);
                     wave-shape-changed(index);
                 }
             }
