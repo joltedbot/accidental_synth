@@ -2,11 +2,10 @@ use crate::math::f32s_are_equal;
 use crate::modules::filter::NUMBER_OF_FILER_POLES;
 use crate::modules::oscillator::{NUMBER_OF_WAVE_SHAPES, OscillatorParameters};
 use crate::synthesizer::constants::{
-    CENTS_PER_SEMITONE, ENVELOPE_MAX_MILLISECONDS, ENVELOPE_MIN_MILLISECONDS,
-    EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT,
-    LEVEL_CURVE_LINEAR_RANGE, LINEAR_VELOCITY_CURVE_EXPONENT, MAX_MIDI_KEY_VELOCITY,
-    MAX_VELOCITY_CURVE_EXPONENT, MIN_VELOCITY_CURVE_EXPONENT, NORMAL_TO_BOOL_SWITCH_ON_VALUE,
-    PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT,
+    CENTS_PER_SEMITONE, EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT,
+    EXPONENTIAL_LFO_COEFFICIENT, LEVEL_CURVE_LINEAR_RANGE, LINEAR_VELOCITY_CURVE_EXPONENT,
+    MAX_MIDI_KEY_VELOCITY, MAX_VELOCITY_CURVE_EXPONENT, MIN_VELOCITY_CURVE_EXPONENT,
+    NORMAL_TO_BOOL_SWITCH_ON_VALUE, PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT,
 };
 use std::sync::atomic::Ordering::Relaxed;
 /*
@@ -71,14 +70,6 @@ pub fn normal_value_to_bool(normal_value: f32) -> bool {
     normal_value >= NORMAL_TO_BOOL_SWITCH_ON_VALUE
 }
 
-pub fn normal_value_to_envelope_milliseconds(normal_value: f32) -> u32 {
-    normal_value_to_integer_range(
-        normal_value,
-        ENVELOPE_MIN_MILLISECONDS,
-        ENVELOPE_MAX_MILLISECONDS,
-    )
-}
-
 pub fn normal_value_to_number_of_filter_poles(normal_value: f32) -> u8 {
     (NUMBER_OF_FILER_POLES * normal_value)
         .ceil()
@@ -111,6 +102,28 @@ pub fn exponential_curve_lfo_frequency_from_normal_value(normal_value: f32) -> f
     }
     exponential_curve_from_normal_value_and_coefficient(normal_value, EXPONENTIAL_LFO_COEFFICIENT)
         / 100.0
+}
+
+pub fn exponential_curve_envelope_time_from_normal_value(
+    normal_value: f32,
+    crossover_values: (f32, f32),
+    minimum: u32,
+    maximum: u32,
+) -> u32 {
+    if normal_value == 0.0 {
+        return 0;
+    }
+
+    if normal_value < crossover_values.0 {
+        let renormailzed_value = normal_value / crossover_values.0;
+        let quadratic_curve = renormailzed_value.powi(2);
+        minimum + ((crossover_values.1 - minimum as f32) * quadratic_curve) as u32
+    } else {
+        let renormailzed_value = (normal_value - crossover_values.0) / crossover_values.0;
+        let quadratic_curve = renormailzed_value.powi(2);
+        (crossover_values.1 + ((maximum as f32 - crossover_values.1) * quadratic_curve).round())
+            as u32
+    }
 }
 
 pub fn exponential_curve_level_adjustment_from_normal_value(normal_value: f32) -> f32 {

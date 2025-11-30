@@ -10,12 +10,16 @@ const DEFAULT_EG_AMOUNT: f32 = 1.0;
 pub const DEFAULT_ATTACK_LEVEL_INCREMENT: f32 = 0.0001;
 pub const DEFAULT_DECAY_LEVEL_INCREMENT: f32 = 0.0001;
 pub const DEFAULT_DECAY_MILLISECONDS: f32 = 200.0;
-const DEFAULT_SUSTAIN_LEVEL: f32 = 0.8;
 pub const DEFAULT_RELEASE_LEVEL_INCREMENT: f32 = 0.0001;
 pub const DEFAULT_ENVELOPE_AMOUNT: f32 = 1.0;
 pub const DEFAULT_ENVELOPE_SUSTAIN_LEVEL: f32 = 0.8;
 pub const DEFAULT_ENVELOPE_STAGE_MILLISECONDS: u32 = 200;
-pub const ENVELOPE_STAGE_MILLISECONDS_RANGE: u32 = 9_999;
+pub const MIN_ATTACK_STAGE_MILLISECONDS: u32 = 1;
+pub const MAX_ATTACK_STAGE_MILLISECONDS: u32 = 5000;
+pub const MIN_DECAY_STAGE_MILLISECONDS: u32 = 10;
+pub const MAX_DECAY_STAGE_MILLISECONDS: u32 = 5000;
+pub const MIN_RELEASE_STAGE_MILLISECONDS: u32 = 10;
+pub const MAX_RELEASE_STAGE_MILLISECONDS: u32 = 10000;
 
 #[derive(Debug)]
 pub struct EnvelopeParameters {
@@ -43,7 +47,7 @@ impl Default for EnvelopeParameters {
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
-enum Stage {
+pub(crate) enum Stage {
     #[default]
     Off,
     Attack,
@@ -86,7 +90,7 @@ impl Envelope {
             milliseconds_per_sample,
             is_inverted: false,
             amount: DEFAULT_EG_AMOUNT,
-            sustain_level: DEFAULT_SUSTAIN_LEVEL,
+            sustain_level: DEFAULT_ENVELOPE_SUSTAIN_LEVEL,
             attack_level_increment: DEFAULT_ATTACK_LEVEL_INCREMENT,
             decay_level_increment: DEFAULT_DECAY_LEVEL_INCREMENT,
             decay_milliseconds: DEFAULT_DECAY_MILLISECONDS,
@@ -297,7 +301,7 @@ mod tests {
         ));
         assert!(f32s_are_equal(
             envelope.sustain_level,
-            DEFAULT_SUSTAIN_LEVEL
+            DEFAULT_ENVELOPE_SUSTAIN_LEVEL
         ));
         assert!(f32s_are_equal(
             envelope.attack_level_increment,

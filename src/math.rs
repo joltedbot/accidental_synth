@@ -62,7 +62,7 @@ pub fn normalize_midi_value(midi_value: u8) -> f32 {
     (f32::from(midi_value) / MAX_MIDI_VALUE).clamp(0.0, 1.0)
 }
 
-fn map_value_from_linear_to_exponential_scale(
+pub(crate) fn map_value_from_linear_to_exponential_scale(
     mut input_value: f32,
     mut input_range: (f32, f32),
     mut output_range: (f32, f32),

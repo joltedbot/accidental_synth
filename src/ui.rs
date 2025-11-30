@@ -12,7 +12,8 @@ use crate::audio::AudioDeviceUpdateEvents;
 use crate::midi::MidiDeviceUpdateEvents;
 use crate::modules::envelope::{
     DEFAULT_ENVELOPE_STAGE_MILLISECONDS, DEFAULT_ENVELOPE_SUSTAIN_LEVEL,
-    ENVELOPE_STAGE_MILLISECONDS_RANGE,
+    MAX_ATTACK_STAGE_MILLISECONDS, MAX_DECAY_STAGE_MILLISECONDS, MAX_RELEASE_STAGE_MILLISECONDS,
+    MIN_ATTACK_STAGE_MILLISECONDS, MIN_DECAY_STAGE_MILLISECONDS, MIN_RELEASE_STAGE_MILLISECONDS,
 };
 use crate::synthesizer::SynthesizerUpdateEvents;
 use crate::ui::callbacks::register_callbacks;
@@ -63,12 +64,12 @@ impl UI {
 
         let amp_envelope_values = UIEnvelope {
             attack: DEFAULT_ENVELOPE_STAGE_MILLISECONDS as f32
-                / ENVELOPE_STAGE_MILLISECONDS_RANGE as f32,
+                / (MAX_ATTACK_STAGE_MILLISECONDS - MIN_ATTACK_STAGE_MILLISECONDS) as f32,
             decay: DEFAULT_ENVELOPE_STAGE_MILLISECONDS as f32
-                / ENVELOPE_STAGE_MILLISECONDS_RANGE as f32,
+                / (MAX_DECAY_STAGE_MILLISECONDS - MIN_DECAY_STAGE_MILLISECONDS) as f32,
             sustain: DEFAULT_ENVELOPE_SUSTAIN_LEVEL,
             release: DEFAULT_ENVELOPE_STAGE_MILLISECONDS as f32
-                / ENVELOPE_STAGE_MILLISECONDS_RANGE as f32,
+                / (MAX_RELEASE_STAGE_MILLISECONDS - MIN_RELEASE_STAGE_MILLISECONDS) as f32,
             inverted: false,
         };
 
