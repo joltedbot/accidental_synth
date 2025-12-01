@@ -1,25 +1,23 @@
 use crate::math::store_f32_as_atomic_u32;
 use crate::modules::envelope::{
-    EnvelopeParameters, MAX_ATTACK_MILLISECONDS, MAX_DECAY_MILLISECONDS,
-    MAX_RELEASE_MILLISECONDS, MIN_ATTACK_MILLISECONDS, MIN_DECAY_MILLISECONDS,
-    MIN_RELEASE_MILLISECONDS,
+    EnvelopeParameters, MAX_ATTACK_MILLISECONDS, MAX_DECAY_MILLISECONDS, MAX_RELEASE_MILLISECONDS,
+    MIN_ATTACK_MILLISECONDS, MIN_DECAY_MILLISECONDS, MIN_RELEASE_MILLISECONDS,
 };
 use crate::modules::filter::FilterParameters;
 use crate::modules::lfo::{LfoParameters, MAX_LFO_CENTER_VALUE, MIN_LFO_CENTER_VALUE};
 use crate::modules::oscillator::OscillatorParameters;
-use crate::modules::oscillator::constants::{
-    MAX_CLIP_BOOST, MAX_PORTAMENTO_TIME_IN_BUFFERS, MIN_CLIP_BOOST, MIN_PORTAMENTO_TIME_IN_BUFFERS,
-};
+use crate::modules::oscillator::constants::{MAX_CLIP_BOOST, MIN_CLIP_BOOST};
 use crate::synthesizer::constants::{
     EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES, EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
-    EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES, MAX_FILTER_RESONANCE, MAX_PITCH_BEND_RANGE,
-    MIN_FILTER_RESONANCE, MIN_PITCH_BEND_RANGE, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL,
-    OSCILLATOR_COURSE_TUNE_MIN_INTERVAL, OSCILLATOR_FINE_TUNE_MAX_CENTS,
-    OSCILLATOR_FINE_TUNE_MIN_CENTS,
+    EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES, EXPONENTIAL_PORTAMENTO_COEFFICIENT,
+    MAX_FILTER_RESONANCE, MAX_PITCH_BEND_RANGE, MIN_FILTER_RESONANCE, MIN_PITCH_BEND_RANGE,
+    OSCILLATOR_COURSE_TUNE_MAX_INTERVAL, OSCILLATOR_COURSE_TUNE_MIN_INTERVAL,
+    OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS,
 };
 use crate::synthesizer::midi_value_converters::{
     exponential_curve_envelope_time_from_normal_value,
     exponential_curve_filter_cutoff_from_midi_value,
+    exponential_curve_from_normal_value_and_coefficient,
     exponential_curve_level_adjustment_from_normal_value,
     exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool,
     normal_value_to_f32_range, normal_value_to_integer_range,
@@ -180,11 +178,11 @@ pub fn set_oscillator_hard_sync(parameters: &[OscillatorParameters; 4], normal_v
 }
 
 pub fn set_portamento_time(parameters: &[OscillatorParameters; 4], normal_value: f32) {
-    let speed = normal_value_to_integer_range(
+    let speed = exponential_curve_from_normal_value_and_coefficient(
         normal_value,
-        u32::from(MIN_PORTAMENTO_TIME_IN_BUFFERS),
-        u32::from(MAX_PORTAMENTO_TIME_IN_BUFFERS),
-    ) as u16;
+        EXPONENTIAL_PORTAMENTO_COEFFICIENT,
+    )
+    .round() as u16;
 
     for parameters in parameters {
         parameters.portamento_time.store(speed, Relaxed);

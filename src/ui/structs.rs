@@ -81,10 +81,13 @@ pub struct UIEnvelope {
 impl Default for UIEnvelope {
     fn default() -> Self {
         Self {
-            attack: DEFAULT_ENVELOPE_MILLISECONDS as f32 / (MAX_ATTACK_MILLISECONDS - MIN_ATTACK_MILLISECONDS) as f32,
-            decay: DEFAULT_ENVELOPE_MILLISECONDS as f32 / (MAX_DECAY_MILLISECONDS - MIN_DECAY_MILLISECONDS) as f32,
+            attack: DEFAULT_ENVELOPE_MILLISECONDS as f32
+                / (MAX_ATTACK_MILLISECONDS - MIN_ATTACK_MILLISECONDS) as f32,
+            decay: DEFAULT_ENVELOPE_MILLISECONDS as f32
+                / (MAX_DECAY_MILLISECONDS - MIN_DECAY_MILLISECONDS) as f32,
             sustain: DEFAULT_ENVELOPE_SUSTAIN_LEVEL,
-            release: DEFAULT_ENVELOPE_MILLISECONDS as f32 / (MAX_RELEASE_MILLISECONDS - MIN_RELEASE_MILLISECONDS) as f32,
+            release: DEFAULT_ENVELOPE_MILLISECONDS as f32
+                / (MAX_RELEASE_MILLISECONDS - MIN_RELEASE_MILLISECONDS) as f32,
             inverted: false,
         }
     }

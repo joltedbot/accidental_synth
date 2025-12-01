@@ -19,7 +19,6 @@ use crate::ui::constants::{
 use crate::ui::structs::{UIAudioDevice, UIEnvelope, UILfo, UIMidiPort};
 use anyhow::Result;
 
-
 const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -60,7 +59,7 @@ impl UI {
             right_channel_index: 1,
             ..Default::default()
         };
-        
+
         Self {
             ui_update_sender,
             ui_update_receiver,
@@ -119,7 +118,7 @@ impl UI {
                 .unwrap_or_else(std::sync::PoisonError::into_inner);
             let filter_envelope = filter_envelope_values
                 .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);            
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             let mod_wheel_lfo = mod_wheel_lfo_values
                 .lock()
                 .unwrap_or_else(std::sync::PoisonError::into_inner);
@@ -333,7 +332,7 @@ fn slint_envelope_from_ui_envelope(envelope_values: &UIEnvelope) -> EnvelopeValu
 }
 fn slint_envelope_from_ui_lfo(lfo_values: &UILfo) -> LFOValues {
     LFOValues {
-        frequency:  lfo_values.frequency,
+        frequency: lfo_values.frequency,
         phase: lfo_values.phase,
         wave_shape_index: lfo_values.wave_shape_index,
     }

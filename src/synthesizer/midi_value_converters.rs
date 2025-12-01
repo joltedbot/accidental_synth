@@ -134,7 +134,7 @@ pub fn exponential_curve_level_adjustment_from_normal_value(normal_value: f32) -
         / LEVEL_CURVE_LINEAR_RANGE
 }
 
-fn exponential_curve_from_normal_value_and_coefficient(
+pub fn exponential_curve_from_normal_value_and_coefficient(
     normal_value: f32,
     exponential_coefficient: f32,
 ) -> f32 {
