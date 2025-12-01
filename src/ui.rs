@@ -2,7 +2,7 @@ mod callbacks;
 mod constants;
 mod structs;
 
-use super::{AccidentalSynth, AudioDevice, EnvelopeValues, MidiPort};
+use super::{AccidentalSynth, AudioDevice, EnvelopeValues, LFOValues, MidiPort};
 use crossbeam_channel::{Receiver, Sender, bounded};
 use slint::{ModelRc, SharedString, VecModel, Weak};
 use std::sync::{Arc, Mutex};
@@ -10,19 +10,15 @@ use std::thread;
 
 use crate::audio::AudioDeviceUpdateEvents;
 use crate::midi::MidiDeviceUpdateEvents;
-use crate::modules::envelope::{
-    DEFAULT_ENVELOPE_STAGE_MILLISECONDS, DEFAULT_ENVELOPE_SUSTAIN_LEVEL,
-    MAX_ATTACK_STAGE_MILLISECONDS, MAX_DECAY_STAGE_MILLISECONDS, MAX_RELEASE_STAGE_MILLISECONDS,
-    MIN_ATTACK_STAGE_MILLISECONDS, MIN_DECAY_STAGE_MILLISECONDS, MIN_RELEASE_STAGE_MILLISECONDS,
-};
 use crate::synthesizer::SynthesizerUpdateEvents;
 use crate::ui::callbacks::register_callbacks;
 use crate::ui::constants::{
     AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET, AUDIO_DEVICE_CHANNEL_NULL_VALUE, MIDI_CHANNEL_LIST,
     MONO_CHANNEL_COUNT,
 };
-use crate::ui::structs::{UIAudioDevice, UIEnvelope, UIMidiPort};
+use crate::ui::structs::{UIAudioDevice, UIEnvelope, UILfo, UIMidiPort};
 use anyhow::Result;
+
 
 const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
 
@@ -43,6 +39,9 @@ pub struct UI {
     audio_device_values: Arc<Mutex<UIAudioDevice>>,
     midi_port_values: Arc<Mutex<UIMidiPort>>,
     amp_envelope_values: Arc<Mutex<UIEnvelope>>,
+    filter_envelope_values: Arc<Mutex<UIEnvelope>>,
+    mod_wheel_lfo_values: Arc<Mutex<UILfo>>,
+    filter_lfo_values: Arc<Mutex<UILfo>>,
 }
 
 impl UI {
@@ -61,24 +60,16 @@ impl UI {
             right_channel_index: 1,
             ..Default::default()
         };
-
-        let amp_envelope_values = UIEnvelope {
-            attack: DEFAULT_ENVELOPE_STAGE_MILLISECONDS as f32
-                / (MAX_ATTACK_STAGE_MILLISECONDS - MIN_ATTACK_STAGE_MILLISECONDS) as f32,
-            decay: DEFAULT_ENVELOPE_STAGE_MILLISECONDS as f32
-                / (MAX_DECAY_STAGE_MILLISECONDS - MIN_DECAY_STAGE_MILLISECONDS) as f32,
-            sustain: DEFAULT_ENVELOPE_SUSTAIN_LEVEL,
-            release: DEFAULT_ENVELOPE_STAGE_MILLISECONDS as f32
-                / (MAX_RELEASE_STAGE_MILLISECONDS - MIN_RELEASE_STAGE_MILLISECONDS) as f32,
-            inverted: false,
-        };
-
+        
         Self {
             ui_update_sender,
             ui_update_receiver,
             audio_device_values: Arc::new(Mutex::new(audio_device_values)),
             midi_port_values: Arc::new(Mutex::new(midi_port_values)),
-            amp_envelope_values: Arc::new(Mutex::new(amp_envelope_values)),
+            amp_envelope_values: Arc::new(Mutex::new(UIEnvelope::default())),
+            filter_envelope_values: Arc::new(Mutex::new(UIEnvelope::default())),
+            mod_wheel_lfo_values: Arc::new(Mutex::new(UILfo::default())),
+            filter_lfo_values: Arc::new(Mutex::new(UILfo::default())),
         }
     }
 
@@ -110,6 +101,9 @@ impl UI {
         let midi_port_values = self.midi_port_values.clone();
         let audio_device_values = self.audio_device_values.clone();
         let amp_envelope_values = self.amp_envelope_values.clone();
+        let filter_envelope_values = self.filter_envelope_values.clone();
+        let mod_wheel_lfo_values = self.mod_wheel_lfo_values.clone();
+        let filter_lfo_values = self.filter_lfo_values.clone();
 
         ui_weak.upgrade_in_event_loop(move |ui| {
             ui.set_version(SharedString::from(env!("CARGO_PKG_VERSION")));
@@ -123,10 +117,22 @@ impl UI {
             let amp_envelope = amp_envelope_values
                 .lock()
                 .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let filter_envelope = filter_envelope_values
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);            
+            let mod_wheel_lfo = mod_wheel_lfo_values
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let filter_lfo = filter_lfo_values
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
 
             ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(&midi_ports));
             ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(&audio_devices));
             ui.set_amp_eg_values(slint_envelope_from_ui_envelope(&amp_envelope));
+            ui.set_filter_eq_values(slint_envelope_from_ui_envelope(&filter_envelope));
+            ui.set_mod_wheel_lfo_values(slint_envelope_from_ui_lfo(&mod_wheel_lfo));
+            ui.set_filter_lfo_values(slint_envelope_from_ui_lfo(&filter_lfo));
         })?;
 
         Ok(())
@@ -316,13 +322,20 @@ fn slint_audio_device_from_ui_audio_device(audio_device_values: &UIAudioDevice) 
     }
 }
 
-fn slint_envelope_from_ui_envelope(amp_envelope_values: &UIEnvelope) -> EnvelopeValues {
+fn slint_envelope_from_ui_envelope(envelope_values: &UIEnvelope) -> EnvelopeValues {
     EnvelopeValues {
-        attack: amp_envelope_values.attack,
-        decay: amp_envelope_values.decay,
-        sustain: amp_envelope_values.sustain,
-        release: amp_envelope_values.release,
-        inverted: amp_envelope_values.inverted,
+        attack: envelope_values.attack,
+        decay: envelope_values.decay,
+        sustain: envelope_values.sustain,
+        release: envelope_values.release,
+        inverted: envelope_values.inverted,
+    }
+}
+fn slint_envelope_from_ui_lfo(lfo_values: &UILfo) -> LFOValues {
+    LFOValues {
+        frequency:  lfo_values.frequency,
+        phase: lfo_values.phase,
+        wave_shape_index: lfo_values.wave_shape_index,
     }
 }
 

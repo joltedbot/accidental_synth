@@ -2,13 +2,13 @@ pub mod am;
 pub mod constants;
 pub mod fm;
 mod generate_wave_trait;
-pub mod supersaw;
 pub mod noise;
 pub mod pulse;
 pub mod ramp;
 pub mod saw;
 pub mod sine;
 pub mod square;
+pub mod supersaw;
 pub mod triangle;
 
 use self::am::AM;
@@ -18,13 +18,13 @@ use self::constants::{
     MIN_NOTE_FREQUENCY,
 };
 use self::fm::FM;
-use self::supersaw::Supersaw;
 use self::noise::Noise;
 use self::pulse::Pulse;
 use self::ramp::Ramp;
 use self::saw::Saw;
 use self::sine::Sine;
 use self::square::Square;
+use self::supersaw::Supersaw;
 use self::triangle::Triangle;
 use crate::math;
 use crate::math::{dbfs_to_f32_sample, f32s_are_equal, load_f32_from_atomic_u32};

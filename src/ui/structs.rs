@@ -1,5 +1,12 @@
 #![allow(dead_code)]
 
+use crate::modules::envelope::{
+    DEFAULT_ENVELOPE_MILLISECONDS, DEFAULT_ENVELOPE_SUSTAIN_LEVEL, MAX_ATTACK_MILLISECONDS,
+    MAX_DECAY_MILLISECONDS, MAX_RELEASE_MILLISECONDS, MIN_ATTACK_MILLISECONDS,
+    MIN_DECAY_MILLISECONDS, MIN_RELEASE_MILLISECONDS,
+};
+use crate::modules::lfo::DEFAULT_LFO_FREQUENCY;
+
 #[derive(Clone, Default)]
 pub struct UIAudioDevice {
     pub output_device_index: i32,
@@ -45,20 +52,42 @@ pub struct UIFilterOptions {
     pub lfo_amount: f32,
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct UILfo {
     pub frequency: f32,
     pub phase: f32,
     pub wave_shape_index: i32,
 }
 
-#[derive(Clone, Default)]
+impl Default for UILfo {
+    fn default() -> Self {
+        Self {
+            frequency: DEFAULT_LFO_FREQUENCY,
+            phase: 0.0,
+            wave_shape_index: 0,
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct UIEnvelope {
     pub attack: f32,
     pub decay: f32,
     pub sustain: f32,
     pub release: f32,
     pub inverted: bool,
+}
+
+impl Default for UIEnvelope {
+    fn default() -> Self {
+        Self {
+            attack: DEFAULT_ENVELOPE_MILLISECONDS as f32 / (MAX_ATTACK_MILLISECONDS - MIN_ATTACK_MILLISECONDS) as f32,
+            decay: DEFAULT_ENVELOPE_MILLISECONDS as f32 / (MAX_DECAY_MILLISECONDS - MIN_DECAY_MILLISECONDS) as f32,
+            sustain: DEFAULT_ENVELOPE_SUSTAIN_LEVEL,
+            release: DEFAULT_ENVELOPE_MILLISECONDS as f32 / (MAX_RELEASE_MILLISECONDS - MIN_RELEASE_MILLISECONDS) as f32,
+            inverted: false,
+        }
+    }
 }
 
 #[derive(Clone, Default)]

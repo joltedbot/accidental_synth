@@ -1,8 +1,8 @@
 use crate::math::store_f32_as_atomic_u32;
 use crate::modules::envelope::{
-    EnvelopeParameters, MAX_ATTACK_STAGE_MILLISECONDS, MAX_DECAY_STAGE_MILLISECONDS,
-    MAX_RELEASE_STAGE_MILLISECONDS, MIN_ATTACK_STAGE_MILLISECONDS, MIN_DECAY_STAGE_MILLISECONDS,
-    MIN_RELEASE_STAGE_MILLISECONDS,
+    EnvelopeParameters, MAX_ATTACK_MILLISECONDS, MAX_DECAY_MILLISECONDS,
+    MAX_RELEASE_MILLISECONDS, MIN_ATTACK_MILLISECONDS, MIN_DECAY_MILLISECONDS,
+    MIN_RELEASE_MILLISECONDS,
 };
 use crate::modules::filter::FilterParameters;
 use crate::modules::lfo::{LfoParameters, MAX_LFO_CENTER_VALUE, MIN_LFO_CENTER_VALUE};
@@ -70,8 +70,8 @@ pub fn set_envelope_release_time(envelope_parameters: &EnvelopeParameters, norma
     let milliseconds = exponential_curve_envelope_time_from_normal_value(
         normal_value,
         EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES,
-        MIN_RELEASE_STAGE_MILLISECONDS,
-        MAX_RELEASE_STAGE_MILLISECONDS,
+        MIN_RELEASE_MILLISECONDS,
+        MAX_RELEASE_MILLISECONDS,
     );
     envelope_parameters.release_ms.store(milliseconds, Relaxed);
 }
@@ -84,8 +84,8 @@ pub fn set_envelope_decay_time(envelope_parameters: &EnvelopeParameters, normal_
     let milliseconds = exponential_curve_envelope_time_from_normal_value(
         normal_value,
         EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
-        MIN_DECAY_STAGE_MILLISECONDS,
-        MAX_DECAY_STAGE_MILLISECONDS,
+        MIN_DECAY_MILLISECONDS,
+        MAX_DECAY_MILLISECONDS,
     );
     envelope_parameters.decay_ms.store(milliseconds, Relaxed);
 }
@@ -94,8 +94,8 @@ pub fn set_envelope_attack_time(envelope_parameters: &EnvelopeParameters, normal
     let milliseconds = exponential_curve_envelope_time_from_normal_value(
         normal_value,
         EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES,
-        MIN_ATTACK_STAGE_MILLISECONDS,
-        MAX_ATTACK_STAGE_MILLISECONDS,
+        MIN_ATTACK_MILLISECONDS,
+        MAX_ATTACK_MILLISECONDS,
     );
     envelope_parameters.attack_ms.store(milliseconds, Relaxed);
 }

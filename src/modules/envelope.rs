@@ -13,13 +13,13 @@ pub const DEFAULT_DECAY_MILLISECONDS: f32 = 200.0;
 pub const DEFAULT_RELEASE_LEVEL_INCREMENT: f32 = 0.0001;
 pub const DEFAULT_ENVELOPE_AMOUNT: f32 = 1.0;
 pub const DEFAULT_ENVELOPE_SUSTAIN_LEVEL: f32 = 0.8;
-pub const DEFAULT_ENVELOPE_STAGE_MILLISECONDS: u32 = 200;
-pub const MIN_ATTACK_STAGE_MILLISECONDS: u32 = 1;
-pub const MAX_ATTACK_STAGE_MILLISECONDS: u32 = 5000;
-pub const MIN_DECAY_STAGE_MILLISECONDS: u32 = 10;
-pub const MAX_DECAY_STAGE_MILLISECONDS: u32 = 5000;
-pub const MIN_RELEASE_STAGE_MILLISECONDS: u32 = 10;
-pub const MAX_RELEASE_STAGE_MILLISECONDS: u32 = 10000;
+pub const DEFAULT_ENVELOPE_MILLISECONDS: u32 = 200;
+pub const MIN_ATTACK_MILLISECONDS: u32 = 1;
+pub const MAX_ATTACK_MILLISECONDS: u32 = 5000;
+pub const MIN_DECAY_MILLISECONDS: u32 = 10;
+pub const MAX_DECAY_MILLISECONDS: u32 = 5000;
+pub const MIN_RELEASE_MILLISECONDS: u32 = 10;
+pub const MAX_RELEASE_MILLISECONDS: u32 = 10000;
 
 #[derive(Debug)]
 pub struct EnvelopeParameters {
@@ -35,10 +35,10 @@ pub struct EnvelopeParameters {
 impl Default for EnvelopeParameters {
     fn default() -> Self {
         Self {
-            attack_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
-            decay_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
+            attack_ms: AtomicU32::new(DEFAULT_ENVELOPE_MILLISECONDS),
+            decay_ms: AtomicU32::new(DEFAULT_ENVELOPE_MILLISECONDS),
             sustain_level: AtomicU32::new(DEFAULT_ENVELOPE_SUSTAIN_LEVEL.to_bits()),
-            release_ms: AtomicU32::new(DEFAULT_ENVELOPE_STAGE_MILLISECONDS),
+            release_ms: AtomicU32::new(DEFAULT_ENVELOPE_MILLISECONDS),
             amount: AtomicU32::new(DEFAULT_ENVELOPE_AMOUNT.to_bits()),
             is_inverted: AtomicBool::new(false),
             gate_flag: AtomicU8::new(0),

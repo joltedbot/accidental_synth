@@ -13,7 +13,7 @@ pub const MIN_LFO_CENTER_VALUE: f32 = -1.0;
 const DEFAULT_CENTER_VALUE: f32 = 0.0;
 const DEFAULT_RANGE: f32 = 2.0;
 const DEFAULT_PHASE: f32 = 0.0;
-const DEFAULT_FREQUENCY: f32 = 0.1;
+pub const DEFAULT_LFO_FREQUENCY: f32 = 0.1;
 
 #[derive(Debug)]
 pub struct LfoParameters {
@@ -28,7 +28,7 @@ pub struct LfoParameters {
 impl Default for LfoParameters {
     fn default() -> Self {
         Self {
-            frequency: AtomicU32::new(DEFAULT_FREQUENCY.to_bits()),
+            frequency: AtomicU32::new(DEFAULT_LFO_FREQUENCY.to_bits()),
             center_value: AtomicU32::new(DEFAULT_CENTER_VALUE.to_bits()),
             range: AtomicU32::new(DEFAULT_RANGE.to_bits()),
             phase: AtomicU32::new(DEFAULT_PHASE.to_bits()),
@@ -53,7 +53,7 @@ impl Lfo {
         let oscillator = Oscillator::new(sample_rate, WaveShape::Sine);
         Self {
             oscillator,
-            frequency: DEFAULT_FREQUENCY,
+            frequency: DEFAULT_LFO_FREQUENCY,
             center_value: DEFAULT_CENTER_VALUE,
             range: DEFAULT_RANGE,
             phase: DEFAULT_PHASE,
