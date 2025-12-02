@@ -46,10 +46,14 @@ fn main() {
     audio
         .run(ui_update_sender.clone())
         .expect("Could not initialize audio module. Exiting.");
-    midi.run(ui_update_sender)
+    midi.run(ui_update_sender.clone())
         .expect("Could not initialize midi module. Exiting.");
     synthesizer
-        .run(midi_message_receiver, audio_sample_buffer_receiver)
+        .run(
+            midi_message_receiver,
+            audio_sample_buffer_receiver,
+            ui_update_sender,
+        )
         .expect("Could not initialize the synthesizer module. Exiting.");
     ui.run(
         &application.as_weak(),

@@ -18,6 +18,8 @@ use crate::synthesizer::{
     CurrentNote, KeyboardParameters, MidiGateEvent, MidiNoteEvent, ModuleParameters,
     OscillatorIndex, midi_value_converters,
 };
+use crate::ui::UIUpdates;
+use crossbeam_channel::Sender;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Relaxed, Release};
 
@@ -101,6 +103,7 @@ pub fn process_midi_cc_values(
     cc_value: CC,
     current_note: &mut Arc<CurrentNote>,
     module_parameters: &mut Arc<ModuleParameters>,
+    ui_update_sender: Sender<UIUpdates>,
 ) {
     log::debug!("process_midi_cc_values(): CC received: {cc_value:?}");
     match cc_value {
@@ -123,51 +126,115 @@ pub fn process_midi_cc_values(
             set_output_mute(&module_parameters.mixer, normalize_midi_value(value));
         }
         CC::SubOscillatorShapeParameter1(value) => {
+            let parameter1_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::Sub;
             set_oscillator_shape_parameter1(
-                &module_parameters.oscillators[OscillatorIndex::Sub as usize],
-                normalize_midi_value(value),
+                &module_parameters.oscillators[oscillator_index as usize],
+                parameter1_value,
             );
+
+            ui_update_sender.send(UIUpdates::OscillatorParameter1(oscillator_index as i32, parameter1_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator-specific parameter 1 value to the UI. \
+                    Exiting.",
+                );
         }
         CC::SubOscillatorShapeParameter2(value) => {
+            let parameter2_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::Sub;
             set_oscillator_shape_parameter2(
-                &module_parameters.oscillators[OscillatorIndex::Sub as usize],
-                normalize_midi_value(value),
+                &module_parameters.oscillators[oscillator_index as usize],
+                parameter2_value,
+            );
+            ui_update_sender
+                .send(UIUpdates::OscillatorParameter2(oscillator_index as i32, parameter2_value))
+                .expect(
+                "process_midi_cc_values(): Could not send the oscillator-specific parameter 2 value to the UI. \
+                Exiting.",
             );
         }
         CC::Oscillator1ShapeParameter1(value) => {
+            let parameter1_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::One;
             set_oscillator_shape_parameter1(
-                &module_parameters.oscillators[OscillatorIndex::One as usize],
-                normalize_midi_value(value),
+                &module_parameters.oscillators[oscillator_index as usize],
+                parameter1_value,
+            );
+            ui_update_sender
+                .send(UIUpdates::OscillatorParameter1(oscillator_index as i32, parameter1_value))
+                .expect(
+                "process_midi_cc_values(): Could not send the oscillator-specific parameter 1 value to the UI. \
+                Exiting.",
             );
         }
         CC::Oscillator1ShapeParameter2(value) => {
+            let parameter2_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::One;
             set_oscillator_shape_parameter2(
-                &module_parameters.oscillators[OscillatorIndex::One as usize],
-                normalize_midi_value(value),
+                &module_parameters.oscillators[oscillator_index as usize],
+                parameter2_value,
+            );
+            ui_update_sender
+                .send(UIUpdates::OscillatorParameter2(oscillator_index as i32, parameter2_value))
+                .expect(
+                "process_midi_cc_values(): Could not send the oscillator-specific parameter 2 value to the UI. \
+                Exiting.",
             );
         }
         CC::Oscillator2ShapeParameter1(value) => {
+            let parameter1_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::Two;
             set_oscillator_shape_parameter1(
-                &module_parameters.oscillators[OscillatorIndex::Two as usize],
-                normalize_midi_value(value),
+                &module_parameters.oscillators[oscillator_index as usize],
+                parameter1_value,
+            );
+            ui_update_sender
+                .send(UIUpdates::OscillatorParameter1(oscillator_index as i32, parameter1_value))
+                .expect(
+                "process_midi_cc_values(): Could not send the oscillator-specific parameter 1 value to the UI. \
+                Exiting.",
             );
         }
         CC::Oscillator2ShapeParameter2(value) => {
+            let parameter2_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::Two;
             set_oscillator_shape_parameter2(
-                &module_parameters.oscillators[OscillatorIndex::Two as usize],
-                normalize_midi_value(value),
+                &module_parameters.oscillators[oscillator_index as usize],
+                parameter2_value,
+            );
+            ui_update_sender
+                .send(UIUpdates::OscillatorParameter2(oscillator_index as i32, parameter2_value))
+                .expect(
+                "process_midi_cc_values(): Could not send the oscillator-specific parameter 2 value to the UI. \
+                Exiting.",
             );
         }
         CC::Oscillator3ShapeParameter1(value) => {
-            set_oscillator_shape_parameter1(
-                &module_parameters.oscillators[OscillatorIndex::Three as usize],
-                normalize_midi_value(value),
+            let parameter1_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::Three;
+            set_oscillator_shape_parameter2(
+                &module_parameters.oscillators[oscillator_index as usize],
+                parameter1_value,
+            );
+            ui_update_sender
+                .send(UIUpdates::OscillatorParameter1(oscillator_index as i32, parameter1_value))
+                .expect(
+                "process_midi_cc_values(): Could not send the oscillator-specific parameter 1 value to the UI. \
+                Exiting.",
             );
         }
         CC::Oscillator3ShapeParameter2(value) => {
+            let parameter2_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::Three;
             set_oscillator_shape_parameter2(
-                &module_parameters.oscillators[OscillatorIndex::Three as usize],
-                normalize_midi_value(value),
+                &module_parameters.oscillators[oscillator_index as usize],
+                parameter2_value,
+            );
+            ui_update_sender
+                .send(UIUpdates::OscillatorParameter2(oscillator_index as i32, parameter2_value))
+                .expect(
+                "process_midi_cc_values(): Could not send the oscillator-specific parameter 2 value to the UI. \
+                Exiting.",
             );
         }
         CC::OscillatorKeySyncEnabled(value) => {
@@ -180,76 +247,163 @@ pub fn process_midi_cc_values(
             set_oscillator_hard_sync(&module_parameters.oscillators, normalize_midi_value(value));
         }
         CC::SubOscillatorShape(value) => {
-            set_oscillator_wave_shape(
+            let normal_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::Sub;
+            let shape_index = set_oscillator_wave_shape(
                 &module_parameters.oscillators[OscillatorIndex::Sub as usize],
-                normalize_midi_value(value),
+                normal_value,
             );
+            ui_update_sender
+                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, shape_index as i32))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator wave shape value to the UI. Exiting.",
+                );
         }
         CC::Oscillator1Shape(value) => {
-            set_oscillator_wave_shape(
-                &module_parameters.oscillators[OscillatorIndex::One as usize],
-                normalize_midi_value(value),
+            let normal_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::One;
+            let shape_index = set_oscillator_wave_shape(
+                &module_parameters.oscillators[oscillator_index as usize],
+                normal_value,
             );
+            ui_update_sender
+                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, shape_index as i32))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator wave shape value to the UI. Exiting.",
+                );
         }
         CC::Oscillator2Shape(value) => {
-            set_oscillator_wave_shape(
-                &module_parameters.oscillators[OscillatorIndex::Two as usize],
-                normalize_midi_value(value),
+            let normal_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::Two;
+            let shape_index = set_oscillator_wave_shape(
+                &module_parameters.oscillators[oscillator_index as usize],
+                normal_value,
             );
+            ui_update_sender
+                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, shape_index as i32))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator wave shape value to the UI. Exiting.",
+                );
         }
         CC::Oscillator3Shape(value) => {
-            set_oscillator_wave_shape(
-                &module_parameters.oscillators[OscillatorIndex::Three as usize],
-                normalize_midi_value(value),
+            let normal_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::Three;
+            let shape_index = set_oscillator_wave_shape(
+                &module_parameters.oscillators[oscillator_index as usize],
+                normal_value,
             );
+            ui_update_sender
+                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, shape_index as i32))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator wave shape value to the UI. Exiting.",
+                );
         }
         CC::SubOscillatorCourseTune(value) => {
-            set_oscillator_course_tune(
-                &module_parameters.oscillators[OscillatorIndex::Sub as usize],
+            let oscillator_index = OscillatorIndex::Sub;
+            let course_tune = set_oscillator_course_tune(
+                &module_parameters.oscillators[oscillator_index as usize],
                 normalize_midi_value(value),
             );
+
+            ui_update_sender
+                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
+                );
         }
         CC::Oscillator1CourseTune(value) => {
-            set_oscillator_course_tune(
-                &module_parameters.oscillators[OscillatorIndex::One as usize],
+            let oscillator_index = OscillatorIndex::One;
+            let course_tune = set_oscillator_course_tune(
+                &module_parameters.oscillators[oscillator_index as usize],
                 normalize_midi_value(value),
             );
+
+            ui_update_sender
+                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
+                );
         }
         CC::Oscillator2CourseTune(value) => {
-            set_oscillator_course_tune(
-                &module_parameters.oscillators[OscillatorIndex::Two as usize],
+            let oscillator_index = OscillatorIndex::Two;
+            let course_tune = set_oscillator_course_tune(
+                &module_parameters.oscillators[oscillator_index as usize],
                 normalize_midi_value(value),
             );
+
+            ui_update_sender
+                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
+                );
         }
         CC::Oscillator3CourseTune(value) => {
-            set_oscillator_course_tune(
-                &module_parameters.oscillators[OscillatorIndex::Three as usize],
+            let oscillator_index = OscillatorIndex::Three;
+            let course_tune = set_oscillator_course_tune(
+                &module_parameters.oscillators[oscillator_index as usize],
                 normalize_midi_value(value),
             );
+
+            ui_update_sender
+                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
+                );
         }
         CC::SubOscillatorFineTune(value) => {
-            set_oscillator_fine_tune(
-                &module_parameters.oscillators[OscillatorIndex::Sub as usize],
-                normalize_midi_value(value),
+            let oscillator_index = OscillatorIndex::Sub;
+            let fine_tune_normal_value = normalize_midi_value(value);
+            let cents = set_oscillator_fine_tune(
+                &module_parameters.oscillators[oscillator_index as usize],
+                fine_tune_normal_value,
             );
+
+            ui_update_sender
+                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value,cents as i32))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
+                );
         }
         CC::Oscillator1FineTune(value) => {
-            set_oscillator_fine_tune(
-                &module_parameters.oscillators[OscillatorIndex::One as usize],
-                normalize_midi_value(value),
+            let oscillator_index = OscillatorIndex::One;
+            let fine_tune_normal_value = normalize_midi_value(value);
+            let cents = set_oscillator_fine_tune(
+                &module_parameters.oscillators[oscillator_index as usize],
+                fine_tune_normal_value,
             );
+            ui_update_sender
+                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value,cents as i32))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
+                );
         }
         CC::Oscillator2FineTune(value) => {
-            set_oscillator_fine_tune(
-                &module_parameters.oscillators[OscillatorIndex::Two as usize],
-                normalize_midi_value(value),
+            let oscillator_index = OscillatorIndex::Two;
+            let fine_tune_normal_value = normalize_midi_value(value);
+            let cents = set_oscillator_fine_tune(
+                &module_parameters.oscillators[oscillator_index as usize],
+                fine_tune_normal_value,
             );
+            ui_update_sender
+                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value, cents as i32))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
+                );
         }
         CC::Oscillator3FineTune(value) => {
-            set_oscillator_fine_tune(
-                &module_parameters.oscillators[OscillatorIndex::Three as usize],
-                normalize_midi_value(value),
+            let oscillator_index = OscillatorIndex::Three;
+            let fine_tune_normal_value = normalize_midi_value(value);
+            let cents = set_oscillator_fine_tune(
+                &module_parameters.oscillators[oscillator_index as usize],
+                fine_tune_normal_value,
             );
+
+            ui_update_sender
+                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value, cents as
+                    i32))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
+                );
         }
         CC::SubOscillatorLevel(value) => {
             set_oscillator_level(
@@ -339,27 +493,56 @@ pub fn process_midi_cc_values(
             set_portamento_enabled(&module_parameters.oscillators, normalize_midi_value(value));
         }
         CC::SubOscillatorClipBoost(value) => {
+            let boost_level = normalize_midi_value(value);
             set_oscillator_clip_boost(
                 &module_parameters.oscillators[OscillatorIndex::Sub as usize],
-                normalize_midi_value(value),
+                boost_level,
             );
+            ui_update_sender
+                .send(UIUpdates::OscillatorClipperBoost(OscillatorIndex::Sub as i32, boost_level))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator clipper boost level value to the UI. \
+                    Exiting.",
+                );
         }
         CC::Oscillator1ClipBoost(value) => {
+            let boost_level = normalize_midi_value(value);
             set_oscillator_clip_boost(
                 &module_parameters.oscillators[OscillatorIndex::One as usize],
                 normalize_midi_value(value),
             );
+            ui_update_sender
+                .send(UIUpdates::OscillatorClipperBoost(OscillatorIndex::One as i32, boost_level))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator clipper boost level value to the UI. \
+                    Exiting.",
+                );
         }
         CC::Oscillator2ClipBoost(value) => {
+            let boost_level = normalize_midi_value(value);
             set_oscillator_clip_boost(
                 &module_parameters.oscillators[OscillatorIndex::Two as usize],
                 normalize_midi_value(value),
             );
+
+            ui_update_sender
+                .send(UIUpdates::OscillatorClipperBoost(OscillatorIndex::Two as i32, boost_level))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator clipper boost level value to the UI. \
+                    Exiting.",
+            );
         }
         CC::Oscillator3ClipBoost(value) => {
+            let boost_level = normalize_midi_value(value);
             set_oscillator_clip_boost(
                 &module_parameters.oscillators[OscillatorIndex::Three as usize],
                 normalize_midi_value(value),
+            );
+            ui_update_sender
+                .send(UIUpdates::OscillatorClipperBoost(OscillatorIndex::Three as i32, boost_level))
+                .expect(
+                    "process_midi_cc_values(): Could not send the oscillator clipper boost level value to the UI. \
+                    Exiting.",
             );
         }
         CC::FilterPoles(value) => {

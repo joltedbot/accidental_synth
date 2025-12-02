@@ -2,21 +2,21 @@ mod callbacks;
 mod constants;
 mod structs;
 
-use super::{AccidentalSynth, AudioDevice, EnvelopeValues, LFOValues, MidiPort};
+use super::{AccidentalSynth, AudioDevice, EnvelopeValues, LFOValues, MidiPort, Oscillator};
 use crossbeam_channel::{Receiver, Sender, bounded};
 use slint::{ModelRc, SharedString, VecModel, Weak};
+use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::thread;
-
 use crate::audio::AudioDeviceUpdateEvents;
 use crate::midi::MidiDeviceUpdateEvents;
-use crate::synthesizer::SynthesizerUpdateEvents;
+use crate::synthesizer::{OscillatorIndex, SynthesizerUpdateEvents};
 use crate::ui::callbacks::register_callbacks;
 use crate::ui::constants::{
     AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET, AUDIO_DEVICE_CHANNEL_NULL_VALUE, MIDI_CHANNEL_LIST,
     MONO_CHANNEL_COUNT,
 };
-use crate::ui::structs::{UIAudioDevice, UIEnvelope, UILfo, UIMidiPort};
+use crate::ui::structs::{UIAudioDevice, UIEnvelope, UILfo, UIMidiPort, UIOscillator};
 use anyhow::Result;
 
 const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
@@ -30,6 +30,13 @@ pub enum UIUpdates {
     AudioDeviceIndex(i32),
     AudioDeviceChannelCount(u16),
     AudioDeviceChannelIndexes { left: i32, right: i32 },
+    OscillatorWaveShape(i32, i32),
+    OscillatorFineTune(i32, f32, i32),
+    OscillatorFineTuneCents(i32, i32),
+    OscillatorCourseTune(i32, i32),
+    OscillatorClipperBoost(i32, f32),
+    OscillatorParameter1(i32, f32),
+    OscillatorParameter2(i32, f32),
 }
 
 pub struct UI {
@@ -41,6 +48,8 @@ pub struct UI {
     filter_envelope_values: Arc<Mutex<UIEnvelope>>,
     mod_wheel_lfo_values: Arc<Mutex<UILfo>>,
     filter_lfo_values: Arc<Mutex<UILfo>>,
+    oscillators: Arc<Mutex<Vec<UIOscillator>>>,
+    oscillator_fine_tune_values: Arc<Mutex<Vec<i32>>>,
 }
 
 impl UI {
@@ -60,6 +69,8 @@ impl UI {
             ..Default::default()
         };
 
+        let oscillator_values = vec![UIOscillator::default(); OscillatorIndex::count()];
+
         Self {
             ui_update_sender,
             ui_update_receiver,
@@ -69,6 +80,8 @@ impl UI {
             filter_envelope_values: Arc::new(Mutex::new(UIEnvelope::default())),
             mod_wheel_lfo_values: Arc::new(Mutex::new(UILfo::default())),
             filter_lfo_values: Arc::new(Mutex::new(UILfo::default())),
+            oscillators: Arc::new(Mutex::new(oscillator_values)),
+            oscillator_fine_tune_values: Arc::new(Mutex::new(vec![0; OscillatorIndex::count()])),
         }
     }
 
@@ -144,6 +157,8 @@ impl UI {
     ) {
         let midi_port_values = self.midi_port_values.clone();
         let audio_device_values = self.audio_device_values.clone();
+        let oscillators = self.oscillators.clone();
+        let oscillator_fine_tune_values = self.oscillator_fine_tune_values.clone();
         let ui_weak_thread = ui_weak.clone();
 
         thread::spawn(move || {
@@ -174,6 +189,68 @@ impl UI {
                             &audio_device_values,
                             left,
                             right,
+                        );
+                    }
+                    UIUpdates::OscillatorWaveShape(oscillator_index, shape_index) => {
+                        set_oscillator_wave_shape(
+                            &ui_weak_thread,
+                            &oscillators,
+                            oscillator_index,
+                            shape_index,
+                        );
+                    }
+                    UIUpdates::OscillatorFineTune(oscillator_index, normal_value, cents) => {
+                        set_oscillator_fine_tune(
+                            &ui_weak_thread,
+                            &oscillators,
+                            oscillator_index,
+                            normal_value,
+                        );
+                        set_oscillator_fine_tune_display(
+                            &ui_weak_thread,
+                            &oscillator_fine_tune_values,
+                            oscillator_index,
+                            cents,
+                        );
+                    }
+                    UIUpdates::OscillatorFineTuneCents(oscillator_index, cents) => {
+                        set_oscillator_fine_tune_display(
+                            &ui_weak_thread,
+                            &oscillator_fine_tune_values,
+                            oscillator_index,
+                            cents,
+                        );
+                    }
+                    UIUpdates::OscillatorCourseTune(oscillator_index, normal_value) => {
+                        set_oscillator_course_tune(
+                            &ui_weak_thread,
+                            &oscillators,
+                            oscillator_index,
+                            normal_value,
+                        );
+                    }
+                    UIUpdates::OscillatorClipperBoost(oscillator_index, level) => {
+                        set_oscillator_clipper_boost(
+                            &ui_weak_thread,
+                            &oscillators,
+                            oscillator_index,
+                            level,
+                        );
+                    }
+                    UIUpdates::OscillatorParameter1(oscillator_index, value) => {
+                        set_oscillator_parameter1(
+                            &ui_weak_thread,
+                            &oscillators,
+                            oscillator_index,
+                            value,
+                        );
+                    }
+                    UIUpdates::OscillatorParameter2(oscillator_index, value) => {
+                        set_oscillator_parameter2(
+                            &ui_weak_thread,
+                            &oscillators,
+                            oscillator_index,
+                            value,
                         );
                     }
                 }
@@ -308,16 +385,154 @@ fn set_audio_device_channel_indexes(
     });
 }
 
+
+fn set_oscillator_wave_shape(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    oscillator_values: &Arc<Mutex<Vec<UIOscillator>>>,
+    oscillator_index: i32,
+    wave_shape_index: i32,
+) {
+    let mut oscillators = oscillator_values
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    oscillators[oscillator_index as usize].wave_shape_index = wave_shape_index;
+
+    let ui_oscillators = oscillators.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_oscillators(slint_oscillators_from_oscillators(&ui_oscillators));
+    });
+}
+
+fn set_oscillator_fine_tune(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    oscillator_values: &Arc<Mutex<Vec<UIOscillator>>>,
+    oscillator_index: i32,
+    normal_value: f32,
+) {
+    let mut oscillators = oscillator_values
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    oscillators[oscillator_index as usize].fine_tune = normal_value;
+
+    let ui_oscillators = oscillators.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_oscillators(slint_oscillators_from_oscillators(&ui_oscillators));
+    });
+}
+
+fn set_oscillator_fine_tune_display(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    oscillator_fine_tune_values: &Arc<Mutex<Vec<i32>>>,
+    oscillator_index: i32,
+    cents: i32,
+) {
+    let mut fine_tune_values = oscillator_fine_tune_values
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    fine_tune_values[oscillator_index as usize] = cents;
+
+    let ui_oscillator_fine_tune_values = fine_tune_values.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_osc_fine_tune_cents(vec_to_model_rc_int(&ui_oscillator_fine_tune_values));
+    });
+}
+
+fn set_oscillator_course_tune(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    oscillator_values: &Arc<Mutex<Vec<UIOscillator>>>,
+    oscillator_index: i32,
+    course_tune: i32,
+) {
+    let mut oscillators = oscillator_values
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    oscillators[oscillator_index as usize].course_tune = course_tune;
+
+    let ui_oscillators = oscillators.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_oscillators(slint_oscillators_from_oscillators(&ui_oscillators));
+    });
+}
+
+fn set_oscillator_clipper_boost(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    oscillator_values: &Arc<Mutex<Vec<UIOscillator>>>,
+    oscillator_index: i32,
+    boost_level: f32,
+) {
+    let mut oscillators = oscillator_values
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    oscillators[oscillator_index as usize].clipper_boost = boost_level;
+
+    let ui_oscillators = oscillators.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_oscillators(slint_oscillators_from_oscillators(&ui_oscillators));
+    });
+}
+fn set_oscillator_parameter1(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    oscillator_values: &Arc<Mutex<Vec<UIOscillator>>>,
+    oscillator_index: i32,
+    value: f32,
+) {
+    let mut oscillators = oscillator_values
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    oscillators[oscillator_index as usize].parameter1 = value;
+
+    let ui_oscillators = oscillators.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_oscillators(slint_oscillators_from_oscillators(&ui_oscillators));
+    });
+}
+
+fn set_oscillator_parameter2(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    oscillator_values: &Arc<Mutex<Vec<UIOscillator>>>,
+    oscillator_index: i32,
+    value: f32,
+) {
+    let mut oscillators = oscillator_values
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    oscillators[oscillator_index as usize].parameter2 = value;
+
+    let ui_oscillators = oscillators.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_oscillators(slint_oscillators_from_oscillators(&ui_oscillators));
+    });
+}
+
+
+fn slint_oscillators_from_oscillators(
+    oscillator_values: &[UIOscillator],
+) -> ModelRc<Oscillator> {
+    let oscillators: VecModel<Oscillator> = oscillator_values
+        .iter()
+        .map(|osc| Oscillator {
+            wave_shape_index: osc.wave_shape_index,
+            fine_tune: osc.fine_tune,
+            course_tune: osc.course_tune,
+            clipper_boost: osc.clipper_boost,
+            parameter1: osc.parameter1,
+            parameter2: osc.parameter2,
+        })
+        .collect();
+
+    ModelRc::from(Rc::new(oscillators))
+}
+
 fn slint_audio_device_from_ui_audio_device(audio_device_values: &UIAudioDevice) -> AudioDevice {
     AudioDevice {
         output_device_index: audio_device_values.output_device_index,
         left_channel_index: audio_device_values.left_channel_index,
         right_channel_index: audio_device_values.right_channel_index,
         sample_rate_index: audio_device_values.sample_rate_index,
-        output_devices: vec_to_model_rc(&audio_device_values.output_devices),
-        left_channels: vec_to_model_rc(&audio_device_values.left_channels),
-        right_channels: vec_to_model_rc(&audio_device_values.right_channels),
-        sample_rates: vec_to_model_rc(&audio_device_values.sample_rates),
+        output_devices: vec_to_model_rc_shared_string(&audio_device_values.output_devices),
+        left_channels: vec_to_model_rc_shared_string(&audio_device_values.left_channels),
+        right_channels: vec_to_model_rc_shared_string(&audio_device_values.right_channels),
+        sample_rates: vec_to_model_rc_shared_string(&audio_device_values.sample_rates),
     }
 }
 
@@ -340,20 +555,24 @@ fn slint_envelope_from_ui_lfo(lfo_values: &UILfo) -> LFOValues {
 
 fn slint_midi_port_from_ui_midi_port(midi_port_values: &UIMidiPort) -> MidiPort {
     MidiPort {
-        input_ports: vec_to_model_rc(&midi_port_values.input_ports),
-        channels: vec_to_model_rc(&midi_port_values.channels),
+        input_ports: vec_to_model_rc_shared_string(&midi_port_values.input_ports),
+        channels: vec_to_model_rc_shared_string(&midi_port_values.channels),
         input_port_index: midi_port_values.input_port_index,
         channel_index: midi_port_values.channel_index,
     }
 }
 
-fn vec_to_model_rc(input_values: &[String]) -> ModelRc<SharedString> {
+fn vec_to_model_rc_shared_string(input_values: &[String]) -> ModelRc<SharedString> {
     ModelRc::new(VecModel::from(
         input_values
             .iter()
             .map(SharedString::from)
             .collect::<Vec<SharedString>>(),
     ))
+}
+
+fn vec_to_model_rc_int(input_values: &Vec<i32>) -> ModelRc<i32> {
+    ModelRc::new(VecModel::from(input_values.to_owned()))
 }
 
 #[cfg(test)]

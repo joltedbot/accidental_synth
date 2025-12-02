@@ -1,6 +1,5 @@
 use crate::synthesizer::constants::{
-    ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, LFO_INDEX_FILTER, LFO_INDEX_MOD_WHEEL,
-    UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET,
+    ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, LFO_INDEX_FILTER, LFO_INDEX_MOD_WHEEL
 };
 use crate::synthesizer::set_parameters::{
     set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted,
@@ -14,7 +13,8 @@ use crate::synthesizer::set_parameters::{
     set_portamento_time, set_velocity_curve,
 };
 use crate::synthesizer::{CurrentNote, ModuleParameters, OscillatorIndex, SynthesizerUpdateEvents};
-use crossbeam_channel::Receiver;
+use crate::ui::UIUpdates;
+use crossbeam_channel::{Receiver, Sender};
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
@@ -23,6 +23,7 @@ pub fn start_ui_event_listener(
     ui_update_receiver: Receiver<SynthesizerUpdateEvents>,
     module_parameters: Arc<ModuleParameters>,
     mut current_note: Arc<CurrentNote>,
+    ui_update_sender: Sender<UIUpdates>,
 ) {
     thread::spawn(move || {
         log::debug!("start_ui_event_listener(): spawned thread to receive UI events");
@@ -33,11 +34,9 @@ pub fn start_ui_event_listener(
                     if oscillator_index >= 0
                         && oscillator_index < module_parameters.oscillators.len() as i32
                     {
-                        let reindexed_wave_shape =
-                            (wave_shape_index + UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
                         module_parameters.oscillators[oscillator_index as usize]
                             .wave_shape_index
-                            .store(reindexed_wave_shape, Relaxed);
+                            .store(wave_shape_index as u8, Relaxed);
                     } else {
                         log::error!(
                             "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
@@ -62,10 +61,16 @@ pub fn start_ui_event_listener(
                     if oscillator_index >= 0
                         && oscillator_index < module_parameters.oscillators.len() as i32
                     {
-                        set_oscillator_fine_tune(
+                        let cents = set_oscillator_fine_tune(
                             &module_parameters.oscillators[oscillator_index as usize],
                             fine_tune,
                         );
+                        ui_update_sender
+                            .send(UIUpdates::OscillatorFineTuneCents(oscillator_index, cents as i32))
+                            .expect(
+                                "start_ui_event_listener(): Could not send the oscillator fine-tune cents value to \
+                                the UI. Exiting.",
+                            );
                     } else {
                         log::error!(
                             "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
@@ -229,20 +234,16 @@ pub fn start_ui_event_listener(
                 SynthesizerUpdateEvents::LfoShapeIndex(lfo_index, wave_shape_index) => {
                     match lfo_index {
                         LFO_INDEX_MOD_WHEEL => {
-                            let reindexed_wave_shape =
-                                (wave_shape_index + UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
                             module_parameters
                                 .lfo1
                                 .wave_shape
-                                .store(reindexed_wave_shape, Relaxed);
+                                .store(wave_shape_index as u8, Relaxed);
                         }
                         LFO_INDEX_FILTER => {
-                            let reindexed_wave_shape =
-                                (wave_shape_index + UI_TO_SYNTHESIZER_WAVESHAPE_INDEX_OFFSET) as u8;
                             module_parameters
                                 .filter_lfo
                                 .wave_shape
-                                .store(reindexed_wave_shape, Relaxed);
+                                .store(wave_shape_index as u8, Relaxed);
                         }
                         _ => {
                             log::error!(

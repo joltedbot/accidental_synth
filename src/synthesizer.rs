@@ -27,6 +27,7 @@ use crate::synthesizer::midi_messages::{
     process_midi_note_on_message, process_midi_pitch_bend_message,
 };
 
+use crate::ui::UIUpdates;
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
 use rtrb::Producer;
@@ -92,6 +93,12 @@ pub enum OscillatorIndex {
     One = 1,
     Two = 2,
     Three = 3,
+}
+
+impl OscillatorIndex {
+    pub fn count() -> usize {
+        4
+    }
 }
 
 impl OscillatorIndex {
@@ -257,14 +264,16 @@ impl Synthesizer {
         &mut self,
         midi_message_receiver: Receiver<Event>,
         sample_buffer_receiver: Receiver<Producer<f32>>,
+        ui_update_sender: Sender<UIUpdates>,
     ) -> Result<()> {
         log::debug!("run(): Start the midi event listener thread");
-        self.start_midi_event_listener(midi_message_receiver);
+        self.start_midi_event_listener(midi_message_receiver, ui_update_sender.clone());
 
         start_ui_event_listener(
             self.ui_update_receiver.clone(),
             self.module_parameters.clone(),
             self.current_note.clone(),
+            ui_update_sender,
         );
 
         log::info!("Creating the synthesizer audio stream");
@@ -278,7 +287,11 @@ impl Synthesizer {
         Ok(())
     }
 
-    fn start_midi_event_listener(&mut self, midi_message_receiver: Receiver<Event>) {
+    fn start_midi_event_listener(
+        &mut self,
+        midi_message_receiver: Receiver<Event>,
+        ui_update_sender: Sender<UIUpdates>,
+    ) {
         let mut current_note = self.current_note.clone();
         let mut module_parameters = self.module_parameters.clone();
 
@@ -312,7 +325,12 @@ impl Synthesizer {
                         );
                     }
                     Event::ControlChange(cc_value) => {
-                        process_midi_cc_values(cc_value, &mut current_note, &mut module_parameters);
+                        process_midi_cc_values(
+                            cc_value,
+                            &mut current_note,
+                            &mut module_parameters,
+                            ui_update_sender.clone(),
+                        );
                     }
                 }
             }

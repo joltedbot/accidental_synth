@@ -33,7 +33,9 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
 use std::sync::atomic::{AtomicBool, AtomicI8, AtomicI16, AtomicU8, AtomicU16, AtomicU32};
 
-pub const NUMBER_OF_WAVE_SHAPES: u8 = 10;
+pub const FIRST_WAVE_SHAPE_INDEX: u32 = 0;
+pub const LAST_WAVE_SHAPE_INDEX: u32 = 9;
+
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WaveShape {
     #[default]
@@ -52,16 +54,16 @@ pub enum WaveShape {
 impl WaveShape {
     pub fn from_index(index: u8) -> Self {
         match index {
-            1 => WaveShape::Sine,
-            2 => WaveShape::Triangle,
-            3 => WaveShape::Square,
-            4 => WaveShape::Saw,
-            5 => WaveShape::Pulse,
-            6 => WaveShape::Ramp,
-            7 => WaveShape::Supersaw,
-            8 => WaveShape::AM,
-            9 => WaveShape::FM,
-            10 => WaveShape::Noise,
+            0 => WaveShape::Sine,
+            1 => WaveShape::Triangle,
+            2 => WaveShape::Square,
+            3 => WaveShape::Saw,
+            4 => WaveShape::Pulse,
+            5 => WaveShape::Ramp,
+            6 => WaveShape::Supersaw,
+            7 => WaveShape::AM,
+            8 => WaveShape::FM,
+            9 => WaveShape::Noise,
             _ => WaveShape::default(),
         }
     }

@@ -45,7 +45,8 @@ export component VerticalSlider inherits Rectangle {
     width: 50px;
     height: 100px;
 
-    property <length> indicator-default-position: track.y + track.height - (track.height * value.clamp(0.0, 1.0));
+    property <length> indicator-default-position: track.y + track.height;
+    property <length> indicator-current-position: track.y + track.height - (track.height * value.clamp(0.0, 1.0));
 
     function get_output_value(position: length) -> float {
         let scaled_value = (track.height - position) / track.height;
@@ -67,6 +68,7 @@ export component VerticalSlider inherits Rectangle {
         }
 
         double-clicked => {
+            indicator-current-position = indicator-default-position;
             track.position = indicator-default-position;
             handle.y = get_handle_position();
             updated(get_output_value(indicator-default-position));
@@ -80,7 +82,7 @@ export component VerticalSlider inherits Rectangle {
 
     track := SliderTrack {
         track-height: parent.height;
-        position: indicator-default-position;
+        position: indicator-current-position;
     }
 }
 
@@ -92,7 +94,8 @@ export component HorzontalSlider inherits Rectangle {
     width: 100px;
     height: 50px;
 
-    property <length> indicator-default-position: track.x - track.width + (track.width * value);
+    property <length> indicator-default-position: track.x - track.width;
+    property <length> indicator-current-position: track.x - track.width + (track.width * value);
 
     function get_output_value(position: length) -> float {
         let scaled_value = (position + track.width) / track.width;
@@ -102,6 +105,7 @@ export component HorzontalSlider inherits Rectangle {
     function get_handle_position() -> length {
         return clamp(track.position + track.width - (handle.width / 2), track.x, track.x + track.width - handle.width);
     }
+
 
     touch := TouchArea {
         width: parent.width;
@@ -116,6 +120,7 @@ export component HorzontalSlider inherits Rectangle {
         }
 
         double-clicked => {
+            indicator-current-position = indicator-default-position;
             track.position = indicator-default-position;
             handle.x = get_handle_position();
             updated(get_output_value(indicator-default-position));
@@ -131,7 +136,7 @@ export component HorzontalSlider inherits Rectangle {
     track := SliderTrack {
         orientation: horizontal;
         track-width: parent.width;
-        position: indicator-default-position;
+        position: indicator-current-position;
     }
 }
 
@@ -171,7 +176,9 @@ export component BalanceSlider inherits Rectangle {
     width: 100px;
     height: 50px;
 
-    property <length> indicator-default-position: get_position_from_normal_value(value);
+
+    property <length> indicator-default-position: 0;
+    property <length> indicator-current-position: get_position_from_normal_value(value);
     property <length> minimum-position: -self.width / 2;
 
     function get_output_value(position: length) -> float {
@@ -199,6 +206,7 @@ export component BalanceSlider inherits Rectangle {
         }
 
         double-clicked => {
+            indicator-current-position = indicator-default-position;
             track.position = indicator-default-position;
             handle.x = get_handle_position(indicator-default-position);
             updated(get_output_value(indicator-default-position));
@@ -208,11 +216,11 @@ export component BalanceSlider inherits Rectangle {
     handle := SliderHandle {
         z: 2;
         orientation: horizontal;
-        x: get_handle_position(indicator-default-position);
+        x: get_handle_position(indicator-current-position);
     }
 
     track := BalanceTrack {
         track-width: parent.width;
-        position: indicator-default-position;
+        position: indicator-current-position;
     }
 }

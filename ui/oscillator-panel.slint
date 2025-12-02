@@ -21,7 +21,6 @@ import { Theme } from "theme.slint";
 export struct Oscillator  {
     wave-shape-index: int,
     fine-tune: float,
-    fine-tune-cents: int,
     course-tune: int,
     clipper-boost: float,
     parameter1: float,
@@ -32,6 +31,7 @@ export struct Oscillator  {
 export component OscControlsPanel inherits Panel {
     in property <Oscillator> oscillator;
     in property <string> title;
+    in property <int> fine-tune-cents: 0;
 
     callback wave-shape-changed(int);
     callback course-tune-changed(float);
@@ -106,6 +106,7 @@ export component OscControlsPanel inherits Panel {
             fine-tune := CenteredParameterSlider {
                 label: Theme.osc-controls-fine-tune;
                 value: oscillator.fine-tune;
+                display-value: fine-tune-cents;
                 value-units: Theme.osc-controls-cents;
                 show-value: true;
                 slider-width: Theme.oscillator-panel-widget-width;
@@ -133,7 +134,7 @@ export component OscControlsPanel inherits Panel {
 
             param2 := HorizontalParameterSlider {
                 slider-width: Theme.oscillator-panel-widget-width;
-                value: oscillator.parameter1;
+                value: oscillator.parameter2;
                 horizontal-parameter-slider-changed(value) => {
                     parameter2-changed(value);
                 }
@@ -144,6 +145,7 @@ export component OscControlsPanel inherits Panel {
 
 export component OscillatorsPanel inherits Panel {
     in property <[Oscillator]> oscillators;
+    in property <[int]> fine-tune-cents;
 
     callback wave-shape-changed(int, int);
     callback course-tune-changed(int, float);
@@ -161,6 +163,7 @@ export component OscillatorsPanel inherits Panel {
             width: Theme.oscillator-panel-section-width;
             oscillator: oscillator;
             title: Theme.osc-controls-panel-titles[index];
+            fine-tune-cents: fine-tune-cents[index];
 
             wave-shape-changed(int) => {
                 wave-shape-changed(index, int);

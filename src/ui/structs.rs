@@ -6,6 +6,7 @@ use crate::modules::envelope::{
     MIN_DECAY_MILLISECONDS, MIN_RELEASE_MILLISECONDS,
 };
 use crate::modules::lfo::DEFAULT_LFO_FREQUENCY;
+use crate::ui::constants::DEFAULT_FINE_TUNE_NORMAL_VALUE;
 
 #[derive(Clone, Default)]
 pub struct UIAudioDevice {
@@ -27,15 +28,27 @@ pub struct UIMidiPort {
     pub channel_index: i32,
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct UIOscillator {
     pub wave_shape_index: i32,
     pub fine_tune: f32,
-    pub fine_tune_cents: i32,
     pub course_tune: i32,
     pub clipper_boost: f32,
     pub parameter1: f32,
     pub parameter2: f32,
+}
+
+impl Default for UIOscillator {
+    fn default() -> Self {
+        Self {
+            wave_shape_index: 0,
+            fine_tune: DEFAULT_FINE_TUNE_NORMAL_VALUE,
+            course_tune: 0,
+            clipper_boost: 0.0,
+            parameter1: 0.0,
+            parameter2: 0.0,
+        }
+    }
 }
 
 #[derive(Clone, Default)]

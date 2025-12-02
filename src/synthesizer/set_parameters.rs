@@ -241,7 +241,7 @@ pub fn set_oscillator_level(
     );
 }
 
-pub fn set_oscillator_fine_tune(parameters: &OscillatorParameters, normal_value: f32) {
+pub fn set_oscillator_fine_tune(parameters: &OscillatorParameters, normal_value: f32) -> i8 {
     let cents = normal_value_to_unsigned_integer_range(
         normal_value,
         i32::from(OSCILLATOR_FINE_TUNE_MIN_CENTS),
@@ -249,9 +249,10 @@ pub fn set_oscillator_fine_tune(parameters: &OscillatorParameters, normal_value:
     ) as i8;
 
     parameters.fine_tune.store(cents, Relaxed);
+    cents
 }
 
-pub fn set_oscillator_course_tune(parameters: &OscillatorParameters, normal_value: f32) {
+pub fn set_oscillator_course_tune(parameters: &OscillatorParameters, normal_value: f32) -> i8 {
     let interval = normal_value_to_unsigned_integer_range(
         normal_value,
         i32::from(OSCILLATOR_COURSE_TUNE_MIN_INTERVAL),
@@ -259,9 +260,11 @@ pub fn set_oscillator_course_tune(parameters: &OscillatorParameters, normal_valu
     ) as i8;
 
     parameters.course_tune.store(interval, Relaxed);
+    interval
 }
 
-pub fn set_oscillator_wave_shape(parameters: &OscillatorParameters, normal_value: f32) {
+pub fn set_oscillator_wave_shape(parameters: &OscillatorParameters, normal_value: f32) -> u8 {
     let wave_shape_index = normal_value_to_wave_shape_index(normal_value);
     parameters.wave_shape_index.store(wave_shape_index, Relaxed);
+    wave_shape_index
 }

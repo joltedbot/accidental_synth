@@ -45,6 +45,8 @@ export component AccidentalSynth inherits Window {
         { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
     ];
 
+    in property <[int]> osc-fine-tune-cents;
+
     callback osc-wave-shape-changed(int, int);
     callback osc-course-tune-changed(int, float);
     callback osc-fine-tune-changed(int, float);
@@ -174,6 +176,7 @@ export component AccidentalSynth inherits Window {
                         VerticalLayout {
                             oscillator-panel := OscillatorsPanel {
                                 oscillators: oscillators;
+                                fine-tune-cents: osc-fine-tune-cents;
 
                                 wave-shape-changed(oscillator, shape_index) => {
                                     osc-wave-shape-changed(oscillator, shape_index);
