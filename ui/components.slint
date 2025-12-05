@@ -230,7 +230,7 @@ export component HorizontalParameterSlider inherits VerticalLayout {
     in property <string> label: Theme.control-label-default-string;
     in property <string> value-units;
     in property <float> value;
-    in property <string> display-value: 0;
+    in property <string> display-value;
     in property <length> slider-width: 100px;
     in property <length> slider-height: 30px;
     in property <bool> enabled: true;
@@ -525,11 +525,14 @@ export component EnvelopeSection inherits VerticalLayout {
 
 export component FixedCenterLFOSection inherits VerticalLayout {
     in property <LFOValues> lfo-values;
+    in property <int> lfo-phase-display: 0;
+    in property <int> lfo-frequency-display: 0;
 
     callback lfo-frequency-changed(float);
     callback lfo-shape-changed(int);
     callback lfo-phase-changed(float);
     callback lfo-phase-reset();
+
 
     alignment: start;
     spacing: 5px;
@@ -548,6 +551,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
                 show-value: true;
                 value-units: Theme.display-units-hertz;
                 slider-width: Theme.global-panel-widget-width;
+                display-value: lfo-frequency-display;
                 width: Theme.global-panel-widget-width;
                 horizontal-parameter-slider-changed(frequency) => {
                     lfo-frequency-changed(frequency);
@@ -575,10 +579,10 @@ export component FixedCenterLFOSection inherits VerticalLayout {
                 value: lfo-values.phase;
                 show-value: true;
                 value-units: Theme.display-units-degrees;
+                display-value: lfo-phase-display;
                 slider-width: Theme.global-panel-widget-width;
+
                 horizontal-parameter-slider-changed(degrees) => {
-                    let new_display_value = degrees * Constant.LFO_MAX_PHASE_DEGREES;
-                    self.display-value = new_display_value.ceil();
                     lfo-phase-changed(degrees);
                 }
             }

@@ -2,7 +2,7 @@ mod constants;
 mod create_synthesizer;
 mod event_listener;
 mod midi_messages;
-mod midi_value_converters;
+pub(crate) mod midi_value_converters;
 mod set_parameters;
 
 use self::constants::{
@@ -99,9 +99,7 @@ impl OscillatorIndex {
     pub fn count() -> usize {
         4
     }
-}
 
-impl OscillatorIndex {
     pub fn from_i32(index: i32) -> Option<Self> {
         match index {
             0 => Some(OscillatorIndex::Sub),
@@ -159,7 +157,7 @@ pub struct ModuleParameters {
     amp_envelope: EnvelopeParameters,
     filter_envelope: EnvelopeParameters,
     filter_lfo: LfoParameters,
-    lfo1: LfoParameters,
+    mod_wheel_lfo: LfoParameters,
     keyboard: KeyboardParameters,
     oscillators: [OscillatorParameters; 4],
 }
@@ -220,14 +218,14 @@ impl Synthesizer {
         let filter_lfo_parameters: LfoParameters = LfoParameters::default();
         store_f32_as_atomic_u32(&filter_lfo_parameters.range, 0.0);
 
-        let lfo1_parameters = LfoParameters::default();
-        lfo1_parameters
+        let mod_wheel_lfo_parameters = LfoParameters::default();
+        mod_wheel_lfo_parameters
             .frequency
             .store(DEFAULT_VIBRATO_LFO_RATE.to_bits(), Relaxed);
-        lfo1_parameters
+        mod_wheel_lfo_parameters
             .center_value
             .store(DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY.to_bits(), Relaxed);
-        lfo1_parameters
+        mod_wheel_lfo_parameters
             .range
             .store(DEFAULT_VIBRATO_LFO_DEPTH.to_bits(), Relaxed);
 
@@ -242,7 +240,7 @@ impl Synthesizer {
             amp_envelope: EnvelopeParameters::default(),
             filter_envelope: filter_envelope_parameters,
             filter_lfo: filter_lfo_parameters,
-            lfo1: lfo1_parameters,
+            mod_wheel_lfo: mod_wheel_lfo_parameters,
             keyboard: keyboard_parameters,
             oscillators: Default::default(),
         };

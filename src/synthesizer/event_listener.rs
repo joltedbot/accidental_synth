@@ -1,5 +1,6 @@
+use crate::modules::lfo::DEFAULT_LFO_PHASE;
 use crate::synthesizer::constants::{
-    ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, LFO_INDEX_FILTER, LFO_INDEX_MOD_WHEEL
+    ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, LFO_INDEX_FILTER, LFO_INDEX_MOD_WHEEL,
 };
 use crate::synthesizer::set_parameters::{
     set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted,
@@ -65,12 +66,9 @@ pub fn start_ui_event_listener(
                             &module_parameters.oscillators[oscillator_index as usize],
                             fine_tune,
                         );
-                        ui_update_sender
-                            .send(UIUpdates::OscillatorFineTuneCents(oscillator_index, cents as i32))
-                            .expect(
-                                "start_ui_event_listener(): Could not send the oscillator fine-tune cents value to \
-                                the UI. Exiting.",
-                            );
+
+                        ui_update_sender.send(UIUpdates::OscillatorFineTuneCents(oscillator_index, cents as i32)).expect
+                        ("start_ui_event_listener(): Failed to send oscillator fine-tune display value to the UI.");
                     } else {
                         log::error!(
                             "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
@@ -222,20 +220,29 @@ pub fn start_ui_event_listener(
                         }
                     }
                 }
-                SynthesizerUpdateEvents::LfoFrequency(lfo_index, frequency) => match lfo_index {
-                    LFO_INDEX_MOD_WHEEL => set_lfo_frequency(&module_parameters.lfo1, frequency),
-                    LFO_INDEX_FILTER => set_lfo_frequency(&module_parameters.filter_lfo, frequency),
-                    _ => {
-                        log::error!(
-                            "start_ui_event_listener():SynthesizerUpdateEvents::LfoFrequency: Invalid LFO index: {lfo_index}"
-                        );
-                    }
-                },
+                SynthesizerUpdateEvents::LfoFrequency(lfo_index, frequency) => {
+                    let exponential_cents = match lfo_index {
+                        LFO_INDEX_MOD_WHEEL => {
+                            set_lfo_frequency(&module_parameters.mod_wheel_lfo, frequency)
+                        }
+                        LFO_INDEX_FILTER => {
+                            set_lfo_frequency(&module_parameters.filter_lfo, frequency)
+                        }
+                        _ => {
+                            log::error!(
+                                "start_ui_event_listener():SynthesizerUpdateEvents::LfoFrequency: Invalid LFO index: {lfo_index}"
+                            );
+                            return;
+                        }
+                    };
+                    ui_update_sender.send(UIUpdates::LFOFrequencyDisplay(lfo_index, exponential_cents as i32)).expect
+                    ("start_ui_event_listener(): Failed to send oscillator fine-tune display value to the UI.");
+                }
                 SynthesizerUpdateEvents::LfoShapeIndex(lfo_index, wave_shape_index) => {
                     match lfo_index {
                         LFO_INDEX_MOD_WHEEL => {
                             module_parameters
-                                .lfo1
+                                .mod_wheel_lfo
                                 .wave_shape
                                 .store(wave_shape_index as u8, Relaxed);
                         }
@@ -253,24 +260,44 @@ pub fn start_ui_event_listener(
                         }
                     }
                 }
-                SynthesizerUpdateEvents::LfoPhase(lfo_index, phase) => match lfo_index {
-                    LFO_INDEX_MOD_WHEEL => set_lfo_phase(&module_parameters.lfo1, phase),
-                    LFO_INDEX_FILTER => set_lfo_phase(&module_parameters.filter_lfo, phase),
-                    _ => {
-                        log::error!(
-                            "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhase: Invalid LFO index: {lfo_index}"
-                        );
+                SynthesizerUpdateEvents::LfoPhase(lfo_index, phase) => {
+                    match lfo_index {
+                        LFO_INDEX_MOD_WHEEL => {
+                            set_lfo_phase(&module_parameters.mod_wheel_lfo, phase)
+                        }
+                        LFO_INDEX_FILTER => set_lfo_phase(&module_parameters.filter_lfo, phase),
+                        _ => {
+                            log::error!(
+                                "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhase: Invalid LFO index: {lfo_index}"
+                            );
+                        }
                     }
-                },
-                SynthesizerUpdateEvents::LfoPhaseReset(lfo_index) => match lfo_index {
-                    LFO_INDEX_MOD_WHEEL => set_lfo_phase_reset(&module_parameters.lfo1),
-                    LFO_INDEX_FILTER => set_lfo_phase_reset(&module_parameters.filter_lfo),
-                    _ => {
-                        log::error!(
-                            "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhaseReset: Invalid LFO index: {lfo_index}"
+                    ui_update_sender
+                        .send(UIUpdates::LFOPhase(lfo_index, phase))
+                        .expect(
+                            "start_ui_event_listener(): \
+                    Failed to send the lfo reset to the UI.",
                         );
+                }
+                SynthesizerUpdateEvents::LfoPhaseReset(lfo_index) => {
+                    match lfo_index {
+                        LFO_INDEX_MOD_WHEEL => {
+                            set_lfo_phase_reset(&module_parameters.mod_wheel_lfo)
+                        }
+                        LFO_INDEX_FILTER => set_lfo_phase_reset(&module_parameters.filter_lfo),
+                        _ => {
+                            log::error!(
+                                "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhaseReset: Invalid LFO index: {lfo_index}"
+                            );
+                        }
                     }
-                },
+                    ui_update_sender
+                        .send(UIUpdates::LFOPhase(lfo_index, DEFAULT_LFO_PHASE))
+                        .expect(
+                            "start_ui_event_listener(): \
+                    Failed to send the lfo reset to the UI.",
+                        );
+                }
                 SynthesizerUpdateEvents::PortamentoEnabled(is_enabled) => {
                     set_portamento_enabled(&module_parameters.oscillators, f32::from(is_enabled));
                 }

@@ -1,5 +1,6 @@
 use crate::math::{load_f32_from_atomic_u32, normalize_midi_value, store_f32_as_atomic_u32};
 use crate::midi::control_change::CC;
+use crate::modules::lfo::DEFAULT_LFO_PHASE;
 use crate::modules::oscillator::OscillatorParameters;
 use crate::synthesizer::midi_value_converters::scaled_velocity_from_normal_value;
 use crate::synthesizer::set_parameters::{
@@ -18,7 +19,7 @@ use crate::synthesizer::{
     CurrentNote, KeyboardParameters, MidiGateEvent, MidiNoteEvent, ModuleParameters,
     OscillatorIndex, midi_value_converters,
 };
-use crate::ui::UIUpdates;
+use crate::ui::{LFOIndex, UIUpdates};
 use crossbeam_channel::Sender;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Relaxed, Release};
@@ -308,7 +309,8 @@ pub fn process_midi_cc_values(
             ui_update_sender
                 .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
                 .expect(
-                    "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
+                    "process_midi_cc_values(): Could not send the oscillator course-tune interval value to the UI. \
+                    Exiting.",
                 );
         }
         CC::Oscillator1CourseTune(value) => {
@@ -321,7 +323,8 @@ pub fn process_midi_cc_values(
             ui_update_sender
                 .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
                 .expect(
-                    "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
+                    "process_midi_cc_values(): Could not send the oscillator course-tune interval value to the UI. \
+                    Exiting.",
                 );
         }
         CC::Oscillator2CourseTune(value) => {
@@ -334,7 +337,8 @@ pub fn process_midi_cc_values(
             ui_update_sender
                 .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
                 .expect(
-                    "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
+                    "process_midi_cc_values(): Could not send the oscillator course-tune interval value to the UI. \
+                    Exiting.",
                 );
         }
         CC::Oscillator3CourseTune(value) => {
@@ -347,7 +351,8 @@ pub fn process_midi_cc_values(
             ui_update_sender
                 .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
                 .expect(
-                    "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
+                    "process_midi_cc_values(): Could not send the oscillator course-tune interval value to the UI. \
+                    Exiting.",
                 );
         }
         CC::SubOscillatorFineTune(value) => {
@@ -361,7 +366,7 @@ pub fn process_midi_cc_values(
             ui_update_sender
                 .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value,cents as i32))
                 .expect(
-                    "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
+                    "process_midi_cc_values(): Could not send the oscillator fine-tune value to the UI. Exiting.",
                 );
         }
         CC::Oscillator1FineTune(value) => {
@@ -611,38 +616,102 @@ pub fn process_midi_cc_values(
         CC::KeyTrackingAmount(value) => {
             set_key_tracking_amount(&module_parameters.filter, normalize_midi_value(value));
         }
-        CC::LFO1Frequency(value) => {
-            set_lfo_frequency(&module_parameters.lfo1, normalize_midi_value(value));
+        CC::ModWheelLFOFrequency(value) => {
+            let normal_value = normalize_midi_value(value);
+            set_lfo_frequency(&module_parameters.mod_wheel_lfo, normal_value);
+
+            ui_update_sender
+                .send(UIUpdates::LFOFrequency(LFOIndex::ModWheelLfo as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the mod wheel lfo frequency level value to the UI. \
+                    Exiting.",
+                );
         }
-        CC::LFO1CenterValue(value) => {
-            set_lfo_center_value(&module_parameters.lfo1, normalize_midi_value(value));
+        CC::ModWheelLFOCenterValue(value) => {
+            let normal_value = normalize_midi_value(value);
+            set_lfo_center_value(&module_parameters.mod_wheel_lfo, normal_value);
         }
-        CC::LFO1Range(value) => {
-            set_lfo_range(&module_parameters.lfo1, normalize_midi_value(value));
+        CC::ModWheelLFORange(value) => {
+            let normal_value = normalize_midi_value(value);
+            set_lfo_range(&module_parameters.mod_wheel_lfo, normal_value);
         }
-        CC::LFO1WaveShape(value) => {
-            set_lfo_wave_shape(&module_parameters.lfo1, normalize_midi_value(value));
+        CC::ModWheelLFOWaveShape(value) => {
+            let normal_value = normalize_midi_value(value);
+            set_lfo_wave_shape(&module_parameters.mod_wheel_lfo, normal_value);
+
+            ui_update_sender
+                .send(UIUpdates::LFOWaveShape(LFOIndex::ModWheelLfo as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the mod wheel lfo wave shape value to the UI. \
+                    Exiting.",
+                );
         }
-        CC::LFO1Phase(value) => {
-            set_lfo_phase(&module_parameters.lfo1, normalize_midi_value(value));
+        CC::ModWheelLFOPhase(value) => {
+            let normal_value = normalize_midi_value(value);
+            set_lfo_phase(&module_parameters.mod_wheel_lfo, normal_value);
+
+            ui_update_sender
+                .send(UIUpdates::LFOPhase(LFOIndex::ModWheelLfo as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the mod wheel lfo phase value to the UI. \
+                    Exiting.",
+                );
         }
-        CC::LFO1Reset => {
-            set_lfo_phase_reset(&module_parameters.lfo1);
+        CC::ModWheelLFOReset => {
+            set_lfo_phase_reset(&module_parameters.mod_wheel_lfo);
+            ui_update_sender
+                .send(UIUpdates::LFOPhase(LFOIndex::ModWheelLfo as i32, DEFAULT_LFO_PHASE))
+                .expect(
+                    "process_midi_cc_values(): Could not send the mod wheel phase reset value to the UI. \
+                    Exiting.",
+                );
         }
         CC::FilterModLFOFrequency(value) => {
-            set_lfo_frequency(&module_parameters.filter_lfo, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_lfo_frequency(&module_parameters.filter_lfo, normal_value);
+
+            ui_update_sender
+                .send(UIUpdates::LFOFrequency(LFOIndex::FilterLfo as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter lfo frequency value to the UI. \
+                    Exiting.",
+                );
         }
         CC::FilterModLFOAmount(value) => {
-            set_lfo_range(&module_parameters.filter_lfo, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_lfo_range(&module_parameters.filter_lfo, normal_value);
         }
         CC::FilterModLFOWaveShape(value) => {
-            set_lfo_wave_shape(&module_parameters.filter_lfo, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_lfo_wave_shape(&module_parameters.filter_lfo, normal_value);
+
+            ui_update_sender
+                .send(UIUpdates::LFOWaveShape(LFOIndex::FilterLfo as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter lfo wave shape value to the UI. \
+                    Exiting.",
+                );
         }
         CC::FilterModLFOPhase(value) => {
-            set_lfo_phase(&module_parameters.filter_lfo, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_lfo_phase(&module_parameters.filter_lfo, normal_value);
+
+            ui_update_sender
+                .send(UIUpdates::LFOPhase(LFOIndex::FilterLfo as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter lfo phase value to the UI. \
+                    Exiting.",
+                );
         }
         CC::FilterModLFOReset => {
             set_lfo_phase_reset(&module_parameters.filter_lfo);
+
+            ui_update_sender
+                .send(UIUpdates::LFOPhase(LFOIndex::FilterLfo as i32, DEFAULT_LFO_PHASE))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter lfo phase reset  value to the UI. \
+                    Exiting.",
+                );
         }
         CC::AllNotesOff => {
             process_midi_note_off_message(module_parameters);

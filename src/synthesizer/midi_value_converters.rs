@@ -1,6 +1,8 @@
 use crate::math::f32s_are_equal;
 use crate::modules::filter::NUMBER_OF_FILER_POLES;
-use crate::modules::oscillator::{OscillatorParameters, LAST_WAVE_SHAPE_INDEX, FIRST_WAVE_SHAPE_INDEX};
+use crate::modules::oscillator::{
+    FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX, OscillatorParameters,
+};
 use crate::synthesizer::constants::{
     CENTS_PER_SEMITONE, EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT,
     EXPONENTIAL_LFO_COEFFICIENT, LEVEL_CURVE_LINEAR_RANGE, LINEAR_VELOCITY_CURVE_EXPONENT,
@@ -77,13 +79,8 @@ pub fn normal_value_to_number_of_filter_poles(normal_value: f32) -> u8 {
 }
 
 pub fn normal_value_to_wave_shape_index(normal_value: f32) -> u8 {
-
-    normal_value_to_integer_range(
-        normal_value,
-        FIRST_WAVE_SHAPE_INDEX,
-        LAST_WAVE_SHAPE_INDEX,
-    )
-    .clamp(FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX) as u8
+    normal_value_to_integer_range(normal_value, FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX)
+        .clamp(FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX) as u8
 }
 
 pub fn exponential_curve_filter_cutoff_from_midi_value(normal_value: f32) -> f32 {

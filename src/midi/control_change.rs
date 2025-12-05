@@ -61,12 +61,12 @@ pub enum CC {
     FilterEGInverted(u8),
     FilterEGAmount(u8),
     KeyTrackingAmount(u8),
-    LFO1Frequency(u8),
-    LFO1CenterValue(u8),
-    LFO1Range(u8),
-    LFO1WaveShape(u8),
-    LFO1Phase(u8),
-    LFO1Reset,
+    ModWheelLFOFrequency(u8),
+    ModWheelLFOCenterValue(u8),
+    ModWheelLFORange(u8),
+    ModWheelLFOWaveShape(u8),
+    ModWheelLFOPhase(u8),
+    ModWheelLFOReset,
     FilterModLFOFrequency(u8),
     FilterModLFOAmount(u8),
     FilterModLFOWaveShape(u8),
@@ -138,12 +138,12 @@ pub fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC
         89 => Some(CC::FilterEGInverted(cc_value)),
         90 => Some(CC::FilterEGAmount(cc_value)),
         91 => Some(CC::KeyTrackingAmount(cc_value)),
-        102 => Some(CC::LFO1Frequency(cc_value)),
-        103 => Some(CC::LFO1CenterValue(cc_value)),
-        104 => Some(CC::LFO1Range(cc_value)),
-        105 => Some(CC::LFO1WaveShape(cc_value)),
-        106 => Some(CC::LFO1Phase(cc_value)),
-        107 => Some(CC::LFO1Reset),
+        102 => Some(CC::ModWheelLFOFrequency(cc_value)),
+        103 => Some(CC::ModWheelLFOCenterValue(cc_value)),
+        104 => Some(CC::ModWheelLFORange(cc_value)),
+        105 => Some(CC::ModWheelLFOWaveShape(cc_value)),
+        106 => Some(CC::ModWheelLFOPhase(cc_value)),
+        107 => Some(CC::ModWheelLFOReset),
         108 => Some(CC::FilterModLFOFrequency(cc_value)),
         109 => Some(CC::FilterModLFOAmount(cc_value)),
         110 => Some(CC::FilterModLFOWaveShape(cc_value)),
@@ -168,7 +168,10 @@ mod tests {
             get_supported_cc_from_cc_number(74, 100),
             Some(CC::FilterCutoff(100))
         );
-        assert_eq!(get_supported_cc_from_cc_number(107, 0), Some(CC::LFO1Reset));
+        assert_eq!(
+            get_supported_cc_from_cc_number(107, 0),
+            Some(CC::ModWheelLFOReset)
+        );
         assert_eq!(
             get_supported_cc_from_cc_number(123, 0),
             Some(CC::AllNotesOff)

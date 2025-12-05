@@ -165,6 +165,8 @@ export component FilterPanel inherits Panel {
     in property <FilterOptions> filter-options-values;
     in property <EnvelopeValues> filter-eq-values;
     in property <LFOValues> filter-lfo-values;
+    in property <int> filter-lfo-phase-display;
+    in property <int> filter-lfo-frequency-display;
 
     callback filter-cutoff-changed(float);
     callback filter-resonance-changed(float);
@@ -246,6 +248,8 @@ export component FilterPanel inherits Panel {
 
         FixedCenterLFOSection {
             lfo-values: filter-lfo-values;
+            lfo-phase-display:  filter-lfo-phase-display;
+            lfo-frequency-display: filter-lfo-frequency-display;
 
             lfo-frequency-changed(frequency) => {
                 lfo-frequency-changed(Constant.LFO_FILTER_INDEX, frequency);

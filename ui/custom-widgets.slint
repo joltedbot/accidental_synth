@@ -97,6 +97,7 @@ export component HorzontalSlider inherits Rectangle {
     property <length> indicator-default-position: track.x - track.width;
     property <length> indicator-current-position: track.x - track.width + (track.width * value);
 
+
     function get_output_value(position: length) -> float {
         let scaled_value = (position + track.width) / track.width;
         return scaled_value;
@@ -106,6 +107,14 @@ export component HorzontalSlider inherits Rectangle {
         return clamp(track.position + track.width - (handle.width / 2), track.x, track.x + track.width - handle.width);
     }
 
+    function update_position_from_external_move() {
+            track.position = indicator-current-position;
+            handle.x = get_handle_position();
+    }
+
+    changed value => {
+        update_position_from_external_move();
+    }
 
     touch := TouchArea {
         width: parent.width;

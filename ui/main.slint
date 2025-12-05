@@ -65,6 +65,8 @@ export component AccidentalSynth inherits Window {
     };
     in property <EnvelopeValues> filter-eq-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
     in property <LFOValues> filter-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
+    in property <int> filter-lfo-frequency-display;
+    in property <int> filter-lfo-phase-display;
 
     callback filter-cutoff-changed(float);
     callback filter-resonance-changed(float);
@@ -107,6 +109,8 @@ export component AccidentalSynth inherits Window {
     ];
     in property <EnvelopeValues> amp-eg-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
     in property <LFOValues> mod-wheel-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
+    in property <int> mod-wheel-lfo-frequency-display;
+    in property <int> mod-wheel-lfo-phase-display;
     in property <bool> portamento-is-enabled;
     in property <float> portamento-time;
     in property <int> pitch-bend-range: Constant.DEFAULT_PITCH_BEND_RANGE;
@@ -203,6 +207,8 @@ export component AccidentalSynth inherits Window {
                                 oscillator-mixer-values: oscillator-mixer-values;
                                 amp-eg-values: amp-eg-values;
                                 mod-wheel-lfo-values: mod-wheel-lfo-values;
+                                mod-wheel-lfo-frequency-display: mod-wheel-lfo-frequency-display;
+                                mod-wheel-lfo-phase-display: mod-wheel-lfo-phase-display;
                                 portamento-is-enabled: portamento-is-enabled;
                                 portamento-time: portamento-time;
                                 pitch-bend-range: pitch-bend-range;
@@ -278,6 +284,8 @@ export component AccidentalSynth inherits Window {
 
                         filter-panel := FilterPanel {
                             width: Theme.filter-panel-width;
+                            filter-lfo-phase-display: filter-lfo-phase-display;
+                            filter-lfo-frequency-display: filter-lfo-frequency-display;
 
                             filter-cutoff-values: filter-cutoff-values;
                             filter-options-values: filter-options-values;

@@ -3,21 +3,24 @@ mod constants;
 mod structs;
 
 use super::{AccidentalSynth, AudioDevice, EnvelopeValues, LFOValues, MidiPort, Oscillator};
+use crate::audio::AudioDeviceUpdateEvents;
+use crate::midi::MidiDeviceUpdateEvents;
+use crate::synthesizer::midi_value_converters::{
+    exponential_curve_lfo_frequency_from_normal_value, normal_value_to_wave_shape_index,
+};
+use crate::synthesizer::{OscillatorIndex, SynthesizerUpdateEvents};
+use crate::ui::callbacks::register_callbacks;
+use crate::ui::constants::{
+    AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET, AUDIO_DEVICE_CHANNEL_NULL_VALUE, MAX_PHASE_VALUE,
+    MIDI_CHANNEL_LIST, MONO_CHANNEL_COUNT,
+};
+use crate::ui::structs::{UIAudioDevice, UIEnvelope, UILfo, UIMidiPort, UIOscillator};
+use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender, bounded};
 use slint::{ModelRc, SharedString, VecModel, Weak};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use crate::audio::AudioDeviceUpdateEvents;
-use crate::midi::MidiDeviceUpdateEvents;
-use crate::synthesizer::{OscillatorIndex, SynthesizerUpdateEvents};
-use crate::ui::callbacks::register_callbacks;
-use crate::ui::constants::{
-    AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET, AUDIO_DEVICE_CHANNEL_NULL_VALUE, MIDI_CHANNEL_LIST,
-    MONO_CHANNEL_COUNT,
-};
-use crate::ui::structs::{UIAudioDevice, UIEnvelope, UILfo, UIMidiPort, UIOscillator};
-use anyhow::Result;
 
 const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
 
@@ -37,6 +40,26 @@ pub enum UIUpdates {
     OscillatorClipperBoost(i32, f32),
     OscillatorParameter1(i32, f32),
     OscillatorParameter2(i32, f32),
+    LFOFrequency(i32, f32),
+    LFOFrequencyDisplay(i32, i32),
+    LFOPhase(i32, f32),
+    LFOWaveShape(i32, f32),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum LFOIndex {
+    ModWheelLfo = 0,
+    FilterLfo = 1,
+}
+
+impl LFOIndex {
+    pub fn from_i32(index: i32) -> Option<Self> {
+        match index {
+            0 => Some(LFOIndex::ModWheelLfo),
+            1 => Some(LFOIndex::FilterLfo),
+            _ => None,
+        }
+    }
 }
 
 pub struct UI {
@@ -143,8 +166,8 @@ impl UI {
             ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(&audio_devices));
             ui.set_amp_eg_values(slint_envelope_from_ui_envelope(&amp_envelope));
             ui.set_filter_eq_values(slint_envelope_from_ui_envelope(&filter_envelope));
-            ui.set_mod_wheel_lfo_values(slint_envelope_from_ui_lfo(&mod_wheel_lfo));
-            ui.set_filter_lfo_values(slint_envelope_from_ui_lfo(&filter_lfo));
+            ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&mod_wheel_lfo));
+            ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&filter_lfo));
         })?;
 
         Ok(())
@@ -159,6 +182,8 @@ impl UI {
         let audio_device_values = self.audio_device_values.clone();
         let oscillators = self.oscillators.clone();
         let oscillator_fine_tune_values = self.oscillator_fine_tune_values.clone();
+        let mod_wheel_lfo_values = self.mod_wheel_lfo_values.clone();
+        let filter_lfo_values = self.filter_lfo_values.clone();
         let ui_weak_thread = ui_weak.clone();
 
         thread::spawn(move || {
@@ -252,6 +277,43 @@ impl UI {
                             oscillator_index,
                             value,
                         );
+                    }
+                    UIUpdates::LFOFrequency(lfo_index, value) => {
+                        if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
+                            let lfo_values = match lfo_index {
+                                LFOIndex::ModWheelLfo => &mod_wheel_lfo_values,
+                                LFOIndex::FilterLfo => &filter_lfo_values,
+                            };
+                            set_lfo_frequency(&ui_weak_thread, lfo_index, lfo_values, value);
+                            let lfo_display_value =
+                                exponential_curve_lfo_frequency_from_normal_value(value) as i32;
+                            set_lfo_frequency_display(&ui_weak_thread, lfo_index, lfo_display_value)
+                        }
+                    }
+                    UIUpdates::LFOFrequencyDisplay(lfo_index, value) => {
+                        if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
+                            set_lfo_frequency_display(&ui_weak_thread, lfo_index, value)
+                        }
+                    }
+                    UIUpdates::LFOWaveShape(lfo_index, value) => {
+                        if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
+                            let lfo_values = match lfo_index {
+                                LFOIndex::ModWheelLfo => &mod_wheel_lfo_values,
+                                LFOIndex::FilterLfo => &filter_lfo_values,
+                            };
+                            set_lfo_wave_shape(&ui_weak_thread, lfo_values, value);
+                        }
+                    }
+                    UIUpdates::LFOPhase(lfo_index, value) => {
+                        if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
+                            let lfo_values = match lfo_index {
+                                LFOIndex::ModWheelLfo => &mod_wheel_lfo_values,
+                                LFOIndex::FilterLfo => &filter_lfo_values,
+                            };
+                            set_lfo_phase(&ui_weak_thread, lfo_index, lfo_values, value);
+                            let lfo_display_value = (value * MAX_PHASE_VALUE).ceil() as i32;
+                            set_lfo_phase_display(&ui_weak_thread, lfo_index, lfo_display_value);
+                        }
                     }
                 }
             }
@@ -385,7 +447,6 @@ fn set_audio_device_channel_indexes(
     });
 }
 
-
 fn set_oscillator_wave_shape(
     ui_weak_thread: &Weak<AccidentalSynth>,
     oscillator_values: &Arc<Mutex<Vec<UIOscillator>>>,
@@ -504,10 +565,81 @@ fn set_oscillator_parameter2(
     });
 }
 
+fn set_lfo_frequency(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    lfo_index: LFOIndex,
+    lfo_values: &Arc<Mutex<UILfo>>,
+    normal_value: f32,
+) {
+    let mut lfo_values = lfo_values
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    lfo_values.frequency = normal_value;
 
-fn slint_oscillators_from_oscillators(
-    oscillator_values: &[UIOscillator],
-) -> ModelRc<Oscillator> {
+    let ui_lfo_values = lfo_values.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match lfo_index {
+        LFOIndex::ModWheelLfo => ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
+        LFOIndex::FilterLfo => ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
+    });
+}
+
+fn set_lfo_frequency_display(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    lfo_index: LFOIndex,
+    frequency: i32,
+) {
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match lfo_index {
+        LFOIndex::ModWheelLfo => ui.set_mod_wheel_lfo_frequency_display(frequency),
+        LFOIndex::FilterLfo => ui.set_filter_lfo_frequency_display(frequency),
+    });
+}
+
+fn set_lfo_wave_shape(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    lfo_values: &Arc<Mutex<UILfo>>,
+    normal_value: f32,
+) {
+    let mut lfo_values = lfo_values
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    lfo_values.wave_shape_index = normal_value_to_wave_shape_index(normal_value) as i32;
+
+    let ui_lfo_values = lfo_values.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values));
+    });
+}
+
+fn set_lfo_phase(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    lfo_index: LFOIndex,
+    lfo_values: &Arc<Mutex<UILfo>>,
+    normal_value: f32,
+) {
+    let mut lfo_values = lfo_values
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    lfo_values.phase = normal_value;
+
+    let ui_lfo_values = lfo_values.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match lfo_index {
+        LFOIndex::ModWheelLfo => ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
+        LFOIndex::FilterLfo => ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
+    });
+}
+
+fn set_lfo_phase_display(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    lfo_index: LFOIndex,
+    degrees: i32,
+) {
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match lfo_index {
+        LFOIndex::ModWheelLfo => ui.set_mod_wheel_lfo_phase_display(degrees),
+        LFOIndex::FilterLfo => ui.set_filter_lfo_phase_display(degrees),
+    });
+}
+
+fn slint_oscillators_from_oscillators(oscillator_values: &[UIOscillator]) -> ModelRc<Oscillator> {
     let oscillators: VecModel<Oscillator> = oscillator_values
         .iter()
         .map(|osc| Oscillator {
@@ -545,7 +677,7 @@ fn slint_envelope_from_ui_envelope(envelope_values: &UIEnvelope) -> EnvelopeValu
         inverted: envelope_values.inverted,
     }
 }
-fn slint_envelope_from_ui_lfo(lfo_values: &UILfo) -> LFOValues {
+fn slint_lfo_from_ui_lfo(lfo_values: &UILfo) -> LFOValues {
     LFOValues {
         frequency: lfo_values.frequency,
         phase: lfo_values.phase,

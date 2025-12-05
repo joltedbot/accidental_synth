@@ -33,7 +33,7 @@ pub fn create_synthesizer(
     let mut amp_envelope = Envelope::new(sample_rate);
     let mut filter_envelope = Envelope::new(sample_rate);
     let mut filter_lfo = Lfo::new(sample_rate);
-    let mut lfo1 = Lfo::new(sample_rate);
+    let mut mod_wheel_lfo = Lfo::new(sample_rate);
 
     let mut oscillators = [
         Oscillator::new(sample_rate, WaveShape::default()),
@@ -62,7 +62,7 @@ pub fn create_synthesizer(
             filter_envelope.set_parameters(&module_parameters.filter_envelope);
             filter_lfo.set_parameters(&module_parameters.filter_lfo);
             filter.set_parameters(&module_parameters.filter);
-            lfo1.set_parameters(&module_parameters.lfo1);
+            mod_wheel_lfo.set_parameters(&module_parameters.mod_wheel_lfo);
 
             for (index, oscillator) in oscillators.iter_mut().enumerate() {
                 oscillator.set_parameters(&module_parameters.oscillators[index]);
@@ -75,14 +75,14 @@ pub fn create_synthesizer(
 
             let vibrato_amount =
                 load_f32_from_atomic_u32(&module_parameters.keyboard.mod_wheel_amount);
-            lfo1.set_range(vibrato_amount / 4.0);
+            mod_wheel_lfo.set_range(vibrato_amount / 4.0);
 
             // Loop Here
             let mut local_buffer = Vec::<f32>::with_capacity(LOCAL_BUFFER_CAPACITY);
 
             while local_buffer.len() < LOCAL_BUFFER_CAPACITY {
                 // Begin generating and processing the samples for the frame
-                let vibrato_value = lfo1.generate(None);
+                let vibrato_value = mod_wheel_lfo.generate(None);
                 for (index, input) in quad_mixer_inputs.iter_mut().enumerate() {
                     input.sample = oscillators[index].generate(Some(vibrato_value));
                 }

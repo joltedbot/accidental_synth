@@ -5,3 +5,5 @@ pub const MONO_CHANNEL_COUNT: u16 = 1;
 pub const MIDI_CHANNEL_LIST: [&str; 17] = [
     "Omni", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
 ];
+
+pub const MAX_PHASE_VALUE: f32 = 360.0;

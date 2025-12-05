@@ -4,7 +4,9 @@ use crate::modules::envelope::{
     MIN_ATTACK_MILLISECONDS, MIN_DECAY_MILLISECONDS, MIN_RELEASE_MILLISECONDS,
 };
 use crate::modules::filter::FilterParameters;
-use crate::modules::lfo::{LfoParameters, MAX_LFO_CENTER_VALUE, MIN_LFO_CENTER_VALUE};
+use crate::modules::lfo::{
+    DEFAULT_LFO_PHASE, LfoParameters, MAX_LFO_CENTER_VALUE, MIN_LFO_CENTER_VALUE,
+};
 use crate::modules::oscillator::OscillatorParameters;
 use crate::modules::oscillator::constants::{MAX_CLIP_BOOST, MIN_CLIP_BOOST};
 use crate::synthesizer::constants::{
@@ -28,9 +30,10 @@ use crate::synthesizer::{CurrentNote, KeyboardParameters, MixerParameters, Oscil
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 
-pub fn set_lfo_frequency(parameters: &LfoParameters, normal_value: f32) {
+pub fn set_lfo_frequency(parameters: &LfoParameters, normal_value: f32) -> f32 {
     let frequency = exponential_curve_lfo_frequency_from_normal_value(normal_value);
     store_f32_as_atomic_u32(&parameters.frequency, frequency);
+    frequency
 }
 
 pub fn set_lfo_center_value(parameters: &LfoParameters, normal_value: f32) {
@@ -53,6 +56,7 @@ pub fn set_lfo_wave_shape(parameters: &LfoParameters, normal_value: f32) {
 }
 
 pub fn set_lfo_phase_reset(parameters: &LfoParameters) {
+    parameters.phase.store(DEFAULT_LFO_PHASE as u32, Relaxed);
     parameters.reset.store(true, Relaxed);
 }
 

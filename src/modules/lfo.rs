@@ -12,7 +12,7 @@ pub const MAX_LFO_CENTER_VALUE: f32 = 1.0;
 pub const MIN_LFO_CENTER_VALUE: f32 = -1.0;
 const DEFAULT_CENTER_VALUE: f32 = 0.0;
 const DEFAULT_RANGE: f32 = 2.0;
-const DEFAULT_PHASE: f32 = 0.0;
+pub const DEFAULT_LFO_PHASE: f32 = 0.0;
 pub const DEFAULT_LFO_FREQUENCY: f32 = 0.1;
 
 #[derive(Debug)]
@@ -31,7 +31,7 @@ impl Default for LfoParameters {
             frequency: AtomicU32::new(DEFAULT_LFO_FREQUENCY.to_bits()),
             center_value: AtomicU32::new(DEFAULT_CENTER_VALUE.to_bits()),
             range: AtomicU32::new(DEFAULT_RANGE.to_bits()),
-            phase: AtomicU32::new(DEFAULT_PHASE.to_bits()),
+            phase: AtomicU32::new(DEFAULT_LFO_PHASE.to_bits()),
             wave_shape: AtomicU8::new(WaveShape::default() as u8),
             reset: AtomicBool::new(false),
         }
@@ -56,7 +56,7 @@ impl Lfo {
             frequency: DEFAULT_LFO_FREQUENCY,
             center_value: DEFAULT_CENTER_VALUE,
             range: DEFAULT_RANGE,
-            phase: DEFAULT_PHASE,
+            phase: DEFAULT_LFO_PHASE,
             wave_shape_index: WaveShape::Sine as u8,
         }
     }
