@@ -13,6 +13,5 @@ pub const COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS: u64 = 100;
 pub const OSSSTATUS_NO_ERROR: SInt32 = 0;
 pub const BUFFER_DROP_OUT_LOGGER: u64 = 2;
 
-
 #[cfg(not(target_os = "macos"))]
 pub const DEVICE_LIST_POLLING_INTERVAL_IN_MS: u64 = 20000;

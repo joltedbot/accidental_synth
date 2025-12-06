@@ -301,7 +301,7 @@ impl UI {
                                 LFOIndex::ModWheelLfo => &mod_wheel_lfo_values,
                                 LFOIndex::FilterLfo => &filter_lfo_values,
                             };
-                            set_lfo_wave_shape(&ui_weak_thread, lfo_values, value);
+                            set_lfo_wave_shape(&ui_weak_thread, lfo_index, lfo_values, value);
                         }
                     }
                     UIUpdates::LFOPhase(lfo_index, value) => {
@@ -596,6 +596,7 @@ fn set_lfo_frequency_display(
 
 fn set_lfo_wave_shape(
     ui_weak_thread: &Weak<AccidentalSynth>,
+    lfo_index: LFOIndex,
     lfo_values: &Arc<Mutex<UILfo>>,
     normal_value: f32,
 ) {
@@ -605,8 +606,9 @@ fn set_lfo_wave_shape(
     lfo_values.wave_shape_index = normal_value_to_wave_shape_index(normal_value) as i32;
 
     let ui_lfo_values = lfo_values.clone();
-    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
-        ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values));
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match lfo_index {
+        LFOIndex::ModWheelLfo => ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
+        LFOIndex::FilterLfo => ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
     });
 }
 

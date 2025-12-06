@@ -4,7 +4,9 @@ mod device_monitor;
 #[cfg(not(target_os = "macos"))]
 use crate::audio::device_monitor::create_device_monitor;
 
-use crate::audio::constants::{BUFFER_DROP_OUT_LOGGER, COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS};
+use crate::audio::constants::{
+    BUFFER_DROP_OUT_LOGGER, COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS,
+};
 use crate::audio::device_monitor::{DeviceMonitor, get_audio_device_list};
 use crate::ui::UIUpdates;
 use anyhow::{Result, anyhow};
@@ -116,13 +118,13 @@ impl Audio {
         self.create_coreaudio_device_monitor()?;
 
         start_audio_buffer_dropout_logger(self.buffer_dropout_counter.clone());
-        
+
         start_control_listener(
             ui_update_sender,
             self.device_update_receiver.clone(),
             self.sample_buffer_sender.clone(),
             self.current_output_channels.clone(),
-            self.buffer_dropout_counter.clone()
+            self.buffer_dropout_counter.clone(),
         );
 
         Ok(())
@@ -181,7 +183,13 @@ fn restart_main_audio_loop_with_new_device(
                     update to the UI. Exiting ",
         );
 
-    start_main_audio_output_loop(output_device, &current_output_channels, sample_consumer, buffer_dropout_counter.clone()).ok()
+    start_main_audio_output_loop(
+        output_device,
+        &current_output_channels,
+        sample_consumer,
+        buffer_dropout_counter.clone(),
+    )
+    .ok()
 }
 
 fn start_control_listener(
@@ -379,14 +387,18 @@ fn start_control_listener(
 }
 
 fn start_audio_buffer_dropout_logger(buffer_dropout_counter: Arc<AtomicU32>) {
-    thread::spawn(move || loop {
-        let buffer_dropout_count = buffer_dropout_counter.load(Relaxed);
-         if buffer_dropout_count > 0 {
-             log::warn!("The main audio buffer dropped {buffer_dropout_count} times since the last check.");
-             buffer_dropout_counter.store(0, Relaxed);
-         }
+    thread::spawn(move || {
+        loop {
+            let buffer_dropout_count = buffer_dropout_counter.load(Relaxed);
+            if buffer_dropout_count > 0 {
+                log::warn!(
+                    "The main audio buffer dropped {buffer_dropout_count} times since the last check."
+                );
+                buffer_dropout_counter.store(0, Relaxed);
+            }
 
-        thread::sleep(Duration::from_secs(BUFFER_DROP_OUT_LOGGER));
+            thread::sleep(Duration::from_secs(BUFFER_DROP_OUT_LOGGER));
+        }
     });
 }
 
