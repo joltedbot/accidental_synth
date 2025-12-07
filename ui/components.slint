@@ -526,13 +526,14 @@ export component EnvelopeSection inherits VerticalLayout {
 export component FixedCenterLFOSection inherits VerticalLayout {
     in property <LFOValues> lfo-values;
     in property <int> lfo-phase-display: 0;
-    in property <int> lfo-frequency-display: 0;
+    in property <float> lfo-frequency-display: Constant.DEFAULT_LFO_FREQUENCY_NORMAL;
+
+    property <float> lfo-frequency-rounded: lfo-frequency-display < 1 ? floor(lfo-frequency-display * 100) / 100.0 : floor(lfo-frequency-display);
 
     callback lfo-frequency-changed(float);
     callback lfo-shape-changed(int);
     callback lfo-phase-changed(float);
     callback lfo-phase-reset();
-
 
     alignment: start;
     spacing: 5px;
@@ -551,7 +552,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
                 show-value: true;
                 value-units: Theme.display-units-hertz;
                 slider-width: Theme.global-panel-widget-width;
-                display-value: lfo-frequency-display;
+                display-value: lfo-frequency-rounded;
                 width: Theme.global-panel-widget-width;
                 horizontal-parameter-slider-changed(frequency) => {
                     lfo-frequency-changed(frequency);

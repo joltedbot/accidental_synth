@@ -65,7 +65,7 @@ export component AccidentalSynth inherits Window {
     };
     in property <EnvelopeValues> filter-eq-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
     in property <LFOValues> filter-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
-    in property <int> filter-lfo-frequency-display;
+    in property <float> filter-lfo-frequency-display;
     in property <int> filter-lfo-phase-display;
 
     callback filter-cutoff-changed(float);
@@ -109,7 +109,7 @@ export component AccidentalSynth inherits Window {
     ];
     in property <EnvelopeValues> amp-eg-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
     in property <LFOValues> mod-wheel-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
-    in property <int> mod-wheel-lfo-frequency-display;
+    in property <float> mod-wheel-lfo-frequency-display;
     in property <int> mod-wheel-lfo-phase-display;
     in property <bool> portamento-is-enabled;
     in property <float> portamento-time;

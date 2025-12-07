@@ -334,7 +334,7 @@ export component AmpEnvelopeSection inherits VerticalLayout {
 
 export component ModWheelSection inherits VerticalLayout {
     in property <LFOValues> mod-wheel-lfo-values;
-    in property <int> mod-wheel-lfo-frequency-display;
+    in property <float> mod-wheel-lfo-frequency-display;
     in property <int> mod-wheel-lfo-phase-display;
     callback lfo-frequency-changed(int, float);
     callback lfo-shape-changed(int, int);
@@ -375,7 +375,7 @@ export component ModWheelSection inherits VerticalLayout {
 export component GlobalPanel inherits Panel {
     in property <EnvelopeValues> amp-eg-values;
     in property <LFOValues> mod-wheel-lfo-values;
-    in property <int> mod-wheel-lfo-frequency-display;
+    in property <float> mod-wheel-lfo-frequency-display;
     in property <int> mod-wheel-lfo-phase-display;
 
     in property <Mixer> output-mixer-values;

@@ -5,6 +5,7 @@ mod structs;
 use super::{AccidentalSynth, AudioDevice, EnvelopeValues, LFOValues, MidiPort, Oscillator};
 use crate::audio::AudioDeviceUpdateEvents;
 use crate::midi::MidiDeviceUpdateEvents;
+use crate::modules::lfo::DEFAULT_LFO_FREQUENCY;
 use crate::synthesizer::midi_value_converters::{
     exponential_curve_lfo_frequency_from_normal_value, normal_value_to_wave_shape_index,
 };
@@ -41,7 +42,7 @@ pub enum UIUpdates {
     OscillatorParameter1(i32, f32),
     OscillatorParameter2(i32, f32),
     LFOFrequency(i32, f32),
-    LFOFrequencyDisplay(i32, i32),
+    LFOFrequencyDisplay(i32, f32),
     LFOPhase(i32, f32),
     LFOWaveShape(i32, f32),
 }
@@ -167,7 +168,9 @@ impl UI {
             ui.set_amp_eg_values(slint_envelope_from_ui_envelope(&amp_envelope));
             ui.set_filter_eq_values(slint_envelope_from_ui_envelope(&filter_envelope));
             ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&mod_wheel_lfo));
+            ui.set_mod_wheel_lfo_frequency_display(DEFAULT_LFO_FREQUENCY);
             ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&filter_lfo));
+            ui.set_filter_lfo_frequency_display(DEFAULT_LFO_FREQUENCY);
         })?;
 
         Ok(())
@@ -286,7 +289,7 @@ impl UI {
                             };
                             set_lfo_frequency(&ui_weak_thread, lfo_index, lfo_values, value);
                             let lfo_display_value =
-                                exponential_curve_lfo_frequency_from_normal_value(value) as i32;
+                                exponential_curve_lfo_frequency_from_normal_value(value);
                             set_lfo_frequency_display(&ui_weak_thread, lfo_index, lfo_display_value)
                         }
                     }
@@ -586,7 +589,7 @@ fn set_lfo_frequency(
 fn set_lfo_frequency_display(
     ui_weak_thread: &Weak<AccidentalSynth>,
     lfo_index: LFOIndex,
-    frequency: i32,
+    frequency: f32,
 ) {
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match lfo_index {
         LFOIndex::ModWheelLfo => ui.set_mod_wheel_lfo_frequency_display(frequency),

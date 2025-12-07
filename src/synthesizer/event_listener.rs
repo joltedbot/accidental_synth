@@ -221,7 +221,7 @@ pub fn start_ui_event_listener(
                     }
                 }
                 SynthesizerUpdateEvents::LfoFrequency(lfo_index, frequency) => {
-                    let exponential_cents = match lfo_index {
+                    let frequency = match lfo_index {
                         LFO_INDEX_MOD_WHEEL => {
                             set_lfo_frequency(&module_parameters.mod_wheel_lfo, frequency)
                         }
@@ -235,7 +235,7 @@ pub fn start_ui_event_listener(
                             return;
                         }
                     };
-                    ui_update_sender.send(UIUpdates::LFOFrequencyDisplay(lfo_index, exponential_cents as i32)).expect
+                    ui_update_sender.send(UIUpdates::LFOFrequencyDisplay(lfo_index, frequency)).expect
                     ("start_ui_event_listener(): Failed to send oscillator fine-tune display value to the UI.");
                 }
                 SynthesizerUpdateEvents::LfoShapeIndex(lfo_index, wave_shape_index) => {
