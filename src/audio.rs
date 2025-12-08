@@ -119,6 +119,7 @@ impl Audio {
 
         start_audio_buffer_dropout_logger(self.buffer_dropout_counter.clone());
 
+
         start_control_listener(
             ui_update_sender,
             self.device_update_receiver.clone(),
@@ -126,6 +127,8 @@ impl Audio {
             self.current_output_channels.clone(),
             self.buffer_dropout_counter.clone(),
         );
+
+
 
         Ok(())
     }
@@ -199,6 +202,7 @@ fn start_control_listener(
     current_output_channels: Arc<OutputChannels>,
     buffer_dropout_counter: Arc<AtomicU32>,
 ) {
+    log::debug!("start_control_listener(): Starting the Audio Device Event listener thread");
     thread::spawn(move || {
         let mut audio_output_stream: Option<Stream> = None;
         let mut current_output_device_name = String::new();
@@ -207,7 +211,7 @@ fn start_control_listener(
         let ui_update_sender = ui_update_sender.clone();
         let sample_producer_sender = sample_producer_sender.clone();
 
-        log::debug!("create_control_listener(): Audio Device Event listener thread running");
+        log::debug!("start_control_listener(): Audio Device Event listener thread running");
 
         while let Ok(update) = device_update_receiver.recv() {
             log::debug!("AudioDeviceEvent: Received UI update: {update:?}");
@@ -387,6 +391,7 @@ fn start_control_listener(
 }
 
 fn start_audio_buffer_dropout_logger(buffer_dropout_counter: Arc<AtomicU32>) {
+    log::debug!("start_audio_buffer_dropout_logger(): Starting the audio buffer dropout logger thread");
     thread::spawn(move || {
         loop {
             let buffer_dropout_count = buffer_dropout_counter.load(Relaxed);
@@ -435,7 +440,7 @@ fn update_device_properties(
         String::new()
     };
 
-    update_current_channels(current_output_channels, Option::from(new_output_device));
+    update_current_channels(current_output_channels, new_output_device);
 }
 
 fn update_current_channels(

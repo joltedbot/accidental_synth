@@ -28,7 +28,7 @@ pub struct UIMidiPort {
     pub channel_index: i32,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct UIOscillator {
     pub wave_shape_index: i32,
     pub fine_tune: f32,

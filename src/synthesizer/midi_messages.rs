@@ -554,7 +554,14 @@ pub fn process_midi_cc_values(
             set_filter_poles(&module_parameters.filter, normalize_midi_value(value));
         }
         CC::FilterResonance(value) => {
-            set_filter_resonance(&module_parameters.filter, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_filter_resonance(&module_parameters.filter, normal_value);
+            ui_update_sender
+                .send(UIUpdates::FilterResonance(normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter resonance value to the UI. \
+                    Exiting.",
+                );
         }
         CC::AmpEGReleaseTime(value) => {
             let normal_value = normalize_midi_value(value);
@@ -577,7 +584,14 @@ pub fn process_midi_cc_values(
                 );
         }
         CC::FilterCutoff(value) => {
-            set_filter_cutoff(&module_parameters.filter, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_filter_cutoff(&module_parameters.filter, normal_value);
+            ui_update_sender
+                .send(UIUpdates::FilterCutoff(normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter cutoff value to the UI. \
+                    Exiting.",
+                );
         }
         CC::AmpEGDecayTime(value) => {
             let normal_value = normalize_midi_value(value);
