@@ -1,13 +1,15 @@
 mod callbacks;
 mod constants;
 mod structs;
+mod update_listener;
 
 use super::{AccidentalSynth, AudioDevice, EnvelopeValues, LFOValues, MidiPort, Oscillator};
 use crate::audio::AudioDeviceUpdateEvents;
 use crate::midi::MidiDeviceUpdateEvents;
 use crate::modules::lfo::DEFAULT_LFO_FREQUENCY;
 use crate::synthesizer::midi_value_converters::{
-    exponential_curve_lfo_frequency_from_normal_value, normal_value_to_wave_shape_index,
+    exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool,
+    normal_value_to_wave_shape_index,
 };
 use crate::synthesizer::{OscillatorIndex, SynthesizerUpdateEvents};
 use crate::ui::callbacks::register_callbacks;
@@ -16,6 +18,7 @@ use crate::ui::constants::{
     MIDI_CHANNEL_LIST, MONO_CHANNEL_COUNT,
 };
 use crate::ui::structs::{UIAudioDevice, UIEnvelope, UILfo, UIMidiPort, UIOscillator};
+use crate::ui::update_listener::start_ui_update_listener;
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender, bounded};
 use slint::{ModelRc, SharedString, VecModel, Weak};
@@ -45,35 +48,68 @@ pub enum UIUpdates {
     LFOFrequencyDisplay(i32, f32),
     LFOPhase(i32, f32),
     LFOWaveShape(i32, f32),
+    EnvelopeAttackTime(i32, f32),
+    EnvelopeDecayTime(i32, f32),
+    EnvelopeSustainLevel(i32, f32),
+    EnvelopeReleaseTime(i32, f32),
+    EnvelopeInverted(i32, f32),
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum LFOIndex {
-    ModWheelLfo = 0,
-    FilterLfo = 1,
+    ModWheel = 0,
+    Filter = 1,
 }
 
 impl LFOIndex {
     pub fn from_i32(index: i32) -> Option<Self> {
         match index {
-            0 => Some(LFOIndex::ModWheelLfo),
-            1 => Some(LFOIndex::FilterLfo),
+            0 => Some(Self::ModWheel),
+            1 => Some(Self::Filter),
             _ => None,
         }
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum EnvelopeIndex {
+    Amp = 0,
+    Filter = 1,
+}
+
+impl EnvelopeIndex {
+    pub fn from_i32(index: i32) -> Option<Self> {
+        match index {
+            0 => Some(Self::Amp),
+            1 => Some(Self::Filter),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum EnvelopeStage {
+    Attack,
+    Decay,
+    Sustain,
+    Release,
+}
+
+struct ParameterValues {
+    audio_device: Arc<Mutex<UIAudioDevice>>,
+    midi_port: Arc<Mutex<UIMidiPort>>,
+    amp_envelope: Arc<Mutex<UIEnvelope>>,
+    filter_envelope: Arc<Mutex<UIEnvelope>>,
+    mod_wheel_lfo: Arc<Mutex<UILfo>>,
+    filter_lfo: Arc<Mutex<UILfo>>,
+    oscillator_fine_tune: Arc<Mutex<Vec<i32>>>,
+}
+
 pub struct UI {
     ui_update_sender: Sender<UIUpdates>,
     ui_update_receiver: Receiver<UIUpdates>,
-    audio_device_values: Arc<Mutex<UIAudioDevice>>,
-    midi_port_values: Arc<Mutex<UIMidiPort>>,
-    amp_envelope_values: Arc<Mutex<UIEnvelope>>,
-    filter_envelope_values: Arc<Mutex<UIEnvelope>>,
-    mod_wheel_lfo_values: Arc<Mutex<UILfo>>,
-    filter_lfo_values: Arc<Mutex<UILfo>>,
     oscillators: Arc<Mutex<Vec<UIOscillator>>>,
-    oscillator_fine_tune_values: Arc<Mutex<Vec<i32>>>,
+    parameter_values: ParameterValues,
 }
 
 impl UI {
@@ -95,17 +131,21 @@ impl UI {
 
         let oscillator_values = vec![UIOscillator::default(); OscillatorIndex::count()];
 
+        let parameter_values = ParameterValues {
+            audio_device: Arc::new(Mutex::new(audio_device_values)),
+            midi_port: Arc::new(Mutex::new(midi_port_values)),
+            amp_envelope: Arc::new(Mutex::new(UIEnvelope::default())),
+            filter_envelope: Arc::new(Mutex::new(UIEnvelope::default())),
+            mod_wheel_lfo: Arc::new(Mutex::new(UILfo::default())),
+            filter_lfo: Arc::new(Mutex::new(UILfo::default())),
+            oscillator_fine_tune: Arc::new(Mutex::new(vec![0; OscillatorIndex::count()])),
+        };
+
         Self {
             ui_update_sender,
             ui_update_receiver,
-            audio_device_values: Arc::new(Mutex::new(audio_device_values)),
-            midi_port_values: Arc::new(Mutex::new(midi_port_values)),
-            amp_envelope_values: Arc::new(Mutex::new(UIEnvelope::default())),
-            filter_envelope_values: Arc::new(Mutex::new(UIEnvelope::default())),
-            mod_wheel_lfo_values: Arc::new(Mutex::new(UILfo::default())),
-            filter_lfo_values: Arc::new(Mutex::new(UILfo::default())),
+            parameter_values,
             oscillators: Arc::new(Mutex::new(oscillator_values)),
-            oscillator_fine_tune_values: Arc::new(Mutex::new(vec![0; OscillatorIndex::count()])),
         }
     }
 
@@ -128,18 +168,23 @@ impl UI {
             synthesizer_update_sender,
         );
         self.set_ui_default_values(ui_weak)?;
-        self.start_ui_update_listener(ui_update_receiver, ui_weak);
+        start_ui_update_listener(
+            ui_update_receiver,
+            ui_weak,
+            self.oscillators.clone(),
+            &self.parameter_values,
+        );
 
         Ok(())
     }
 
     fn set_ui_default_values(&self, ui_weak: &Weak<AccidentalSynth>) -> Result<()> {
-        let midi_port_values = self.midi_port_values.clone();
-        let audio_device_values = self.audio_device_values.clone();
-        let amp_envelope_values = self.amp_envelope_values.clone();
-        let filter_envelope_values = self.filter_envelope_values.clone();
-        let mod_wheel_lfo_values = self.mod_wheel_lfo_values.clone();
-        let filter_lfo_values = self.filter_lfo_values.clone();
+        let midi_port_values = self.parameter_values.midi_port.clone();
+        let audio_device_values = self.parameter_values.audio_device.clone();
+        let amp_envelope_values = self.parameter_values.amp_envelope.clone();
+        let filter_envelope_values = self.parameter_values.filter_envelope.clone();
+        let mod_wheel_lfo_values = self.parameter_values.mod_wheel_lfo.clone();
+        let filter_lfo_values = self.parameter_values.filter_lfo.clone();
 
         ui_weak.upgrade_in_event_loop(move |ui| {
             ui.set_version(SharedString::from(env!("CARGO_PKG_VERSION")));
@@ -166,7 +211,7 @@ impl UI {
             ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(&midi_ports));
             ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(&audio_devices));
             ui.set_amp_eg_values(slint_envelope_from_ui_envelope(&amp_envelope));
-            ui.set_filter_eq_values(slint_envelope_from_ui_envelope(&filter_envelope));
+            ui.set_filter_eg_values(slint_envelope_from_ui_envelope(&filter_envelope));
             ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&mod_wheel_lfo));
             ui.set_mod_wheel_lfo_frequency_display(DEFAULT_LFO_FREQUENCY);
             ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&filter_lfo));
@@ -174,153 +219,6 @@ impl UI {
         })?;
 
         Ok(())
-    }
-
-    fn start_ui_update_listener(
-        &self,
-        ui_update_receiver: Receiver<UIUpdates>,
-        ui_weak: &Weak<AccidentalSynth>,
-    ) {
-        let midi_port_values = self.midi_port_values.clone();
-        let audio_device_values = self.audio_device_values.clone();
-        let oscillators = self.oscillators.clone();
-        let oscillator_fine_tune_values = self.oscillator_fine_tune_values.clone();
-        let mod_wheel_lfo_values = self.mod_wheel_lfo_values.clone();
-        let filter_lfo_values = self.filter_lfo_values.clone();
-        let ui_weak_thread = ui_weak.clone();
-
-        thread::spawn(move || {
-            log::debug!("start_ui_update_listener(): spawned thread to receive ui update events");
-            while let Ok(update) = ui_update_receiver.recv() {
-                match update {
-                    UIUpdates::MidiPortList(port_list) => {
-                        set_midi_port_list(&ui_weak_thread, &midi_port_values, port_list);
-                    }
-                    UIUpdates::MidiPortIndex(index) => {
-                        set_midi_port_index(&ui_weak_thread, &midi_port_values, index);
-                    }
-                    UIUpdates::MidiChannelIndex(index) => {
-                        set_midi_channel_index(&ui_weak_thread, &midi_port_values, index);
-                    }
-                    UIUpdates::AudioDeviceList(device_list) => {
-                        set_audio_device_list(&ui_weak_thread, &audio_device_values, device_list);
-                    }
-                    UIUpdates::AudioDeviceIndex(index) => {
-                        set_audio_device_index(&ui_weak_thread, &audio_device_values, index);
-                    }
-                    UIUpdates::AudioDeviceChannelCount(count) => {
-                        set_audio_device_channel_list(&ui_weak_thread, &audio_device_values, count);
-                    }
-                    UIUpdates::AudioDeviceChannelIndexes { left, right } => {
-                        set_audio_device_channel_indexes(
-                            &ui_weak_thread,
-                            &audio_device_values,
-                            left,
-                            right,
-                        );
-                    }
-                    UIUpdates::OscillatorWaveShape(oscillator_index, shape_index) => {
-                        set_oscillator_wave_shape(
-                            &ui_weak_thread,
-                            &oscillators,
-                            oscillator_index,
-                            shape_index,
-                        );
-                    }
-                    UIUpdates::OscillatorFineTune(oscillator_index, normal_value, cents) => {
-                        set_oscillator_fine_tune(
-                            &ui_weak_thread,
-                            &oscillators,
-                            oscillator_index,
-                            normal_value,
-                        );
-                        set_oscillator_fine_tune_display(
-                            &ui_weak_thread,
-                            &oscillator_fine_tune_values,
-                            oscillator_index,
-                            cents,
-                        );
-                    }
-                    UIUpdates::OscillatorFineTuneCents(oscillator_index, cents) => {
-                        set_oscillator_fine_tune_display(
-                            &ui_weak_thread,
-                            &oscillator_fine_tune_values,
-                            oscillator_index,
-                            cents,
-                        );
-                    }
-                    UIUpdates::OscillatorCourseTune(oscillator_index, normal_value) => {
-                        set_oscillator_course_tune(
-                            &ui_weak_thread,
-                            &oscillators,
-                            oscillator_index,
-                            normal_value,
-                        );
-                    }
-                    UIUpdates::OscillatorClipperBoost(oscillator_index, level) => {
-                        set_oscillator_clipper_boost(
-                            &ui_weak_thread,
-                            &oscillators,
-                            oscillator_index,
-                            level,
-                        );
-                    }
-                    UIUpdates::OscillatorParameter1(oscillator_index, value) => {
-                        set_oscillator_parameter1(
-                            &ui_weak_thread,
-                            &oscillators,
-                            oscillator_index,
-                            value,
-                        );
-                    }
-                    UIUpdates::OscillatorParameter2(oscillator_index, value) => {
-                        set_oscillator_parameter2(
-                            &ui_weak_thread,
-                            &oscillators,
-                            oscillator_index,
-                            value,
-                        );
-                    }
-                    UIUpdates::LFOFrequency(lfo_index, value) => {
-                        if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
-                            let lfo_values = match lfo_index {
-                                LFOIndex::ModWheelLfo => &mod_wheel_lfo_values,
-                                LFOIndex::FilterLfo => &filter_lfo_values,
-                            };
-                            set_lfo_frequency(&ui_weak_thread, lfo_index, lfo_values, value);
-                            let lfo_display_value =
-                                exponential_curve_lfo_frequency_from_normal_value(value);
-                            set_lfo_frequency_display(&ui_weak_thread, lfo_index, lfo_display_value)
-                        }
-                    }
-                    UIUpdates::LFOFrequencyDisplay(lfo_index, value) => {
-                        if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
-                            set_lfo_frequency_display(&ui_weak_thread, lfo_index, value)
-                        }
-                    }
-                    UIUpdates::LFOWaveShape(lfo_index, value) => {
-                        if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
-                            let lfo_values = match lfo_index {
-                                LFOIndex::ModWheelLfo => &mod_wheel_lfo_values,
-                                LFOIndex::FilterLfo => &filter_lfo_values,
-                            };
-                            set_lfo_wave_shape(&ui_weak_thread, lfo_index, lfo_values, value);
-                        }
-                    }
-                    UIUpdates::LFOPhase(lfo_index, value) => {
-                        if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
-                            let lfo_values = match lfo_index {
-                                LFOIndex::ModWheelLfo => &mod_wheel_lfo_values,
-                                LFOIndex::FilterLfo => &filter_lfo_values,
-                            };
-                            set_lfo_phase(&ui_weak_thread, lfo_index, lfo_values, value);
-                            let lfo_display_value = (value * MAX_PHASE_VALUE).ceil() as i32;
-                            set_lfo_phase_display(&ui_weak_thread, lfo_index, lfo_display_value);
-                        }
-                    }
-                }
-            }
-        });
     }
 }
 
@@ -581,8 +479,8 @@ fn set_lfo_frequency(
 
     let ui_lfo_values = lfo_values.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match lfo_index {
-        LFOIndex::ModWheelLfo => ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
-        LFOIndex::FilterLfo => ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
+        LFOIndex::ModWheel => ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
+        LFOIndex::Filter => ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
     });
 }
 
@@ -592,8 +490,8 @@ fn set_lfo_frequency_display(
     frequency: f32,
 ) {
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match lfo_index {
-        LFOIndex::ModWheelLfo => ui.set_mod_wheel_lfo_frequency_display(frequency),
-        LFOIndex::FilterLfo => ui.set_filter_lfo_frequency_display(frequency),
+        LFOIndex::ModWheel => ui.set_mod_wheel_lfo_frequency_display(frequency),
+        LFOIndex::Filter => ui.set_filter_lfo_frequency_display(frequency),
     });
 }
 
@@ -610,8 +508,8 @@ fn set_lfo_wave_shape(
 
     let ui_lfo_values = lfo_values.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match lfo_index {
-        LFOIndex::ModWheelLfo => ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
-        LFOIndex::FilterLfo => ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
+        LFOIndex::ModWheel => ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
+        LFOIndex::Filter => ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
     });
 }
 
@@ -628,8 +526,8 @@ fn set_lfo_phase(
 
     let ui_lfo_values = lfo_values.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match lfo_index {
-        LFOIndex::ModWheelLfo => ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
-        LFOIndex::FilterLfo => ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
+        LFOIndex::ModWheel => ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
+        LFOIndex::Filter => ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_lfo_values)),
     });
 }
 
@@ -639,8 +537,68 @@ fn set_lfo_phase_display(
     degrees: i32,
 ) {
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match lfo_index {
-        LFOIndex::ModWheelLfo => ui.set_mod_wheel_lfo_phase_display(degrees),
-        LFOIndex::FilterLfo => ui.set_filter_lfo_phase_display(degrees),
+        LFOIndex::ModWheel => ui.set_mod_wheel_lfo_phase_display(degrees),
+        LFOIndex::Filter => ui.set_filter_lfo_phase_display(degrees),
+    });
+}
+
+fn set_envelope_stage_value(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    envelope_index: EnvelopeIndex,
+    stage: EnvelopeStage,
+    envelope_values: &Arc<Mutex<UIEnvelope>>,
+    normal_value: f32,
+) {
+    let mut envelope_values = envelope_values
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+
+    match stage {
+        EnvelopeStage::Attack => {
+            envelope_values.attack = normal_value;
+        }
+        EnvelopeStage::Decay => {
+            envelope_values.decay = normal_value;
+        }
+        EnvelopeStage::Sustain => {
+            envelope_values.sustain = normal_value;
+        }
+        EnvelopeStage::Release => {
+            envelope_values.release = normal_value;
+        }
+    }
+
+    let ui_envelope_values = envelope_values.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match envelope_index {
+        EnvelopeIndex::Amp => {
+            ui.set_amp_eg_values(slint_envelope_from_ui_envelope(&ui_envelope_values))
+        }
+        EnvelopeIndex::Filter => {
+            ui.set_filter_eg_values(slint_envelope_from_ui_envelope(&ui_envelope_values))
+        }
+    });
+}
+
+fn set_envelope_inverted(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    envelope_index: EnvelopeIndex,
+    envelope_values: &Arc<Mutex<UIEnvelope>>,
+    normal_value: f32,
+) {
+    let mut envelope_values = envelope_values
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+
+    envelope_values.inverted = normal_value_to_bool(normal_value);
+
+    let ui_envelope_values = envelope_values.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match envelope_index {
+        EnvelopeIndex::Amp => {
+            ui.set_amp_eg_values(slint_envelope_from_ui_envelope(&ui_envelope_values))
+        }
+        EnvelopeIndex::Filter => {
+            ui.set_filter_eg_values(slint_envelope_from_ui_envelope(&ui_envelope_values))
+        }
     });
 }
 

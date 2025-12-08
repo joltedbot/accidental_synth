@@ -163,7 +163,7 @@ export component FilterPanel inherits Panel {
 
     in property <FilterCutoff> filter-cutoff-values;
     in property <FilterOptions> filter-options-values;
-    in property <EnvelopeValues> filter-eq-values;
+    in property <EnvelopeValues> filter-eg-values;
     in property <LFOValues> filter-lfo-values;
     in property <int> filter-lfo-phase-display;
     in property <float> filter-lfo-frequency-display;
@@ -226,7 +226,7 @@ export component FilterPanel inherits Panel {
         HorizontalSpacer { }
 
         FilterEGSection {
-            filter-eg-values: filter-eq-values;
+            filter-eg-values: filter-eg-values;
             envelope-attack-changed(milliseconds) => {
                 envelope-attack-changed(Constant.ENVELOPE_FILTER_INDEX, milliseconds);
             }

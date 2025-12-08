@@ -19,7 +19,7 @@ use crate::synthesizer::{
     CurrentNote, KeyboardParameters, MidiGateEvent, MidiNoteEvent, ModuleParameters,
     OscillatorIndex, midi_value_converters,
 };
-use crate::ui::{LFOIndex, UIUpdates};
+use crate::ui::{EnvelopeIndex, LFOIndex, UIUpdates};
 use crossbeam_channel::Sender;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Relaxed, Release};
@@ -557,55 +557,109 @@ pub fn process_midi_cc_values(
             set_filter_resonance(&module_parameters.filter, normalize_midi_value(value));
         }
         CC::AmpEGReleaseTime(value) => {
-            set_envelope_release_time(&module_parameters.amp_envelope, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_envelope_release_time(&module_parameters.amp_envelope, normal_value);
+            ui_update_sender
+                .send(UIUpdates::EnvelopeReleaseTime(EnvelopeIndex::Amp as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the amp envelope release time value to the UI. \
+                    Exiting.",
+                );
         }
         CC::AmpEGAttackTime(value) => {
-            set_envelope_attack_time(&module_parameters.amp_envelope, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_envelope_attack_time(&module_parameters.amp_envelope, normal_value);
+            ui_update_sender
+                .send(UIUpdates::EnvelopeAttackTime(EnvelopeIndex::Amp as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the amp envelope attack time value to the UI. \
+                    Exiting.",
+                );
         }
         CC::FilterCutoff(value) => {
             set_filter_cutoff(&module_parameters.filter, normalize_midi_value(value));
         }
         CC::AmpEGDecayTime(value) => {
-            set_envelope_decay_time(&module_parameters.amp_envelope, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_envelope_decay_time(&module_parameters.amp_envelope, normal_value);
+            ui_update_sender
+                .send(UIUpdates::EnvelopeDecayTime(EnvelopeIndex::Amp as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the amp envelope decay time value to the UI. \
+                    Exiting.",
+                );
         }
         CC::AmpEGSustainLevel(value) => {
-            set_envelope_sustain_level(
-                &module_parameters.amp_envelope,
-                normalize_midi_value(value),
-            );
+            let normal_value = normalize_midi_value(value);
+            set_envelope_sustain_level(&module_parameters.amp_envelope, normal_value);
+
+            ui_update_sender
+                .send(UIUpdates::EnvelopeSustainLevel(EnvelopeIndex::Amp as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the amp envelope sustain level value to the UI. \
+                    Exiting.",
+                );
         }
         CC::AmpEGInverted(value) => {
-            set_envelope_inverted(&module_parameters.amp_envelope, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_envelope_inverted(&module_parameters.amp_envelope, normal_value);
+
+            ui_update_sender
+                .send(UIUpdates::EnvelopeInverted(EnvelopeIndex::Amp as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the amp envelope inverted state value to the UI. \
+                    Exiting.",
+                );
         }
         CC::FilterEGAttackTime(value) => {
-            set_envelope_attack_time(
-                &module_parameters.filter_envelope,
-                normalize_midi_value(value),
-            );
+            let normal_value = normalize_midi_value(value);
+            set_envelope_attack_time(&module_parameters.filter_envelope, normal_value);
+            ui_update_sender
+                .send(UIUpdates::EnvelopeAttackTime(EnvelopeIndex::Filter as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter envelope attack time value to the UI. \
+                    Exiting.",
+                );
         }
         CC::FilterEGDecayTime(value) => {
-            set_envelope_decay_time(
-                &module_parameters.filter_envelope,
-                normalize_midi_value(value),
-            );
+            let normal_value = normalize_midi_value(value);
+            set_envelope_decay_time(&module_parameters.filter_envelope, normal_value);
+            ui_update_sender
+                .send(UIUpdates::EnvelopeDecayTime(EnvelopeIndex::Filter as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter envelope decay time value to the UI. \
+                    Exiting.",
+                );
         }
         CC::FilterEGSustainLevel(value) => {
-            set_envelope_sustain_level(
-                &module_parameters.filter_envelope,
-                normalize_midi_value(value),
-            );
+            let normal_value = normalize_midi_value(value);
+            set_envelope_sustain_level(&module_parameters.filter_envelope, normal_value);
+            ui_update_sender
+                .send(UIUpdates::EnvelopeSustainLevel(EnvelopeIndex::Filter as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter envelope sustain level value to the UI. \
+                    Exiting.",
+                );
         }
         CC::FilterEGReleaseTime(value) => {
-            set_envelope_release_time(
-                &module_parameters.filter_envelope,
-                normalize_midi_value(value),
-            );
+            let normal_value = normalize_midi_value(value);
+            set_envelope_release_time(&module_parameters.filter_envelope, normal_value);
+            ui_update_sender
+                .send(UIUpdates::EnvelopeReleaseTime(EnvelopeIndex::Filter as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter envelope release time value to the UI. \
+                    Exiting.",
+                );
         }
         CC::FilterEGInverted(value) => {
-            set_envelope_inverted(
-                &module_parameters.filter_envelope,
-                normalize_midi_value(value),
-            );
+            let normal_value = normalize_midi_value(value);
+            set_envelope_inverted(&module_parameters.filter_envelope, normal_value);
+            ui_update_sender
+                .send(UIUpdates::EnvelopeInverted(EnvelopeIndex::Filter as i32, normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter envelope inverted state value to the UI. \
+                    Exiting.",
+                );
         }
         CC::FilterEGAmount(value) => {
             set_envelope_amount(
@@ -621,7 +675,7 @@ pub fn process_midi_cc_values(
             set_lfo_frequency(&module_parameters.mod_wheel_lfo, normal_value);
 
             ui_update_sender
-                .send(UIUpdates::LFOFrequency(LFOIndex::ModWheelLfo as i32, normal_value))
+                .send(UIUpdates::LFOFrequency(LFOIndex::ModWheel as i32, normal_value))
                 .expect(
                     "process_midi_cc_values(): Could not send the mod wheel lfo frequency level value to the UI. \
                     Exiting.",
@@ -640,7 +694,7 @@ pub fn process_midi_cc_values(
             set_lfo_wave_shape(&module_parameters.mod_wheel_lfo, normal_value);
 
             ui_update_sender
-                .send(UIUpdates::LFOWaveShape(LFOIndex::ModWheelLfo as i32, normal_value))
+                .send(UIUpdates::LFOWaveShape(LFOIndex::ModWheel as i32, normal_value))
                 .expect(
                     "process_midi_cc_values(): Could not send the mod wheel lfo wave shape value to the UI. \
                     Exiting.",
@@ -651,7 +705,7 @@ pub fn process_midi_cc_values(
             set_lfo_phase(&module_parameters.mod_wheel_lfo, normal_value);
 
             ui_update_sender
-                .send(UIUpdates::LFOPhase(LFOIndex::ModWheelLfo as i32, normal_value))
+                .send(UIUpdates::LFOPhase(LFOIndex::ModWheel as i32, normal_value))
                 .expect(
                     "process_midi_cc_values(): Could not send the mod wheel lfo phase value to the UI. \
                     Exiting.",
@@ -660,7 +714,7 @@ pub fn process_midi_cc_values(
         CC::ModWheelLFOReset => {
             set_lfo_phase_reset(&module_parameters.mod_wheel_lfo);
             ui_update_sender
-                .send(UIUpdates::LFOPhase(LFOIndex::ModWheelLfo as i32, DEFAULT_LFO_PHASE))
+                .send(UIUpdates::LFOPhase(LFOIndex::ModWheel as i32, DEFAULT_LFO_PHASE))
                 .expect(
                     "process_midi_cc_values(): Could not send the mod wheel phase reset value to the UI. \
                     Exiting.",
@@ -671,7 +725,7 @@ pub fn process_midi_cc_values(
             set_lfo_frequency(&module_parameters.filter_lfo, normal_value);
 
             ui_update_sender
-                .send(UIUpdates::LFOFrequency(LFOIndex::FilterLfo as i32, normal_value))
+                .send(UIUpdates::LFOFrequency(LFOIndex::Filter as i32, normal_value))
                 .expect(
                     "process_midi_cc_values(): Could not send the filter lfo frequency value to the UI. \
                     Exiting.",
@@ -686,7 +740,7 @@ pub fn process_midi_cc_values(
             set_lfo_wave_shape(&module_parameters.filter_lfo, normal_value);
 
             ui_update_sender
-                .send(UIUpdates::LFOWaveShape(LFOIndex::FilterLfo as i32, normal_value))
+                .send(UIUpdates::LFOWaveShape(LFOIndex::Filter as i32, normal_value))
                 .expect(
                     "process_midi_cc_values(): Could not send the filter lfo wave shape value to the UI. \
                     Exiting.",
@@ -697,7 +751,7 @@ pub fn process_midi_cc_values(
             set_lfo_phase(&module_parameters.filter_lfo, normal_value);
 
             ui_update_sender
-                .send(UIUpdates::LFOPhase(LFOIndex::FilterLfo as i32, normal_value))
+                .send(UIUpdates::LFOPhase(LFOIndex::Filter as i32, normal_value))
                 .expect(
                     "process_midi_cc_values(): Could not send the filter lfo phase value to the UI. \
                     Exiting.",
@@ -707,7 +761,7 @@ pub fn process_midi_cc_values(
             set_lfo_phase_reset(&module_parameters.filter_lfo);
 
             ui_update_sender
-                .send(UIUpdates::LFOPhase(LFOIndex::FilterLfo as i32, DEFAULT_LFO_PHASE))
+                .send(UIUpdates::LFOPhase(LFOIndex::Filter as i32, DEFAULT_LFO_PHASE))
                 .expect(
                     "process_midi_cc_values(): Could not send the filter lfo phase reset  value to the UI. \
                     Exiting.",

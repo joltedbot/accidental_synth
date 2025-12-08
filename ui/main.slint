@@ -63,7 +63,7 @@ export component AccidentalSynth inherits Window {
         poles: Constant.DEFAULT_FILTER_POLES,
         key-track: Constant.DEFAULT_KEY_TRACKING_NORMAL
     };
-    in property <EnvelopeValues> filter-eq-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
+    in property <EnvelopeValues> filter-eg-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
     in property <LFOValues> filter-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
     in property <float> filter-lfo-frequency-display;
     in property <int> filter-lfo-phase-display;
@@ -289,7 +289,7 @@ export component AccidentalSynth inherits Window {
 
                             filter-cutoff-values: filter-cutoff-values;
                             filter-options-values: filter-options-values;
-                            filter-eq-values: filter-eq-values;
+                            filter-eg-values: filter-eg-values;
                             filter-lfo-values: filter-lfo-values;
 
                             filter-cutoff-changed(frequency) => {

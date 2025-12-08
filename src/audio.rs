@@ -514,12 +514,13 @@ fn start_main_audio_output_loop(
     );
 
     let number_of_channels = channel_count as usize;
-    let left_channel_index = output_channels.left.load(Relaxed);
-    let right_channel_index = output_channels.right.load(Relaxed);
+    let output_channels_thread = output_channels.clone();
 
     let stream = output_device.device.build_output_stream(
         &default_device_stream_config,
         move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
+            let left_channel_index = output_channels_thread.left.load(Relaxed);
+            let right_channel_index = output_channels_thread.right.load(Relaxed);
             let number_of_frames = buffer.len() / number_of_channels;
             let mut samples = if let Ok(samples) = sample_buffer.read_chunk(number_of_frames * 2) {
                 samples.into_iter()
