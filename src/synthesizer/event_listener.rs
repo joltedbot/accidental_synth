@@ -39,7 +39,7 @@ pub fn start_ui_event_listener(
                             .wave_shape_index
                             .store(wave_shape_index as u8, Relaxed);
                     } else {
-                        log::error!(
+                        log::warn!(
                             "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
                         );
                     }
@@ -53,7 +53,7 @@ pub fn start_ui_event_listener(
                             course_tune,
                         );
                     } else {
-                        log::error!(
+                        log::warn!(
                             "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
                         );
                     }
@@ -70,7 +70,7 @@ pub fn start_ui_event_listener(
                         ui_update_sender.send(UIUpdates::OscillatorFineTuneCents(oscillator_index, cents as i32)).expect
                         ("start_ui_event_listener(): Failed to send oscillator fine-tune display value to the UI.");
                     } else {
-                        log::error!(
+                        log::warn!(
                             "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
                         );
                     }
@@ -84,7 +84,7 @@ pub fn start_ui_event_listener(
                             boost,
                         );
                     } else {
-                        log::error!(
+                        log::warn!(
                             "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
                         );
                     }
@@ -98,7 +98,7 @@ pub fn start_ui_event_listener(
                             boost,
                         );
                     } else {
-                        log::error!(
+                        log::warn!(
                             "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
                         );
                     }
@@ -112,7 +112,7 @@ pub fn start_ui_event_listener(
                             boost,
                         );
                     } else {
-                        log::error!(
+                        log::warn!(
                             "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
                         );
                     }
@@ -145,7 +145,7 @@ pub fn start_ui_event_listener(
                             milliseconds,
                         ),
                         _ => {
-                            log::error!(
+                            log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeAttack: Invalid \
                                 Envelope index: {envelope_index}"
                             );
@@ -162,7 +162,7 @@ pub fn start_ui_event_listener(
                             milliseconds,
                         ),
                         _ => {
-                            log::error!(
+                            log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeDecay: Invalid \
                                 Envelope index: {envelope_index}"
                             );
@@ -178,7 +178,7 @@ pub fn start_ui_event_listener(
                             set_envelope_sustain_level(&module_parameters.filter_envelope, level)
                         }
                         _ => {
-                            log::error!(
+                            log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeSustain: Invalid \
                                 Envelope index: {envelope_index}"
                             );
@@ -195,7 +195,7 @@ pub fn start_ui_event_listener(
                             milliseconds,
                         ),
                         _ => {
-                            log::error!(
+                            log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeRelease: Invalid \
                                 Envelope index: {envelope_index}"
                             );
@@ -213,7 +213,7 @@ pub fn start_ui_event_listener(
                             f32::from(is_inverted),
                         ),
                         _ => {
-                            log::error!(
+                            log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeInvert: Invalid \
                                 Envelope index: {envelope_index}"
                             );
@@ -229,7 +229,7 @@ pub fn start_ui_event_listener(
                             set_lfo_frequency(&module_parameters.filter_lfo, frequency)
                         }
                         _ => {
-                            log::error!(
+                            log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoFrequency: Invalid LFO index: {lfo_index}"
                             );
                             return;
@@ -253,7 +253,7 @@ pub fn start_ui_event_listener(
                                 .store(wave_shape_index as u8, Relaxed);
                         }
                         _ => {
-                            log::error!(
+                            log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoShapeIndex: Invalid\
                                  LFO index: {lfo_index}"
                             );
@@ -267,7 +267,7 @@ pub fn start_ui_event_listener(
                         }
                         LFO_INDEX_FILTER => set_lfo_phase(&module_parameters.filter_lfo, phase),
                         _ => {
-                            log::error!(
+                            log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhase: Invalid LFO index: {lfo_index}"
                             );
                         }
@@ -286,7 +286,7 @@ pub fn start_ui_event_listener(
                         }
                         LFO_INDEX_FILTER => set_lfo_phase_reset(&module_parameters.filter_lfo),
                         _ => {
-                            log::error!(
+                            log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhaseReset: Invalid LFO index: {lfo_index}"
                             );
                         }
@@ -329,7 +329,7 @@ pub fn start_ui_event_listener(
                     if let Some(oscillator) = OscillatorIndex::from_i32(oscillator_index) {
                         set_oscillator_balance(&module_parameters.mixer, oscillator, balance);
                     } else {
-                        log::error!(
+                        log::warn!(
                             "start_ui_event_listener():SynthesizerUpdateEvents::OscillatorMixerBalance: Invalid oscillator index: {oscillator_index}"
                         );
                     }
@@ -338,7 +338,7 @@ pub fn start_ui_event_listener(
                     if let Some(oscillator) = OscillatorIndex::from_i32(oscillator_index) {
                         set_oscillator_level(&module_parameters.mixer, oscillator, level);
                     } else {
-                        log::error!(
+                        log::warn!(
                             "start_ui_event_listener():SynthesizerUpdateEvents::OscillatorMixerLevel: Invalid oscillator index: {oscillator_index}"
                         );
                     }
@@ -351,7 +351,7 @@ pub fn start_ui_event_listener(
                             f32::from(is_muted),
                         );
                     } else {
-                        log::error!(
+                        log::warn!(
                             "start_ui_event_listener():SynthesizerUpdateEvents::OscillatorMixerMute: Invalid oscillator index: {oscillator_index}"
                         );
                     }

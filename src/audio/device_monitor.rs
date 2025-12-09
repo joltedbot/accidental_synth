@@ -34,7 +34,7 @@ pub struct DeviceMonitor {
 
 impl DeviceMonitor {
     pub fn new(device_update_sender: Sender<AudioDeviceUpdateEvents>) -> Self {
-        log::info!("Constructing CoreAudio device monitor");
+        log::info!(target: "audio::device", "Constructing CoreAudio device monitor");
         Self {
             device_update_sender,
             property_address: AudioObjectPropertyAddress {
@@ -47,7 +47,7 @@ impl DeviceMonitor {
     }
 
     pub fn run(&mut self) -> Result<()> {
-        log::debug!("run(): Starting CoreAudio device monitor");
+        log::info!(target: "audio::device", "Starting CoreAudio device monitor");
         let _ = self
             .device_update_sender
             .send(AudioDeviceUpdateEvents::OutputDeviceListChanged);
@@ -75,6 +75,7 @@ impl DeviceMonitor {
     }
 
     pub fn stop(&mut self) -> Result<(), String> {
+        log::info!(target: "audio::device", "Stoping CoreAudio device monitor");
         unsafe {
             let status = AudioObjectRemovePropertyListener(
                 kAudioObjectSystemObject,
@@ -103,7 +104,7 @@ impl Drop for DeviceMonitor {
 }
 
 pub fn get_audio_device_list() -> Result<Vec<String>, String> {
-    log::debug!("Getting new Coreaudio device list.");
+    log::trace!(target: "audio::device", "Enumerating CoreAudio devices");
     unsafe {
         let property_address = AudioObjectPropertyAddress {
             mSelector: kAudioHardwarePropertyDevices,
@@ -150,8 +151,10 @@ pub fn get_audio_device_list() -> Result<Vec<String>, String> {
                     }
                     Err(err) => {
                         log::warn!(
-                            "Couldn't get the name for the audio output device {device_id} from CoreAudio. Error: \
-                            {err}",
+                            target: "audio::device",
+                            device_id = device_id,
+                            error = err.as_str();
+                            "Couldn't get the name for the audio output device from CoreAudio.",
                         );
                     }
                 }
@@ -180,8 +183,12 @@ unsafe fn is_output_device(device_id: AudioDeviceID) -> bool {
         );
 
         if status != OSSSTATUS_NO_ERROR || property_size < size_of::<UInt32>() as UInt32 {
-            log::debug!(
-                "is_output_device(): Failed to get the device stream configuration size for the device {device_id}. Status: {status}, Size: {property_size}"
+            log::trace!(
+                target: "audio::device",
+                device_id = device_id,
+                status = status,
+                size = property_size;
+                "Failed to get device stream configuration size"
             );
             return false;
         }
@@ -199,8 +206,11 @@ unsafe fn is_output_device(device_id: AudioDeviceID) -> bool {
         );
 
         if status != OSSSTATUS_NO_ERROR {
-            log::debug!(
-                "is_output_device(): Failed to get the device stream configuration for the device {device_id}. Status: {status}"
+            log::trace!(
+                target: "audio::device",
+                device_id = device_id,
+                status = status;
+                "Failed to get device stream configuration"
             );
             return false;
         }
@@ -259,7 +269,7 @@ extern "C" fn device_listener_callback(
 ) -> OSStatus {
     unsafe {
         if in_client_data.is_null() {
-            log::debug!("device_listener_callback(): Received a null client data pointer.");
+            log::trace!(target: "audio::device", "Callback received null client data pointer");
             return 0;
         }
 
@@ -277,7 +287,7 @@ pub fn create_device_monitor(device_update_sender: Sender<AudioDeviceUpdateEvent
     let mut current_output_device_list = Vec::new();
 
     thread::spawn(move || {
-        log::debug!("run(): Audio device monitor thread running");
+        log::info!("run(): Audio device monitor thread running");
         loop {
             let is_changed = update_current_output_device_list_if_changed(
                 &host,

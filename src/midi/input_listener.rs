@@ -3,13 +3,12 @@ use crate::midi::constants::{
     MESSAGE_STATUS_BYTE_CHANNEL_MASK, MESSAGE_STATUS_BYTE_INDEX, MESSAGE_STATUS_BYTE_TYPE_MASK,
     MESSAGE_TYPE_IGNORE_LIST, MIDI_INPUT_CLIENT_NAME, MIDI_INPUT_CONNECTION_NAME,
     NOTE_MESSAGE_NUMBER_BYTE_INDEX, NOTE_MESSAGE_VELOCITY_BYTE_INDEX,
-    PANIC_MESSAGE_MIDI_SENDER_FAILURE, PITCH_BEND_MESSAGE_LSB_BYTE_INDEX,
-    PITCH_BEND_MESSAGE_MSB_BYTE_INDEX, RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET,
+    PITCH_BEND_MESSAGE_LSB_BYTE_INDEX, PITCH_BEND_MESSAGE_MSB_BYTE_INDEX,
+    RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET,
 };
-use crate::midi::{Event, Status, control_change};
+use crate::midi::{control_change, Event, MidiError, Status};
 use anyhow::Result;
 use crossbeam_channel::Sender;
-use midir::os::unix::VirtualInput;
 use midir::{MidiInput, MidiInputConnection, MidiInputPort};
 use std::sync::{Arc, Mutex, PoisonError};
 
@@ -39,31 +38,7 @@ pub fn create_midi_input_listener(
     Ok(connection_result)
 }
 
-pub fn create_midi_virtual_input(
-    current_channel_arc: Arc<Mutex<Option<u8>>>,
-    midi_message_sender: Sender<Event>,
-    current_note_arc: Arc<Mutex<Option<u8>>>,
-) -> Result<MidiInputConnection<()>> {
-    let mut midi_input = MidiInput::new(MIDI_INPUT_CLIENT_NAME)?;
-    midi_input.ignore(MESSAGE_TYPE_IGNORE_LIST);
-
-    let connection_result = midi_input.create_virtual(
-        MIDI_INPUT_CONNECTION_NAME,
-        move |_, message, ()| {
-            process_midi_message(
-                message,
-                &current_channel_arc,
-                &midi_message_sender,
-                &current_note_arc,
-            );
-        },
-        (),
-    )?;
-
-    Ok(connection_result)
-}
-
-fn process_midi_message(
+pub(crate) fn process_midi_message(
     message: &[u8],
     current_channel_arc: &Arc<Mutex<Option<u8>>>,
     midi_message_sender: &Sender<Event>,
@@ -73,12 +48,16 @@ fn process_midi_message(
         return;
     }
 
-    if let Some(message) = event_from_message_status(message, current_note_arc) {
-        midi_message_sender.send(message).unwrap_or_else(|err| {
+    if let Some(event) = event_from_message_status(message, current_note_arc) {
+        midi_message_sender.send(event).unwrap_or_else(|err| {
+            let midi_err = MidiError::MessageSendFailed;
             log::error!(
-                "process_midi_message(): FATAL ERROR: midi message sender failure. Exiting. Error: {err}."
+                target: "midi::message",
+                error:% = midi_err,
+                details:% = err;
+                "Channel send failed"
             );
-            panic!("{PANIC_MESSAGE_MIDI_SENDER_FAILURE}");
+            panic!("{midi_err}");
         });
     }
 }

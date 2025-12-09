@@ -14,7 +14,7 @@ pub struct AM {
 
 impl AM {
     pub fn new(sample_rate: u32) -> Self {
-        log::info!("Constructing AM WaveShape Module");
+        log::debug!(target: "synth::oscillator", shape = "AM"; "Constructing wave generator");
         Self {
             shape: WaveShape::AM,
             carrier: Box::new(Sine::new(sample_rate)),

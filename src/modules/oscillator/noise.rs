@@ -7,7 +7,7 @@ pub struct Noise {
 
 impl Noise {
     pub fn new() -> Self {
-        log::info!("Constructing Noise WaveShape Module");
+        log::debug!(target: "synth::oscillator", shape = "Noise"; "Constructing wave generator");
         Self {
             shape: WaveShape::Noise,
         }

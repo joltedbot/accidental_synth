@@ -21,7 +21,7 @@ pub struct FM {
 
 impl FM {
     pub fn new(sample_rate: u32) -> Self {
-        log::info!("Constructing FM WaveShape Module");
+        log::debug!(target: "synth::oscillator", shape = "FM"; "Constructing wave generator");
         Self {
             shape: SHAPE,
             carrier: Box::new(Sine::new(sample_rate)),

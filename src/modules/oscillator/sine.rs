@@ -11,7 +11,7 @@ pub struct Sine {
 
 impl Sine {
     pub fn new(sample_rate: u32) -> Self {
-        log::info!("Constructing Sine WaveShape Module");
+        log::debug!(target: "synth::oscillator", shape = "Sine"; "Constructing wave generator");
         let phase: f32 = DEFAULT_PHASE;
         let seconds_per_sample = 1.0 / sample_rate as f32;
         let phase_increment = RADS_PER_CYCLE * seconds_per_sample;

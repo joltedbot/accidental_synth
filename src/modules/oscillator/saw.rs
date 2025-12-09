@@ -15,7 +15,7 @@ pub struct Saw {
 
 impl Saw {
     pub fn new(sample_rate: u32) -> Self {
-        log::info!("Constructing Saw WaveShape Module");
+        log::debug!(target: "synth::oscillator", shape = "Saw"; "Constructing wave generator");
 
         let x_coordinate = DEFAULT_X_COORDINATE;
 

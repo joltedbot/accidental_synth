@@ -12,7 +12,7 @@ pub struct Ramp {
 
 impl Ramp {
     pub fn new(sample_rate: u32) -> Self {
-        log::info!("Constructing Ramp WaveShape Module");
+        log::debug!(target: "synth::oscillator", shape = "Ramp"; "Constructing wave generator");
         let x_coordinate = DEFAULT_X_COORDINATE;
 
         Self {

@@ -14,8 +14,6 @@ pub const MIDI_INPUT_CONNECTION_NAME: &str = "AccSyn MIDI Input";
 pub const MIDI_MESSAGE_SENDER_CAPACITY: usize = 16;
 pub const NOTE_MESSAGE_NUMBER_BYTE_INDEX: usize = 1;
 pub const NOTE_MESSAGE_VELOCITY_BYTE_INDEX: usize = 2;
-pub const PANIC_MESSAGE_MIDI_SENDER_FAILURE: &str =
-    "Could not send MIDI message to the synthesizer engine.";
 pub const PITCH_BEND_MESSAGE_MSB_BYTE_INDEX: usize = 2;
 pub const PITCH_BEND_MESSAGE_LSB_BYTE_INDEX: usize = 1;
 pub const RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET: u8 = 1;

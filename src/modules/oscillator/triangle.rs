@@ -14,7 +14,7 @@ pub struct Triangle {
 
 impl Triangle {
     pub fn new(sample_rate: u32) -> Self {
-        log::info!("Constructing Triangle WaveShape Module");
+        log::debug!(target: "synth::oscillator", shape = "Triangle"; "Constructing wave generator");
         let x_coordinate = DEFAULT_X_COORDINATE;
 
         Self {
