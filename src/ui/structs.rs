@@ -61,7 +61,7 @@ pub struct UIFilterCutoff {
 pub struct UIFilterOptions {
     pub poles: i32,
     pub key_track: f32,
-    pub eg_amount: f32,
+    pub envelope_amount: f32,
     pub lfo_amount: f32,
 }
 

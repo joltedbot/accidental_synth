@@ -172,7 +172,7 @@ pub struct Synthesizer {
 
 impl Synthesizer {
     pub fn new(sample_rate: u32) -> Self {
-        log::info!("Constructing Synthesizer Module");
+        log::info!(target: "synthesizer", "Constructing Synthesizer Module");
 
         let (ui_update_sender, ui_update_receiver) =
             crossbeam_channel::bounded(SYNTHESIZER_MESSAGE_SENDER_CAPACITY);
@@ -264,9 +264,10 @@ impl Synthesizer {
         sample_buffer_receiver: Receiver<Producer<f32>>,
         ui_update_sender: Sender<UIUpdates>,
     ) -> Result<()> {
-        log::debug!("run(): Start the midi event listener thread");
+        log::debug!(target: "synthesizer", "Start the midi event listener thread");
         self.start_midi_event_listener(midi_message_receiver, ui_update_sender.clone());
 
+        log::debug!(target: "synthesizer", "Start the UI event listener thread");
         start_ui_event_listener(
             self.ui_update_receiver.clone(),
             self.module_parameters.clone(),
@@ -274,7 +275,7 @@ impl Synthesizer {
             ui_update_sender,
         );
 
-        log::info!("Creating the synthesizer audio stream");
+        log::debug!(target: "synthesizer", "Start the synthesizer thread");
         create_synthesizer(
             sample_buffer_receiver,
             self.sample_rate,
@@ -327,7 +328,7 @@ impl Synthesizer {
                             cc_value,
                             &mut current_note,
                             &mut module_parameters,
-                            ui_update_sender.clone(),
+                            &ui_update_sender,
                         );
                     }
                 }

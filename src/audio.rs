@@ -71,7 +71,7 @@ pub struct Audio {
 
 impl Audio {
     pub fn new() -> Result<Self> {
-        log::info!("Constructing Audio Module");
+        log::debug!(target: "audio", "Constructing Audio Module");
         let (output_device_sender, output_device_receiver) = bounded(SAMPLE_BUFFER_SENDER_CAPACITY);
         let (device_update_sender, device_update_receiver) = bounded(AUDIO_MESSAGE_SENDER_CAPACITY);
 
@@ -111,15 +111,19 @@ impl Audio {
     }
 
     pub fn run(&mut self, ui_update_sender: Sender<UIUpdates>) -> Result<()> {
+        log::debug!(target: "audio", "Starting Audio Module");
+
+        log::debug!(target: "audio", "Creating the Audio Device Monitor");
         #[cfg(not(target_os = "macos"))]
         create_device_monitor(self.device_update_sender.clone());
 
         #[cfg(target_os = "macos")]
         self.create_coreaudio_device_monitor()?;
 
+        log::debug!(target: "audio", "Starting the Audio Output Device Listener");
         start_audio_buffer_dropout_logger(self.buffer_dropout_counter.clone());
 
-
+        log::debug!(target: "audio", "Starting the Audio Output Device Listener");
         start_control_listener(
             ui_update_sender,
             self.device_update_receiver.clone(),
@@ -127,8 +131,6 @@ impl Audio {
             self.current_output_channels.clone(),
             self.buffer_dropout_counter.clone(),
         );
-
-
 
         Ok(())
     }
@@ -143,13 +145,8 @@ impl Audio {
     }
 }
 
-fn restart_main_audio_loop_with_new_device(
-    ui_update_sender: &Sender<UIUpdates>,
-    sample_producer_sender: &Sender<Producer<f32>>,
-    output_device: &OutputDevice,
-    current_output_channels: Arc<OutputChannels>,
-    buffer_dropout_counter: Arc<AtomicU32>,
-) -> Option<Stream> {
+fn restart_main_audio_loop_with_new_device(ui_update_sender: &Sender<UIUpdates>, sample_producer_sender: 
+&Sender<Producer<f32>>, output_device: &OutputDevice, current_output_channels: &Arc<OutputChannels>, buffer_dropout_counter: &Arc<AtomicU32>,) -> Option<Stream> {
     log::debug!(
         "restart_main_audio_loop_with_new_device(): New Audio Output Device: {:?}",
         output_device.name
@@ -188,13 +185,14 @@ fn restart_main_audio_loop_with_new_device(
 
     start_main_audio_output_loop(
         output_device,
-        &current_output_channels,
+        current_output_channels,
         sample_consumer,
         buffer_dropout_counter.clone(),
     )
     .ok()
 }
 
+#[allow(clippy::too_many_lines)]
 fn start_control_listener(
     ui_update_sender: Sender<UIUpdates>,
     device_update_receiver: Receiver<AudioDeviceUpdateEvents>,
@@ -202,7 +200,7 @@ fn start_control_listener(
     current_output_channels: Arc<OutputChannels>,
     buffer_dropout_counter: Arc<AtomicU32>,
 ) {
-    log::debug!("start_control_listener(): Starting the Audio Device Event listener thread");
+    log::debug!(target: "audio::control_listener",  "Starting the Audio Device Event listener thread");
     thread::spawn(move || {
         let mut audio_output_stream: Option<Stream> = None;
         let mut current_output_device_name = String::new();
@@ -211,10 +209,12 @@ fn start_control_listener(
         let ui_update_sender = ui_update_sender.clone();
         let sample_producer_sender = sample_producer_sender.clone();
 
-        log::debug!("start_control_listener(): Audio Device Event listener thread running");
+        log::debug!(target: "audio::control_listener", "Audio Device Event listener thread running");
 
         while let Ok(update) = device_update_receiver.recv() {
-            log::debug!("AudioDeviceEvent: Received UI update: {update:?}");
+            log::trace!(target: "audio::control_listener",
+                update:? = update;
+                "Received UI update");
 
             match update {
                 #[cfg(not(target_os = "macos"))]
@@ -249,7 +249,7 @@ fn start_control_listener(
                     update_device_properties(
                         &current_output_channels,
                         &mut current_output_device_name,
-                        &new_output_device,
+                        Option::from(&new_output_device),
                     );
 
                     if let Some(stream) = audio_output_stream {
@@ -261,6 +261,7 @@ fn start_control_listener(
                         &current_output_channels,
                         &ui_update_sender,
                         &sample_producer_sender,
+                        &buffer_dropout_counter,
                     );
                 }
                 AudioDeviceUpdateEvents::OutputDeviceListChanged => {
@@ -318,7 +319,7 @@ fn start_control_listener(
                         &current_output_channels,
                         &ui_update_sender,
                         &sample_producer_sender,
-                        buffer_dropout_counter.clone(),
+                        &buffer_dropout_counter,
                     );
                 }
                 AudioDeviceUpdateEvents::UIOutputDevice(name) => {
@@ -350,7 +351,7 @@ fn start_control_listener(
                         &current_output_channels,
                         &ui_update_sender,
                         &sample_producer_sender,
-                        buffer_dropout_counter.clone(),
+                        &buffer_dropout_counter,
                     );
                 }
                 AudioDeviceUpdateEvents::UIOutputDeviceLeftChannel(channel) => {
@@ -391,7 +392,7 @@ fn start_control_listener(
 }
 
 fn start_audio_buffer_dropout_logger(buffer_dropout_counter: Arc<AtomicU32>) {
-    log::debug!("start_audio_buffer_dropout_logger(): Starting the audio buffer dropout logger thread");
+    log::debug!(target: "audio", "Starting the audio buffer dropout logger thread");
     thread::spawn(move || {
         loop {
             let buffer_dropout_count = buffer_dropout_counter.load(Relaxed);
@@ -466,7 +467,7 @@ fn start_new_output_device(
     current_output_channels: &Arc<OutputChannels>,
     ui_update_sender: &Sender<UIUpdates>,
     sample_producer_sender: &Sender<Producer<f32>>,
-    buffer_dropout_counter: Arc<AtomicU32>,
+    buffer_dropout_counter: &Arc<AtomicU32>,
 ) -> Option<Stream> {
     if let Some(device) = new_output_device {
         ui_update_sender
@@ -493,7 +494,7 @@ fn start_new_output_device(
             ui_update_sender,
             sample_producer_sender,
             &device,
-            current_output_channels.clone(),
+            current_output_channels,
             buffer_dropout_counter,
         )
     } else {

@@ -3,18 +3,21 @@ pub mod control_change;
 pub mod device_monitor;
 pub mod input_listener;
 
-use crate::midi::constants::{MESSAGE_TYPE_IGNORE_LIST, MIDI_INPUT_CLIENT_NAME, MIDI_INPUT_CONNECTION_NAME, MIDI_MESSAGE_SENDER_CAPACITY};
+use crate::midi::constants::{
+    MESSAGE_TYPE_IGNORE_LIST, MIDI_INPUT_CLIENT_NAME, MIDI_INPUT_CONNECTION_NAME,
+    MIDI_MESSAGE_SENDER_CAPACITY,
+};
 use crate::midi::input_listener::{create_midi_input_listener, process_midi_message};
 use crate::ui::UIUpdates;
 
 use anyhow::Result;
 use control_change::CC;
 use crossbeam_channel::{Receiver, Sender};
+use midir::os::unix::VirtualInput;
 use midir::{MidiInput, MidiInputConnection, MidiInputPort};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::thread;
 use thiserror::Error;
-use midir::os::unix::VirtualInput;
 
 /// Errors that can occur during MIDI operations.
 #[derive(Debug, Clone, Error)]
@@ -68,7 +71,7 @@ pub struct Midi {
 
 impl Midi {
     pub fn new() -> Self {
-        log::debug!(target: "midi", "Constructing module");
+        log::debug!(target: "midi", "Constructing Midi module");
 
         let (message_sender, message_receiver) =
             crossbeam_channel::bounded(MIDI_MESSAGE_SENDER_CAPACITY);
@@ -97,6 +100,8 @@ impl Midi {
     }
 
     pub fn run(&mut self, ui_update_sender: Sender<UIUpdates>) -> Result<()> {
+        log::debug!(target: "midi", "Starting MIDI module");
+
         log::debug!(target: "midi", "Creating input port monitor");
         let mut device_monitor =
             device_monitor::DeviceMonitor::new(self.get_device_update_sender());

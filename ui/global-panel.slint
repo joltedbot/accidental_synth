@@ -298,7 +298,7 @@ export component OscillatorSection inherits VerticalLayout {
 }
 
 export component AmpEnvelopeSection inherits VerticalLayout {
-    in property <EnvelopeValues> amp-eg-values;
+    in property <EnvelopeValues> amp-envelope-values;
     callback envelope-attack-changed(float);
     callback envelope-decay-changed(float);
     callback envelope-sustain-changed(float);
@@ -313,7 +313,7 @@ export component AmpEnvelopeSection inherits VerticalLayout {
     }
 
     EnvelopeSection {
-        envelope-values: amp-eg-values;
+        envelope-values: amp-envelope-values;
         envelope-attack-changed(milliseconds) => {
             envelope-attack-changed(milliseconds);
         }
@@ -373,7 +373,7 @@ export component ModWheelSection inherits VerticalLayout {
 }
 
 export component GlobalPanel inherits Panel {
-    in property <EnvelopeValues> amp-eg-values;
+    in property <EnvelopeValues> amp-envelope-values;
     in property <LFOValues> mod-wheel-lfo-values;
     in property <float> mod-wheel-lfo-frequency-display;
     in property <int> mod-wheel-lfo-phase-display;
@@ -443,7 +443,7 @@ export component GlobalPanel inherits Panel {
             HorizontalLayout {
                 alignment: start;
                 amp-section := AmpEnvelopeSection {
-                    amp-eg-values: amp-eg-values;
+                    amp-envelope-values: amp-envelope-values;
                     envelope-attack-changed(milliseconds) => {
                         envelope-attack-changed(Constant.ENVELOPE_AMP_INDEX, milliseconds);
                     }

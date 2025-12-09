@@ -63,7 +63,7 @@ export component AccidentalSynth inherits Window {
         poles: Constant.DEFAULT_FILTER_POLES,
         key-track: Constant.DEFAULT_KEY_TRACKING_NORMAL
     };
-    in property <EnvelopeValues> filter-eg-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
+    in property <EnvelopeValues> filter-envelope-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
     in property <LFOValues> filter-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
     in property <float> filter-lfo-frequency-display;
     in property <int> filter-lfo-phase-display;
@@ -72,7 +72,7 @@ export component AccidentalSynth inherits Window {
     callback filter-resonance-changed(float);
     callback filter-poles-changed(float);
     callback filter-key-tracking-changed(float);
-    callback filter-eg-amount-changed(float);
+    callback filter-envelope-amount-changed(float);
     callback filter-lfo-amount-changed(float);
     callback envelope-attack-changed(int, float);
     callback envelope-decay-changed(int, float);
@@ -107,7 +107,7 @@ export component AccidentalSynth inherits Window {
             level: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL
         }
     ];
-    in property <EnvelopeValues> amp-eg-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
+    in property <EnvelopeValues> amp-envelope-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
     in property <LFOValues> mod-wheel-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
     in property <float> mod-wheel-lfo-frequency-display;
     in property <int> mod-wheel-lfo-phase-display;
@@ -205,7 +205,7 @@ export component AccidentalSynth inherits Window {
                             global-panel := GlobalPanel {
                                 output-mixer-values: output-mixer-values;
                                 oscillator-mixer-values: oscillator-mixer-values;
-                                amp-eg-values: amp-eg-values;
+                                amp-envelope-values: amp-envelope-values;
                                 mod-wheel-lfo-values: mod-wheel-lfo-values;
                                 mod-wheel-lfo-frequency-display: mod-wheel-lfo-frequency-display;
                                 mod-wheel-lfo-phase-display: mod-wheel-lfo-phase-display;
@@ -289,7 +289,7 @@ export component AccidentalSynth inherits Window {
 
                             filter-cutoff-values: filter-cutoff-values;
                             filter-options-values: filter-options-values;
-                            filter-eg-values: filter-eg-values;
+                            filter-envelope-values: filter-envelope-values;
                             filter-lfo-values: filter-lfo-values;
 
                             filter-cutoff-changed(frequency) => {
@@ -304,8 +304,8 @@ export component AccidentalSynth inherits Window {
                             filter-key-tracking-changed(amount) => {
                                 filter-key-tracking-changed(amount);
                             }
-                            filter-eg-amount-changed(amount) => {
-                                filter-eg-amount-changed(amount);
+                            filter-envelope-amount-changed(amount) => {
+                                filter-envelope-amount-changed(amount);
                             }
                             filter-lfo-amount-changed(amount) => {
                                 filter-lfo-amount-changed(amount);

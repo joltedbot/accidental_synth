@@ -20,6 +20,7 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
 
+#[allow(clippy::too_many_lines)]
 pub fn start_ui_event_listener(
     ui_update_receiver: Receiver<SynthesizerUpdateEvents>,
     module_parameters: Arc<ModuleParameters>,
@@ -138,7 +139,7 @@ pub fn start_ui_event_listener(
                 SynthesizerUpdateEvents::FilterEnvelopeAttack(envelope_index, milliseconds) => {
                     match envelope_index {
                         ENVELOPE_INDEX_AMP => {
-                            set_envelope_attack_time(&module_parameters.amp_envelope, milliseconds)
+                            set_envelope_attack_time(&module_parameters.amp_envelope, milliseconds);
                         }
                         ENVELOPE_INDEX_FILTER => set_envelope_attack_time(
                             &module_parameters.filter_envelope,
@@ -155,7 +156,7 @@ pub fn start_ui_event_listener(
                 SynthesizerUpdateEvents::FilterEnvelopeDecay(envelope_index, milliseconds) => {
                     match envelope_index {
                         ENVELOPE_INDEX_AMP => {
-                            set_envelope_decay_time(&module_parameters.amp_envelope, milliseconds)
+                            set_envelope_decay_time(&module_parameters.amp_envelope, milliseconds);
                         }
                         ENVELOPE_INDEX_FILTER => set_envelope_decay_time(
                             &module_parameters.filter_envelope,
@@ -172,10 +173,10 @@ pub fn start_ui_event_listener(
                 SynthesizerUpdateEvents::FilterEnvelopeSustain(envelope_index, level) => {
                     match envelope_index {
                         ENVELOPE_INDEX_AMP => {
-                            set_envelope_sustain_level(&module_parameters.amp_envelope, level)
+                            set_envelope_sustain_level(&module_parameters.amp_envelope, level);
                         }
                         ENVELOPE_INDEX_FILTER => {
-                            set_envelope_sustain_level(&module_parameters.filter_envelope, level)
+                            set_envelope_sustain_level(&module_parameters.filter_envelope, level);
                         }
                         _ => {
                             log::warn!(
@@ -188,7 +189,7 @@ pub fn start_ui_event_listener(
                 SynthesizerUpdateEvents::FilterEnvelopeRelease(envelope_index, milliseconds) => {
                     match envelope_index {
                         ENVELOPE_INDEX_AMP => {
-                            set_envelope_release_time(&module_parameters.amp_envelope, milliseconds)
+                            set_envelope_release_time(&module_parameters.amp_envelope, milliseconds);
                         }
                         ENVELOPE_INDEX_FILTER => set_envelope_release_time(
                             &module_parameters.filter_envelope,
@@ -263,7 +264,7 @@ pub fn start_ui_event_listener(
                 SynthesizerUpdateEvents::LfoPhase(lfo_index, phase) => {
                     match lfo_index {
                         LFO_INDEX_MOD_WHEEL => {
-                            set_lfo_phase(&module_parameters.mod_wheel_lfo, phase)
+                            set_lfo_phase(&module_parameters.mod_wheel_lfo, phase);
                         }
                         LFO_INDEX_FILTER => set_lfo_phase(&module_parameters.filter_lfo, phase),
                         _ => {
@@ -282,7 +283,7 @@ pub fn start_ui_event_listener(
                 SynthesizerUpdateEvents::LfoPhaseReset(lfo_index) => {
                     match lfo_index {
                         LFO_INDEX_MOD_WHEEL => {
-                            set_lfo_phase_reset(&module_parameters.mod_wheel_lfo)
+                            set_lfo_phase_reset(&module_parameters.mod_wheel_lfo);
                         }
                         LFO_INDEX_FILTER => set_lfo_phase_reset(&module_parameters.filter_lfo),
                         _ => {

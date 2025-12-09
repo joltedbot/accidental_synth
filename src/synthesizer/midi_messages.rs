@@ -104,9 +104,9 @@ pub fn process_midi_cc_values(
     cc_value: CC,
     current_note: &mut Arc<CurrentNote>,
     module_parameters: &mut Arc<ModuleParameters>,
-    ui_update_sender: Sender<UIUpdates>,
+    ui_update_sender: &Sender<UIUpdates>,
 ) {
-    log::debug!("process_midi_cc_values(): CC received: {cc_value:?}");
+    log::trace!("CC received: {cc_value:?}");
     match cc_value {
         CC::ModWheel(value) => {
             set_mod_wheel(&module_parameters.keyboard, normalize_midi_value(value));
@@ -551,7 +551,14 @@ pub fn process_midi_cc_values(
             );
         }
         CC::FilterPoles(value) => {
-            set_filter_poles(&module_parameters.filter, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_filter_poles(&module_parameters.filter, normal_value);
+            ui_update_sender
+                .send(UIUpdates::FilterPoles(normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter poles value to the UI. \
+                    Exiting.",
+                );
         }
         CC::FilterResonance(value) => {
             let normal_value = normalize_midi_value(value);
@@ -625,7 +632,7 @@ pub fn process_midi_cc_values(
                     Exiting.",
                 );
         }
-        CC::FilterEGAttackTime(value) => {
+        CC::FilterEnvelopeAttackTime(value) => {
             let normal_value = normalize_midi_value(value);
             set_envelope_attack_time(&module_parameters.filter_envelope, normal_value);
             ui_update_sender
@@ -635,7 +642,7 @@ pub fn process_midi_cc_values(
                     Exiting.",
                 );
         }
-        CC::FilterEGDecayTime(value) => {
+        CC::FilterEnvelopeDecayTime(value) => {
             let normal_value = normalize_midi_value(value);
             set_envelope_decay_time(&module_parameters.filter_envelope, normal_value);
             ui_update_sender
@@ -645,7 +652,7 @@ pub fn process_midi_cc_values(
                     Exiting.",
                 );
         }
-        CC::FilterEGSustainLevel(value) => {
+        CC::FilterEnvelopeSustainLevel(value) => {
             let normal_value = normalize_midi_value(value);
             set_envelope_sustain_level(&module_parameters.filter_envelope, normal_value);
             ui_update_sender
@@ -655,7 +662,7 @@ pub fn process_midi_cc_values(
                     Exiting.",
                 );
         }
-        CC::FilterEGReleaseTime(value) => {
+        CC::FilterEnvelopeReleaseTime(value) => {
             let normal_value = normalize_midi_value(value);
             set_envelope_release_time(&module_parameters.filter_envelope, normal_value);
             ui_update_sender
@@ -665,7 +672,7 @@ pub fn process_midi_cc_values(
                     Exiting.",
                 );
         }
-        CC::FilterEGInverted(value) => {
+        CC::FilterEnvelopeInverted(value) => {
             let normal_value = normalize_midi_value(value);
             set_envelope_inverted(&module_parameters.filter_envelope, normal_value);
             ui_update_sender
@@ -675,14 +682,25 @@ pub fn process_midi_cc_values(
                     Exiting.",
                 );
         }
-        CC::FilterEGAmount(value) => {
-            set_envelope_amount(
-                &module_parameters.filter_envelope,
-                normalize_midi_value(value),
-            );
+        CC::FilterEnvelopeAmount(value) => {
+            let normal_value = normalize_midi_value(value);
+            set_envelope_amount(&module_parameters.filter_envelope, normal_value);
+            ui_update_sender
+                .send(UIUpdates::FilterEnvelopeAmount(normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter envelope amount value to the UI. \
+                    Exiting.",
+                );
         }
         CC::KeyTrackingAmount(value) => {
-            set_key_tracking_amount(&module_parameters.filter, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_key_tracking_amount(&module_parameters.filter, normal_value);
+            ui_update_sender
+                .send(UIUpdates::FilterKeyTracking(normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter key tracking value to the UI. \
+                    Exiting.",
+                );
         }
         CC::ModWheelLFOFrequency(value) => {
             let normal_value = normalize_midi_value(value);
@@ -748,6 +766,12 @@ pub fn process_midi_cc_values(
         CC::FilterModLFOAmount(value) => {
             let normal_value = normalize_midi_value(value);
             set_lfo_range(&module_parameters.filter_lfo, normal_value);
+            ui_update_sender
+                .send(UIUpdates::FilterLFOAmount(normal_value))
+                .expect(
+                    "process_midi_cc_values(): Could not send the filter lfo amount value to the UI. \
+                    Exiting.",
+                );
         }
         CC::FilterModLFOWaveShape(value) => {
             let normal_value = normalize_midi_value(value);

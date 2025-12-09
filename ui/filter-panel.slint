@@ -33,7 +33,7 @@ export struct FilterCutoff  {
 export struct FilterOptions  {
     poles: int,
     key-track: float,
-    eg-amount: float,
+    envelope-amount: float,
     lfo-amount: float,
 }
 
@@ -70,7 +70,7 @@ export component FilterOptionsSection inherits VerticalLayout {
 
     callback filter-poles-changed(float);
     callback filter-key-tracking-changed(float);
-    callback filter-eg-amount-changed(float);
+    callback filter-envelope-amount-changed(float);
     callback filter-lfo-amount-changed(float);
 
     padding: Theme.osc-controls-panel-padding;
@@ -99,12 +99,12 @@ export component FilterOptionsSection inherits VerticalLayout {
         }
     }
 
-    eg_amount := HorizontalParameterSlider {
+    envelope_amount := HorizontalParameterSlider {
         label: Theme.filter-label-envelope-amount;
-        value: filter-options-values.eg-amount;
+        value: filter-options-values.envelope-amount;
         slider-width: Theme.filter-panel-widget-width;
         horizontal-parameter-slider-changed(amount) => {
-            filter-eg-amount-changed(amount);
+            filter-envelope-amount-changed(amount);
         }
     }
 
@@ -118,9 +118,9 @@ export component FilterOptionsSection inherits VerticalLayout {
     }
 }
 
-export component FilterEGSection inherits VerticalLayout {
+export component FilterEnvelopeSection inherits VerticalLayout {
 
-    in property <EnvelopeValues> filter-eg-values;
+    in property <EnvelopeValues> filter-envelope-values;
 
     callback envelope-attack-changed(float);
     callback envelope-decay-changed(float);
@@ -140,7 +140,7 @@ export component FilterEGSection inherits VerticalLayout {
     HorizontalSpacer { }
 
     EnvelopeSection {
-        envelope-values: filter-eg-values;
+        envelope-values: filter-envelope-values;
         envelope-attack-changed(milliseconds) => {
             envelope-attack-changed(milliseconds);
         }
@@ -163,7 +163,7 @@ export component FilterPanel inherits Panel {
 
     in property <FilterCutoff> filter-cutoff-values;
     in property <FilterOptions> filter-options-values;
-    in property <EnvelopeValues> filter-eg-values;
+    in property <EnvelopeValues> filter-envelope-values;
     in property <LFOValues> filter-lfo-values;
     in property <int> filter-lfo-phase-display;
     in property <float> filter-lfo-frequency-display;
@@ -172,7 +172,7 @@ export component FilterPanel inherits Panel {
     callback filter-resonance-changed(float);
     callback filter-poles-changed(float);
     callback filter-key-tracking-changed(float);
-    callback filter-eg-amount-changed(float);
+    callback filter-envelope-amount-changed(float);
     callback filter-lfo-amount-changed(float);
     callback envelope-attack-changed(int, float);
     callback envelope-decay-changed(int, float);
@@ -214,8 +214,8 @@ export component FilterPanel inherits Panel {
                 filter-key-tracking-changed(amount) => {
                     filter-key-tracking-changed(amount);
                 }
-                filter-eg-amount-changed(amount) => {
-                    filter-eg-amount-changed(amount);
+                filter-envelope-amount-changed(amount) => {
+                    filter-envelope-amount-changed(amount);
                 }
                 filter-lfo-amount-changed(amount) => {
                     filter-lfo-amount-changed(amount);
@@ -225,8 +225,8 @@ export component FilterPanel inherits Panel {
 
         HorizontalSpacer { }
 
-        FilterEGSection {
-            filter-eg-values: filter-eg-values;
+        FilterEnvelopeSection {
+            filter-envelope-values: filter-envelope-values;
             envelope-attack-changed(milliseconds) => {
                 envelope-attack-changed(Constant.ENVELOPE_FILTER_INDEX, milliseconds);
             }

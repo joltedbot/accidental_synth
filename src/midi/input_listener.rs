@@ -6,7 +6,7 @@ use crate::midi::constants::{
     PITCH_BEND_MESSAGE_LSB_BYTE_INDEX, PITCH_BEND_MESSAGE_MSB_BYTE_INDEX,
     RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET,
 };
-use crate::midi::{control_change, Event, MidiError, Status};
+use crate::midi::{Event, MidiError, Status, control_change};
 use anyhow::Result;
 use crossbeam_channel::Sender;
 use midir::{MidiInput, MidiInputConnection, MidiInputPort};

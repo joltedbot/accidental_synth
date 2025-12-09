@@ -67,16 +67,16 @@ pub fn callback_filter_key_tracking_changed(
     }
 }
 
-pub fn callback_filter_eg_amount_changed(
+pub fn callback_filter_envelope_amount_changed(
     ui_weak: &Weak<AccidentalSynth>,
     synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
 ) {
     if let Some(ui) = ui_weak.upgrade() {
-        ui.on_filter_eg_amount_changed(move |value| {
+        ui.on_filter_envelope_amount_changed(move |value| {
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::FilterEnvelopeAmount(value))
                 .expect(
-                    "callback_filter_eg_amount_changed(): Could not send new \
+                    "callback_filter_envelope_amount_changed(): Could not send new \
             synthesizer filter envelope amount to the synthesizer module.Exiting.",
                 );
         });

@@ -41,7 +41,7 @@ pub fn register_callbacks(
     filter::callback_filter_resonance_changed(ui_weak, synthesizer_update_sender.clone());
     filter::callback_filter_poles_changed(ui_weak, synthesizer_update_sender.clone());
     filter::callback_filter_key_tracking_changed(ui_weak, synthesizer_update_sender.clone());
-    filter::callback_filter_eg_amount_changed(ui_weak, synthesizer_update_sender.clone());
+    filter::callback_filter_envelope_amount_changed(ui_weak, synthesizer_update_sender.clone());
     filter::callback_filter_lfo_amount_changed(ui_weak, synthesizer_update_sender.clone());
 
     modulation::callback_envelope_attack_changed(ui_weak, synthesizer_update_sender.clone());
