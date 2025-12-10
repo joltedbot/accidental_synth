@@ -68,6 +68,10 @@ export component OscControlsPanel inherits Panel {
         set_parameters_from_wave_shape(wave-shape.current-value);
     }
 
+    changed oscillator => {
+        set_parameters_from_wave_shape(wave-shape.current-value);
+    }
+
     HorizontalLayout {
         alignment: center;
         VerticalLayout {
@@ -158,31 +162,112 @@ export component OscillatorsPanel inherits Panel {
         padding: Theme.oscillator-panel-padding;
         spacing: Theme.oscillator-panel-spacing;
 
-        for oscillator[index] in oscillators: OscControlsPanel {
+        oscillator_sub := OscControlsPanel {
 
             width: Theme.oscillator-panel-section-width;
-            oscillator: oscillator;
-            title: Theme.osc-controls-panel-titles[index];
-            fine-tune-cents: fine-tune-cents[index];
+            oscillator: oscillators[Constant.OSCILLATOR_SUB_INDEX];
+            title: Theme.osc-controls-panel-titles[Constant.OSCILLATOR_SUB_INDEX];
+            fine-tune-cents: fine-tune-cents[Constant.OSCILLATOR_SUB_INDEX];
 
             wave-shape-changed(int) => {
-                wave-shape-changed(index, int);
+                wave-shape-changed(Constant.OSCILLATOR_SUB_INDEX, int);
             }
             course-tune-changed(float) => {
-                course-tune-changed(index, float);
+                course-tune-changed(Constant.OSCILLATOR_SUB_INDEX, float);
             }
             fine-tune-changed(float) => {
-                fine-tune-changed(index, float);
+                fine-tune-changed(Constant.OSCILLATOR_SUB_INDEX, float);
             }
             clipper-boost-changed(float) => {
-                clipper-boost-changed(index, float);
+                clipper-boost-changed(Constant.OSCILLATOR_SUB_INDEX, float);
             }
             parameter1-changed(float) => {
-                parameter1-changed(index, float);
+                parameter1-changed(Constant.OSCILLATOR_SUB_INDEX, float);
             }
             parameter2-changed(float) => {
-                parameter2-changed(index, float);
+                parameter2-changed(Constant.OSCILLATOR_SUB_INDEX, float);
             }
         }
+        
+        oscillator_one := OscControlsPanel {
+        
+                    width: Theme.oscillator-panel-section-width;
+                    oscillator: oscillators[Constant.OSCILLATOR_ONE_INDEX];
+                    title: Theme.osc-controls-panel-titles[Constant.OSCILLATOR_ONE_INDEX];
+                    fine-tune-cents: fine-tune-cents[Constant.OSCILLATOR_ONE_INDEX];
+        
+                    wave-shape-changed(int) => {
+                        wave-shape-changed(Constant.OSCILLATOR_ONE_INDEX, int);
+                    }
+                    course-tune-changed(float) => {
+                        course-tune-changed(Constant.OSCILLATOR_ONE_INDEX, float);
+                    }
+                    fine-tune-changed(float) => {
+                        fine-tune-changed(Constant.OSCILLATOR_ONE_INDEX, float);
+                    }
+                    clipper-boost-changed(float) => {
+                        clipper-boost-changed(Constant.OSCILLATOR_ONE_INDEX, float);
+                    }
+                    parameter1-changed(float) => {
+                        parameter1-changed(Constant.OSCILLATOR_ONE_INDEX, float);
+                    }
+                    parameter2-changed(float) => {
+                        parameter2-changed(Constant.OSCILLATOR_ONE_INDEX, float);
+                    }
+                }
+                
+        oscillator_two := OscControlsPanel {
+        
+                    width: Theme.oscillator-panel-section-width;
+                    oscillator: oscillators[Constant.OSCILLATOR_TWO_INDEX];
+                    title: Theme.osc-controls-panel-titles[Constant.OSCILLATOR_TWO_INDEX];
+                    fine-tune-cents: fine-tune-cents[Constant.OSCILLATOR_TWO_INDEX];
+        
+                    wave-shape-changed(int) => {
+                        wave-shape-changed(Constant.OSCILLATOR_TWO_INDEX, int);
+                    }
+                    course-tune-changed(float) => {
+                        course-tune-changed(Constant.OSCILLATOR_TWO_INDEX, float);
+                    }
+                    fine-tune-changed(float) => {
+                        fine-tune-changed(Constant.OSCILLATOR_TWO_INDEX, float);
+                    }
+                    clipper-boost-changed(float) => {
+                        clipper-boost-changed(Constant.OSCILLATOR_TWO_INDEX, float);
+                    }
+                    parameter1-changed(float) => {
+                        parameter1-changed(Constant.OSCILLATOR_TWO_INDEX, float);
+                    }
+                    parameter2-changed(float) => {
+                        parameter2-changed(Constant.OSCILLATOR_TWO_INDEX, float);
+                    }
+                }
+                
+        oscillator_three := OscControlsPanel {
+                
+                            width: Theme.oscillator-panel-section-width;
+                            oscillator: oscillators[Constant.OSCILLATOR_THREE_INDEX];
+                            title: Theme.osc-controls-panel-titles[Constant.OSCILLATOR_THREE_INDEX];
+                            fine-tune-cents: fine-tune-cents[Constant.OSCILLATOR_THREE_INDEX];
+                
+                            wave-shape-changed(int) => {
+                                wave-shape-changed(Constant.OSCILLATOR_THREE_INDEX, int);
+                            }
+                            course-tune-changed(float) => {
+                                course-tune-changed(Constant.OSCILLATOR_THREE_INDEX, float);
+                            }
+                            fine-tune-changed(float) => {
+                                fine-tune-changed(Constant.OSCILLATOR_THREE_INDEX, float);
+                            }
+                            clipper-boost-changed(float) => {
+                                clipper-boost-changed(Constant.OSCILLATOR_THREE_INDEX, float);
+                            }
+                            parameter1-changed(float) => {
+                                parameter1-changed(Constant.OSCILLATOR_THREE_INDEX, float);
+                            }
+                            parameter2-changed(float) => {
+                                parameter2-changed(Constant.OSCILLATOR_THREE_INDEX, float);
+                            }
+                        }
     }
 }

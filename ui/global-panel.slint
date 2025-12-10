@@ -114,24 +114,69 @@ export component OscillatorMixer inherits VerticalLayout {
         padding: Theme.global-panel-padding;
         spacing: Theme.global-panel-spacing;
 
-        for mixer-strip[index] in oscillator-mixer-values: HorizontalLayout {
-
-            MixerStrip {
-                label: Theme.osc-mixer-titles[index];
-                mixer-strip-values: mixer-strip;
-                mixer-balance-update(balance) => {
-                    osc-mixer-balance-update(index, balance);
-                }
-                mixer-level-update(level) => {
-                    osc-mixer-level-update(index, level);
-                }
-                mixer_mute_update(is_muted) => {
-                    osc-mixer-mute-update(index, is_muted);
-                }
+        MixerStrip {
+            label: Theme.osc-mixer-titles[Constant.OSCILLATOR_SUB_INDEX];
+            mixer-strip-values: oscillator-mixer-values[Constant.OSCILLATOR_SUB_INDEX];
+            mixer-balance-update(balance) => {
+                osc-mixer-balance-update(Constant.OSCILLATOR_SUB_INDEX, balance);
             }
-
-            VerticalSpacer { }
+            mixer-level-update(level) => {
+                osc-mixer-level-update(Constant.OSCILLATOR_SUB_INDEX, level);
+            }
+            mixer_mute_update(is_muted) => {
+                osc-mixer-mute-update(Constant.OSCILLATOR_SUB_INDEX, is_muted);
+            }
         }
+
+        VerticalSpacer { }
+
+        MixerStrip {
+            label: Theme.osc-mixer-titles[Constant.OSCILLATOR_ONE_INDEX];
+            mixer-strip-values: oscillator-mixer-values[Constant.OSCILLATOR_ONE_INDEX];
+            mixer-balance-update(balance) => {
+                osc-mixer-balance-update(Constant.OSCILLATOR_ONE_INDEX, balance);
+            }
+            mixer-level-update(level) => {
+                osc-mixer-level-update(Constant.OSCILLATOR_ONE_INDEX, level);
+            }
+            mixer_mute_update(is_muted) => {
+                osc-mixer-mute-update(Constant.OSCILLATOR_ONE_INDEX, is_muted);
+            }
+        }
+
+        VerticalSpacer { }
+
+        MixerStrip {
+            label: Theme.osc-mixer-titles[Constant.OSCILLATOR_TWO_INDEX];
+            mixer-strip-values: oscillator-mixer-values[Constant.OSCILLATOR_TWO_INDEX];
+            mixer-balance-update(balance) => {
+                osc-mixer-balance-update(Constant.OSCILLATOR_TWO_INDEX, balance);
+            }
+            mixer-level-update(level) => {
+                osc-mixer-level-update(Constant.OSCILLATOR_TWO_INDEX, level);
+            }
+            mixer_mute_update(is_muted) => {
+                osc-mixer-mute-update(Constant.OSCILLATOR_TWO_INDEX, is_muted);
+            }
+        }
+
+        VerticalSpacer { }
+
+        MixerStrip {
+            label: Theme.osc-mixer-titles[Constant.OSCILLATOR_THREE_INDEX];
+            mixer-strip-values: oscillator-mixer-values[Constant.OSCILLATOR_THREE_INDEX];
+            mixer-balance-update(balance) => {
+                osc-mixer-balance-update(Constant.OSCILLATOR_THREE_INDEX, balance);
+            }
+            mixer-level-update(level) => {
+                osc-mixer-level-update(Constant.OSCILLATOR_THREE_INDEX, level);
+            }
+            mixer_mute_update(is_muted) => {
+                osc-mixer-mute-update(Constant.OSCILLATOR_THREE_INDEX, is_muted);
+            }
+        }
+
+        VerticalSpacer { }
     }
 }
 

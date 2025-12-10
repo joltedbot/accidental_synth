@@ -3,10 +3,7 @@ mod constants;
 mod structs;
 mod update_listener;
 
-use super::{
-    AccidentalSynth, AudioDevice, EnvelopeValues, FilterCutoff, FilterOptions, LFOValues, MidiPort,
-    Oscillator,
-};
+use super::{AccidentalSynth, AudioDevice, EnvelopeValues, FilterCutoff, FilterOptions, LFOValues, MidiPort, Mixer, Oscillator};
 use crate::audio::AudioDeviceUpdateEvents;
 use crate::midi::MidiDeviceUpdateEvents;
 use crate::modules::lfo::DEFAULT_LFO_FREQUENCY;
@@ -17,15 +14,15 @@ use crate::ui::constants::{
     AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET, AUDIO_DEVICE_CHANNEL_NULL_VALUE, MIDI_CHANNEL_LIST,
     MONO_CHANNEL_COUNT,
 };
-use crate::ui::structs::{
-    UIAudioDevice, UIEnvelope, UIFilterCutoff, UIFilterOptions, UILfo, UIMidiPort, UIOscillator,
-};
+use crate::ui::structs::{UIAudioDevice, UIEnvelope, UIFilterCutoff, UIFilterOptions, UILfo, UIMidiPort, UIMixer, UIOscillator};
 use crate::ui::update_listener::start_ui_update_listener;
+use crate::defaults::Defaults;
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender, bounded};
 use slint::{ModelRc, SharedString, VecModel, Weak};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
+
 
 const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
 
@@ -60,7 +57,16 @@ pub enum UIUpdates {
     FilterKeyTracking(f32),
     FilterEnvelopeAmount(f32),
     FilterLFOAmount(f32),
+    OutputMixerBalance(f32),
+    OutputMixerLevel(f32),
+    OutputMixerIsMuted(f32),
+    OscillatorMixerBalance(i32, f32),
+    OscillatorMixerLevel(i32, f32),
+    OscillatorMixerIsMuted(i32, f32),
 }
+
+
+
 
 #[derive(Debug, Clone, Copy)]
 pub enum LFOIndex {
@@ -114,6 +120,8 @@ struct ParameterValues {
     filter_lfo: UILfo,
     filter_cutoff: UIFilterCutoff,
     filter_options: UIFilterOptions,
+    output_mixer: UIMixer,
+    oscillator_mixer: Vec<UIMixer>,
 }
 
 pub struct UI {
@@ -128,20 +136,34 @@ impl UI {
 
         let (ui_update_sender, ui_update_receiver) = bounded(UI_UPDATE_CHANNEL_CAPACITY);
 
-        let midi_port_values = UIMidiPort {
+        let midi_port = UIMidiPort {
             channels: MIDI_CHANNEL_LIST.iter().map(ToString::to_string).collect(),
             ..Default::default()
         };
 
-        let audio_device_values = UIAudioDevice {
+        let audio_device = UIAudioDevice {
             left_channel_index: 0,
             right_channel_index: 1,
             ..Default::default()
         };
 
+        let output_mixer = UIMixer {
+            balance: Defaults::OUTPUT_MIXER_BALANCE,
+            level: Defaults::OUTPUT_MIXER_LEVEL,
+            is_muted: Defaults::OUTPUT_MIXER_IS_MUTED,
+        };
+        let oscillator_mixer = UIMixer {
+            balance: Defaults::QUAD_MIXER_BALANCE,
+            level: Defaults::QUAD_MIXER_LEVEL,
+            is_muted: Defaults::QUAD_MIXER_IS_MUTED,
+        };
+        let mut oscillator_mixer = vec![oscillator_mixer; OscillatorIndex::count()];
+        oscillator_mixer[OscillatorIndex::Sub as usize].level = Defaults::QUAD_MIXER_SUB_LEVEL;
+
+
         let parameter_values = ParameterValues {
-            audio_device: audio_device_values,
-            midi_port: midi_port_values,
+            audio_device,
+            midi_port,
             oscillators: vec![UIOscillator::default(); OscillatorIndex::count()],
             amp_envelope: UIEnvelope::default(),
             filter_envelope: UIEnvelope::default(),
@@ -150,6 +172,8 @@ impl UI {
             oscillator_fine_tune: vec![0; OscillatorIndex::count()],
             filter_cutoff: UIFilterCutoff::default(),
             filter_options: UIFilterOptions::default(),
+            output_mixer,
+            oscillator_mixer,
         };
 
         Self {
@@ -413,6 +437,33 @@ fn set_filter_options_values(
     });
 }
 
+fn set_output_mixer_values(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    mixer_values: &UIMixer,) {
+    let ui_mixer_values = mixer_values.clone();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_output_mixer_values(slint_mixer_to_ui_mixer_options(
+            &ui_mixer_values,
+        ));
+    });
+}
+
+
+fn set_oscillator_mixer_values(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    mixer_values: &[UIMixer]) {
+
+    let oscillator_mixers:Vec<Mixer> = mixer_values.iter().map(|mixer| {
+        slint_mixer_to_ui_mixer_options(
+            mixer,
+        )
+    }).collect();
+
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_oscillator_mixer_values(ModelRc::from(Rc::new(VecModel::from(oscillator_mixers))));
+    });
+}
+
 fn slint_oscillators_from_oscillators(oscillator_values: &[UIOscillator]) -> ModelRc<Oscillator> {
     let oscillators: VecModel<Oscillator> = oscillator_values
         .iter()
@@ -483,6 +534,16 @@ fn slint_filter_options_to_ui_filter_options(
         key_track: filter_option_values.key_track,
         envelope_amount: filter_option_values.envelope_amount,
         lfo_amount: filter_option_values.lfo_amount,
+    }
+}
+
+fn slint_mixer_to_ui_mixer_options(
+    mixer_values: &UIMixer,
+) -> Mixer {
+    Mixer {
+        balance: mixer_values.balance,
+        level: mixer_values.level,
+        is_muted: mixer_values.is_muted,
     }
 }
 

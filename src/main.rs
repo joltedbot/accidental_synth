@@ -4,6 +4,7 @@ mod midi;
 mod modules;
 mod synthesizer;
 mod ui;
+mod defaults;
 
 use crate::audio::Audio;
 use crate::midi::Midi;

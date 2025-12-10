@@ -1,21 +1,11 @@
 use crate::AccidentalSynth;
-use crate::synthesizer::midi_value_converters::{
-    exponential_curve_lfo_frequency_from_normal_value, normal_value_to_number_of_filter_poles,
-    normal_value_to_wave_shape_index,
-};
+use crate::synthesizer::midi_value_converters::{exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool, normal_value_to_number_of_filter_poles, normal_value_to_wave_shape_index};
 use crate::ui::constants::MAX_PHASE_VALUE;
-use crate::ui::{
-    EnvelopeIndex, EnvelopeStage, LFOIndex, ParameterValues, UIUpdates,
-    set_audio_device_channel_indexes, set_audio_device_channel_list, set_audio_device_values,
-    set_envelope_inverted, set_envelope_stage_value, set_filter_cutoff_values,
-    set_filter_options_values, set_lfo_frequency_display, set_lfo_phase_display, set_lfo_values,
-    set_midi_port_values, set_oscillator_fine_tune_display, set_oscillator_values,
-};
+use crate::ui::{EnvelopeIndex, EnvelopeStage, LFOIndex, ParameterValues, UIUpdates, set_audio_device_channel_indexes, set_audio_device_channel_list, set_audio_device_values, set_envelope_inverted, set_envelope_stage_value, set_filter_cutoff_values, set_filter_options_values, set_lfo_frequency_display, set_lfo_phase_display, set_lfo_values, set_midi_port_values, set_oscillator_fine_tune_display, set_oscillator_values, set_output_mixer_values, set_oscillator_mixer_values};
 use crossbeam_channel::Receiver;
 use slint::Weak;
 use std::sync::{Arc, Mutex};
 use std::thread;
-
 
 #[allow(clippy::too_many_lines)]
 pub fn start_ui_update_listener(
@@ -264,6 +254,43 @@ pub fn start_ui_update_listener(
                     let filter_option_values = &mut values.filter_options;
                     filter_option_values.lfo_amount = value;
                     set_filter_options_values(&ui_weak_thread, filter_option_values);
+                }
+
+                UIUpdates::OutputMixerBalance(value) => {
+                        let output_mixer_values = &mut values.output_mixer;
+                        output_mixer_values.balance = value;
+                        set_output_mixer_values(&ui_weak_thread, output_mixer_values);
+                }
+
+                UIUpdates::OutputMixerLevel(value) => {
+                    let output_mixer_values = &mut values.output_mixer;
+                    output_mixer_values.level = value;
+                    set_output_mixer_values(&ui_weak_thread, output_mixer_values);
+                }
+
+                UIUpdates::OutputMixerIsMuted(value) => {
+                    let output_mixer_values = &mut values.output_mixer;
+                    output_mixer_values.is_muted = normal_value_to_bool(value);
+                    set_output_mixer_values(&ui_weak_thread, output_mixer_values);
+                }
+
+
+                UIUpdates::OscillatorMixerBalance(oscillator_index, value) => {
+                    let output_mixer_values = &mut values.oscillator_mixer;
+                    output_mixer_values[oscillator_index as usize].balance = value;
+                    set_oscillator_mixer_values(&ui_weak_thread, output_mixer_values);
+                }
+
+                UIUpdates::OscillatorMixerLevel(oscillator_index, value) => {
+                    let output_mixer_values = &mut values.oscillator_mixer;
+                    output_mixer_values[oscillator_index as usize].level = value;
+                    set_oscillator_mixer_values(&ui_weak_thread, output_mixer_values);
+                }
+
+                UIUpdates::OscillatorMixerIsMuted(oscillator_index, value) => {
+                    let output_mixer_values = &mut values.oscillator_mixer;
+                    output_mixer_values[oscillator_index as usize].is_muted = normal_value_to_bool(value);
+                    set_oscillator_mixer_values(&ui_weak_thread, output_mixer_values);
                 }
             }
         }

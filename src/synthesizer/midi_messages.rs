@@ -118,13 +118,28 @@ pub fn process_midi_cc_values(
             set_pitch_bend_range(&module_parameters.keyboard, normalize_midi_value(value));
         }
         CC::Volume(value) => {
-            set_output_level(&module_parameters.mixer, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_output_level(&module_parameters.mixer, normal_value);
+            ui_update_sender.send(UIUpdates::OutputMixerLevel(normal_value))
+                            .expect(
+                                "process_midi_cc_values(): Could not send the output mixer level value to the UI. \
+                                Exiting.", );
         }
         CC::Balance(value) => {
-            set_output_balance(&module_parameters.mixer, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_output_balance(&module_parameters.mixer, normal_value);
+            ui_update_sender.send(UIUpdates::OutputMixerBalance(normal_value))
+                            .expect(
+                                "process_midi_cc_values(): Could not send the output mixer balance value to the UI. \
+                                Exiting.", );
         }
         CC::Mute(value) => {
-            set_output_mute(&module_parameters.mixer, normalize_midi_value(value));
+            let normal_value = normalize_midi_value(value);
+            set_output_mute(&module_parameters.mixer, normal_value);
+            ui_update_sender.send(UIUpdates::OutputMixerIsMuted(normal_value))
+                            .expect(
+                                "process_midi_cc_values(): Could not send the output mixer mute state value to the UI. \
+                                Exiting.", );
         }
         CC::SubOscillatorShapeParameter1(value) => {
             let parameter1_value = normalize_midi_value(value);
@@ -411,88 +426,144 @@ pub fn process_midi_cc_values(
                 );
         }
         CC::SubOscillatorLevel(value) => {
+            let normal_value = normalize_midi_value(value);
             set_oscillator_level(
                 &module_parameters.mixer,
                 OscillatorIndex::Sub,
-                normalize_midi_value(value),
+                normal_value,
             );
+                        ui_update_sender.send(UIUpdates::OscillatorMixerLevel(OscillatorIndex::Sub as i32,
+                                                                              normal_value))
+                .expect("process_cc_midi_values(): Could not send the oscillator mixer sub level value to the UI. \
+                Exiting");
         }
         CC::Oscillator1Level(value) => {
+            let normal_value = normalize_midi_value(value);
             set_oscillator_level(
                 &module_parameters.mixer,
                 OscillatorIndex::One,
-                normalize_midi_value(value),
+                normal_value,
             );
+                        ui_update_sender.send(UIUpdates::OscillatorMixerLevel(OscillatorIndex::One as i32,
+                                                                              normal_value))
+                .expect("process_cc_midi_values(): Could not send the oscillator mixer 1 level value to the UI. \
+                Exiting");
         }
         CC::Oscillator2Level(value) => {
+            let normal_value = normalize_midi_value(value);
             set_oscillator_level(
                 &module_parameters.mixer,
                 OscillatorIndex::Two,
-                normalize_midi_value(value),
+                normal_value,
             );
+                        ui_update_sender.send(UIUpdates::OscillatorMixerLevel(OscillatorIndex::Two as i32,
+                                                                              normal_value))
+                .expect("process_cc_midi_values(): Could not send the oscillator mixer 2 level value to the UI. \
+                Exiting");
         }
         CC::Oscillator3Level(value) => {
+            let normal_value = normalize_midi_value(value);
             set_oscillator_level(
                 &module_parameters.mixer,
                 OscillatorIndex::Three,
-                normalize_midi_value(value),
+                normal_value,
             );
+                        ui_update_sender.send(UIUpdates::OscillatorMixerLevel(OscillatorIndex::Three as i32,
+                                                                              normal_value))
+                .expect("process_cc_midi_values(): Could not send the oscillator mixer 3 level value to the UI. \
+                Exiting");
         }
         CC::SubOscillatorMute(value) => {
+            let normal_value = normalize_midi_value(value);
             set_oscillator_mute(
                 &module_parameters.mixer,
                 OscillatorIndex::Sub,
-                normalize_midi_value(value),
+                normal_value,
             );
+                        ui_update_sender.send(UIUpdates::OscillatorMixerIsMuted(OscillatorIndex::Sub as i32,
+                                                                              normal_value))
+                .expect("process_cc_midi_values(): Could not send the oscillator mixer sub mute state to the UI. \
+                Exiting");
         }
         CC::Oscillator1Mute(value) => {
+            let normal_value = normalize_midi_value(value);
             set_oscillator_mute(
                 &module_parameters.mixer,
                 OscillatorIndex::One,
-                normalize_midi_value(value),
+                normal_value,
             );
+                        ui_update_sender.send(UIUpdates::OscillatorMixerIsMuted(OscillatorIndex::One as i32,
+                                                                              normal_value))
+                .expect("process_cc_midi_values(): Could not send the oscillator mixer 1 mute state to the UI. \
+                Exiting");
         }
         CC::Oscillator2Mute(value) => {
+            let normal_value = normalize_midi_value(value);
             set_oscillator_mute(
                 &module_parameters.mixer,
                 OscillatorIndex::Two,
-                normalize_midi_value(value),
+                normal_value,
             );
+                        ui_update_sender.send(UIUpdates::OscillatorMixerIsMuted(OscillatorIndex::Two as i32,
+                                                                              normal_value))
+                .expect("process_cc_midi_values(): Could not send the oscillator mixer 2 mute state to the UI. \
+                Exiting");
         }
         CC::Oscillator3Mute(value) => {
+            let normal_value = normalize_midi_value(value);
             set_oscillator_mute(
                 &module_parameters.mixer,
                 OscillatorIndex::Three,
-                normalize_midi_value(value),
+                normal_value,
             );
+                        ui_update_sender.send(UIUpdates::OscillatorMixerIsMuted(OscillatorIndex::Three as i32,
+                                                                              normal_value))
+                .expect("process_cc_midi_values(): Could not send the oscillator mixer 3 mute state to the UI. \
+                Exiting");
         }
         CC::SubOscillatorBalance(value) => {
+            let normal_value = normalize_midi_value(value);
             set_oscillator_balance(
                 &module_parameters.mixer,
                 OscillatorIndex::Sub,
-                normalize_midi_value(value),
+                normal_value,
             );
+            ui_update_sender.send(UIUpdates::OscillatorMixerBalance(OscillatorIndex::Sub as i32, normal_value))
+                .expect("process_cc_midi_values(): Could not send the oscillator mixer sub balance value to the UI. \
+                Exiting");
         }
         CC::Oscillator1Balance(value) => {
+            let normal_value = normalize_midi_value(value);
             set_oscillator_balance(
                 &module_parameters.mixer,
                 OscillatorIndex::One,
-                normalize_midi_value(value),
+                normal_value,
             );
+            ui_update_sender.send(UIUpdates::OscillatorMixerBalance(OscillatorIndex::One as i32, normal_value))
+                .expect("process_cc_midi_values(): Could not send the oscillator mixer 1 balance  value to the UI. \
+                Exiting");
         }
         CC::Oscillator2Balance(value) => {
+            let normal_value = normalize_midi_value(value);
             set_oscillator_balance(
                 &module_parameters.mixer,
                 OscillatorIndex::Two,
-                normalize_midi_value(value),
+                normal_value,
             );
+            ui_update_sender.send(UIUpdates::OscillatorMixerBalance(OscillatorIndex::Two as i32, normal_value))
+                .expect("process_cc_midi_values(): Could not send the oscillator mixer 2 balance value to the UI. \
+                Exiting");
         }
         CC::Oscillator3Balance(value) => {
+            let normal_value = normalize_midi_value(value);
             set_oscillator_balance(
                 &module_parameters.mixer,
                 OscillatorIndex::Three,
-                normalize_midi_value(value),
+                normal_value,
             );
+            ui_update_sender.send(UIUpdates::OscillatorMixerBalance(OscillatorIndex::Three as i32, normal_value))
+                .expect("process_cc_midi_values(): Could not send the oscillator mixer 3 balance value to the UI. \
+                Exiting");
         }
         CC::PortamentoEnabled(value) => {
             set_portamento_enabled(&module_parameters.oscillators, normalize_midi_value(value));

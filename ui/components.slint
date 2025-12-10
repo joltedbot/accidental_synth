@@ -396,7 +396,7 @@ export component DropDownMenu inherits VerticalLayout {
 }
 
 export component MixerMute inherits VerticalLayout {
-    in property <bool> is_muted;
+    in property <bool> is_muted: false;
     in property <length> switch-height: 25px;
     callback mixer_mute_update(bool);
 
@@ -411,7 +411,7 @@ export component MixerMute inherits VerticalLayout {
         alignment: center;
         Switch {
             height: switch-height;
-
+            checked: is_muted;
             toggled() => {
                 mixer_mute_update(self.checked);
             }

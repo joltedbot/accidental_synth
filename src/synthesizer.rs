@@ -6,16 +6,15 @@ pub(crate) mod midi_value_converters;
 mod set_parameters;
 
 use self::constants::{
-    DEFAULT_FILTER_ENVELOPE_AMOUNT, DEFAULT_OUTPUT_BALANCE, DEFAULT_OUTPUT_LEVEL,
+    DEFAULT_FILTER_ENVELOPE_AMOUNT,
     DEFAULT_VELOCITY_CURVE, DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY, DEFAULT_VIBRATO_LFO_DEPTH,
-    DEFAULT_VIBRATO_LFO_RATE, MAX_MIDI_KEY_VELOCITY, QUAD_MIX_DEFAULT_BALANCE,
-    QUAD_MIX_DEFAULT_INPUT_LEVEL, QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
+    DEFAULT_VIBRATO_LFO_RATE, MAX_MIDI_KEY_VELOCITY,
 };
 
 use crate::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
 use crate::midi::Event;
 use crate::modules::envelope::EnvelopeParameters;
-use crate::modules::filter::{DEFAULT_KEY_TRACKING_AMOUNT, FilterParameters};
+use crate::modules::filter::{FilterParameters, DEFAULT_KEY_TRACKING_AMOUNT};
 use crate::modules::lfo::LfoParameters;
 use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
@@ -34,8 +33,9 @@ use rtrb::Producer;
 use std::default::Default;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU8};
 use std::thread;
+use crate::defaults::Defaults;
 
 pub enum SynthesizerUpdateEvents {
     WaveShapeIndex(i32, i32),
@@ -135,8 +135,8 @@ struct QuadMixerInput {
 impl Default for QuadMixerInput {
     fn default() -> Self {
         Self {
-            level: AtomicU32::new(QUAD_MIX_DEFAULT_INPUT_LEVEL.to_bits()),
-            balance: AtomicU32::new(QUAD_MIX_DEFAULT_BALANCE.to_bits()),
+            level: AtomicU32::new(Defaults::QUAD_MIXER_LEVEL.to_bits()),
+            balance: AtomicU32::new(Defaults::QUAD_MIXER_BALANCE.to_bits()),
             mute: AtomicBool::new(false),
         }
     }
@@ -191,12 +191,12 @@ impl Synthesizer {
         let oscillator_mixer_parameters: [QuadMixerInput; 4] = Default::default();
         store_f32_as_atomic_u32(
             &oscillator_mixer_parameters[0].level,
-            QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL,
+            Defaults::QUAD_MIXER_SUB_LEVEL,
         );
 
         let mixer_parameters = MixerParameters {
-            output_level: AtomicU32::new(DEFAULT_OUTPUT_LEVEL.to_bits()),
-            output_balance: AtomicU32::new(DEFAULT_OUTPUT_BALANCE.to_bits()),
+            output_level: AtomicU32::new(Defaults::OUTPUT_MIXER_LEVEL.to_bits()),
+            output_balance: AtomicU32::new(Defaults::OUTPUT_MIXER_BALANCE.to_bits()),
             output_is_muted: AtomicBool::new(false),
             quad_mixer_inputs: oscillator_mixer_parameters,
         };

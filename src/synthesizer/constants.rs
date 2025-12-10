@@ -30,13 +30,6 @@ pub const DEFAULT_FILTER_ENVELOPE_AMOUNT: f32 = 0.0;
 pub const ENVELOPE_INDEX_AMP: i32 = 0;
 pub const ENVELOPE_INDEX_FILTER: i32 = 1;
 
-// Mixer Constants
-pub const DEFAULT_OUTPUT_LEVEL: f32 = 0.5;
-pub const DEFAULT_OUTPUT_BALANCE: f32 = 0.0;
-pub const QUAD_MIX_DEFAULT_INPUT_LEVEL: f32 = 1.0;
-pub const QUAD_MIX_DEFAULT_SUB_INPUT_LEVEL: f32 = 0.0;
-pub const QUAD_MIX_DEFAULT_BALANCE: f32 = 0.0;
-
 // Filter Constants
 pub const MIN_FILTER_RESONANCE: f32 = 0.0;
 pub const MAX_FILTER_RESONANCE: f32 = 0.90;
