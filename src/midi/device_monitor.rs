@@ -85,16 +85,14 @@ fn update_current_port(
         return;
     }
 
-    if let Some(input_port) = current_input_port {
-        if let Some(index) = current_port_list
-            .iter()
-            .position(|port| port == &input_port.1)
-        {
-            *current_input_port = Some((index, current_port_list[index].clone()));
-            return;
-        }
+    if let Some(index) = current_input_port
+        .as_ref()
+        .and_then(|(_, port)| current_port_list.iter().position(|p| p == port))
+    {
+        *current_input_port = Some((index, current_port_list[index].clone()));
+        return;
     }
-
+g
     let default_port = current_port_list[DEFAULT_MIDI_PORT_INDEX].clone();
     let port_name = get_input_port_name(&default_port);
     log::info!(

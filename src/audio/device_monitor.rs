@@ -1,13 +1,5 @@
 use crate::audio::constants::OSSSTATUS_NO_ERROR;
 
-#[cfg(not(target_os = "macos"))]
-use {
-    crate::audio::constants::DEVICE_LIST_POLLING_INTERVAL_IN_MS,
-    crate::audio::update_current_output_device_list_if_changed, cpal::default_host,
-    crossbeam_channel::Sender, std::ffi::c_void, std::thread, std::thread::sleep,
-    std::time::Duration,
-};
-
 use crate::audio::AudioDeviceUpdateEvents;
 use anyhow::{Result, anyhow};
 use core_foundation::base::TCFType;
@@ -25,7 +17,6 @@ use crossbeam_channel::Sender;
 use std::ffi::c_void;
 use std::ptr;
 
-#[cfg(target_os = "macos")]
 pub struct DeviceMonitor {
     device_update_sender: Sender<AudioDeviceUpdateEvents>,
     property_address: AudioObjectPropertyAddress,
@@ -279,31 +270,4 @@ extern "C" fn device_listener_callback(
     }
 
     OSSSTATUS_NO_ERROR
-}
-
-#[cfg(not(target_os = "macos"))]
-pub fn create_device_monitor(device_update_sender: Sender<AudioDeviceUpdateEvents>) {
-    let host = default_host();
-    let mut current_output_device_list = Vec::new();
-
-    thread::spawn(move || {
-        log::info!("run(): Audio device monitor thread running");
-        loop {
-            let is_changed = update_current_output_device_list_if_changed(
-                &host,
-                &mut current_output_device_list,
-            );
-
-            if is_changed {
-                log::debug!("create_device_monitor(): Output device list changed");
-                device_update_sender
-                    .send(AudioDeviceUpdateEvents::OutputDeviceList(current_output_device_list.clone()))
-                    .expect(
-                        "create_device_monitor(): Could not send audio device update to the UI. Exiting.",
-                    );
-            }
-
-            sleep(Duration::from_millis(DEVICE_LIST_POLLING_INTERVAL_IN_MS));
-        }
-    });
 }

@@ -9,10 +9,11 @@ Standalone, native UI, four‑oscillator mono synthesizer written in Rust.
 ---
 
 ## Overview
-Accidental Synthesizer (AccSyn) is a standalone four‑oscillator mono synth with a native UI.
+Accidental Synthesizer (AccSyn) is a standalone four‑oscillator mono synth for macOS with a native UI.  
 
 I am, perhaps foolishly, writing it in Rust, largely for my own education and amusement.
 
+It is a work in progress.
 
 ## Project Status
 In early development. I am actively working towards and MVP that includes the basic functional synth voice and a working UI for the current state 
@@ -20,7 +21,8 @@ of the synth.
 
 The synth voice works and is controllable via MIDI though control over the devices and channels is lacking without the UI. 
 
-The UI loads with the application but is not connected the backend yet which is what is currently being worked on.
+The UI is more or less functional and usable. There are some tweaks and fixes as well as parameter range changed to be made but all parameters are 
+currently working.
 
 
 ## Features
@@ -37,8 +39,7 @@ Planned for MVP:
 
 ### Prerequisites
 - Rust (stable, edition 2024). No specific toolchain version required.
-- macOS (Apple Silicon) — It is written and tested on macOS Tahoe but will likely work on previous versions. It will likely work on intel macs as 
-  well but has not been tested.
+- macOS (Apple Silicon) -- It might work on Intel macOS but I can't test that myself.
 - No external system dependencies beyond those pulled via Cargo. 
 - On macOS, the app is not code‑signed; you may need to allow running apps from unidentified developers in System Settings.
 
@@ -78,7 +79,6 @@ Default (The UI will load, but it is not fully connected yet):
 Usage: accidental-synth [OPTIONS]
 
 Options:
-      --headless
   -h, --help      Print help
   -V, --version   Print version
 ```

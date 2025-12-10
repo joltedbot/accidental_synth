@@ -1,8 +1,6 @@
 mod constants;
 mod device_monitor;
 
-#[cfg(not(target_os = "macos"))]
-use crate::audio::device_monitor::create_device_monitor;
 
 use crate::audio::constants::{
     BUFFER_DROP_OUT_LOGGER, COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS,
@@ -54,9 +52,7 @@ pub enum AudioDeviceUpdateEvents {
     UIOutputDeviceLeftChannel(i32),
     UIOutputDeviceRightChannel(i32),
     OutputDeviceListChanged,
-    #[cfg(not(target_os = "macos"))]
-    OutputDeviceList(Vec<String>),
-}
+ }
 
 pub struct Audio {
     sample_rate: u32,
@@ -114,10 +110,7 @@ impl Audio {
         log::debug!(target: "audio", "Starting Audio Module");
 
         log::debug!(target: "audio", "Creating the Audio Device Monitor");
-        #[cfg(not(target_os = "macos"))]
-        create_device_monitor(self.device_update_sender.clone());
 
-        #[cfg(target_os = "macos")]
         self.create_coreaudio_device_monitor()?;
 
         log::debug!(target: "audio", "Starting the Audio Output Device Listener");
@@ -217,53 +210,6 @@ fn start_control_listener(
                 "Received UI update");
 
             match update {
-                #[cfg(not(target_os = "macos"))]
-                AudioDeviceUpdateEvents::OutputDeviceList(new_output_device_list) => {
-                    log::debug!(
-                        "AudioDeviceEvent::OutputDeviceListUpdate: A new audio output device list received. \
-                    Updating the UI."
-                    );
-
-                    ui_update_sender
-                        .send(UIUpdates::AudioDeviceList(
-                            new_output_device_list.clone(),
-                        ))
-                        .expect("create_device_monitor(): Could not send audio device list update to the UI. Exiting.");
-
-                    if new_output_device_list.contains(&current_output_device_name) {
-                        update_ui_with_new_device_index(
-                            &mut current_output_device_name,
-                            &ui_update_sender,
-                            &new_output_device_list,
-                        );
-                        continue;
-                    }
-
-                    log::warn!(
-                        "create_control_listener(): The current audio device {current_output_device_name} is not in the new list. {new_output_device_list:?} \
-                    Getting the default device."
-                    );
-
-                    let new_output_device = default_audio_output_device();
-
-                    update_device_properties(
-                        &current_output_channels,
-                        &mut current_output_device_name,
-                        Option::from(&new_output_device),
-                    );
-
-                    if let Some(stream) = audio_output_stream {
-                        let _ = stream.pause();
-                    }
-
-                    audio_output_stream = start_new_output_device(
-                        new_output_device,
-                        &current_output_channels,
-                        &ui_update_sender,
-                        &sample_producer_sender,
-                        &buffer_dropout_counter,
-                    );
-                }
                 AudioDeviceUpdateEvents::OutputDeviceListChanged => {
                     log::debug!(
                         "AudioDeviceEvent::OutputDeviceListChanged: The audio device list changed. Updating"
@@ -275,12 +221,7 @@ fn start_control_listener(
                         COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS,
                     ));
 
-                    // Choose the correct function to check for audio device list changes depending on the OS.
-                    #[cfg(target_os = "macos")]
                     let new_output_device_list = get_audio_device_list().expect("create_control_listener(): Could not get audio devices from CoreAudio. Exiting.");
-
-                    #[cfg(not(target_os = "macos"))]
-                    let new_output_device_list = output_audio_device_name_list(&host);
 
                     ui_update_sender
                         .send(UIUpdates::AudioDeviceList(
@@ -612,34 +553,4 @@ fn default_channels_from_device(output_device: &OutputDevice) -> Result<(i32, i3
     };
 
     Ok((left_index, right_index))
-}
-
-#[cfg(not(target_os = "macos"))]
-fn update_current_output_device_list_if_changed(
-    host: &Host,
-    current_device_list: &mut Vec<String>,
-) -> bool {
-    let new_device_list = output_audio_device_name_list(host);
-
-    if *current_device_list != new_device_list {
-        *current_device_list = new_device_list;
-        return true;
-    }
-
-    false
-}
-
-#[cfg(not(target_os = "macos"))]
-fn output_audio_device_name_list(host: &Host) -> Vec<String> {
-    let mut device_name_list: Vec<String> = Vec::new();
-
-    if let Ok(device_list) = host.output_devices() {
-        for device in device_list {
-            if let Ok(name) = device.name() {
-                device_name_list.push(name);
-            }
-        }
-    }
-
-    device_name_list
 }
