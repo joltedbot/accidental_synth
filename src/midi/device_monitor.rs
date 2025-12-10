@@ -92,7 +92,7 @@ fn update_current_port(
         *current_input_port = Some((index, current_port_list[index].clone()));
         return;
     }
-g
+
     let default_port = current_port_list[DEFAULT_MIDI_PORT_INDEX].clone();
     let port_name = get_input_port_name(&default_port);
     log::info!(
