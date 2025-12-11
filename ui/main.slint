@@ -117,6 +117,7 @@ export component AccidentalSynth inherits Window {
     in property <float> velocity-curve-slope: Constant.DEFAULT_VELOCITY_CURVE_SLOPE;
     in property <bool> hard-sync-is-enabled;
     in property <bool> key-sync-is-enabled;
+    in property <[string]> midi-display-values;
 
     callback portamento-enabled(bool);
     callback portamento-time-changed(float);
@@ -215,6 +216,7 @@ export component AccidentalSynth inherits Window {
                                 velocity-curve-slope: velocity-curve-slope;
                                 hard-sync-is-enabled: hard-sync-is-enabled;
                                 key-sync-is-enabled: key-sync-is-enabled;
+                                midi-display-values: midi-display-values;
 
                                 envelope-attack-changed(envelope_index, milliseconds) => {
                                     envelope-attack-changed(envelope_index, milliseconds);

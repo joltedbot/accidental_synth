@@ -103,6 +103,91 @@ export component ComponentLabel inherits VerticalLayout {
     }
 }
 
+export component GreenScreen inherits Rectangle {
+    in property <string> title;
+    in property <[string]> output;
+
+    border-width: 7px;
+    border-color: beige.darker(1);
+    border-radius: 20px;
+    clip: true;
+    z: 4;
+
+    property <color> display-text: #22AA55;
+
+    background: #111111;
+    width: 110px;
+    height: 110px;
+
+    VerticalLayout {
+        padding: 10px;
+        alignment: start;
+        Text {
+            color: display-text;
+            horizontal-alignment: center;
+            text: title;
+        }
+
+        HorizontalSpacer { }
+
+        HorizontalLayout {
+            padding: 5px;
+            alignment: center;
+            height: 80px;
+
+            VerticalLayout {
+                slot0 := Text {
+                    color: display-text;
+                    horizontal-alignment: center;
+                    text: output[0];
+                }
+
+                slot1 := Text {
+                    color: display-text;
+                    horizontal-alignment: center;
+                    text: output[1];
+                }
+
+                slot2 := Text {
+                    color: display-text;
+                    horizontal-alignment: center;
+                    text: output[2];
+                }
+
+                slot3 := Text {
+                    color: display-text;
+                    horizontal-alignment: center;
+                    text: output[3];
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        z: 6;
+        y: 5px;
+        x: -25px;
+        width: parent.width + 50px;
+        height: parent.height + 30px;
+        background: @linear-gradient(0deg, black 0%, green 10%, black 11%, green 20%, black 21%, green 30%, black 31%, green 40%, black 41%, green 50%, black 51%, green 60%, black 61%, green 70%, black 71%, green 80%, black 81%, green 90%, black 91%, green 100%);
+        opacity: 5%;
+    }
+
+    Rectangle {
+        z: 3;
+        width: parent.width;
+        height: parent.height;
+        background: @linear-gradient(0deg, black 0%, green 10%, black 11%, green 20%, black 100%);
+        opacity: 20%;
+    }
+
+    Rectangle {
+        z: 4;
+        background: @linear-gradient(-45deg, black 0%, black 75%, white 100%);
+        opacity: 30%;
+    }
+}
+
 export component HorizontalControlLabel inherits Rectangle {
     in property <string> label: Theme.control-label-default-string;
     in property <string> value-units;

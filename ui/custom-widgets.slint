@@ -82,7 +82,7 @@ export component VerticalSlider inherits Rectangle {
 
     track := SliderTrack {
         track-height: parent.height;
-        position: enabled?indicator-current-position:indicator-default-position;
+        position: enabled ? indicator-current-position : indicator-default-position;
     }
 }
 
@@ -140,7 +140,7 @@ export component HorzontalSlider inherits Rectangle {
     track := SliderTrack {
         orientation: horizontal;
         track-width: parent.width;
-        position: enabled?indicator-current-position:indicator-default-position;
+        position: enabled ? indicator-current-position : indicator-default-position;
     }
 }
 
@@ -184,7 +184,6 @@ export component BalanceSlider inherits Rectangle {
     property <length> indicator-default-position: 0;
     property <length> indicator-current-position: minimum-position + (value * self.width);
 
-
     function get_output_value(position: length) -> float {
         return (position - minimum-position) / self.width;
     }
@@ -221,6 +220,6 @@ export component BalanceSlider inherits Rectangle {
 
     track := BalanceTrack {
         track-width: parent.width;
-        position: enabled?indicator-current-position:indicator-default-position;
+        position: enabled ? indicator-current-position : indicator-default-position;
     }
 }

@@ -16,6 +16,7 @@ import {
     FixedCenterLFOSection,
     EnvelopeValues,
     LFOValues,
+    GreenScreen,
 } from "components.slint";
 import { Theme } from "theme.slint";
 import { Constant } from "constants.slint";
@@ -243,6 +244,7 @@ export component OscillatorSection inherits VerticalLayout {
     in property <float> velocity-curve-slope;
     in property <bool> hard-sync-is-enabled;
     in property <bool> key-sync-is-enabled;
+    in property <[string]> midi-display-values;
 
     callback portamento-enabled(bool);
     callback portamento-time-changed(float);
@@ -337,6 +339,11 @@ export component OscillatorSection inherits VerticalLayout {
                 }
 
                 VerticalSpacer { }
+
+                GreenScreen {
+                    title: Theme.midi-screen-title;
+                    output: midi-display-values;
+                }
             }
         }
     }
@@ -431,6 +438,7 @@ export component GlobalPanel inherits Panel {
     in property <float> velocity-curve-slope;
     in property <bool> hard-sync-is-enabled;
     in property <bool> key-sync-is-enabled;
+    in property <[string]> midi-display-values;
 
     callback envelope-attack-changed(int, float);
     callback envelope-decay-changed(int, float);
@@ -534,6 +542,7 @@ export component GlobalPanel inherits Panel {
                 velocity-curve-slope: velocity-curve-slope;
                 hard-sync-is-enabled: hard-sync-is-enabled;
                 key-sync-is-enabled: key-sync-is-enabled;
+                midi-display-values: midi-display-values;
 
                 portamento-enabled(is_enabled) => {
                     portamento-enabled(is_enabled);

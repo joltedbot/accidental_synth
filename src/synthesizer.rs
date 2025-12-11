@@ -305,6 +305,7 @@ impl Synthesizer {
                             &mut current_note,
                             midi_note,
                             velocity,
+                            &ui_update_sender,
                         );
                     }
                     Event::NoteOff => {

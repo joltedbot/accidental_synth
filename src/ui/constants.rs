@@ -7,3 +7,4 @@ pub const MIDI_CHANNEL_LIST: [&str; 17] = [
 ];
 
 pub const MAX_PHASE_VALUE: f32 = 360.0;
+pub const MIDI_SCREEN_TOTAL_SLOTS: usize = 4;

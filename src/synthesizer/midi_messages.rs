@@ -23,6 +23,7 @@ use crate::ui::{EnvelopeIndex, LFOIndex, UIUpdates};
 use crossbeam_channel::Sender;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Relaxed, Release};
+use crate::defaults::Defaults;
 
 pub fn action_midi_note_events(
     midi_events: MidiNoteEvent,
@@ -81,6 +82,7 @@ pub fn process_midi_note_on_message(
     current_note: &mut Arc<CurrentNote>,
     midi_note: u8,
     velocity: u8,
+    ui_update_sender: &Sender<UIUpdates>,
 ) {
     let scaled_velocity = scaled_velocity_from_normal_value(
         load_f32_from_atomic_u32(&current_note.velocity_curve),
@@ -96,6 +98,10 @@ pub fn process_midi_note_on_message(
         .store(midi_note, Relaxed);
 
     action_midi_note_events(MidiNoteEvent::NoteOn, module_parameters);
+
+    let note_name = Defaults::MIDI_NOTE_FREQUENCIES[midi_note as usize].1.to_string();
+    ui_update_sender.send(UIUpdates::MidiScreen(note_name)).expect("process_midi_note_on_message(): Could not send the MIDI screen message to the UI. Exiting.");
+
 }
 
 // This function has to match every CC value, so it is going to be very long.
