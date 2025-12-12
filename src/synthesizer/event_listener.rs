@@ -189,7 +189,10 @@ pub fn start_ui_event_listener(
                 SynthesizerUpdateEvents::FilterEnvelopeRelease(envelope_index, milliseconds) => {
                     match envelope_index {
                         ENVELOPE_INDEX_AMP => {
-                            set_envelope_release_time(&module_parameters.amp_envelope, milliseconds);
+                            set_envelope_release_time(
+                                &module_parameters.amp_envelope,
+                                milliseconds,
+                            );
                         }
                         ENVELOPE_INDEX_FILTER => set_envelope_release_time(
                             &module_parameters.filter_envelope,

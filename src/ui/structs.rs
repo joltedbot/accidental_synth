@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use crate::defaults::Defaults;
 use crate::modules::envelope::{
     DEFAULT_ENVELOPE_MILLISECONDS, DEFAULT_ENVELOPE_SUSTAIN_LEVEL, MAX_ATTACK_MILLISECONDS,
     MAX_DECAY_MILLISECONDS, MAX_RELEASE_MILLISECONDS, MIN_ATTACK_MILLISECONDS,
@@ -111,4 +112,27 @@ pub struct UIMixer {
     pub level: f32,
     pub balance: f32,
     pub is_muted: bool,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct UIGlobalOptions {
+    pub portamento_time: f32,
+    pub portamento_is_enabled: bool,
+    pub pitch_bend_range: i32,
+    pub velocity_curve_slope: f32,
+    pub hard_sync_is_enabled: bool,
+    pub key_sync_is_enabled: bool,
+}
+
+impl Default for UIGlobalOptions {
+    fn default() -> Self {
+        Self {
+            portamento_time: Defaults::PORTAMENTO_TIME_NORMAL_VALUE,
+            portamento_is_enabled: false,
+            pitch_bend_range: Defaults::PITCH_BEND_RANGE as i32,
+            velocity_curve_slope: Defaults::VELOCITY_CURVE_NORMAL_VALUE,
+            hard_sync_is_enabled: false,
+            key_sync_is_enabled: false,
+        }
+    }
 }

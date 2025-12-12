@@ -33,6 +33,15 @@ export struct Mixer {
     is_muted: bool,
 }
 
+export struct GlobalOptions {
+    portamento-is-enabled: bool,
+    portamento-time: float,
+    pitch-bend-range: int,
+    velocity-curve-slope: float,
+    hard-sync-is-enabled: bool,
+    key-sync-is-enabled: bool,
+}
+
 
 export component MixerStrip inherits VerticalLayout {
     in property <Mixer> mixer-strip-values;
@@ -238,12 +247,7 @@ export component MixerSection inherits VerticalLayout {
 }
 
 export component OscillatorSection inherits VerticalLayout {
-    in property <bool> portamento-is-enabled;
-    in property <float> portamento-time;
-    in property <int> pitch-bend-range;
-    in property <float> velocity-curve-slope;
-    in property <bool> hard-sync-is-enabled;
-    in property <bool> key-sync-is-enabled;
+    in property <GlobalOptions> global-option-values;
     in property <[string]> midi-display-values;
 
     callback portamento-enabled(bool);
@@ -268,7 +272,7 @@ export component OscillatorSection inherits VerticalLayout {
                 alignment: space-between;
 
                 ToggleSwitch {
-                    is_enabled: portamento-is-enabled;
+                    is_enabled: global-option-values.portamento-is-enabled;
                     label: Theme.osc-options-portamento-label;
                     toggle_switch_updated(is_enabled) => {
                         portamento-enabled(is_enabled);
@@ -277,14 +281,17 @@ export component OscillatorSection inherits VerticalLayout {
 
                 HorizontalParameterSlider {
                     label: Theme.osc-options-portamento-time-label;
-                    value: portamento-time;
+                    value: global-option-values.portamento-time;
                     horizontal-parameter-slider-changed(milliseconds) => {
                         portamento-time-changed(milliseconds);
                     }
                 }
             }
 
-            VerticalSpacer { }
+            VerticalSpacer {
+                left-padding: 5px;
+                right-padding: 5px;
+            }
 
             HorizontalLayout {
                 padding: Theme.global-panel-padding;
@@ -296,7 +303,7 @@ export component OscillatorSection inherits VerticalLayout {
 
                     IntSpinBox {
                         label: Theme.osc-options-pitch-bend-range;
-                        value: pitch-bend-range;
+                        value: global-option-values.pitch-bend-range;
                         step: 1;
                         minimum: Constant.PITCH_BEND_MINIMUM;
                         maximum: Constant.PITCH_BEND_MAXIMUM;
@@ -308,7 +315,7 @@ export component OscillatorSection inherits VerticalLayout {
 
                     CenteredParameterSlider {
                         label: Theme.osc-options-velocity-curve;
-                        value: velocity-curve-slope;
+                        value: global-option-values.velocity-curve-slope;
                         width: 120px;
                         centered-parameter-slider-changed(curve) => {
                             velocity-curve-changed(curve);
@@ -316,14 +323,17 @@ export component OscillatorSection inherits VerticalLayout {
                     }
                 }
 
-                VerticalSpacer { }
+                VerticalSpacer {
+                    left-padding: 5px;
+                    right-padding: 5px;
+                 }
 
                 VerticalLayout {
                     alignment: space-between;
 
                     hard_sync := ToggleSwitch {
                         label: Theme.osc-options-hard-sync;
-                        is_enabled: hard-sync-is-enabled;
+                        is_enabled: global-option-values.hard-sync-is-enabled;
                         toggle_switch_updated(is_enabled) => {
                             hard-sync-enabled(is_enabled);
                         }
@@ -331,18 +341,23 @@ export component OscillatorSection inherits VerticalLayout {
 
                     key_sync := ToggleSwitch {
                         label: Theme.osc-options-key-sync;
-                        is_enabled: hard-sync-is-enabled;
+                        is_enabled: global-option-values.key-sync-is-enabled;
                         toggle_switch_updated(is_enabled) => {
                             key-sync-enabled(is_enabled);
                         }
                     }
                 }
 
-                VerticalSpacer { }
+                VerticalSpacer {
+                    left-padding: 5px;
+                    right-padding: 5px;
+                }
 
                 GreenScreen {
                     title: Theme.midi-screen-title;
                     output: midi-display-values;
+                    screen-height: Theme.midi-screen-height;
+                    screen-width: Theme.midi-screen-width;
                 }
             }
         }
@@ -429,15 +444,10 @@ export component GlobalPanel inherits Panel {
     in property <LFOValues> mod-wheel-lfo-values;
     in property <float> mod-wheel-lfo-frequency-display;
     in property <int> mod-wheel-lfo-phase-display;
+    in property <GlobalOptions> global-options-values;
 
     in property <Mixer> output-mixer-values;
     in property <[Mixer]> oscillator-mixer-values;
-    in property <bool> portamento-is-enabled;
-    in property <float> portamento-time;
-    in property <int> pitch-bend-range;
-    in property <float> velocity-curve-slope;
-    in property <bool> hard-sync-is-enabled;
-    in property <bool> key-sync-is-enabled;
     in property <[string]> midi-display-values;
 
     callback envelope-attack-changed(int, float);
@@ -536,12 +546,7 @@ export component GlobalPanel inherits Panel {
             HorizontalSpacer { }
 
             osc-section := OscillatorSection {
-                portamento-is-enabled: portamento-is-enabled;
-                portamento-time: portamento-time;
-                pitch-bend-range: pitch-bend-range;
-                velocity-curve-slope: velocity-curve-slope;
-                hard-sync-is-enabled: hard-sync-is-enabled;
-                key-sync-is-enabled: key-sync-is-enabled;
+                global-option-values: global-options-values;
                 midi-display-values: midi-display-values;
 
                 portamento-enabled(is_enabled) => {

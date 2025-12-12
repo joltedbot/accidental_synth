@@ -4,8 +4,8 @@ mod structs;
 mod update_listener;
 
 use super::{
-    AccidentalSynth, AudioDevice, EnvelopeValues, FilterCutoff, FilterOptions, LFOValues, MidiPort,
-    Mixer, Oscillator,
+    AccidentalSynth, AudioDevice, EnvelopeValues, FilterCutoff, FilterOptions, GlobalOptions,
+    LFOValues, MidiPort, Mixer, Oscillator,
 };
 use crate::audio::AudioDeviceUpdateEvents;
 use crate::defaults::Defaults;
@@ -28,6 +28,7 @@ use crossbeam_channel::{Receiver, Sender, bounded};
 use slint::{ModelRc, SharedString, VecModel, Weak};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
+use structs::UIGlobalOptions;
 
 const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
 
@@ -69,6 +70,12 @@ pub enum UIUpdates {
     OscillatorMixerBalance(i32, f32),
     OscillatorMixerLevel(i32, f32),
     OscillatorMixerIsMuted(i32, f32),
+    PortamentoTime(f32),
+    PortamentoEnabled(f32),
+    PitchBendRange(f32),
+    VelocityCurve(f32),
+    HardSync(f32),
+    KeySync(f32),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -125,6 +132,7 @@ struct ParameterValues {
     filter_options: UIFilterOptions,
     output_mixer: UIMixer,
     oscillator_mixer: Vec<UIMixer>,
+    global_options: UIGlobalOptions,
     midi_screen: Vec<String>,
 }
 
@@ -178,6 +186,7 @@ impl UI {
             output_mixer,
             oscillator_mixer,
             midi_screen: Vec::with_capacity(MIDI_SCREEN_TOTAL_SLOTS),
+            global_options: UIGlobalOptions::default(),
         };
 
         Self {
@@ -266,7 +275,6 @@ fn set_midi_screen_values(
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
         ui.set_midi_display_values(vec_to_model_rc_shared_string(&ui_midi_screen_values));
     });
-
 }
 
 fn set_midi_port_values(ui_weak_thread: &Weak<AccidentalSynth>, midi_port_values: &mut UIMidiPort) {
@@ -446,7 +454,7 @@ fn set_filter_cutoff_values(
 ) {
     let ui_filter_cutoff_values = filter_cutoff_values.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
-        ui.set_filter_cutoff_values(slint_filter_cutoff_to_ui_filter_cutoff(
+        ui.set_filter_cutoff_values(slint_filter_cutoff_from_ui_filter_cutoff(
             &ui_filter_cutoff_values,
         ));
     });
@@ -458,7 +466,7 @@ fn set_filter_options_values(
 ) {
     let ui_filter_option_values = filter_option_values.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
-        ui.set_filter_options_values(slint_filter_options_to_ui_filter_options(
+        ui.set_filter_options_values(slint_filter_options_from_ui_filter_options(
             &ui_filter_option_values,
         ));
     });
@@ -467,18 +475,30 @@ fn set_filter_options_values(
 fn set_output_mixer_values(ui_weak_thread: &Weak<AccidentalSynth>, mixer_values: &UIMixer) {
     let ui_mixer_values = mixer_values.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
-        ui.set_output_mixer_values(slint_mixer_to_ui_mixer_options(&ui_mixer_values));
+        ui.set_output_mixer_values(slint_mixer_from_ui_mixer_options(&ui_mixer_values));
     });
 }
 
 fn set_oscillator_mixer_values(ui_weak_thread: &Weak<AccidentalSynth>, mixer_values: &[UIMixer]) {
     let oscillator_mixers: Vec<Mixer> = mixer_values
         .iter()
-        .map(slint_mixer_to_ui_mixer_options)
+        .map(slint_mixer_from_ui_mixer_options)
         .collect();
 
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
         ui.set_oscillator_mixer_values(ModelRc::from(Rc::new(VecModel::from(oscillator_mixers))));
+    });
+}
+
+fn set_global_options_values(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    global_option_values: &UIGlobalOptions,
+) {
+    let ui_global_option_values = *global_option_values;
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_global_options_values(slint_global_options_from_ui_global_options(
+            &ui_global_option_values,
+        ));
     });
 }
 
@@ -537,14 +557,16 @@ fn slint_midi_port_from_ui_midi_port(midi_port_values: &UIMidiPort) -> MidiPort 
     }
 }
 
-fn slint_filter_cutoff_to_ui_filter_cutoff(filter_cutoff_values: &UIFilterCutoff) -> FilterCutoff {
+fn slint_filter_cutoff_from_ui_filter_cutoff(
+    filter_cutoff_values: &UIFilterCutoff,
+) -> FilterCutoff {
     FilterCutoff {
         cutoff: filter_cutoff_values.cutoff,
         resonance: filter_cutoff_values.resonance,
     }
 }
 
-fn slint_filter_options_to_ui_filter_options(
+fn slint_filter_options_from_ui_filter_options(
     filter_option_values: &UIFilterOptions,
 ) -> FilterOptions {
     FilterOptions {
@@ -555,11 +577,24 @@ fn slint_filter_options_to_ui_filter_options(
     }
 }
 
-fn slint_mixer_to_ui_mixer_options(mixer_values: &UIMixer) -> Mixer {
+fn slint_mixer_from_ui_mixer_options(mixer_values: &UIMixer) -> Mixer {
     Mixer {
         balance: mixer_values.balance,
         level: mixer_values.level,
         is_muted: mixer_values.is_muted,
+    }
+}
+
+fn slint_global_options_from_ui_global_options(
+    global_option_values: &UIGlobalOptions,
+) -> GlobalOptions {
+    GlobalOptions {
+        portamento_time: global_option_values.portamento_time,
+        portamento_is_enabled: global_option_values.portamento_is_enabled,
+        pitch_bend_range: global_option_values.pitch_bend_range,
+        velocity_curve_slope: global_option_values.velocity_curve_slope,
+        hard_sync_is_enabled: global_option_values.hard_sync_is_enabled,
+        key_sync_is_enabled: global_option_values.key_sync_is_enabled,
     }
 }
 

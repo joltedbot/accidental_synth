@@ -6,15 +6,14 @@ pub(crate) mod midi_value_converters;
 mod set_parameters;
 
 use self::constants::{
-    DEFAULT_FILTER_ENVELOPE_AMOUNT,
-    DEFAULT_VELOCITY_CURVE, DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY, DEFAULT_VIBRATO_LFO_DEPTH,
-    DEFAULT_VIBRATO_LFO_RATE, MAX_MIDI_KEY_VELOCITY,
+    DEFAULT_FILTER_ENVELOPE_AMOUNT, DEFAULT_VELOCITY_CURVE, DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY,
+    DEFAULT_VIBRATO_LFO_DEPTH, DEFAULT_VIBRATO_LFO_RATE, MAX_MIDI_KEY_VELOCITY,
 };
 
 use crate::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
 use crate::midi::Event;
 use crate::modules::envelope::EnvelopeParameters;
-use crate::modules::filter::{FilterParameters, DEFAULT_KEY_TRACKING_AMOUNT};
+use crate::modules::filter::{DEFAULT_KEY_TRACKING_AMOUNT, FilterParameters};
 use crate::modules::lfo::LfoParameters;
 use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
@@ -26,6 +25,7 @@ use crate::synthesizer::midi_messages::{
     process_midi_note_on_message, process_midi_pitch_bend_message,
 };
 
+use crate::defaults::Defaults;
 use crate::ui::UIUpdates;
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
@@ -33,9 +33,8 @@ use rtrb::Producer;
 use std::default::Default;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU8};
+use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::thread;
-use crate::defaults::Defaults;
 
 pub enum SynthesizerUpdateEvents {
     WaveShapeIndex(i32, i32),
@@ -230,7 +229,7 @@ impl Synthesizer {
             .store(DEFAULT_VIBRATO_LFO_DEPTH.to_bits(), Relaxed);
 
         let keyboard_parameters = KeyboardParameters {
-            pitch_bend_range: AtomicU8::new(12),
+            pitch_bend_range: AtomicU8::new(Defaults::PITCH_BEND_RANGE as u8),
             ..KeyboardParameters::default()
         };
 

@@ -4,7 +4,7 @@ import { Theme } from "theme.slint";
 import { Constant } from "constants.slint";
 import { TabWidget, Slider, VerticalBox, SpinBox } from "std-widgets.slint";
 import { Panel, EnvelopeValues, LFOValues } from "components.slint";
-import { GlobalPanel } from "global-panel.slint";
+import { GlobalPanel, GlobalOptions } from "global-panel.slint";
 import { HeaderPanel } from "header-panel.slint";
 import { AudioDevice, MidiPort } from "settings-panel.slint";
 import { FilterPanel, FilterCutoff, FilterOptions } from "filter-panel.slint";
@@ -107,17 +107,23 @@ export component AccidentalSynth inherits Window {
             level: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL
         }
     ];
+
     in property <EnvelopeValues> amp-envelope-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
     in property <LFOValues> mod-wheel-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
     in property <float> mod-wheel-lfo-frequency-display;
     in property <int> mod-wheel-lfo-phase-display;
-    in property <bool> portamento-is-enabled;
-    in property <float> portamento-time;
-    in property <int> pitch-bend-range: Constant.DEFAULT_PITCH_BEND_RANGE;
-    in property <float> velocity-curve-slope: Constant.DEFAULT_VELOCITY_CURVE_SLOPE;
-    in property <bool> hard-sync-is-enabled;
-    in property <bool> key-sync-is-enabled;
+
+
     in property <[string]> midi-display-values;
+
+    in property <GlobalOptions> global-options-values: {
+        portamento-is-enabled: Constant.PORTAMENTO_IS_ENABLED,
+        portamento-time: Constant.DEFAULT_PORTAMENTO_TIME,
+        pitch-bend-range: Constant.DEFAULT_PITCH_BEND_RANGE,
+        velocity-curve-slope: Constant.DEFAULT_VELOCITY_CURVE_SLOPE,
+        hard-sync-is-enabled: Constant.DEFAULT_HARD_SYNC_IS_ENABLED,
+        key-sync-is-enabled: Constant.DEFAULT_KEY_SYNC_IS_ENABLED,
+    };
 
     callback portamento-enabled(bool);
     callback portamento-time-changed(float);
@@ -210,13 +216,7 @@ export component AccidentalSynth inherits Window {
                                 mod-wheel-lfo-values: mod-wheel-lfo-values;
                                 mod-wheel-lfo-frequency-display: mod-wheel-lfo-frequency-display;
                                 mod-wheel-lfo-phase-display: mod-wheel-lfo-phase-display;
-                                portamento-is-enabled: portamento-is-enabled;
-                                portamento-time: portamento-time;
-                                pitch-bend-range: pitch-bend-range;
-                                velocity-curve-slope: velocity-curve-slope;
-                                hard-sync-is-enabled: hard-sync-is-enabled;
-                                key-sync-is-enabled: key-sync-is-enabled;
-                                midi-display-values: midi-display-values;
+                                global-options-values: global-options-values;
 
                                 envelope-attack-changed(envelope_index, milliseconds) => {
                                     envelope-attack-changed(envelope_index, milliseconds);

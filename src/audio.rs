@@ -1,7 +1,6 @@
 mod constants;
 mod device_monitor;
 
-
 use crate::audio::constants::{
     BUFFER_DROP_OUT_LOGGER, COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS,
 };
@@ -52,7 +51,7 @@ pub enum AudioDeviceUpdateEvents {
     UIOutputDeviceLeftChannel(i32),
     UIOutputDeviceRightChannel(i32),
     OutputDeviceListChanged,
- }
+}
 
 pub struct Audio {
     sample_rate: u32,
@@ -138,8 +137,13 @@ impl Audio {
     }
 }
 
-fn restart_main_audio_loop_with_new_device(ui_update_sender: &Sender<UIUpdates>, sample_producer_sender: 
-&Sender<Producer<f32>>, output_device: &OutputDevice, current_output_channels: &Arc<OutputChannels>, buffer_dropout_counter: &Arc<AtomicU32>,) -> Option<Stream> {
+fn restart_main_audio_loop_with_new_device(
+    ui_update_sender: &Sender<UIUpdates>,
+    sample_producer_sender: &Sender<Producer<f32>>,
+    output_device: &OutputDevice,
+    current_output_channels: &Arc<OutputChannels>,
+    buffer_dropout_counter: &Arc<AtomicU32>,
+) -> Option<Stream> {
     log::debug!(
         "restart_main_audio_loop_with_new_device(): New Audio Output Device: {:?}",
         output_device.name

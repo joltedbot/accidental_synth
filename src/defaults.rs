@@ -9,6 +9,13 @@ impl Defaults {
     pub const QUAD_MIXER_SUB_LEVEL: f32 = 0.0;
     pub const QUAD_MIXER_BALANCE: f32 = 0.0;
     pub const QUAD_MIXER_IS_MUTED: bool = false;
+
+    // Global Panel Constants
+    pub const PITCH_BEND_RANGE: u32 = 12;
+    pub const PORTAMENTO_TIME_NORMAL_VALUE: f32 = 0.0;
+    pub const VELOCITY_CURVE_NORMAL_VALUE: f32 = 0.5;
+    pub const MINIMUM_PITCH_BEND_RANGE: u32 = 2;
+    pub const MAXIMUM_PITCH_BEND_RANGE: u32 = 12;
 }
 
 impl Defaults {

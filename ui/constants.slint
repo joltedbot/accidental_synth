@@ -16,6 +16,7 @@ export global Constant {
     out property <int> OSCILLATOR_TWO_INDEX: 2;
     out property <int> OSCILLATOR_THREE_INDEX: 3;
 
+
     // Control Default Values
     out property <float> DEFAULT_BALANCE_NORMAL: 0.5;
     out property <float> DEFAULT_OUTPUT_MIXER_LEVEL_NORMAL: 0.8;
@@ -35,6 +36,10 @@ export global Constant {
     out property <int> PITCH_BEND_MINIMUM: 2;
     out property <int> PITCH_BEND_MAXIMUM: 12;
     out property <float> DEFAULT_VELOCITY_CURVE_SLOPE: 0.5;
+    out property <float> DEFAULT_PORTAMENTO_TIME: 0.0;
+    out property <bool> PORTAMENTO_IS_ENABLED: false;
+    out property <bool> DEFAULT_HARD_SYNC_IS_ENABLED: false;
+    out property <bool> DEFAULT_KEY_SYNC_IS_ENABLED: false;
 
     out property <[string]> OSC_WAVE_SHAPES: [
         "Sine",

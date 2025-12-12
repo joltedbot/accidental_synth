@@ -14,8 +14,7 @@ pub mod triangle;
 use self::am::AM;
 use self::constants::{
     DEFAULT_KEY_SYNC_ENABLED, DEFAULT_NOTE_FREQUENCY, DEFAULT_PORTAMENTO_TIME_IN_BUFFERS,
-    MAX_MIDI_NOTE_NUMBER, MAX_NOTE_FREQUENCY, MIN_MIDI_NOTE_NUMBER,
-    MIN_NOTE_FREQUENCY,
+    MAX_MIDI_NOTE_NUMBER, MAX_NOTE_FREQUENCY, MIN_MIDI_NOTE_NUMBER, MIN_NOTE_FREQUENCY,
 };
 use self::fm::FM;
 use self::noise::Noise;
@@ -26,9 +25,9 @@ use self::sine::Sine;
 use self::square::Square;
 use self::supersaw::Supersaw;
 use self::triangle::Triangle;
+use crate::defaults::Defaults;
 use crate::math;
 use crate::math::{dbfs_to_f32_sample, f32s_are_equal, load_f32_from_atomic_u32};
-use crate::defaults::Defaults;
 use generate_wave_trait::GenerateWave;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
