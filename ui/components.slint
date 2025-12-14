@@ -103,6 +103,14 @@ export component ComponentLabel inherits VerticalLayout {
     }
 }
 
+export component GreenScreenText inherits Text {
+    color: Theme.green-screen-text;
+    horizontal-alignment: center;
+    letter-spacing: 4px;
+    stroke-width: 2px;
+    stroke: darkgreen;
+}
+
 export component GreenScreen inherits Rectangle {
     in property <string> title;
     in property <[string]> output;
@@ -115,8 +123,6 @@ export component GreenScreen inherits Rectangle {
     clip: true;
     z: 4;
 
-    property <color> display-text: #22AA55;
-
     background: #111111;
     width: screen-width;
     height: screen-height;
@@ -124,12 +130,13 @@ export component GreenScreen inherits Rectangle {
     VerticalLayout {
         padding: 10px;
         alignment: start;
-        Text {
-            color: display-text;
-            horizontal-alignment: center;
+
+        GreenScreenText {
+            letter-spacing: 3px;
             text: title;
         }
 
+        HorizontalSpacer { }
         HorizontalSpacer { }
 
         HorizontalLayout {
@@ -138,27 +145,19 @@ export component GreenScreen inherits Rectangle {
             height: 80px;
 
             VerticalLayout {
-                slot0 := Text {
-                    color: display-text;
-                    horizontal-alignment: center;
+                slot0 := GreenScreenText {
                     text: output[0];
                 }
 
-                slot1 := Text {
-                    color: display-text;
-                    horizontal-alignment: center;
+                slot1 := GreenScreenText {
                     text: output[1];
                 }
 
-                slot2 := Text {
-                    color: display-text;
-                    horizontal-alignment: center;
+                slot2 := GreenScreenText {
                     text: output[2];
                 }
 
-                slot3 := Text {
-                    color: display-text;
-                    horizontal-alignment: center;
+                slot3 := GreenScreenText {
                     text: output[3];
                 }
             }
@@ -189,6 +188,8 @@ export component GreenScreen inherits Rectangle {
         opacity: 30%;
     }
 }
+
+
 
 export component HorizontalControlLabel inherits Rectangle {
     in property <string> label: Theme.control-label-default-string;
