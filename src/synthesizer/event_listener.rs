@@ -21,14 +21,14 @@ use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
 
 #[allow(clippy::too_many_lines)]
-pub fn start_ui_event_listener(
+pub fn start_update_event_listener(
     ui_update_receiver: Receiver<SynthesizerUpdateEvents>,
     module_parameters: Arc<ModuleParameters>,
     mut current_note: Arc<CurrentNote>,
     ui_update_sender: Sender<UIUpdates>,
 ) {
     thread::spawn(move || {
-        log::debug!("start_ui_event_listener(): spawned thread to receive UI events");
+        log::debug!("start_update_event_listener(): spawned thread to receive UI events");
 
         while let Ok(event) = ui_update_receiver.recv() {
             match event {
@@ -41,7 +41,7 @@ pub fn start_ui_event_listener(
                             .store(wave_shape_index as u8, Relaxed);
                     } else {
                         log::warn!(
-                            "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
+                            "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
                         );
                     }
                 }
@@ -55,7 +55,7 @@ pub fn start_ui_event_listener(
                         );
                     } else {
                         log::warn!(
-                            "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
+                            "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
                         );
                     }
                 }
@@ -69,10 +69,10 @@ pub fn start_ui_event_listener(
                         );
 
                         ui_update_sender.send(UIUpdates::OscillatorFineTuneCents(oscillator_index, cents as i32)).expect
-                        ("start_ui_event_listener(): Failed to send oscillator fine-tune display value to the UI.");
+                        ("start_update_event_listener(): Failed to send oscillator fine-tune display value to the UI.");
                     } else {
                         log::warn!(
-                            "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
+                            "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
                         );
                     }
                 }
@@ -86,7 +86,7 @@ pub fn start_ui_event_listener(
                         );
                     } else {
                         log::warn!(
-                            "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
+                            "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
                         );
                     }
                 }
@@ -100,7 +100,7 @@ pub fn start_ui_event_listener(
                         );
                     } else {
                         log::warn!(
-                            "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
+                            "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
                         );
                     }
                 }
@@ -114,7 +114,7 @@ pub fn start_ui_event_listener(
                         );
                     } else {
                         log::warn!(
-                            "start_ui_event_listener(): Invalid oscillator index: {oscillator_index}"
+                            "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
                         );
                     }
                 }
@@ -240,7 +240,7 @@ pub fn start_ui_event_listener(
                         }
                     };
                     ui_update_sender.send(UIUpdates::LFOFrequencyDisplay(lfo_index, frequency)).expect
-                    ("start_ui_event_listener(): Failed to send oscillator fine-tune display value to the UI.");
+                    ("start_update_event_listener(): Failed to send oscillator fine-tune display value to the UI.");
                 }
                 SynthesizerUpdateEvents::LfoShapeIndex(lfo_index, wave_shape_index) => {
                     match lfo_index {
@@ -279,7 +279,7 @@ pub fn start_ui_event_listener(
                     ui_update_sender
                         .send(UIUpdates::LFOPhase(lfo_index, phase))
                         .expect(
-                            "start_ui_event_listener(): \
+                            "start_update_event_listener(): \
                     Failed to send the lfo reset to the UI.",
                         );
                 }
@@ -298,7 +298,7 @@ pub fn start_ui_event_listener(
                     ui_update_sender
                         .send(UIUpdates::LFOPhase(lfo_index, DEFAULT_LFO_PHASE))
                         .expect(
-                            "start_ui_event_listener(): \
+                            "start_update_event_listener(): \
                     Failed to send the lfo reset to the UI.",
                         );
                 }

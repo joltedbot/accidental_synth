@@ -20,6 +20,8 @@ export struct AudioDevice {
     right-channel-index: int,
     sample-rates: [string],
     sample-rate-index: int,
+    buffer-sizes: [string],
+    buffer-size-index: int,
 }
 
 export struct MidiPort {
@@ -37,6 +39,7 @@ export component AudioSettings inherits VerticalLayout {
     callback audio-output-left-channel-changed(string);
     callback audio-output-right-channel-changed(string);
     callback audio-sample-rate-changed(string);
+    callback audio-buffer-size-changed(string);
     callback reload-popupwindow();
 
     padding: Theme.osc-controls-panel-padding;
@@ -81,7 +84,7 @@ export component AudioSettings inherits VerticalLayout {
 
     sample := DropDownMenu {
         label: "Sample Rate";
-        enabled: false;
+        enabled: true;
         dropdown-width: Theme.oscillator-panel-widget-width;
         value-list: audio-device-values.sample-rates;
         value-index: audio-device-values.sample-rate-index;
@@ -89,6 +92,17 @@ export component AudioSettings inherits VerticalLayout {
             audio-sample-rate-changed(rate);
         }
     }
+
+        buffer_size := DropDownMenu {
+            label: "Buffer Size";
+            enabled: true;
+            dropdown-width: Theme.oscillator-panel-widget-width;
+            value-list: audio-device-values.buffer_sizes;
+            value-index: audio-device-values.buffer_size-index;
+            drop_down_changed(index, size) => {
+                audio-buffer-size-changed(size);
+            }
+        }
 }
 
 export component MidiSettings inherits VerticalLayout {
@@ -150,6 +164,7 @@ export component SettingsWindow inherits PopupWindow {
     callback audio-output-left-channel-changed(string);
     callback audio-output-right-channel-changed(string);
     callback audio-sample-rate-changed(string);
+    callback audio-buffer-size-changed(string);
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
 
@@ -205,6 +220,9 @@ export component SettingsWindow inherits PopupWindow {
                         }
                         audio-sample-rate-changed(rate) => {
                             audio-sample-rate-changed(rate);
+                        }
+                        audio-buffer-size-changed(size) => {
+                            audio-buffer-size-changed(size);
                         }
                     }
                 }

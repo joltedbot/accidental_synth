@@ -5,7 +5,7 @@ use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicU8, AtomicU32};
 
 pub const NUMBER_OF_FILER_POLES: f32 = 4.0;
-const MAXIMUM_FILTER_CUTOFF: f32 = 20000.0;
+const MAX_FILTER_CUTOFF: f32 = 20000.0;
 const DEFAULT_RESONANCE: f32 = 0.0;
 const NATURAL_LOG_OF_4: f32 = 1.386_294_3;
 const DENORMAL_GUARD: f32 = 1e-25_f32;
@@ -67,7 +67,7 @@ impl Filter {
         log::debug!("Constructing Filter Module");
 
         let max_frequency =
-            (sample_rate as f32 * MAX_FILTER_PERCENT_OF_NYQUIST).min(MAXIMUM_FILTER_CUTOFF);
+            (sample_rate as f32 * MAX_FILTER_PERCENT_OF_NYQUIST).min(MAX_FILTER_CUTOFF);
 
         let cutoff_coefficient = calculate_cutoff_coefficient(max_frequency, sample_rate);
         let gain_coefficient = calculate_gain_coefficient(cutoff_coefficient);
@@ -288,6 +288,10 @@ fn calculate_feedback_gain(
 ) -> f32 {
     resonance * (adjusted_resonance_factor + 6.0 * resonance_factor)
         / (adjusted_resonance_factor - 6.0 * resonance_factor)
+}
+
+pub fn max_frequency_from_sample_rate(sample_rate: u32) -> f32 {
+    (sample_rate as f32 * MAX_FILTER_PERCENT_OF_NYQUIST).min(MAX_FILTER_CUTOFF)
 }
 
 #[cfg(test)]

@@ -18,17 +18,20 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
 use std::time::Duration;
+use crate::audio::OutputStreamParameters;
 
 pub fn create_synthesizer(
     sample_buffer_receiver: Receiver<Producer<f32>>,
-    sample_rate: u32,
+    output_stream_parameters: OutputStreamParameters,
     current_note: &Arc<CurrentNote>,
     module_parameters: &Arc<ModuleParameters>,
 ) -> Result<()> {
     let current_note = current_note.clone();
     let module_parameters = module_parameters.clone();
 
-    log::info!("Initializing the filter module");
+    let sample_rate = output_stream_parameters.sample_rate.load(Relaxed);
+    
+    log::info!("Initializing the synthesizer audio creation loop");
     let mut filter = Filter::new(sample_rate);
     let mut amp_envelope = Envelope::new(sample_rate);
     let mut filter_envelope = Envelope::new(sample_rate);
@@ -55,7 +58,7 @@ pub fn create_synthesizer(
 
     log::info!("Creating the synthesizer audio loop at sample rate: {sample_rate}");
 
-    thread::spawn(move || {
+   thread::spawn(move || {
         loop {
             // Process the module parameters per buffer
             amp_envelope.set_parameters(&module_parameters.amp_envelope);
@@ -146,7 +149,8 @@ pub fn create_synthesizer(
                 ));
             }
         }
-    });
+   });
+
 
     log::info!("Synthesizer audio loop was successfully created.");
 

@@ -9,16 +9,37 @@ use crate::modules::envelope::{
 use crate::modules::lfo::DEFAULT_LFO_FREQUENCY;
 use crate::ui::constants::DEFAULT_FINE_TUNE_NORMAL_VALUE;
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct UIAudioDevice {
     pub output_device_index: i32,
     pub left_channel_index: i32,
     pub right_channel_index: i32,
     pub sample_rate_index: i32,
+    pub buffer_size_index: i32,
     pub output_devices: Vec<String>,
     pub left_channels: Vec<String>,
     pub right_channels: Vec<String>,
     pub sample_rates: Vec<String>,
+    pub buffer_sizes: Vec<String>,
+}
+
+impl Default for UIAudioDevice {
+    fn default() -> Self {
+        let sample_rates = Defaults::SUPPORTED_SAMPLE_RATES.iter().map(|s| s.to_string()).collect();
+        let buffer_sizes = Defaults::SUPPORTED_BUFFER_SIZES.iter().map(|s| s.to_string()).collect();
+        Self {
+            output_device_index: Defaults::AUDIO_DEVICE_INDEX as i32,
+            left_channel_index: Defaults::LEFT_CHANNEL_INDEX,
+            right_channel_index: Defaults::LEFT_CHANNEL_INDEX,
+            sample_rate_index: Defaults::SAMPLE_RATE_INDEX as i32,
+            buffer_size_index: Defaults::BUFFER_SIZE_INDEX as i32,
+            output_devices: Vec::new(),
+            left_channels: Vec::new(),
+            right_channels: Vec::new(),
+            sample_rates,
+            buffer_sizes,
+        }
+    }
 }
 
 #[derive(Clone, Default)]

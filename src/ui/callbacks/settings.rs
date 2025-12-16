@@ -75,10 +75,26 @@ pub fn callback_audio_output_right_channel_changed(
     }
 }
 
-pub fn callback_audio_sample_rate_changed(ui_weak: &Weak<AccidentalSynth>) {
+pub fn callback_audio_sample_rate_changed(
+    ui_weak: &Weak<AccidentalSynth>,
+    audio_output_device_sender: Sender<AudioDeviceUpdateEvents>,
+) {
     if let Some(ui) = ui_weak.upgrade() {
-        ui.on_audio_sample_rate_changed(|channel| {
-            println!("Audio sample rate changed. {channel}");
+        ui.on_audio_sample_rate_changed(move |rate| {
+            audio_output_device_sender
+                .send(AudioDeviceUpdateEvents::SampleRateChanged(String::from(rate))).expect("callback_audio_output_device_changed(): Could not send new audio sample  rate update to the audio module.Exiting.");
+        });
+    }
+}
+
+pub fn callback_audio_buffer_size_changed(
+    ui_weak: &Weak<AccidentalSynth>,
+    audio_output_device_sender: Sender<AudioDeviceUpdateEvents>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_audio_buffer_size_changed(move |size| {
+            audio_output_device_sender
+                .send(AudioDeviceUpdateEvents::BufferSizeChanged(String::from(size))).expect("callback_audio_output_device_changed(): Could not send new audio buffer size update to the audio module.Exiting.");
         });
     }
 }

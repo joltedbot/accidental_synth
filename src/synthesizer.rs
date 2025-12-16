@@ -17,9 +17,10 @@ use crate::modules::filter::{DEFAULT_KEY_TRACKING_AMOUNT, FilterParameters};
 use crate::modules::lfo::LfoParameters;
 use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
+use crate::modules::filter::max_frequency_from_sample_rate;
 use crate::synthesizer::constants::SYNTHESIZER_MESSAGE_SENDER_CAPACITY;
 use crate::synthesizer::create_synthesizer::create_synthesizer;
-use crate::synthesizer::event_listener::start_ui_event_listener;
+use crate::synthesizer::event_listener::start_update_event_listener;
 use crate::synthesizer::midi_messages::{
     process_midi_cc_values, process_midi_channel_pressure_message, process_midi_note_off_message,
     process_midi_note_on_message, process_midi_pitch_bend_message,
@@ -35,6 +36,7 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::thread;
+use crate::audio::OutputStreamParameters;
 
 pub enum SynthesizerUpdateEvents {
     WaveShapeIndex(i32, i32),
@@ -162,7 +164,7 @@ pub struct ModuleParameters {
 }
 
 pub struct Synthesizer {
-    sample_rate: u32,
+    output_stream_parameters: OutputStreamParameters,
     current_note: Arc<CurrentNote>,
     module_parameters: Arc<ModuleParameters>,
     ui_update_sender: Sender<SynthesizerUpdateEvents>,
@@ -170,7 +172,7 @@ pub struct Synthesizer {
 }
 
 impl Synthesizer {
-    pub fn new(sample_rate: u32) -> Self {
+    pub fn new(output_stream_parameters: OutputStreamParameters) -> Self {
         log::info!(target: "synthesizer", "Constructing Synthesizer Module");
 
         let (ui_update_sender, ui_update_receiver) =
@@ -200,7 +202,7 @@ impl Synthesizer {
             quad_mixer_inputs: oscillator_mixer_parameters,
         };
 
-        let max_filter_frequency = (sample_rate as f32 * 0.35).min(20000.0);
+        let max_filter_frequency = max_frequency_from_sample_rate(output_stream_parameters.sample_rate.load(Relaxed));
         let filter_parameters = FilterParameters {
             cutoff_frequency: AtomicU32::new(max_filter_frequency.to_bits()),
             resonance: AtomicU32::new(0.0_f32.to_bits()),
@@ -245,7 +247,7 @@ impl Synthesizer {
         };
 
         Self {
-            sample_rate,
+            output_stream_parameters,
             current_note: Arc::new(current_note),
             module_parameters: Arc::new(module_parameters),
             ui_update_sender,
@@ -266,8 +268,8 @@ impl Synthesizer {
         log::debug!(target: "synthesizer", "Start the midi event listener thread");
         self.start_midi_event_listener(midi_message_receiver, ui_update_sender.clone());
 
-        log::debug!(target: "synthesizer", "Start the UI event listener thread");
-        start_ui_event_listener(
+        log::debug!(target: "synthesizer", "Start the update event listener thread");
+        start_update_event_listener(
             self.ui_update_receiver.clone(),
             self.module_parameters.clone(),
             self.current_note.clone(),
@@ -277,7 +279,7 @@ impl Synthesizer {
         log::debug!(target: "synthesizer", "Start the synthesizer thread");
         create_synthesizer(
             sample_buffer_receiver,
-            self.sample_rate,
+            self.output_stream_parameters.clone(),
             &self.current_note,
             &self.module_parameters,
         )?;

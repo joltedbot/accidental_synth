@@ -32,7 +32,7 @@ fn main() {
     let mut audio = Audio::new().expect("Could not initialize audio module. Exiting.");
 
     log::debug!(target: "main", "Initialize the synthesizer module");
-    let mut synthesizer = Synthesizer::new(audio.get_sample_rate());
+    let mut synthesizer = Synthesizer::new(audio.get_output_stream_parameters());
 
     log::debug!(target: "main", "Initialize the midi module");
     let mut midi = Midi::new();

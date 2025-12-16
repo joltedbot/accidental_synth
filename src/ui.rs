@@ -42,6 +42,8 @@ pub enum UIUpdates {
     AudioDeviceIndex(i32),
     AudioDeviceChannelCount(u16),
     AudioDeviceChannelIndexes { left: i32, right: i32 },
+    AudioDeviceSampleRateIndex(i32),
+    AudioDeviceBufferSizeIndex(i32),
     OscillatorWaveShape(i32, i32),
     OscillatorFineTune(i32, f32, i32),
     OscillatorFineTuneCents(i32, i32),
@@ -153,12 +155,6 @@ impl UI {
             ..Default::default()
         };
 
-        let audio_device = UIAudioDevice {
-            left_channel_index: 0,
-            right_channel_index: 1,
-            ..Default::default()
-        };
-
         let output_mixer = UIMixer {
             balance: Defaults::OUTPUT_MIXER_BALANCE,
             level: Defaults::OUTPUT_MIXER_LEVEL,
@@ -173,7 +169,7 @@ impl UI {
         oscillator_mixer[OscillatorIndex::Sub as usize].level = Defaults::QUAD_MIXER_SUB_LEVEL;
 
         let parameter_values = ParameterValues {
-            audio_device,
+            audio_device: UIAudioDevice::default(),
             midi_port,
             oscillators: vec![UIOscillator::default(); OscillatorIndex::count()],
             amp_envelope: UIEnvelope::default(),
@@ -524,10 +520,12 @@ fn slint_audio_device_from_ui_audio_device(audio_device_values: &UIAudioDevice) 
         left_channel_index: audio_device_values.left_channel_index,
         right_channel_index: audio_device_values.right_channel_index,
         sample_rate_index: audio_device_values.sample_rate_index,
+        buffer_size_index: audio_device_values.buffer_size_index,
         output_devices: vec_to_model_rc_shared_string(&audio_device_values.output_devices),
         left_channels: vec_to_model_rc_shared_string(&audio_device_values.left_channels),
         right_channels: vec_to_model_rc_shared_string(&audio_device_values.right_channels),
         sample_rates: vec_to_model_rc_shared_string(&audio_device_values.sample_rates),
+        buffer_sizes: vec_to_model_rc_shared_string(&audio_device_values.buffer_sizes),
     }
 }
 

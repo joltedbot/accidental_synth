@@ -34,6 +34,7 @@ export component AccidentalSynth inherits Window {
     callback audio-output-left-channel-changed(string);
     callback audio-output-right-channel-changed(string);
     callback audio-sample-rate-changed(string);
+    callback audio-buffer-size-changed(string);
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
 
@@ -169,6 +170,9 @@ export component AccidentalSynth inherits Window {
                 }
                 audio-sample-rate-changed(rate) => {
                     audio-sample-rate-changed(rate);
+                }
+                audio-buffer-size-changed(size) => {
+                    audio-buffer-size-changed(size);
                 }
                 midi-input-port-changed(port) => {
                     midi-input-port-changed(port);

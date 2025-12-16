@@ -76,6 +76,16 @@ pub fn start_ui_update_listener(
                         right,
                     );
                 }
+                UIUpdates::AudioDeviceSampleRateIndex(index) => {
+                    let audio_device_values = &mut values.audio_device;
+                    audio_device_values.sample_rate_index = index;
+                    set_audio_device_values(&ui_weak_thread, audio_device_values);
+                }
+                UIUpdates::AudioDeviceBufferSizeIndex(index) => {
+                    let audio_device_values = &mut values.audio_device;
+                    audio_device_values.buffer_size_index = index;
+                    set_audio_device_values(&ui_weak_thread, audio_device_values);
+                }
                 UIUpdates::OscillatorWaveShape(oscillator_index, shape_index) => {
                     let oscillator_values = &mut values.oscillators;
                     oscillator_values[oscillator_index as usize].wave_shape_index = shape_index;
