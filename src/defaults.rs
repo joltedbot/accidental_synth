@@ -8,10 +8,9 @@ impl Defaults {
     pub const MONO_CHANNEL_COUNT: u16 = 1;
     pub const OUTPUT_CHANNEL_DISABLED_VALUE: i32 = -1;
     pub const SAMPLE_RATE_INDEX: usize = 1;
-    pub const BUFFER_SIZE_INDEX: usize = 4;
     pub const SUPPORTED_SAMPLE_RATES: [u32;3] = [44100, 48000, 96000];
-    pub const SUPPORTED_BUFFER_SIZES: [u32;7] = [32, 64, 128, 256, 512, 1024, 2048];
-    pub const USE_DEFAULT_BUFFER_SIZE_VALUE: u32 = 0;
+    pub const BUFFER_SIZE_INDEX: usize = 2;
+    pub const SUPPORTED_BUFFER_SIZES: [u32;5] = [64, 128, 256, 512, 1024];
 
     // Mixer Defaults
     pub const OUTPUT_MIXER_LEVEL: f32 = 0.5;

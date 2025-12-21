@@ -6,9 +6,7 @@ use crate::modules::lfo::Lfo;
 use crate::modules::mixer::{MixerInput, output_mix, quad_mix};
 use crate::modules::oscillator::{HardSyncRole, Oscillator, WaveShape};
 use crate::synthesizer;
-use crate::synthesizer::constants::{
-    LOCAL_BUFFER_CAPACITY, SAMPLE_PRODUCER_LOOP_SLEEP_DURATION_MICROSECONDS,
-};
+use crate::synthesizer::constants::SAMPLE_PRODUCER_LOOP_SLEEP_DURATION_MICROSECONDS;
 use crate::synthesizer::{CurrentNote, ModuleParameters, OscillatorIndex};
 use anyhow::Result;
 use crossbeam_channel::Receiver;
@@ -29,37 +27,81 @@ pub fn create_synthesizer(
     let current_note = current_note.clone();
     let module_parameters = module_parameters.clone();
 
-    let sample_rate = output_stream_parameters.sample_rate.load(Relaxed);
-    
-    log::info!("Initializing the synthesizer audio creation loop");
-    let mut filter = Filter::new(sample_rate);
-    let mut amp_envelope = Envelope::new(sample_rate);
-    let mut filter_envelope = Envelope::new(sample_rate);
-    let mut filter_lfo = Lfo::new(sample_rate);
-    let mut mod_wheel_lfo = Lfo::new(sample_rate);
-
-    let mut oscillators = [
-        Oscillator::new(sample_rate, WaveShape::default()),
-        Oscillator::new(sample_rate, WaveShape::default()),
-        Oscillator::new(sample_rate, WaveShape::default()),
-        Oscillator::new(sample_rate, WaveShape::default()),
-    ];
-    oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
-
-    let oscillator_hard_sync_buffer = Arc::new(AtomicBool::new(false));
-    oscillators[OscillatorIndex::One as usize]
-        .set_hard_sync_role(HardSyncRole::Source(oscillator_hard_sync_buffer.clone()));
-    oscillators[OscillatorIndex::Two as usize]
-        .set_hard_sync_role(HardSyncRole::Synced(oscillator_hard_sync_buffer.clone()));
-
     log::debug!("Blocking till we receive a sample buffer producer from the audio module");
     let mut sample_buffer = sample_buffer_receiver.recv()?;
     log::debug!("Sample buffer producer received from the audio module");
 
-    log::info!("Creating the synthesizer audio loop at sample rate: {sample_rate}");
-
    thread::spawn(move || {
+
+       let sample_rate = output_stream_parameters.sample_rate.load(Relaxed);
+       log::info!("Creating the synthesizer audio loop at sample rate: {sample_rate}");
+
+       let mut previous_sample_rate = 0;
+       let mut previous_buffer_size = 0;
+
+       let mut filter = Filter::new(sample_rate);
+       let mut amp_envelope = Envelope::new(sample_rate);
+       let mut filter_envelope = Envelope::new(sample_rate);
+       let mut filter_lfo = Lfo::new(sample_rate);
+       let mut mod_wheel_lfo = Lfo::new(sample_rate);
+
+       let mut oscillators = [
+           Oscillator::new(sample_rate, WaveShape::default()),
+           Oscillator::new(sample_rate, WaveShape::default()),
+           Oscillator::new(sample_rate, WaveShape::default()),
+           Oscillator::new(sample_rate, WaveShape::default()),
+       ];
+       oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
+
+       let oscillator_hard_sync_buffer = Arc::new(AtomicBool::new(false));
+       oscillators[OscillatorIndex::One as usize]
+           .set_hard_sync_role(HardSyncRole::Source(oscillator_hard_sync_buffer.clone()));
+       oscillators[OscillatorIndex::Two as usize]
+           .set_hard_sync_role(HardSyncRole::Synced(oscillator_hard_sync_buffer.clone()));
+
+
         loop {
+
+
+            // The output is stereo so double the buffer size, one per channel
+            let current_buffer_size = output_stream_parameters.buffer_size.load(Relaxed) as usize * 2;
+            let current_sample_rate = output_stream_parameters.sample_rate.load(Relaxed);
+
+
+            if current_sample_rate != previous_sample_rate {
+                log::info!("Sample rate changed from {} Hz to {} Hz. Reinitializing modules.", previous_sample_rate,current_sample_rate);
+
+                filter = Filter::new(sample_rate);
+                amp_envelope = Envelope::new(sample_rate);
+                filter_envelope = Envelope::new(sample_rate);
+                filter_lfo = Lfo::new(sample_rate);
+                mod_wheel_lfo = Lfo::new(sample_rate);
+
+                oscillators = [
+                    Oscillator::new(sample_rate, WaveShape::default()),
+                    Oscillator::new(sample_rate, WaveShape::default()),
+                    Oscillator::new(sample_rate, WaveShape::default()),
+                    Oscillator::new(sample_rate, WaveShape::default()),
+                ];
+                oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
+
+                let oscillator_hard_sync_buffer = Arc::new(AtomicBool::new(false));
+                oscillators[OscillatorIndex::One as usize]
+                    .set_hard_sync_role(HardSyncRole::Source(oscillator_hard_sync_buffer.clone()));
+                oscillators[OscillatorIndex::Two as usize]
+                    .set_hard_sync_role(HardSyncRole::Synced(oscillator_hard_sync_buffer.clone()));
+
+
+                previous_sample_rate = current_sample_rate;
+            }
+
+
+            if current_buffer_size != previous_buffer_size {
+                log::info!("Buffer size changed from {} samples to {} samples.", previous_buffer_size, current_buffer_size);
+                previous_buffer_size = current_buffer_size;
+            }
+
+
             // Process the module parameters per buffer
             amp_envelope.set_parameters(&module_parameters.amp_envelope);
             filter_envelope.set_parameters(&module_parameters.filter_envelope);
@@ -81,9 +123,9 @@ pub fn create_synthesizer(
             mod_wheel_lfo.set_range(vibrato_amount / 4.0);
 
             // Loop Here
-            let mut local_buffer = Vec::<f32>::with_capacity(LOCAL_BUFFER_CAPACITY);
+            let mut local_buffer = Vec::<f32>::with_capacity(current_buffer_size);
 
-            while local_buffer.len() < LOCAL_BUFFER_CAPACITY {
+            while local_buffer.len() < current_buffer_size {
                 // Begin generating and processing the samples for the frame
                 let vibrato_value = mod_wheel_lfo.generate(None);
                 for (index, input) in quad_mixer_inputs.iter_mut().enumerate() {
@@ -139,7 +181,7 @@ pub fn create_synthesizer(
                     );
                 }
 
-                if let Ok(chunk) = sample_buffer.write_chunk_uninit(LOCAL_BUFFER_CAPACITY) {
+                if let Ok(chunk) = sample_buffer.write_chunk_uninit(current_buffer_size) {
                     _ = chunk.fill_from_iter(local_buffer);
                     break;
                 }

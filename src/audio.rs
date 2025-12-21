@@ -44,12 +44,7 @@ pub struct OutputStreamParameters {
 impl OutputStreamParameters {
     pub fn steam_config(&self) -> StreamConfig {
         let buffer_size_samples = self.buffer_size.load(Relaxed);
-        let buffer_size = if buffer_size_samples == Defaults::USE_DEFAULT_BUFFER_SIZE_VALUE {
-            BufferSize::Default
-        } else {
-            BufferSize::Fixed(buffer_size_samples)
-
-        };
+        let buffer_size = BufferSize::Fixed(buffer_size_samples);
 
         StreamConfig {
             sample_rate: SampleRate(self.sample_rate.load(Relaxed)),
@@ -123,7 +118,7 @@ impl Audio {
 
         let output_stream_parameters = OutputStreamParameters {
             sample_rate: Arc::new(AtomicU32::new(sample_rate)),
-            buffer_size: Arc::new(AtomicU32::new(Defaults::USE_DEFAULT_BUFFER_SIZE_VALUE)),
+            buffer_size: Arc::new(AtomicU32::new(Defaults::SUPPORTED_BUFFER_SIZES[Defaults::BUFFER_SIZE_INDEX])),
             channel_count: Arc::new(AtomicU16::new(channel_count)),
         };
 
@@ -265,7 +260,6 @@ fn start_control_listener(
     buffer_dropout_counter: Arc<AtomicU32>,
 ) {
     log::debug!(target: "audio::control_listener",  "Starting the Audio Device Event listener thread");
-    let thread_output_stream_parameters = output_stream_parameters.clone();
     thread::spawn(move || {
         let mut audio_output_stream: Option<Stream> = None;
         let mut current_output_device_name = String::new();
@@ -331,7 +325,7 @@ fn start_control_listener(
                     }
 
                     audio_output_stream = start_new_output_device(
-                        thread_output_stream_parameters.clone(),
+                        output_stream_parameters.clone(),
                         new_output_device,
                         &current_output_channels,
                         &ui_update_sender,
@@ -365,7 +359,7 @@ fn start_control_listener(
                     }
 
                     audio_output_stream = start_new_output_device(
-                        thread_output_stream_parameters.clone(),
+                        output_stream_parameters.clone(),
                         new_output_device,
                         &current_output_channels,
                         &ui_update_sender,
@@ -420,7 +414,7 @@ fn start_control_listener(
                     }
 
                     audio_output_stream = start_new_output_device(
-                        thread_output_stream_parameters.clone(),
+                        output_stream_parameters.clone(),
                         new_output_device,
                         &current_output_channels,
                         &ui_update_sender,
@@ -434,7 +428,7 @@ fn start_control_listener(
                         "AudioDeviceEvent::BufferSizeChanged: Received UI update for audio output device buffer size: {buffer_size}"
                     );
 
-                    let numeric_buffer_size = buffer_size.parse::<u32>().unwrap_or(Defaults::USE_DEFAULT_BUFFER_SIZE_VALUE);
+                    let numeric_buffer_size = buffer_size.parse::<u32>().unwrap_or(Defaults::SUPPORTED_BUFFER_SIZES[Defaults::BUFFER_SIZE_INDEX]);
                     output_stream_parameters.buffer_size.store(numeric_buffer_size, Relaxed);
 
                     let new_output_device = new_output_device_from_name(&host, &current_output_device_name);
@@ -444,7 +438,7 @@ fn start_control_listener(
                     }
 
                     audio_output_stream = start_new_output_device(
-                        thread_output_stream_parameters.clone(),
+                        output_stream_parameters.clone(),
                         new_output_device,
                         &current_output_channels,
                         &ui_update_sender,
