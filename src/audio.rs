@@ -13,7 +13,7 @@ use constants::{
     USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET,
 };
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{BufferSize, Device, Host, SampleRate, Stream, StreamConfig, default_host};
+use cpal::{BufferSize, Device, Host, Stream, StreamConfig, default_host};
 use crossbeam_channel::{Receiver, Sender, bounded};
 use rtrb::{Consumer, Producer, RingBuffer};
 use std::sync::Arc;
@@ -48,7 +48,7 @@ impl OutputStreamParameters {
         let buffer_size = BufferSize::Fixed(buffer_size_samples);
 
         StreamConfig {
-            sample_rate: SampleRate(self.sample_rate.load(Relaxed)),
+            sample_rate: self.sample_rate.load(Relaxed),
             buffer_size,
             channels: self.channel_count.load(Relaxed),
         }
@@ -111,8 +111,7 @@ impl Audio {
         let sample_rate = default_output_device
             .device
             .default_output_config()?
-            .sample_rate()
-            .0;
+            .sample_rate();
 
         let channel_count = default_output_device
             .device
@@ -649,7 +648,7 @@ fn start_main_audio_output_loop(
 fn default_audio_output_device() -> Option<OutputDevice> {
     let audio_host = default_host();
     if let Some(device) = audio_host.default_output_device() {
-        let device_name = device.name().unwrap_or("Unknown".to_string());
+        let device_name = device.description().ok()?.name().to_string();
         log::debug!(
             "default_audio_output_device(): Using default audio output device: {device_name}"
         );
@@ -667,7 +666,7 @@ fn new_output_device_from_name(host: &Host, name: &str) -> Option<OutputDevice> 
     output_devices
         .enumerate()
         .find_map(|(device_index, device)| {
-            if device.name().ok()? == name {
+            if device.description().ok()?.name() == name {
                 let channel_count = device.default_output_config().ok()?.channels();
 
                 if channel_count == 0 {
