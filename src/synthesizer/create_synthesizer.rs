@@ -1,3 +1,4 @@
+use crate::audio::OutputStreamParameters;
 use crate::math::load_f32_from_atomic_u32;
 use crate::modules::amplifier::amplify_stereo;
 use crate::modules::envelope::Envelope;
@@ -16,7 +17,6 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
 use std::time::Duration;
-use crate::audio::OutputStreamParameters;
 
 pub fn create_synthesizer(
     sample_buffer_receiver: Receiver<Producer<f32>>,
@@ -31,45 +31,39 @@ pub fn create_synthesizer(
     let mut sample_buffer = sample_buffer_receiver.recv()?;
     log::debug!("Sample buffer producer received from the audio module");
 
-   thread::spawn(move || {
+    thread::spawn(move || {
+        let sample_rate = output_stream_parameters.sample_rate.load(Relaxed);
+        log::info!("Creating the synthesizer audio loop at sample rate: {sample_rate}");
 
-       let sample_rate = output_stream_parameters.sample_rate.load(Relaxed);
-       log::info!("Creating the synthesizer audio loop at sample rate: {sample_rate}");
+        let mut previous_sample_rate = 0;
+        let mut previous_buffer_size = 0;
 
-       let mut previous_sample_rate = 0;
-       let mut previous_buffer_size = 0;
+        let mut filter = Filter::new(sample_rate);
+        let mut amp_envelope = Envelope::new(sample_rate);
+        let mut filter_envelope = Envelope::new(sample_rate);
+        let mut filter_lfo = Lfo::new(sample_rate);
+        let mut mod_wheel_lfo = Lfo::new(sample_rate);
 
-       let mut filter = Filter::new(sample_rate);
-       let mut amp_envelope = Envelope::new(sample_rate);
-       let mut filter_envelope = Envelope::new(sample_rate);
-       let mut filter_lfo = Lfo::new(sample_rate);
-       let mut mod_wheel_lfo = Lfo::new(sample_rate);
-
-       let mut oscillators = [
-           Oscillator::new(sample_rate, WaveShape::default()),
-           Oscillator::new(sample_rate, WaveShape::default()),
-           Oscillator::new(sample_rate, WaveShape::default()),
-           Oscillator::new(sample_rate, WaveShape::default()),
-       ];
-       oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
-
-       let oscillator_hard_sync_buffer = Arc::new(AtomicBool::new(false));
-       oscillators[OscillatorIndex::One as usize]
-           .set_hard_sync_role(HardSyncRole::Source(oscillator_hard_sync_buffer.clone()));
-       oscillators[OscillatorIndex::Two as usize]
-           .set_hard_sync_role(HardSyncRole::Synced(oscillator_hard_sync_buffer.clone()));
-
+        let mut oscillators = [
+            Oscillator::new(sample_rate, WaveShape::default()),
+            Oscillator::new(sample_rate, WaveShape::default()),
+            Oscillator::new(sample_rate, WaveShape::default()),
+            Oscillator::new(sample_rate, WaveShape::default()),
+        ];
+        oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
 
         loop {
-
-
             // The output is stereo so double the buffer size, one per channel
-            let current_buffer_size = output_stream_parameters.buffer_size.load(Relaxed) as usize * 2;
+            let current_buffer_size =
+                output_stream_parameters.buffer_size.load(Relaxed) as usize * 2;
             let current_sample_rate = output_stream_parameters.sample_rate.load(Relaxed);
 
-
             if current_sample_rate != previous_sample_rate {
-                log::info!("Sample rate changed from {} Hz to {} Hz. Reinitializing modules.", previous_sample_rate,current_sample_rate);
+                log::info!(
+                    "Sample rate changed from {} Hz to {} Hz. Reinitializing modules.",
+                    previous_sample_rate,
+                    current_sample_rate
+                );
 
                 filter = Filter::new(sample_rate);
                 amp_envelope = Envelope::new(sample_rate);
@@ -91,16 +85,17 @@ pub fn create_synthesizer(
                 oscillators[OscillatorIndex::Two as usize]
                     .set_hard_sync_role(HardSyncRole::Synced(oscillator_hard_sync_buffer.clone()));
 
-
                 previous_sample_rate = current_sample_rate;
             }
 
-
             if current_buffer_size != previous_buffer_size {
-                log::info!("Buffer size changed from {} samples to {} samples.", previous_buffer_size, current_buffer_size);
+                log::info!(
+                    "Buffer size changed from {} samples to {} samples.",
+                    previous_buffer_size,
+                    current_buffer_size
+                );
                 previous_buffer_size = current_buffer_size;
             }
-
 
             // Process the module parameters per buffer
             amp_envelope.set_parameters(&module_parameters.amp_envelope);
@@ -191,8 +186,7 @@ pub fn create_synthesizer(
                 ));
             }
         }
-   });
-
+    });
 
     log::info!("Synthesizer audio loop was successfully created.");
 

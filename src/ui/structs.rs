@@ -25,8 +25,14 @@ pub struct UIAudioDevice {
 
 impl Default for UIAudioDevice {
     fn default() -> Self {
-        let sample_rates = Defaults::SUPPORTED_SAMPLE_RATES.iter().map(|s| s.to_string()).collect();
-        let buffer_sizes = Defaults::SUPPORTED_BUFFER_SIZES.iter().map(|s| s.to_string()).collect();
+        let sample_rates = Defaults::SUPPORTED_SAMPLE_RATES
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
+        let buffer_sizes = Defaults::SUPPORTED_BUFFER_SIZES
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
         Self {
             output_device_index: Defaults::AUDIO_DEVICE_INDEX as i32,
             left_channel_index: Defaults::LEFT_CHANNEL_INDEX,

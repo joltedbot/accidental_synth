@@ -31,7 +31,6 @@ pub fn register_callbacks(
     settings::callback_audio_sample_rate_changed(ui_weak, audio_output_device_sender.clone());
     settings::callback_audio_buffer_size_changed(ui_weak, audio_output_device_sender.clone());
 
-
     oscillators::callback_osc_oscillator_shape_changed(ui_weak, synthesizer_update_sender.clone());
     oscillators::callback_osc_course_tune_changed(ui_weak, synthesizer_update_sender.clone());
     oscillators::callback_osc_fine_tune_changed(ui_weak, synthesizer_update_sender.clone());

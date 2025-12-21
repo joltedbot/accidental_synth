@@ -13,11 +13,11 @@ use self::constants::{
 use crate::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
 use crate::midi::Event;
 use crate::modules::envelope::EnvelopeParameters;
+use crate::modules::filter::max_frequency_from_sample_rate;
 use crate::modules::filter::{DEFAULT_KEY_TRACKING_AMOUNT, FilterParameters};
 use crate::modules::lfo::LfoParameters;
 use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
-use crate::modules::filter::max_frequency_from_sample_rate;
 use crate::synthesizer::constants::SYNTHESIZER_MESSAGE_SENDER_CAPACITY;
 use crate::synthesizer::create_synthesizer::create_synthesizer;
 use crate::synthesizer::event_listener::start_update_event_listener;
@@ -26,6 +26,7 @@ use crate::synthesizer::midi_messages::{
     process_midi_note_on_message, process_midi_pitch_bend_message,
 };
 
+use crate::audio::OutputStreamParameters;
 use crate::defaults::Defaults;
 use crate::ui::UIUpdates;
 use anyhow::Result;
@@ -36,7 +37,6 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::thread;
-use crate::audio::OutputStreamParameters;
 
 pub enum SynthesizerUpdateEvents {
     WaveShapeIndex(i32, i32),
@@ -202,7 +202,8 @@ impl Synthesizer {
             quad_mixer_inputs: oscillator_mixer_parameters,
         };
 
-        let max_filter_frequency = max_frequency_from_sample_rate(output_stream_parameters.sample_rate.load(Relaxed));
+        let max_filter_frequency =
+            max_frequency_from_sample_rate(output_stream_parameters.sample_rate.load(Relaxed));
         let filter_parameters = FilterParameters {
             cutoff_frequency: AtomicU32::new(max_filter_frequency.to_bits()),
             resonance: AtomicU32::new(0.0_f32.to_bits()),

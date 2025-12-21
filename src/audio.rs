@@ -5,13 +5,15 @@ use crate::audio::constants::{
     BUFFER_DROP_OUT_LOGGER, COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS,
 };
 use crate::audio::device_monitor::{DeviceMonitor, get_audio_device_list};
+use crate::defaults::Defaults;
 use crate::ui::UIUpdates;
 use anyhow::{Result, anyhow};
 use constants::{
-    AUDIO_MESSAGE_SENDER_CAPACITY, SAMPLE_BUFFER_CAPACITY, SAMPLE_BUFFER_SENDER_CAPACITY, USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET,
+    AUDIO_MESSAGE_SENDER_CAPACITY, SAMPLE_BUFFER_CAPACITY, SAMPLE_BUFFER_SENDER_CAPACITY,
+    USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET,
 };
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{Device, Host, Stream, default_host, StreamConfig, BufferSize, SampleRate};
+use cpal::{BufferSize, Device, Host, SampleRate, Stream, StreamConfig, default_host};
 use crossbeam_channel::{Receiver, Sender, bounded};
 use rtrb::{Consumer, Producer, RingBuffer};
 use std::sync::Arc;
@@ -20,7 +22,6 @@ use std::sync::atomic::{AtomicI32, AtomicU16, AtomicU32};
 use std::thread;
 use std::time::Duration;
 use thiserror::Error;
-use crate::defaults::Defaults;
 
 #[derive(Clone)]
 pub struct OutputDevice {
@@ -51,21 +52,22 @@ impl OutputStreamParameters {
             buffer_size,
             channels: self.channel_count.load(Relaxed),
         }
-
     }
 
     pub fn sample_rate_index(&self) -> usize {
-        Defaults::SUPPORTED_SAMPLE_RATES.iter().position(|&x| x == self.sample_rate.load(Relaxed)).unwrap_or
-        (Defaults::SAMPLE_RATE_INDEX)
+        Defaults::SUPPORTED_SAMPLE_RATES
+            .iter()
+            .position(|&x| x == self.sample_rate.load(Relaxed))
+            .unwrap_or(Defaults::SAMPLE_RATE_INDEX)
     }
 
     pub fn buffer_size_index(&self) -> usize {
-       Defaults::SUPPORTED_BUFFER_SIZES.iter().position(|&x| x == self.buffer_size.load(Relaxed)).unwrap_or
-       (Defaults::BUFFER_SIZE_INDEX)
+        Defaults::SUPPORTED_BUFFER_SIZES
+            .iter()
+            .position(|&x| x == self.buffer_size.load(Relaxed))
+            .unwrap_or(Defaults::BUFFER_SIZE_INDEX)
     }
 }
-
-
 
 #[derive(Debug, Clone, Error)]
 pub enum AudioError {
@@ -114,11 +116,14 @@ impl Audio {
 
         let channel_count = default_output_device
             .device
-            .default_output_config()?.channels();
+            .default_output_config()?
+            .channels();
 
         let output_stream_parameters = OutputStreamParameters {
             sample_rate: Arc::new(AtomicU32::new(sample_rate)),
-            buffer_size: Arc::new(AtomicU32::new(Defaults::SUPPORTED_BUFFER_SIZES[Defaults::BUFFER_SIZE_INDEX])),
+            buffer_size: Arc::new(AtomicU32::new(
+                Defaults::SUPPORTED_BUFFER_SIZES[Defaults::BUFFER_SIZE_INDEX],
+            )),
             channel_count: Arc::new(AtomicU16::new(channel_count)),
         };
 
@@ -311,8 +316,6 @@ fn start_control_listener(
 
                     let new_output_device = default_audio_output_device();
 
-
-
                     update_device_properties(
                         &current_output_channels,
                         &mut current_output_device_name,
@@ -403,11 +406,15 @@ fn start_control_listener(
                     log::debug!(
                         "AudioDeviceEvent::SampleRateChanged: Received UI update for audio output device sample rate: {sample_rate}"
                     );
-                    let numeric_sample_rate = sample_rate.parse::<u32>().unwrap_or(Defaults::SUPPORTED_SAMPLE_RATES[Defaults::SAMPLE_RATE_INDEX]);
-                    output_stream_parameters.sample_rate.store(numeric_sample_rate, Relaxed);
+                    let numeric_sample_rate = sample_rate
+                        .parse::<u32>()
+                        .unwrap_or(Defaults::SUPPORTED_SAMPLE_RATES[Defaults::SAMPLE_RATE_INDEX]);
+                    output_stream_parameters
+                        .sample_rate
+                        .store(numeric_sample_rate, Relaxed);
 
-
-                    let new_output_device = new_output_device_from_name(&host, &current_output_device_name);
+                    let new_output_device =
+                        new_output_device_from_name(&host, &current_output_device_name);
 
                     if let Some(stream) = audio_output_stream {
                         let _ = stream.pause();
@@ -421,17 +428,21 @@ fn start_control_listener(
                         &sample_producer_sender,
                         &buffer_dropout_counter,
                     );
-
                 }
                 AudioDeviceUpdateEvents::BufferSizeChanged(buffer_size) => {
                     log::debug!(
                         "AudioDeviceEvent::BufferSizeChanged: Received UI update for audio output device buffer size: {buffer_size}"
                     );
 
-                    let numeric_buffer_size = buffer_size.parse::<u32>().unwrap_or(Defaults::SUPPORTED_BUFFER_SIZES[Defaults::BUFFER_SIZE_INDEX]);
-                    output_stream_parameters.buffer_size.store(numeric_buffer_size, Relaxed);
+                    let numeric_buffer_size = buffer_size
+                        .parse::<u32>()
+                        .unwrap_or(Defaults::SUPPORTED_BUFFER_SIZES[Defaults::BUFFER_SIZE_INDEX]);
+                    output_stream_parameters
+                        .buffer_size
+                        .store(numeric_buffer_size, Relaxed);
 
-                    let new_output_device = new_output_device_from_name(&host, &current_output_device_name);
+                    let new_output_device =
+                        new_output_device_from_name(&host, &current_output_device_name);
 
                     if let Some(stream) = audio_output_stream {
                         let _ = stream.pause();
@@ -504,15 +515,15 @@ fn update_device_properties(
 
     update_current_channels(current_output_channels, new_output_device);
 
-
     if let Some(default_config) = new_output_device
-        .as_ref().map(|device| device.device.default_output_config()).and_then(|config| config.ok())
+        .as_ref()
+        .map(|device| device.device.default_output_config())
+        .and_then(|config| config.ok())
     {
-        output_stream_parameters.channel_count.store(default_config.channels(), Relaxed);
+        output_stream_parameters
+            .channel_count
+            .store(default_config.channels(), Relaxed);
     }
-
-
-
 }
 
 fn update_current_channels(
@@ -522,7 +533,10 @@ fn update_current_channels(
     let new_channel_indexes = if let Some(device) = new_output_device {
         default_channels_from_device(device).expect("create_control_listener(): Could not get default audio channels for the new output device. Exiting.")
     } else {
-        (Defaults::OUTPUT_CHANNEL_DISABLED_VALUE, Defaults::OUTPUT_CHANNEL_DISABLED_VALUE)
+        (
+            Defaults::OUTPUT_CHANNEL_DISABLED_VALUE,
+            Defaults::OUTPUT_CHANNEL_DISABLED_VALUE,
+        )
     };
 
     current_output_channels
@@ -585,12 +599,14 @@ fn start_main_audio_output_loop(
     mut sample_buffer: Consumer<f32>,
     buffer_dropout_counter: Arc<AtomicU32>,
 ) -> Result<Stream> {
-
     let device_stream_config = output_stream_parameters.steam_config();
 
     log::info!(
         "Starting audio output loop with the device: {}, sample rate: {} Hz, buffer size: {} samples, channels: {}",
-        output_device.name, output_stream_parameters.sample_rate.load(Relaxed), output_stream_parameters.buffer_size.load(Relaxed), output_stream_parameters.channel_count.load(Relaxed)
+        output_device.name,
+        output_stream_parameters.sample_rate.load(Relaxed),
+        output_stream_parameters.buffer_size.load(Relaxed),
+        output_stream_parameters.channel_count.load(Relaxed)
     );
 
     let number_of_channels = output_stream_parameters.channel_count.load(Relaxed) as usize;
