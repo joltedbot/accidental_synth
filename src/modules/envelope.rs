@@ -106,8 +106,6 @@ impl Envelope {
         self.set_sustain_level(load_f32_from_atomic_u32(&parameters.sustain_level));
         self.set_amount(load_f32_from_atomic_u32(&parameters.amount));
         self.set_is_inverted(parameters.is_inverted.load(Relaxed));
-        self.set_gate(parameters.gate_flag.load(Relaxed));
-        parameters.gate_flag.store(0, Relaxed); // Reset the gate flag to waiting to clear the flag
     }
 
     pub fn generate(&mut self) -> f32 {
@@ -118,15 +116,23 @@ impl Envelope {
         envelope_output_value * self.amount
     }
 
-    pub fn set_gate(&mut self, gate_active: u8) {
+    pub fn check_gate(&mut self, gate_flag: &AtomicU8) {
+        if self.set_gate(gate_flag.load(Relaxed)) {
+            gate_flag.store(0, Relaxed);
+        }
+    }
+
+    fn set_gate(&mut self, gate_active: u8) -> bool {
         match gate_active {
             1 => {
                 self.gate_on();
+                true
             }
             2 => {
                 self.gate_off();
+                true
             }
-            _ => {}
+            _ => false,
         }
     }
 

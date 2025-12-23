@@ -17,6 +17,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
 use std::time::Duration;
+use log::info;
 
 pub fn create_synthesizer(
     sample_buffer_receiver: Receiver<Producer<f32>>,
@@ -33,7 +34,7 @@ pub fn create_synthesizer(
 
     thread::spawn(move || {
         let sample_rate = output_stream_parameters.sample_rate.load(Relaxed);
-        log::info!("Creating the synthesizer audio loop at sample rate: {sample_rate}");
+        info!("Creating the synthesizer audio loop at sample rate: {sample_rate}");
 
         let mut previous_sample_rate = 0;
         let mut previous_buffer_size = 0;
@@ -53,29 +54,26 @@ pub fn create_synthesizer(
         oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
 
         loop {
-            // The output is stereo so double the buffer size, one per channel
-            let current_buffer_size =
-                output_stream_parameters.buffer_size.load(Relaxed) as usize * 2;
-            let current_sample_rate = output_stream_parameters.sample_rate.load(Relaxed);
+            let current_buffer_size = output_stream_parameters.buffer_size.load(Relaxed);
+            let stereo_buffer_size = current_buffer_size as usize * 2;
 
+            let current_sample_rate = output_stream_parameters.sample_rate.load(Relaxed);
             if current_sample_rate != previous_sample_rate {
-                log::info!(
-                    "Sample rate changed from {} Hz to {} Hz. Reinitializing modules.",
-                    previous_sample_rate,
-                    current_sample_rate
+                info!(
+                    "Sample rate changed from {previous_sample_rate} Hz to {current_sample_rate} Hz. Reinitializing modules."
                 );
 
-                filter = Filter::new(sample_rate);
-                amp_envelope = Envelope::new(sample_rate);
-                filter_envelope = Envelope::new(sample_rate);
-                filter_lfo = Lfo::new(sample_rate);
-                mod_wheel_lfo = Lfo::new(sample_rate);
+                filter = Filter::new(current_sample_rate);
+                amp_envelope = Envelope::new(current_sample_rate);
+                filter_envelope = Envelope::new(current_sample_rate);
+                filter_lfo = Lfo::new(current_sample_rate);
+                mod_wheel_lfo = Lfo::new(current_sample_rate);
 
                 oscillators = [
-                    Oscillator::new(sample_rate, WaveShape::default()),
-                    Oscillator::new(sample_rate, WaveShape::default()),
-                    Oscillator::new(sample_rate, WaveShape::default()),
-                    Oscillator::new(sample_rate, WaveShape::default()),
+                    Oscillator::new(current_sample_rate, WaveShape::default()),
+                    Oscillator::new(current_sample_rate, WaveShape::default()),
+                    Oscillator::new(current_sample_rate, WaveShape::default()),
+                    Oscillator::new(current_sample_rate, WaveShape::default()),
                 ];
                 oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);
 
@@ -89,11 +87,7 @@ pub fn create_synthesizer(
             }
 
             if current_buffer_size != previous_buffer_size {
-                log::info!(
-                    "Buffer size changed from {} samples to {} samples.",
-                    previous_buffer_size,
-                    current_buffer_size
-                );
+                info!("Buffer size changed from {previous_buffer_size} samples to {current_buffer_size} samples.");
                 previous_buffer_size = current_buffer_size;
             }
 
@@ -118,10 +112,12 @@ pub fn create_synthesizer(
             mod_wheel_lfo.set_range(vibrato_amount / 4.0);
 
             // Loop Here
-            let mut local_buffer = Vec::<f32>::with_capacity(current_buffer_size);
+            let mut local_buffer = Vec::<f32>::with_capacity(stereo_buffer_size);
 
-            while local_buffer.len() < current_buffer_size {
+            while local_buffer.len() < stereo_buffer_size {
                 // Begin generating and processing the samples for the frame
+                filter_envelope.check_gate(&module_parameters.filter_envelope.gate_flag);
+                amp_envelope.check_gate(&module_parameters.amp_envelope.gate_flag);
                 let vibrato_value = mod_wheel_lfo.generate(None);
                 for (index, input) in quad_mixer_inputs.iter_mut().enumerate() {
                     input.sample = oscillators[index].generate(Some(vibrato_value));
@@ -176,7 +172,7 @@ pub fn create_synthesizer(
                     );
                 }
 
-                if let Ok(chunk) = sample_buffer.write_chunk_uninit(current_buffer_size) {
+                if let Ok(chunk) = sample_buffer.write_chunk_uninit(stereo_buffer_size) {
                     _ = chunk.fill_from_iter(local_buffer);
                     break;
                 }
@@ -188,7 +184,7 @@ pub fn create_synthesizer(
         }
     });
 
-    log::info!("Synthesizer audio loop was successfully created.");
+    info!("Synthesizer audio loop was successfully created.");
 
     Ok(())
 }

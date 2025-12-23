@@ -2,14 +2,15 @@ mod constants;
 mod device_monitor;
 
 use crate::audio::constants::{
-    BUFFER_DROP_OUT_LOGGER, COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS,
+    BUFFER_DROP_OUT_LOGGER, COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS, STEREO_CHANNEL_COUNT,
+    STEREO_SAMPLE_BUFFER_COUNT,
 };
 use crate::audio::device_monitor::{DeviceMonitor, get_audio_device_list};
 use crate::defaults::Defaults;
 use crate::ui::UIUpdates;
 use anyhow::{Result, anyhow};
 use constants::{
-    AUDIO_MESSAGE_SENDER_CAPACITY, SAMPLE_BUFFER_CAPACITY, SAMPLE_BUFFER_SENDER_CAPACITY,
+    AUDIO_MESSAGE_SENDER_CAPACITY, SAMPLE_BUFFER_SENDER_CAPACITY,
     USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET,
 };
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
@@ -187,7 +188,7 @@ impl Audio {
 }
 
 fn restart_main_audio_loop_with_new_device(
-    output_steam_parameters: OutputStreamParameters,
+    output_steam_parameters: &OutputStreamParameters,
     ui_update_sender: &Sender<UIUpdates>,
     sample_producer_sender: &Sender<Producer<f32>>,
     output_device: &OutputDevice,
@@ -199,7 +200,10 @@ fn restart_main_audio_loop_with_new_device(
         output_device.name
     );
 
-    let (sample_producer, sample_consumer) = RingBuffer::<f32>::new(SAMPLE_BUFFER_CAPACITY);
+    let ring_buffer_capacity = output_steam_parameters.buffer_size.load(Relaxed)
+        * STEREO_CHANNEL_COUNT
+        * STEREO_SAMPLE_BUFFER_COUNT;
+    let (sample_producer, sample_consumer) = RingBuffer::<f32>::new(ring_buffer_capacity as usize);
     sample_producer_sender
         .send(sample_producer)
         .expect("restart_main_audio_loop_with_new_device(): Could not send device update to the audio output device sender. Exiting. ");
@@ -245,7 +249,7 @@ fn restart_main_audio_loop_with_new_device(
         );
 
     start_main_audio_output_loop(
-        output_steam_parameters,
+        &output_steam_parameters,
         output_device,
         current_output_channels,
         sample_consumer,
@@ -517,7 +521,7 @@ fn update_device_properties(
     if let Some(default_config) = new_output_device
         .as_ref()
         .map(|device| device.device.default_output_config())
-        .and_then(|config| config.ok())
+        .and_then(std::result::Result::ok)
     {
         output_stream_parameters
             .channel_count
@@ -576,7 +580,7 @@ fn start_new_output_device(
         );
 
         restart_main_audio_loop_with_new_device(
-            output_steam_parameters,
+            &output_steam_parameters,
             ui_update_sender,
             sample_producer_sender,
             &device,
@@ -592,7 +596,7 @@ fn start_new_output_device(
 }
 
 fn start_main_audio_output_loop(
-    output_stream_parameters: OutputStreamParameters,
+    output_stream_parameters: &OutputStreamParameters,
     output_device: &OutputDevice,
     output_channels: &Arc<OutputChannels>,
     mut sample_buffer: Consumer<f32>,

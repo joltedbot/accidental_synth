@@ -27,11 +27,11 @@ impl Default for UIAudioDevice {
     fn default() -> Self {
         let sample_rates = Defaults::SUPPORTED_SAMPLE_RATES
             .iter()
-            .map(|s| s.to_string())
+            .map(ToString::to_string)
             .collect();
         let buffer_sizes = Defaults::SUPPORTED_BUFFER_SIZES
             .iter()
-            .map(|s| s.to_string())
+            .map(ToString::to_string)
             .collect();
         Self {
             output_device_index: Defaults::AUDIO_DEVICE_INDEX as i32,
