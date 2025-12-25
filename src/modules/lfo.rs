@@ -117,3 +117,168 @@ impl Lfo {
         self.oscillator.reset();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SAMPLE_RATE: u32 = 48000;
+
+    // Tests for generate() - early return branching
+    #[test]
+    fn test_generate_returns_zero_when_range_is_zero() {
+        let mut lfo = Lfo::new(SAMPLE_RATE);
+        lfo.set_frequency(1.0);
+        lfo.set_range(0.0);
+        lfo.set_center_value(0.5);
+
+        let actual = lfo.generate(None);
+        let expected = 0.0;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    // Tests for set_frequency() - clamping logic
+    #[test]
+    fn test_set_frequency_clamps_to_minimum() {
+        let mut lfo = Lfo::new(SAMPLE_RATE);
+        let below_min = MIN_LFO_FREQUENCY - 1.0;
+
+        lfo.set_frequency(below_min);
+        let actual = lfo.frequency;
+        let expected = MIN_LFO_FREQUENCY;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
+    fn test_set_frequency_clamps_to_maximum() {
+        let mut lfo = Lfo::new(SAMPLE_RATE);
+        let above_max = MAX_LFO_FREQUENCY + 1.0;
+
+        lfo.set_frequency(above_max);
+        let actual = lfo.frequency;
+        let expected = MAX_LFO_FREQUENCY;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    // Tests for set_center_value() - clamping logic
+    #[test]
+    fn test_set_center_value_clamps_to_minimum() {
+        let mut lfo = Lfo::new(SAMPLE_RATE);
+        let below_min = MIN_LFO_CENTER_VALUE - 1.0;
+
+        lfo.set_center_value(below_min);
+        let actual = lfo.center_value;
+        let expected = MIN_LFO_CENTER_VALUE;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
+    fn test_set_center_value_clamps_to_maximum() {
+        let mut lfo = Lfo::new(SAMPLE_RATE);
+        let above_max = MAX_LFO_CENTER_VALUE + 1.0;
+
+        lfo.set_center_value(above_max);
+        let actual = lfo.center_value;
+        let expected = MAX_LFO_CENTER_VALUE;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    // Tests for set_range() - special zero handling and clamping
+    #[test]
+    fn test_set_range_zero_returns_zero() {
+        let mut lfo = Lfo::new(SAMPLE_RATE);
+
+        lfo.set_range(0.0);
+        let actual = lfo.range;
+        let expected = 0.0;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
+    fn test_set_range_clamps_to_minimum() {
+        let mut lfo = Lfo::new(SAMPLE_RATE);
+        let below_min = MIN_LFO_RANGE - 0.1;
+
+        lfo.set_range(below_min);
+        let actual = lfo.range;
+        let expected = MIN_LFO_RANGE;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
+    fn test_set_range_clamps_to_maximum() {
+        let mut lfo = Lfo::new(SAMPLE_RATE);
+        let above_max = MAX_LFO_RANGE + 1.0;
+
+        lfo.set_range(above_max);
+        let actual = lfo.range;
+        let expected = MAX_LFO_RANGE;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    // Tests for set_wave_shape() - conditional update logic
+    #[test]
+    fn test_set_wave_shape_updates_when_changed() {
+        let mut lfo = Lfo::new(SAMPLE_RATE);
+        let initial_wave_shape = WaveShape::Sine as u8;
+        let new_wave_shape = WaveShape::Square as u8;
+
+        assert_eq!(lfo.wave_shape_index, initial_wave_shape);
+
+        lfo.set_wave_shape(new_wave_shape);
+        let actual = lfo.wave_shape_index;
+        let expected = new_wave_shape;
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_set_wave_shape_does_not_update_when_same() {
+        let mut lfo = Lfo::new(SAMPLE_RATE);
+        let wave_shape = WaveShape::Sine as u8;
+
+        lfo.set_wave_shape(wave_shape);
+        let actual = lfo.wave_shape_index;
+        let expected = wave_shape;
+
+        assert_eq!(actual, expected);
+    }
+
+    // Tests for set_phase() - conditional update logic
+    #[test]
+    fn test_set_phase_updates_when_changed() {
+        let mut lfo = Lfo::new(SAMPLE_RATE);
+        let initial_phase = DEFAULT_LFO_PHASE;
+        let new_phase = 1.5;
+
+        assert!(f32s_are_equal(lfo.phase, initial_phase));
+
+        lfo.set_phase(new_phase);
+        let actual = lfo.phase;
+        let expected = new_phase;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
+    fn test_set_phase_does_not_update_when_same() {
+        let mut lfo = Lfo::new(SAMPLE_RATE);
+        let phase = 1.0;
+
+        lfo.set_phase(phase);
+        lfo.set_phase(phase); // Set again with same value
+
+        let actual = lfo.phase;
+        let expected = phase;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+}

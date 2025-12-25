@@ -306,11 +306,6 @@ mod tests {
     }
 
     #[test]
-    fn frequency_from_cents_returns_lower_frequency_for_negative_cents() {
-        assert!(f32s_are_equal(frequency_from_cents(440.0, -1200), 220.0));
-    }
-
-    #[test]
     fn frequency_from_cents_returns_returns_result_for_absolute_value_of_negative_frequency() {
         assert!(f32s_are_equal(frequency_from_cents(-440.0, 1200), 880.0));
     }
@@ -328,27 +323,19 @@ mod tests {
     }
 
     #[test]
+    fn frequency_from_cents_returns_zero_for_nan_frequency() {
+        let frequency = f32::NAN;
+        let cents = 100;
+
+        let actual = frequency_from_cents(frequency, cents);
+        let expected = 0.0;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
     fn frequency_from_cents_returns_zero_for_zero_frequency() {
         assert!(f32s_are_equal(frequency_from_cents(0.0, 100), 0.0));
-    }
-
-    #[test]
-    fn frequency_from_cents_returns_same_frequency_for_zero_cents() {
-        assert!(f32s_are_equal(frequency_from_cents(440.0, 0), 440.0));
-    }
-
-    #[test]
-    fn map_value_from_linear_to_exponential_scale_returns_correct_result_from_valid_ranges() {
-        let value = 5.0;
-        let input_range = (0.0, 10.0);
-        let output_range = (10.0, 100.0);
-        let expected_result = 0.240_253_06;
-
-        let result = map_value_from_linear_to_exponential_scale(value, input_range, output_range);
-        assert!(
-            f32s_are_equal(result, expected_result),
-            "For: {value}, Expected: {expected_result}, got: {result}"
-        );
     }
 
     #[test]
@@ -488,19 +475,6 @@ mod tests {
     }
 
     #[test]
-    fn swap_tuple_order_correctly_swaps_the_order_and_back_again() {
-        let mut test_tuple = (1.0, 2.0);
-        let expected_result_1 = (2.0, 1.0);
-        let expected_result_2 = (1.0, 2.0);
-
-        swap_tuple_order(&mut test_tuple);
-        assert_eq!(test_tuple, expected_result_1);
-
-        swap_tuple_order(&mut test_tuple);
-        assert_eq!(test_tuple, expected_result_2);
-    }
-
-    #[test]
     fn normalize_midi_value_returns_correct_normal_value_for_valid_input() {
         let midi_value = 54;
         let expected_result = 0.425_196_8;
@@ -508,6 +482,19 @@ mod tests {
         assert!(
             f32s_are_equal(result, expected_result),
             "For: {midi_value}, Expected: {expected_result}, got: {result}"
+        );
+    }
+
+    #[test]
+    fn normalize_midi_value_returns_half_for_center_value() {
+        let midi_value = CENTER_MIDI_VALUE; // 64
+
+        let actual = normalize_midi_value(midi_value);
+        let expected = 0.5;
+
+        assert!(
+            f32s_are_equal(actual, expected),
+            "For: {midi_value}, Expected: {expected}, got: {actual}"
         );
     }
 

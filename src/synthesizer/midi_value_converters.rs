@@ -220,4 +220,403 @@ mod tests {
         assert!(normal_value_to_bool(0.5));
         assert!(normal_value_to_bool(1.0));
     }
+
+    // Tests for normal_value_to_f32_range
+    #[test]
+    fn test_normal_value_to_f32_range_standard() {
+        let normal_value = 0.5;
+        let min = 0.0;
+        let max = 100.0;
+
+        let actual = normal_value_to_f32_range(normal_value, min, max);
+        let expected = 50.0;
+
+        assert!(
+            f32s_are_equal(actual, expected),
+            "Expected {}, got {}",
+            expected,
+            actual
+        );
+    }
+
+    #[test]
+    fn test_normal_value_to_f32_range_inverted_range() {
+        let normal_value = 0.5;
+        let min = 100.0;
+        let max = 0.0; // Inverted
+
+        let actual = normal_value_to_f32_range(normal_value, min, max);
+        let expected = 50.0; // Should swap and produce same result
+
+        assert!(
+            f32s_are_equal(actual, expected),
+            "Expected {}, got {}",
+            expected,
+            actual
+        );
+    }
+
+    #[test]
+    fn test_normal_value_to_f32_range_boundary_values() {
+        let min = 20.0;
+        let max = 200.0;
+
+        let actual_min = normal_value_to_f32_range(0.0, min, max);
+        let expected_min = 20.0;
+
+        let actual_max = normal_value_to_f32_range(1.0, min, max);
+        let expected_max = 200.0;
+
+        assert!(f32s_are_equal(actual_min, expected_min));
+        assert!(f32s_are_equal(actual_max, expected_max));
+    }
+
+    // Tests for normal_value_to_integer_range
+    #[test]
+    fn test_normal_value_to_integer_range_standard() {
+        let normal_value = 0.5;
+        let min = 0;
+        let max = 10;
+
+        let actual = normal_value_to_integer_range(normal_value, min, max);
+        let expected = 5;
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_normal_value_to_integer_range_inverted() {
+        let normal_value = 0.5;
+        let min = 10;
+        let max = 0; // Inverted
+
+        let actual = normal_value_to_integer_range(normal_value, min, max);
+        let expected = 5; // Should swap and produce correct result
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_normal_value_to_integer_range_rounding() {
+        let min = 0;
+        let max = 10;
+
+        // 0.24 * 10 = 2.4, rounds to 2
+        let actual_low = normal_value_to_integer_range(0.24, min, max);
+        let expected_low = 2;
+
+        // 0.26 * 10 = 2.6, rounds to 3
+        let actual_high = normal_value_to_integer_range(0.26, min, max);
+        let expected_high = 3;
+
+        assert_eq!(actual_low, expected_low);
+        assert_eq!(actual_high, expected_high);
+    }
+
+    #[test]
+    fn test_normal_value_to_integer_range_clamping() {
+        let min = 0;
+        let max = 10;
+
+        // Values outside 0-1 should be clamped
+        let actual_below = normal_value_to_integer_range(-0.5, min, max);
+        let expected_below = 0;
+
+        let actual_above = normal_value_to_integer_range(1.5, min, max);
+        let expected_above = 10;
+
+        assert_eq!(actual_below, expected_below);
+        assert_eq!(actual_above, expected_above);
+    }
+
+    // Tests for normal_value_to_unsigned_integer_range (i32)
+    #[test]
+    fn test_normal_value_to_unsigned_integer_range_standard() {
+        let normal_value = 0.5;
+        let min = -50;
+        let max = 50;
+
+        let actual = normal_value_to_unsigned_integer_range(normal_value, min, max);
+        let expected = 0; // -50 + 0.5 * 100 = 0
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_normal_value_to_unsigned_integer_range_inverted() {
+        let normal_value = 0.5;
+        let min = 50;
+        let max = -50; // Inverted
+
+        let actual = normal_value_to_unsigned_integer_range(normal_value, min, max);
+        let expected = 0; // Should swap and produce correct result
+
+        assert_eq!(actual, expected);
+    }
+
+    // Tests for normal_value_to_number_of_filter_poles
+    #[test]
+    fn test_normal_value_to_number_of_filter_poles_boundaries() {
+        // At 0.0, should return 1 (clamped minimum)
+        let actual_min = normal_value_to_number_of_filter_poles(0.0);
+        let expected_min = 1;
+
+        // At 1.0, should return 4 (NUMBER_OF_FILER_POLES)
+        let actual_max = normal_value_to_number_of_filter_poles(1.0);
+        let expected_max = 4;
+
+        assert_eq!(actual_min, expected_min);
+        assert_eq!(actual_max, expected_max);
+    }
+
+    #[test]
+    fn test_normal_value_to_number_of_filter_poles_ceiling() {
+        // 0.3 * 4 = 1.2, ceiling = 2
+        let actual = normal_value_to_number_of_filter_poles(0.3);
+        let expected = 2;
+
+        assert_eq!(actual, expected);
+    }
+
+    // Tests for exponential_curve_envelope_time_from_normal_value
+    #[test]
+    fn test_envelope_time_zero_value() {
+        let normal_value = 0.0;
+        let crossover = (0.5, 700.0);
+        let min = 0;
+        let max = 10000;
+
+        let actual = exponential_curve_envelope_time_from_normal_value(
+            normal_value,
+            crossover,
+            min,
+            max,
+        );
+        let expected = 0;
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_envelope_time_below_crossover() {
+        let normal_value = 0.25; // Below 0.5 crossover
+        let crossover = (0.5, 700.0);
+        let min = 0;
+        let max = 10000;
+
+        let actual = exponential_curve_envelope_time_from_normal_value(
+            normal_value,
+            crossover,
+            min,
+            max,
+        );
+        // Renormalized: 0.25 / 0.5 = 0.5
+        // Quadratic: 0.5^2 = 0.25
+        // Result: 0 + (700 - 0) * 0.25 = 175
+        let expected = 175;
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_envelope_time_at_crossover() {
+        let normal_value = 0.5;
+        let crossover = (0.5, 700.0);
+        let min = 0;
+        let max = 10000;
+
+        let actual = exponential_curve_envelope_time_from_normal_value(
+            normal_value,
+            crossover,
+            min,
+            max,
+        );
+        // At crossover point, renormalized value is 0.0, quadratic is 0.0
+        // Result: 700 + (10000 - 700) * 0.0 = 700
+        let expected = 700;
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_envelope_time_above_crossover() {
+        let normal_value = 0.75; // Above 0.5 crossover
+        let crossover = (0.5, 700.0);
+        let min = 0;
+        let max = 10000;
+
+        let actual = exponential_curve_envelope_time_from_normal_value(
+            normal_value,
+            crossover,
+            min,
+            max,
+        );
+        // Renormalized: (0.75 - 0.5) / 0.5 = 0.5
+        // Quadratic: 0.5^2 = 0.25
+        // Result: 700 + (10000 - 700) * 0.25 = 700 + 2325 = 3025
+        let expected = 3025;
+
+        assert_eq!(actual, expected);
+    }
+
+    // Tests for velocity_curve_from_normal_value
+    #[test]
+    fn test_velocity_curve_zero() {
+        let normal_value = 0.0;
+
+        let actual = velocity_curve_from_normal_value(normal_value);
+        let expected = 0.0;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
+    fn test_velocity_curve_below_midpoint() {
+        let normal_value = 0.25; // Below 0.5 midpoint
+
+        let actual = velocity_curve_from_normal_value(normal_value);
+        // Renormalized: 0.25 / 0.5 = 0.5
+        // Maps 0.5 in range [0.25, 1.0]
+        // Result: 0.25 + 0.5 * (1.0 - 0.25) = 0.25 + 0.375 = 0.625
+        let expected = 0.625;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
+    fn test_velocity_curve_at_midpoint() {
+        let normal_value = 0.5;
+
+        let actual = velocity_curve_from_normal_value(normal_value);
+        // At midpoint, renormalized to 1.0, maps to LINEAR_VELOCITY_CURVE_EXPONENT
+        let expected = LINEAR_VELOCITY_CURVE_EXPONENT; // 1.0
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
+    fn test_velocity_curve_above_midpoint() {
+        let normal_value = 0.75; // Above 0.5 midpoint
+
+        let actual = velocity_curve_from_normal_value(normal_value);
+        // Renormalized: (0.75 - 0.5) / 0.5 = 0.5
+        // Maps 0.5 in range [1.0, 4.0]
+        // Result: 1.0 + 0.5 * (4.0 - 1.0) = 1.0 + 1.5 = 2.5
+        let expected = 2.5;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    // Tests for scaled_velocity_from_normal_value
+    #[test]
+    fn test_scaled_velocity_linear_curve() {
+        let velocity_curve = 1.0; // Linear
+        let velocity = 0.5;
+
+        let actual = scaled_velocity_from_normal_value(velocity_curve, velocity);
+        let expected = 0.5; // No transformation
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
+    fn test_scaled_velocity_zero_curve() {
+        let velocity_curve = 0.0;
+        let velocity = 0.5;
+
+        let actual = scaled_velocity_from_normal_value(velocity_curve, velocity);
+        let expected = MAX_MIDI_KEY_VELOCITY; // 1.0
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
+    fn test_scaled_velocity_power_curve() {
+        let velocity_curve = 2.0; // Squared
+        let velocity = 0.5;
+
+        let actual = scaled_velocity_from_normal_value(velocity_curve, velocity);
+        let expected = 0.25; // 0.5^2
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    // Tests for midi_value_to_pitch_bend_cents
+    #[test]
+    fn test_pitch_bend_at_zero_point() {
+        let pitch_bend_amount = PITCH_BEND_AMOUNT_ZERO_POINT; // 8192
+        let max_bend = 200; // 2 semitones
+
+        let actual = midi_value_to_pitch_bend_cents(pitch_bend_amount, max_bend);
+        let expected = 0; // No bend at zero point
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_pitch_bend_max_up() {
+        let pitch_bend_amount = PITCH_BEND_AMOUNT_MAX_VALUE; // 16383
+        let max_bend = 200; // 2 semitones
+
+        let actual = midi_value_to_pitch_bend_cents(pitch_bend_amount, max_bend);
+        // (16383 - 8192) / 8192 * 200 = 8191/8192 * 200 ≈ 199.975... rounds to 199
+        let expected = 199;
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_pitch_bend_min_down() {
+        let pitch_bend_amount = 0;
+        let max_bend = 200; // 2 semitones
+
+        let actual = midi_value_to_pitch_bend_cents(pitch_bend_amount, max_bend);
+        // (0 - 8192) / 8192 * 200 = -1.0 * 200 = -200
+        let expected = -200;
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_pitch_bend_halfway_up() {
+        let pitch_bend_amount = 12288; // Halfway between zero and max
+        let max_bend = 200;
+
+        let actual = midi_value_to_pitch_bend_cents(pitch_bend_amount, max_bend);
+        // (12288 - 8192) / 8192 * 200 = 4096/8192 * 200 = 0.5 * 200 = 100
+        let expected = 100;
+
+        assert_eq!(actual, expected);
+    }
+
+    // Tests for exponential curve functions (zero check edge cases)
+    #[test]
+    fn test_exponential_filter_cutoff_zero() {
+        let normal_value = 0.0;
+
+        let actual = exponential_curve_filter_cutoff_from_midi_value(normal_value);
+        let expected = 0.0;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
+    fn test_exponential_lfo_frequency_zero() {
+        let normal_value = 0.0;
+
+        let actual = exponential_curve_lfo_frequency_from_normal_value(normal_value);
+        let expected = 0.0;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
+    fn test_exponential_level_adjustment_zero() {
+        let normal_value = 0.0;
+
+        let actual = exponential_curve_level_adjustment_from_normal_value(normal_value);
+        let expected = 0.0;
+
+        assert!(f32s_are_equal(actual, expected));
+    }
 }
