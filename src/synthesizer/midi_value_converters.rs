@@ -386,12 +386,8 @@ mod tests {
         let min = 0;
         let max = 10000;
 
-        let actual = exponential_curve_envelope_time_from_normal_value(
-            normal_value,
-            crossover,
-            min,
-            max,
-        );
+        let actual =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, min, max);
         let expected = 0;
 
         assert_eq!(actual, expected);
@@ -404,12 +400,8 @@ mod tests {
         let min = 0;
         let max = 10000;
 
-        let actual = exponential_curve_envelope_time_from_normal_value(
-            normal_value,
-            crossover,
-            min,
-            max,
-        );
+        let actual =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, min, max);
         // Renormalized: 0.25 / 0.5 = 0.5
         // Quadratic: 0.5^2 = 0.25
         // Result: 0 + (700 - 0) * 0.25 = 175
@@ -425,12 +417,8 @@ mod tests {
         let min = 0;
         let max = 10000;
 
-        let actual = exponential_curve_envelope_time_from_normal_value(
-            normal_value,
-            crossover,
-            min,
-            max,
-        );
+        let actual =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, min, max);
         // At crossover point, renormalized value is 0.0, quadratic is 0.0
         // Result: 700 + (10000 - 700) * 0.0 = 700
         let expected = 700;
@@ -445,12 +433,8 @@ mod tests {
         let min = 0;
         let max = 10000;
 
-        let actual = exponential_curve_envelope_time_from_normal_value(
-            normal_value,
-            crossover,
-            min,
-            max,
-        );
+        let actual =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, min, max);
         // Renormalized: (0.75 - 0.5) / 0.5 = 0.5
         // Quadratic: 0.5^2 = 0.25
         // Result: 700 + (10000 - 700) * 0.25 = 700 + 2325 = 3025
