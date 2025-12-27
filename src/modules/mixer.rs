@@ -97,9 +97,7 @@ mod tests {
 
         assert!(
             f32s_are_equal(actual, expected),
-            "Expected {}, got {}",
-            expected,
-            actual
+            "Expected {expected}, got {actual}"
         );
     }
 

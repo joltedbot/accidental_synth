@@ -27,6 +27,7 @@ pub struct EnvelopeParameters {
     pub decay_ms: AtomicU32,
     pub release_ms: AtomicU32,
     pub sustain_level: AtomicU32,
+    pub sustain_pedal: AtomicBool,
     pub amount: AtomicU32,
     pub is_inverted: AtomicBool,
     pub gate_flag: AtomicU8, // 0 - waiting, 1 - gate on, 2 - gate off
@@ -42,6 +43,7 @@ impl Default for EnvelopeParameters {
             amount: AtomicU32::new(DEFAULT_ENVELOPE_AMOUNT.to_bits()),
             is_inverted: AtomicBool::new(false),
             gate_flag: AtomicU8::new(0),
+            sustain_pedal: AtomicBool::new(false),
         }
     }
 }
@@ -75,6 +77,8 @@ pub struct Envelope {
     decay_milliseconds: f32,
     decay_level_increment: f32,
     sustain_level: f32,
+    sustain_pedal: bool,
+    gate_hold: bool,
     release_level_increment: f32,
 }
 
@@ -96,6 +100,8 @@ impl Envelope {
             decay_milliseconds: DEFAULT_DECAY_MILLISECONDS,
             release_level_increment: DEFAULT_RELEASE_LEVEL_INCREMENT,
             stage: Stage::Off,
+            gate_hold: false,
+            sustain_pedal: false,
         }
     }
 
@@ -104,6 +110,7 @@ impl Envelope {
         self.set_decay_milliseconds(parameters.decay_ms.load(Relaxed));
         self.set_release_milliseconds(parameters.release_ms.load(Relaxed));
         self.set_sustain_level(load_f32_from_atomic_u32(&parameters.sustain_level));
+        self.set_sustain_pedal(parameters.sustain_pedal.load(Relaxed));
         self.set_amount(load_f32_from_atomic_u32(&parameters.amount));
         self.set_is_inverted(parameters.is_inverted.load(Relaxed));
     }
@@ -129,7 +136,11 @@ impl Envelope {
                 true
             }
             2 => {
-                self.gate_off();
+                if self.sustain_pedal {
+                    self.gate_hold = true;
+                } else {
+                    self.gate_off();
+                }
                 true
             }
             _ => false,
@@ -141,6 +152,7 @@ impl Envelope {
     }
 
     fn gate_off(&mut self) {
+        self.gate_hold = false;
         self.state_action(StageAction::Stop);
     }
 
@@ -176,6 +188,18 @@ impl Envelope {
             self.sustain_level,
             self.decay_milliseconds,
         );
+    }
+
+    fn set_sustain_pedal(&mut self, sustain_pedal: bool) {
+        if sustain_pedal == self.sustain_pedal {
+            return;
+        }
+
+        self.sustain_pedal = sustain_pedal;
+
+        if !sustain_pedal && self.stage == Stage::Sustain {
+            self.gate_off();
+        }
     }
 
     fn set_release_milliseconds(&mut self, milliseconds: u32) {

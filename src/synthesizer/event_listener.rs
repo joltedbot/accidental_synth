@@ -13,7 +13,9 @@ use crate::synthesizer::set_parameters::{
     set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled,
     set_portamento_time, set_velocity_curve,
 };
-use crate::synthesizer::{CurrentNote, ModuleParameters, OscillatorIndex, SynthesizerUpdateEvents};
+use crate::synthesizer::{
+    CurrentNote, EnvelopeIndex, ModuleParameters, OscillatorIndex, SynthesizerUpdateEvents,
+};
 use crate::ui::UIUpdates;
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::Arc;
@@ -68,7 +70,7 @@ pub fn start_update_event_listener(
                             fine_tune,
                         );
 
-                        ui_update_sender.send(UIUpdates::OscillatorFineTuneCents(oscillator_index, cents as i32)).expect
+                        ui_update_sender.send(UIUpdates::OscillatorFineTuneCents(oscillator_index, i32::from(cents))).expect
                         ("start_update_event_listener(): Failed to send oscillator fine-tune display value to the UI.");
                     } else {
                         log::warn!(
@@ -131,7 +133,10 @@ pub fn start_update_event_listener(
                     set_key_tracking_amount(&module_parameters.filter, amount);
                 }
                 SynthesizerUpdateEvents::FilterEnvelopeAmount(amount) => {
-                    set_envelope_amount(&module_parameters.filter_envelope, amount);
+                    set_envelope_amount(
+                        &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
+                        amount,
+                    );
                 }
                 SynthesizerUpdateEvents::FilterLfoAmount(amount) => {
                     set_lfo_range(&module_parameters.filter_lfo, amount);
@@ -139,10 +144,13 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::FilterEnvelopeAttack(envelope_index, milliseconds) => {
                     match envelope_index {
                         ENVELOPE_INDEX_AMP => {
-                            set_envelope_attack_time(&module_parameters.amp_envelope, milliseconds);
+                            set_envelope_attack_time(
+                                &module_parameters.envelopes[EnvelopeIndex::Amp as usize],
+                                milliseconds,
+                            );
                         }
                         ENVELOPE_INDEX_FILTER => set_envelope_attack_time(
-                            &module_parameters.filter_envelope,
+                            &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
                             milliseconds,
                         ),
                         _ => {
@@ -156,10 +164,13 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::FilterEnvelopeDecay(envelope_index, milliseconds) => {
                     match envelope_index {
                         ENVELOPE_INDEX_AMP => {
-                            set_envelope_decay_time(&module_parameters.amp_envelope, milliseconds);
+                            set_envelope_decay_time(
+                                &module_parameters.envelopes[EnvelopeIndex::Amp as usize],
+                                milliseconds,
+                            );
                         }
                         ENVELOPE_INDEX_FILTER => set_envelope_decay_time(
-                            &module_parameters.filter_envelope,
+                            &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
                             milliseconds,
                         ),
                         _ => {
@@ -173,10 +184,16 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::FilterEnvelopeSustain(envelope_index, level) => {
                     match envelope_index {
                         ENVELOPE_INDEX_AMP => {
-                            set_envelope_sustain_level(&module_parameters.amp_envelope, level);
+                            set_envelope_sustain_level(
+                                &module_parameters.envelopes[EnvelopeIndex::Amp as usize],
+                                level,
+                            );
                         }
                         ENVELOPE_INDEX_FILTER => {
-                            set_envelope_sustain_level(&module_parameters.filter_envelope, level);
+                            set_envelope_sustain_level(
+                                &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
+                                level,
+                            );
                         }
                         _ => {
                             log::warn!(
@@ -190,12 +207,12 @@ pub fn start_update_event_listener(
                     match envelope_index {
                         ENVELOPE_INDEX_AMP => {
                             set_envelope_release_time(
-                                &module_parameters.amp_envelope,
+                                &module_parameters.envelopes[EnvelopeIndex::Amp as usize],
                                 milliseconds,
                             );
                         }
                         ENVELOPE_INDEX_FILTER => set_envelope_release_time(
-                            &module_parameters.filter_envelope,
+                            &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
                             milliseconds,
                         ),
                         _ => {
@@ -209,11 +226,11 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::FilterEnvelopeInvert(envelope_index, is_inverted) => {
                     match envelope_index {
                         ENVELOPE_INDEX_AMP => set_envelope_inverted(
-                            &module_parameters.amp_envelope,
+                            &module_parameters.envelopes[EnvelopeIndex::Amp as usize],
                             f32::from(is_inverted),
                         ),
                         ENVELOPE_INDEX_FILTER => set_envelope_inverted(
-                            &module_parameters.filter_envelope,
+                            &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
                             f32::from(is_inverted),
                         ),
                         _ => {

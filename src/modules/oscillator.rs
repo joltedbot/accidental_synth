@@ -88,7 +88,7 @@ pub struct OscillatorParameters {
     pub gate_flag: AtomicBool,
     pub key_sync_enabled: AtomicBool,
     pub hard_sync_enabled: AtomicBool,
-    pub portamento_is_enabled: AtomicBool,
+    pub portamento_enabled: AtomicBool,
     pub portamento_time: AtomicU16,
     pub clipper_boost: AtomicU8,
 }
@@ -105,7 +105,7 @@ impl Default for OscillatorParameters {
             gate_flag: AtomicBool::new(false),
             key_sync_enabled: AtomicBool::new(DEFAULT_KEY_SYNC_ENABLED),
             hard_sync_enabled: AtomicBool::new(false),
-            portamento_is_enabled: AtomicBool::new(false),
+            portamento_enabled: AtomicBool::new(false),
             portamento_time: AtomicU16::new(DEFAULT_PORTAMENTO_TIME_IN_BUFFERS),
             clipper_boost: AtomicU8::new(0),
         }
@@ -197,7 +197,7 @@ impl Oscillator {
         self.set_key_sync_enabled(parameters.key_sync_enabled.load(Relaxed));
         self.set_hard_sync_enabled(parameters.hard_sync_enabled.load(Relaxed));
         self.set_portamento(
-            parameters.portamento_is_enabled.load(Relaxed),
+            parameters.portamento_enabled.load(Relaxed),
             parameters.portamento_time.load(Relaxed),
         );
         self.set_gate(&parameters.gate_flag);

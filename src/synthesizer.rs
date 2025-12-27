@@ -2,7 +2,7 @@ mod constants;
 mod create_synthesizer;
 mod event_listener;
 mod midi_messages;
-pub(crate) mod midi_value_converters;
+pub mod midi_value_converters;
 mod set_parameters;
 
 use self::constants::{
@@ -112,6 +112,38 @@ impl OscillatorIndex {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum LFOIndex {
+    ModWheel = 0,
+    Filter = 1,
+}
+
+impl LFOIndex {
+    pub fn from_i32(index: i32) -> Option<Self> {
+        match index {
+            0 => Some(Self::ModWheel),
+            1 => Some(Self::Filter),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum EnvelopeIndex {
+    Amp = 0,
+    Filter = 1,
+}
+
+impl EnvelopeIndex {
+    pub fn from_i32(index: i32) -> Option<Self> {
+        match index {
+            0 => Some(EnvelopeIndex::Amp),
+            1 => Some(EnvelopeIndex::Filter),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Default, Debug)]
 struct CurrentNote {
     midi_note: AtomicU8,
@@ -155,8 +187,7 @@ struct MixerParameters {
 pub struct ModuleParameters {
     filter: FilterParameters,
     mixer: MixerParameters,
-    amp_envelope: EnvelopeParameters,
-    filter_envelope: EnvelopeParameters,
+    envelopes: [EnvelopeParameters; 2],
     filter_lfo: LfoParameters,
     mod_wheel_lfo: LfoParameters,
     keyboard: KeyboardParameters,
@@ -236,15 +267,16 @@ impl Synthesizer {
             ..KeyboardParameters::default()
         };
 
+        let envelopes = [EnvelopeParameters::default(), filter_envelope_parameters];
+
         let module_parameters = ModuleParameters {
             filter: filter_parameters,
             mixer: mixer_parameters,
-            amp_envelope: EnvelopeParameters::default(),
-            filter_envelope: filter_envelope_parameters,
             filter_lfo: filter_lfo_parameters,
             mod_wheel_lfo: mod_wheel_lfo_parameters,
             keyboard: keyboard_parameters,
             oscillators: Default::default(),
+            envelopes,
         };
 
         Self {

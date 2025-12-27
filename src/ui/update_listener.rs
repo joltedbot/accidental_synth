@@ -160,7 +160,7 @@ pub fn start_ui_update_listener(
                             LFOIndex::Filter => &mut values.filter_lfo,
                         };
                         lfo_values.wave_shape_index =
-                            normal_value_to_wave_shape_index(value) as i32;
+                            i32::from(normal_value_to_wave_shape_index(value));
                         set_lfo_values(&ui_weak_thread, lfo_index, lfo_values);
                     }
                 }
@@ -264,7 +264,7 @@ pub fn start_ui_update_listener(
                 UIUpdates::FilterPoles(value) => {
                     let filter_option_values = &mut values.filter_options;
                     filter_option_values.poles =
-                        normal_value_to_number_of_filter_poles(value) as i32;
+                        i32::from(normal_value_to_number_of_filter_poles(value));
                     set_filter_options_values(&ui_weak_thread, filter_option_values);
                 }
                 UIUpdates::FilterKeyTracking(value) => {

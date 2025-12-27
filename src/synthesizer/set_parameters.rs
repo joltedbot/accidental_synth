@@ -82,6 +82,14 @@ pub fn set_envelope_sustain_level(envelope_parameters: &EnvelopeParameters, norm
     store_f32_as_atomic_u32(&envelope_parameters.sustain_level, normal_value);
 }
 
+pub fn set_envelope_sustain_pedal(envelope_parameters: &[EnvelopeParameters], normal_value: f32) {
+    for envelope in envelope_parameters {
+        envelope
+            .sustain_pedal
+            .store(normal_value_to_bool(normal_value), Relaxed);
+    }
+}
+
 pub fn set_envelope_decay_time(envelope_parameters: &EnvelopeParameters, normal_value: f32) {
     let milliseconds = exponential_curve_envelope_time_from_normal_value(
         normal_value,
@@ -205,7 +213,7 @@ pub fn set_oscillator_clip_boost(parameters: &OscillatorParameters, normal_value
 pub fn set_portamento_enabled(parameters: &[OscillatorParameters; 4], normal_value: f32) {
     for parameters in parameters {
         parameters
-            .portamento_is_enabled
+            .portamento_enabled
             .store(normal_value_to_bool(normal_value), Relaxed);
     }
 }

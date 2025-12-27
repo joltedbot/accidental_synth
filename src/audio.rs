@@ -249,7 +249,7 @@ fn restart_main_audio_loop_with_new_device(
         );
 
     start_main_audio_output_loop(
-        &output_steam_parameters,
+        output_steam_parameters,
         output_device,
         current_output_channels,
         sample_consumer,
@@ -331,7 +331,7 @@ fn start_control_listener(
                     }
 
                     audio_output_stream = start_new_output_device(
-                        output_stream_parameters.clone(),
+                        &output_stream_parameters.clone(),
                         new_output_device,
                         &current_output_channels,
                         &ui_update_sender,
@@ -365,7 +365,7 @@ fn start_control_listener(
                     }
 
                     audio_output_stream = start_new_output_device(
-                        output_stream_parameters.clone(),
+                        &output_stream_parameters.clone(),
                         new_output_device,
                         &current_output_channels,
                         &ui_update_sender,
@@ -424,7 +424,7 @@ fn start_control_listener(
                     }
 
                     audio_output_stream = start_new_output_device(
-                        output_stream_parameters.clone(),
+                        &output_stream_parameters.clone(),
                         new_output_device,
                         &current_output_channels,
                         &ui_update_sender,
@@ -452,7 +452,7 @@ fn start_control_listener(
                     }
 
                     audio_output_stream = start_new_output_device(
-                        output_stream_parameters.clone(),
+                        &output_stream_parameters.clone(),
                         new_output_device,
                         &current_output_channels,
                         &ui_update_sender,
@@ -551,7 +551,7 @@ fn update_current_channels(
 }
 
 fn start_new_output_device(
-    output_steam_parameters: OutputStreamParameters,
+    output_steam_parameters: &OutputStreamParameters,
     new_output_device: Option<OutputDevice>,
     current_output_channels: &Arc<OutputChannels>,
     ui_update_sender: &Sender<UIUpdates>,
@@ -580,7 +580,7 @@ fn start_new_output_device(
         );
 
         restart_main_audio_loop_with_new_device(
-            &output_steam_parameters,
+            output_steam_parameters,
             ui_update_sender,
             sample_producer_sender,
             &device,

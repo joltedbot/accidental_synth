@@ -12,7 +12,7 @@ use crate::defaults::Defaults;
 use crate::midi::MidiDeviceUpdateEvents;
 use crate::modules::lfo::DEFAULT_LFO_FREQUENCY;
 use crate::synthesizer::midi_value_converters::normal_value_to_bool;
-use crate::synthesizer::{OscillatorIndex, SynthesizerUpdateEvents};
+use crate::synthesizer::{EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents};
 use crate::ui::callbacks::register_callbacks;
 use crate::ui::constants::{
     AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET, AUDIO_DEVICE_CHANNEL_NULL_VALUE, MIDI_CHANNEL_LIST,
@@ -78,38 +78,6 @@ pub enum UIUpdates {
     VelocityCurve(f32),
     HardSync(f32),
     KeySync(f32),
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum LFOIndex {
-    ModWheel = 0,
-    Filter = 1,
-}
-
-impl LFOIndex {
-    pub fn from_i32(index: i32) -> Option<Self> {
-        match index {
-            0 => Some(Self::ModWheel),
-            1 => Some(Self::Filter),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum EnvelopeIndex {
-    Amp = 0,
-    Filter = 1,
-}
-
-impl EnvelopeIndex {
-    pub fn from_i32(index: i32) -> Option<Self> {
-        match index {
-            0 => Some(Self::Amp),
-            1 => Some(Self::Filter),
-            _ => None,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy)]

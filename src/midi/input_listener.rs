@@ -55,7 +55,7 @@ pub(crate) fn process_midi_message(
                 target: "midi::message",
                 error:% = midi_err,
                 details:% = err;
-                "Channel send failed"
+                "Could not send MIDI message to the synthesizer module."
             );
             panic!("{midi_err}");
         });

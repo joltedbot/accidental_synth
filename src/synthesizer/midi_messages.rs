@@ -6,21 +6,21 @@ use crate::modules::oscillator::OscillatorParameters;
 use crate::synthesizer::midi_value_converters::scaled_velocity_from_normal_value;
 use crate::synthesizer::set_parameters::{
     set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted,
-    set_envelope_release_time, set_envelope_sustain_level, set_filter_cutoff, set_filter_poles,
-    set_filter_resonance, set_key_tracking_amount, set_lfo_center_value, set_lfo_frequency,
-    set_lfo_phase, set_lfo_phase_reset, set_lfo_range, set_lfo_wave_shape, set_mod_wheel,
-    set_oscillator_balance, set_oscillator_clip_boost, set_oscillator_course_tune,
-    set_oscillator_fine_tune, set_oscillator_hard_sync, set_oscillator_key_sync,
-    set_oscillator_level, set_oscillator_mute, set_oscillator_shape_parameter1,
-    set_oscillator_shape_parameter2, set_oscillator_wave_shape, set_output_balance,
-    set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled,
-    set_portamento_time, set_velocity_curve,
+    set_envelope_release_time, set_envelope_sustain_level, set_envelope_sustain_pedal,
+    set_filter_cutoff, set_filter_poles, set_filter_resonance, set_key_tracking_amount,
+    set_lfo_center_value, set_lfo_frequency, set_lfo_phase, set_lfo_phase_reset, set_lfo_range,
+    set_lfo_wave_shape, set_mod_wheel, set_oscillator_balance, set_oscillator_clip_boost,
+    set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_hard_sync,
+    set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute,
+    set_oscillator_shape_parameter1, set_oscillator_shape_parameter2, set_oscillator_wave_shape,
+    set_output_balance, set_output_level, set_output_mute, set_pitch_bend_range,
+    set_portamento_enabled, set_portamento_time, set_velocity_curve,
 };
 use crate::synthesizer::{
-    CurrentNote, KeyboardParameters, MidiGateEvent, MidiNoteEvent, ModuleParameters,
-    OscillatorIndex, midi_value_converters,
+    CurrentNote, EnvelopeIndex, KeyboardParameters, LFOIndex, MidiGateEvent, MidiNoteEvent,
+    ModuleParameters, OscillatorIndex, midi_value_converters,
 };
-use crate::ui::{EnvelopeIndex, LFOIndex, UIUpdates};
+use crate::ui::UIUpdates;
 use crossbeam_channel::Sender;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Relaxed, Release};
@@ -31,12 +31,10 @@ pub fn action_midi_note_events(
 ) {
     match midi_events {
         MidiNoteEvent::NoteOn => {
-            module_parameters
-                .amp_envelope
+            module_parameters.envelopes[EnvelopeIndex::Amp as usize]
                 .gate_flag
                 .store(MidiGateEvent::GateOn as u8, Relaxed);
-            module_parameters
-                .filter_envelope
+            module_parameters.envelopes[EnvelopeIndex::Filter as usize]
                 .gate_flag
                 .store(MidiGateEvent::GateOn as u8, Relaxed);
             for oscillator in &module_parameters.oscillators {
@@ -44,12 +42,10 @@ pub fn action_midi_note_events(
             }
         }
         MidiNoteEvent::NoteOff => {
-            module_parameters
-                .amp_envelope
+            module_parameters.envelopes[EnvelopeIndex::Amp as usize]
                 .gate_flag
                 .store(MidiGateEvent::GateOff as u8, Relaxed);
-            module_parameters
-                .filter_envelope
+            module_parameters.envelopes[EnvelopeIndex::Filter as usize]
                 .gate_flag
                 .store(MidiGateEvent::GateOff as u8, Relaxed);
         }
@@ -287,8 +283,12 @@ pub fn process_midi_cc_values(
             let normal_value = normalize_midi_value(value);
             set_portamento_time(&module_parameters.oscillators, normal_value);
 
-            ui_update_sender.send(UIUpdates::PortamentoTime(normal_value))
-                            .expect("process_cc_midi_values(): Could not send the poratmento time value to the UI. Exiting");
+            ui_update_sender
+                .send(UIUpdates::PortamentoTime(normal_value))
+                .expect(
+                    "process_cc_midi_values(): Could not send the portamento time value to the UI. \
+                            Exiting",
+                );
         }
         CC::OscillatorHardSync(value) => {
             let normal_value = normalize_midi_value(value);
@@ -568,12 +568,16 @@ pub fn process_midi_cc_values(
                 .expect("process_cc_midi_values(): Could not send the oscillator mixer 3 balance value to the UI. \
                 Exiting");
         }
+        CC::Sustain(value) => {
+            let normal_value = normalize_midi_value(value);
+            set_envelope_sustain_pedal(&module_parameters.envelopes, normal_value);
+        }
         CC::PortamentoEnabled(value) => {
             let normal_value = normalize_midi_value(value);
             set_portamento_enabled(&module_parameters.oscillators, normal_value);
 
             ui_update_sender.send(UIUpdates::PortamentoEnabled(normal_value))
-                            .expect("process_cc_midi_values(): Could not send the poratmento enabled state to the UI. \
+                            .expect("process_cc_midi_values(): Could not send the portamento enabled state to the UI. \
                             Exiting");
         }
         CC::SubOscillatorClipBoost(value) => {
@@ -651,7 +655,10 @@ pub fn process_midi_cc_values(
         }
         CC::AmpEGReleaseTime(value) => {
             let normal_value = normalize_midi_value(value);
-            set_envelope_release_time(&module_parameters.amp_envelope, normal_value);
+            set_envelope_release_time(
+                &module_parameters.envelopes[EnvelopeIndex::Amp as usize],
+                normal_value,
+            );
             ui_update_sender
                 .send(UIUpdates::EnvelopeReleaseTime(EnvelopeIndex::Amp as i32, normal_value))
                 .expect(
@@ -661,7 +668,10 @@ pub fn process_midi_cc_values(
         }
         CC::AmpEGAttackTime(value) => {
             let normal_value = normalize_midi_value(value);
-            set_envelope_attack_time(&module_parameters.amp_envelope, normal_value);
+            set_envelope_attack_time(
+                &module_parameters.envelopes[EnvelopeIndex::Amp as usize],
+                normal_value,
+            );
             ui_update_sender
                 .send(UIUpdates::EnvelopeAttackTime(EnvelopeIndex::Amp as i32, normal_value))
                 .expect(
@@ -681,7 +691,10 @@ pub fn process_midi_cc_values(
         }
         CC::AmpEGDecayTime(value) => {
             let normal_value = normalize_midi_value(value);
-            set_envelope_decay_time(&module_parameters.amp_envelope, normal_value);
+            set_envelope_decay_time(
+                &module_parameters.envelopes[EnvelopeIndex::Amp as usize],
+                normal_value,
+            );
             ui_update_sender
                 .send(UIUpdates::EnvelopeDecayTime(EnvelopeIndex::Amp as i32, normal_value))
                 .expect(
@@ -691,7 +704,10 @@ pub fn process_midi_cc_values(
         }
         CC::AmpEGSustainLevel(value) => {
             let normal_value = normalize_midi_value(value);
-            set_envelope_sustain_level(&module_parameters.amp_envelope, normal_value);
+            set_envelope_sustain_level(
+                &module_parameters.envelopes[EnvelopeIndex::Amp as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::EnvelopeSustainLevel(EnvelopeIndex::Amp as i32, normal_value))
@@ -702,7 +718,10 @@ pub fn process_midi_cc_values(
         }
         CC::AmpEGInverted(value) => {
             let normal_value = normalize_midi_value(value);
-            set_envelope_inverted(&module_parameters.amp_envelope, normal_value);
+            set_envelope_inverted(
+                &module_parameters.envelopes[EnvelopeIndex::Amp as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::EnvelopeInverted(EnvelopeIndex::Amp as i32, normal_value))
@@ -713,7 +732,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterEnvelopeAttackTime(value) => {
             let normal_value = normalize_midi_value(value);
-            set_envelope_attack_time(&module_parameters.filter_envelope, normal_value);
+            set_envelope_attack_time(
+                &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
+                normal_value,
+            );
             ui_update_sender
                 .send(UIUpdates::EnvelopeAttackTime(EnvelopeIndex::Filter as i32, normal_value))
                 .expect(
@@ -723,7 +745,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterEnvelopeDecayTime(value) => {
             let normal_value = normalize_midi_value(value);
-            set_envelope_decay_time(&module_parameters.filter_envelope, normal_value);
+            set_envelope_decay_time(
+                &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
+                normal_value,
+            );
             ui_update_sender
                 .send(UIUpdates::EnvelopeDecayTime(EnvelopeIndex::Filter as i32, normal_value))
                 .expect(
@@ -733,7 +758,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterEnvelopeSustainLevel(value) => {
             let normal_value = normalize_midi_value(value);
-            set_envelope_sustain_level(&module_parameters.filter_envelope, normal_value);
+            set_envelope_sustain_level(
+                &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
+                normal_value,
+            );
             ui_update_sender
                 .send(UIUpdates::EnvelopeSustainLevel(EnvelopeIndex::Filter as i32, normal_value))
                 .expect(
@@ -743,7 +771,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterEnvelopeReleaseTime(value) => {
             let normal_value = normalize_midi_value(value);
-            set_envelope_release_time(&module_parameters.filter_envelope, normal_value);
+            set_envelope_release_time(
+                &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
+                normal_value,
+            );
             ui_update_sender
                 .send(UIUpdates::EnvelopeReleaseTime(EnvelopeIndex::Filter as i32, normal_value))
                 .expect(
@@ -753,7 +784,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterEnvelopeInverted(value) => {
             let normal_value = normalize_midi_value(value);
-            set_envelope_inverted(&module_parameters.filter_envelope, normal_value);
+            set_envelope_inverted(
+                &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
+                normal_value,
+            );
             ui_update_sender
                 .send(UIUpdates::EnvelopeInverted(EnvelopeIndex::Filter as i32, normal_value))
                 .expect(
@@ -763,7 +797,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterEnvelopeAmount(value) => {
             let normal_value = normalize_midi_value(value);
-            set_envelope_amount(&module_parameters.filter_envelope, normal_value);
+            set_envelope_amount(
+                &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
+                normal_value,
+            );
             ui_update_sender
                 .send(UIUpdates::FilterEnvelopeAmount(normal_value))
                 .expect(
