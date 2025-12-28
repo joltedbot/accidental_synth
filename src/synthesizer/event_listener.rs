@@ -13,9 +13,7 @@ use crate::synthesizer::set_parameters::{
     set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled,
     set_portamento_time, set_velocity_curve,
 };
-use crate::synthesizer::{
-    CurrentNote, EnvelopeIndex, ModuleParameters, OscillatorIndex, SynthesizerUpdateEvents,
-};
+use crate::synthesizer::{CurrentNote, EnvelopeIndex, LFOIndex, ModuleParameters, OscillatorIndex, SynthesizerUpdateEvents};
 use crate::ui::UIUpdates;
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::Arc;
@@ -139,7 +137,7 @@ pub fn start_update_event_listener(
                     );
                 }
                 SynthesizerUpdateEvents::FilterLfoAmount(amount) => {
-                    set_lfo_range(&module_parameters.filter_lfo, amount);
+                    set_lfo_range(&module_parameters.lfos[LFOIndex::Filter as usize], amount);
                 }
                 SynthesizerUpdateEvents::FilterEnvelopeAttack(envelope_index, milliseconds) => {
                     match envelope_index {
@@ -244,10 +242,10 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::LfoFrequency(lfo_index, frequency) => {
                     let frequency = match lfo_index {
                         LFO_INDEX_MOD_WHEEL => {
-                            set_lfo_frequency(&module_parameters.mod_wheel_lfo, frequency)
+                            set_lfo_frequency(&module_parameters.lfos[LFOIndex::ModWheel as usize], frequency)
                         }
                         LFO_INDEX_FILTER => {
-                            set_lfo_frequency(&module_parameters.filter_lfo, frequency)
+                            set_lfo_frequency(&module_parameters.lfos[LFOIndex::Filter as usize], frequency)
                         }
                         _ => {
                             log::warn!(
@@ -263,13 +261,13 @@ pub fn start_update_event_listener(
                     match lfo_index {
                         LFO_INDEX_MOD_WHEEL => {
                             module_parameters
-                                .mod_wheel_lfo
+                                .lfos[LFOIndex::ModWheel as usize]
                                 .wave_shape
                                 .store(wave_shape_index as u8, Relaxed);
                         }
                         LFO_INDEX_FILTER => {
                             module_parameters
-                                .filter_lfo
+                                .lfos[LFOIndex::Filter as usize]
                                 .wave_shape
                                 .store(wave_shape_index as u8, Relaxed);
                         }
@@ -284,9 +282,9 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::LfoPhase(lfo_index, phase) => {
                     match lfo_index {
                         LFO_INDEX_MOD_WHEEL => {
-                            set_lfo_phase(&module_parameters.mod_wheel_lfo, phase);
+                            set_lfo_phase(&module_parameters.lfos[LFOIndex::ModWheel as usize], phase);
                         }
-                        LFO_INDEX_FILTER => set_lfo_phase(&module_parameters.filter_lfo, phase),
+                        LFO_INDEX_FILTER => set_lfo_phase(&module_parameters.lfos[LFOIndex::Filter as usize], phase),
                         _ => {
                             log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhase: Invalid LFO index: {lfo_index}"
@@ -303,9 +301,9 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::LfoPhaseReset(lfo_index) => {
                     match lfo_index {
                         LFO_INDEX_MOD_WHEEL => {
-                            set_lfo_phase_reset(&module_parameters.mod_wheel_lfo);
+                            set_lfo_phase_reset(&module_parameters.lfos[LFOIndex::ModWheel as usize]);
                         }
-                        LFO_INDEX_FILTER => set_lfo_phase_reset(&module_parameters.filter_lfo),
+                        LFO_INDEX_FILTER => set_lfo_phase_reset(&module_parameters.lfos[LFOIndex::Filter as usize]),
                         _ => {
                             log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhaseReset: Invalid LFO index: {lfo_index}"

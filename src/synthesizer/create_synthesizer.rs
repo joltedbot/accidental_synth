@@ -8,7 +8,7 @@ use crate::modules::mixer::{MixerInput, output_mix, quad_mix};
 use crate::modules::oscillator::{HardSyncRole, Oscillator, WaveShape};
 use crate::synthesizer;
 use crate::synthesizer::constants::SAMPLE_PRODUCER_LOOP_SLEEP_DURATION_MICROSECONDS;
-use crate::synthesizer::{CurrentNote, EnvelopeIndex, ModuleParameters, OscillatorIndex};
+use crate::synthesizer::{CurrentNote, EnvelopeIndex, LFOIndex, ModuleParameters, OscillatorIndex};
 use anyhow::Result;
 use crossbeam_channel::Receiver;
 use log::info;
@@ -84,11 +84,11 @@ pub fn create_synthesizer(
                 .set_parameters(&module_parameters.envelopes[EnvelopeIndex::Filter as usize]);
             modules
                 .filter_lfo
-                .set_parameters(&module_parameters.filter_lfo);
+                .set_parameters(&module_parameters.lfos[LFOIndex::Filter as usize]);
             modules.filter.set_parameters(&module_parameters.filter);
             modules
                 .mod_wheel_lfo
-                .set_parameters(&module_parameters.mod_wheel_lfo);
+                .set_parameters(&module_parameters.lfos[LFOIndex::ModWheel as usize]);
 
             for (index, oscillator) in modules.oscillators.iter_mut().enumerate() {
                 oscillator.set_parameters(&module_parameters.oscillators[index]);
@@ -119,6 +119,7 @@ pub fn create_synthesizer(
                     &module_parameters.envelopes[EnvelopeIndex::Amp as usize].gate_flag,
                 );
                 let vibrato_value = modules.mod_wheel_lfo.generate(None);
+
                 for (index, input) in quad_mixer_inputs.iter_mut().enumerate() {
                     input.sample = modules.oscillators[index].generate(Some(vibrato_value));
                 }

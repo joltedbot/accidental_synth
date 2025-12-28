@@ -187,10 +187,9 @@ struct MixerParameters {
 pub struct ModuleParameters {
     filter: FilterParameters,
     mixer: MixerParameters,
-    envelopes: [EnvelopeParameters; 2],
-    filter_lfo: LfoParameters,
-    mod_wheel_lfo: LfoParameters,
     keyboard: KeyboardParameters,
+    lfos: [LfoParameters; 2],
+    envelopes: [EnvelopeParameters; 2],
     oscillators: [OscillatorParameters; 4],
 }
 
@@ -268,14 +267,14 @@ impl Synthesizer {
         };
 
         let envelopes = [EnvelopeParameters::default(), filter_envelope_parameters];
+        let lfos = [mod_wheel_lfo_parameters, filter_lfo_parameters];
 
         let module_parameters = ModuleParameters {
             filter: filter_parameters,
             mixer: mixer_parameters,
-            filter_lfo: filter_lfo_parameters,
-            mod_wheel_lfo: mod_wheel_lfo_parameters,
             keyboard: keyboard_parameters,
             oscillators: Default::default(),
+            lfos,
             envelopes,
         };
 
