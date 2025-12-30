@@ -1,5 +1,5 @@
 mod constants;
-mod create_synthesizer;
+mod sample_generator;
 mod event_listener;
 mod midi_messages;
 pub mod midi_value_converters;
@@ -19,7 +19,7 @@ use crate::modules::lfo::LfoParameters;
 use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
 use crate::synthesizer::constants::SYNTHESIZER_MESSAGE_SENDER_CAPACITY;
-use crate::synthesizer::create_synthesizer::create_synthesizer;
+use crate::synthesizer::sample_generator::sample_generator;
 use crate::synthesizer::event_listener::start_update_event_listener;
 use crate::synthesizer::midi_messages::{
     process_midi_cc_values, process_midi_channel_pressure_message, process_midi_note_off_message,
@@ -309,7 +309,7 @@ impl Synthesizer {
         );
 
         log::debug!(target: "synthesizer", "Start the synthesizer thread");
-        create_synthesizer(
+        sample_generator(
             sample_buffer_receiver,
             self.output_stream_parameters.clone(),
             &self.current_note,

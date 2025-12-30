@@ -39,7 +39,7 @@ pub const LAST_WAVE_SHAPE_INDEX: u32 = 9;
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WaveShape {
     #[default]
-    Sine = 1,
+    Sine,
     Triangle,
     Square,
     Saw,
@@ -146,6 +146,7 @@ pub struct Oscillator {
     tuning: Tuning,
     hard_sync: HardSync,
     portamento: Portamento,
+    aftertouch: f32,
 }
 
 impl Oscillator {
@@ -184,6 +185,7 @@ impl Oscillator {
             hard_sync,
             portamento,
             clipper_boost: 0,
+            aftertouch: 0.0,
         }
     }
 
@@ -278,13 +280,17 @@ impl Oscillator {
         self.wave_generator.reset();
     }
 
+    pub fn set_aftertouch(&mut self, aftertouch: f32) {
+        self.aftertouch = aftertouch;
+    }
+
     pub fn clip_signal(&mut self, signal: f32) -> f32 {
-        if self.clipper_boost == 0 {
+        if self.clipper_boost == 0 && self.aftertouch == 0.0 {
             return signal;
         }
 
         let boost = dbfs_to_f32_sample(f32::from(self.clipper_boost));
-        let boosted_signal = signal * boost;
+        let boosted_signal = signal * (boost +  (boost * self.aftertouch));
         boosted_signal.clamp(-1.0, 1.0)
     }
 

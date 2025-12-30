@@ -28,7 +28,7 @@ struct Modules {
     oscillators: [Oscillator; 4],
 }
 
-pub fn create_synthesizer(
+pub fn sample_generator(
     sample_buffer_receiver: Receiver<Producer<f32>>,
     output_stream_parameters: OutputStreamParameters,
     current_note: &Arc<CurrentNote>,
@@ -91,6 +91,7 @@ pub fn create_synthesizer(
                 .set_parameters(&module_parameters.lfos[LFOIndex::ModWheel as usize]);
 
             for (index, oscillator) in modules.oscillators.iter_mut().enumerate() {
+                oscillator.set_aftertouch(load_f32_from_atomic_u32(&module_parameters.keyboard.aftertouch_amount));
                 oscillator.set_parameters(&module_parameters.oscillators[index]);
                 oscillator.tune(current_note.midi_note.load(Relaxed));
             }
