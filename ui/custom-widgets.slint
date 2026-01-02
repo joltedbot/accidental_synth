@@ -87,7 +87,7 @@ export component VerticalSlider inherits Rectangle {
 }
 
 export component HorzontalSlider inherits Rectangle {
-    in property <float> value: 0;
+    in-out property <float> value: 0;
     in property <bool> enabled: true;
     callback updated(float);
 

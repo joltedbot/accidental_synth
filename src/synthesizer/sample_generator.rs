@@ -147,7 +147,7 @@ pub fn sample_generator(
 
                 let (filtered_left, filtered_right) = modules.filter.process(
                     left_envelope_sample,
-                    right_envelope_sample,g
+                    right_envelope_sample,
                     Some(filter_modulation),
                 );
 

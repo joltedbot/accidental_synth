@@ -283,11 +283,11 @@ pub fn set_oscillator_wave_shape(parameters: &OscillatorParameters, normal_value
 }
 
 pub fn set_effect_is_enabled(
-    parameters: &Vec<AudioEffectParameters>,
+    parameters: &[AudioEffectParameters],
     effect: EffectIndex,
-    normal_value: f32,
+    is_enabled: bool,
 ) {
-    parameters[effect as usize].is_enabled.store(normal_value_to_bool(normal_value), Relaxed);
+    parameters[effect as usize].is_enabled.store(is_enabled, Relaxed);
 }
 
 
@@ -295,7 +295,7 @@ pub fn set_effect_parameter(
     parameters: &Vec<AudioEffectParameters>,
     effect: EffectIndex,
     parameter_index: i32,
-    parameter: f32,
+    value: f32,
 ) {
-    store_f32_as_atomic_u32(&parameters[effect as usize].parameters[parameter_index as usize], parameter);
+    store_f32_as_atomic_u32(&parameters[effect as usize].parameters[parameter_index as usize], value);
 }

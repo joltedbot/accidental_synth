@@ -48,10 +48,20 @@ impl Default for AudioEffectParameters {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct EffectParameters {
     is_enabled: bool,
     parameters: Vec<f32>,
+}
+
+impl Default for EffectParameters {
+    fn default() -> Self {
+        let parameters = vec![0.0; PARAMETERS_PER_EFFECT];
+        Self {
+            is_enabled: false,
+            parameters,
+        }
+    }
 }
 
 

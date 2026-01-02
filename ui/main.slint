@@ -139,6 +139,9 @@ export component AccidentalSynth inherits Window {
     callback osc-mixer-level-update(int, float);
     callback osc-mixer-mute-update(int, bool);
 
+    callback effect_enabled(int, bool);
+    callback effect_parameter_changed(int, int, float);
+
     top-level := Rectangle {
         background: Theme.window-background;
         border-width: Theme.window-border-width;
@@ -351,7 +354,12 @@ export component AccidentalSynth inherits Window {
                 Tab {
                     title: Theme.tab-title-effects;
                     EffectsPanel {
-                        title: "TBD";
+                        effect_enabled(effect_index, is_enable) => {
+                            effect_enabled(effect_index, is_enable);
+                        }
+                        effect_parameter_changed(effect_index, parameter_index, value) => {
+                            effect_parameter_changed(effect_index, parameter_index, value);
+                        }
                     }
                 }
             }

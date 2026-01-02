@@ -371,7 +371,7 @@ pub fn start_update_event_listener(
                         set_effect_is_enabled(
                             &module_parameters.effects,
                             effect,
-                            f32::from(is_enabled),
+                            is_enabled,
                         );
                     } else {
                         log::warn!(

@@ -37,7 +37,7 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::thread;
-use crate::modules::effects::AudioEffectParameters;
+use crate::modules::effects::{AudioEffectParameters, EffectIndex};
 
 pub enum SynthesizerUpdateEvents {
     WaveShapeIndex(i32, i32),
@@ -273,6 +273,11 @@ impl Synthesizer {
         let envelopes = [EnvelopeParameters::default(), filter_envelope_parameters];
         let lfos = [mod_wheel_lfo_parameters, filter_lfo_parameters];
 
+        let mut effects = Vec::with_capacity(EffectIndex::count());
+        for effect in 0..EffectIndex::count() {
+            effects.push(AudioEffectParameters::default());
+        }
+
         let module_parameters = ModuleParameters {
             filter: filter_parameters,
             mixer: mixer_parameters,
@@ -280,7 +285,7 @@ impl Synthesizer {
             oscillators: Default::default(),
             lfos,
             envelopes,
-            effects: Default::default(),
+            effects,
         };
 
         Self {

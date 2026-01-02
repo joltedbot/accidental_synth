@@ -1,0 +1,90 @@
+import { Panel, HorizontalParameterSlider, PanelLabel, EffectLabel, VerticalSpacer, ToggleSwitch, HorizontalSpacer } from "components.slint";
+import { Theme } from "theme.slint";
+import { Switch } from "std-widgets.slint";
+import { Constant } from "constants.slint";
+
+export component EffectBox inherits VerticalLayout {
+    in property <string> title;
+    in property <int> effect-index;
+    in property <length> box-width: Theme.effect-box-width;
+    in property <length> box-height: Theme.effect-box-height;
+
+    callback effect_enabled(int, bool);
+    in-out property <bool> is_enabled: false;
+
+   padding: Theme.effect-box-padding;
+   spacing: Theme.effect-box-spacing;
+   width: box-width;
+   height: box-height;
+   alignment: start;
+
+   VerticalLayout {
+       padding: Theme.effect-box-padding;
+       spacing: Theme.effect-box-spacing;
+        HorizontalLayout {
+            alignment: space-between;
+
+            EffectLabel {
+                label:  title;
+                alignment: center;
+            }
+
+           effect-enable := Switch {
+                toggled() => {
+                    is_enabled = effect-enable.checked;
+                    effect_enabled(effect-index, self.checked);
+                }
+           }
+        }
+    }
+
+}
+
+
+export component Wavefolder inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    title: Theme.wavefolder-title;
+
+    changed is_enabled => {
+        amount.enabled = self.is_enabled;
+        negative-switch.enabled = self.is_enabled;
+        negative-amount.enabled = self.is_enabled && negative-switch.is_checked?true:false;
+    }
+
+    HorizontalSpacer {}
+
+   amount := HorizontalParameterSlider {
+        slider-width: 230px;
+        label: Theme.wavefolder-parameter1;
+        value: 0;
+        enabled: false;
+        horizontal-parameter-slider-changed(amount) => {
+            effect_parameter_changed(parent.effect-index, 0, amount);
+        }
+    }
+
+    negative-switch := ToggleSwitch {
+        enabled: false;
+        label: Theme.wavefolder-parameter2-switch;
+        toggle_switch_updated(enabled) => {
+            negative-amount.enabled = parent.is_enabled && enabled?true:false;
+            if (enabled) {
+                effect_parameter_changed(parent.effect-index, 1, negative-amount.value);
+            } else {
+                effect_parameter_changed(parent.effect-index, 1, Constant.EFFECT_DISABLED_VALUE);
+            }
+        }
+    }
+
+
+    negative-amount := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.wavefolder-parameter2;
+        horizontal-parameter-slider-changed(amount) => {
+            self.value = amount;
+            effect_parameter_changed(parent.effect-index, 1, amount);
+        }
+    }
+
+}
