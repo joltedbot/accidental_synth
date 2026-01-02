@@ -14,10 +14,11 @@ use crossbeam_channel::Receiver;
 use log::info;
 use rtrb::Producer;
 use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, AtomicU32};
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
 use std::time::Duration;
+use crate::modules::effects::{AudioEffectParameters, EffectParameters, Effects};
 
 struct Modules {
     amp_envelope: Envelope,
@@ -25,6 +26,7 @@ struct Modules {
     filter_lfo: Lfo,
     filter: Filter,
     mod_wheel_lfo: Lfo,
+    effects: Effects,
     oscillators: [Oscillator; 4],
 }
 
@@ -89,6 +91,8 @@ pub fn sample_generator(
             modules
                 .mod_wheel_lfo
                 .set_parameters(&module_parameters.lfos[LFOIndex::ModWheel as usize]);
+            
+            modules.effects.set_parameters(&module_parameters.effects);
 
             for (index, oscillator) in modules.oscillators.iter_mut().enumerate() {
                 oscillator.set_aftertouch(load_f32_from_atomic_u32(&module_parameters.keyboard.aftertouch_amount));
@@ -143,13 +147,15 @@ pub fn sample_generator(
 
                 let (filtered_left, filtered_right) = modules.filter.process(
                     left_envelope_sample,
-                    right_envelope_sample,
+                    right_envelope_sample,g
                     Some(filter_modulation),
                 );
 
+                let (effected_left, effected_right) = modules.effects.process((filtered_left, filtered_right));
+
                 // Final output level control
                 let (output_left, output_right) = output_mix(
-                    (filtered_left, filtered_right),
+                    (effected_left, effected_right),
                     output_level,
                     output_balance,
                     output_is_muted,
@@ -193,6 +199,7 @@ fn initialize_synth_modules(sample_rate: u32) -> Modules {
         filter_lfo: Lfo::new(sample_rate),
         filter: Filter::new(sample_rate),
         mod_wheel_lfo: Lfo::new(sample_rate),
+        effects: Effects::new(),
         oscillators: [
             Oscillator::new(sample_rate, WaveShape::default()),
             Oscillator::new(sample_rate, WaveShape::default()),
