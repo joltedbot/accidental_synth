@@ -1,8 +1,8 @@
 mod constants;
-mod sample_generator;
 mod event_listener;
 mod midi_messages;
 pub mod midi_value_converters;
+mod sample_generator;
 mod set_parameters;
 
 use self::constants::{
@@ -19,15 +19,16 @@ use crate::modules::lfo::LfoParameters;
 use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
 use crate::synthesizer::constants::SYNTHESIZER_MESSAGE_SENDER_CAPACITY;
-use crate::synthesizer::sample_generator::sample_generator;
 use crate::synthesizer::event_listener::start_update_event_listener;
 use crate::synthesizer::midi_messages::{
     process_midi_cc_values, process_midi_channel_pressure_message, process_midi_note_off_message,
     process_midi_note_on_message, process_midi_pitch_bend_message,
 };
+use crate::synthesizer::sample_generator::sample_generator;
 
 use crate::audio::OutputStreamParameters;
 use crate::defaults::Defaults;
+use crate::modules::effects::{AudioEffectParameters, EffectIndex};
 use crate::ui::UIUpdates;
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
@@ -37,7 +38,6 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::thread;
-use crate::modules::effects::{AudioEffectParameters, EffectIndex};
 
 pub enum SynthesizerUpdateEvents {
     WaveShapeIndex(i32, i32),

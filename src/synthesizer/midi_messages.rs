@@ -819,7 +819,10 @@ pub fn process_midi_cc_values(
         }
         CC::ModWheelLFOFrequency(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_frequency(&module_parameters.lfos[LFOIndex::ModWheel as usize], normal_value);
+            set_lfo_frequency(
+                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::LFOFrequency(LFOIndex::ModWheel as i32, normal_value))
@@ -830,15 +833,24 @@ pub fn process_midi_cc_values(
         }
         CC::ModWheelLFOCenterValue(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_center_value(&module_parameters.lfos[LFOIndex::ModWheel as usize], normal_value);
+            set_lfo_center_value(
+                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                normal_value,
+            );
         }
         CC::ModWheelLFORange(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_range(&module_parameters.lfos[LFOIndex::ModWheel as usize], normal_value);
+            set_lfo_range(
+                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                normal_value,
+            );
         }
         CC::ModWheelLFOWaveShape(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_wave_shape(&module_parameters.lfos[LFOIndex::ModWheel as usize], normal_value);
+            set_lfo_wave_shape(
+                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::LFOWaveShape(LFOIndex::ModWheel as i32, normal_value))
@@ -849,7 +861,10 @@ pub fn process_midi_cc_values(
         }
         CC::ModWheelLFOPhase(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_phase(&module_parameters.lfos[LFOIndex::ModWheel as usize], normal_value);
+            set_lfo_phase(
+                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::LFOPhase(LFOIndex::ModWheel as i32, normal_value))
@@ -869,7 +884,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterModLFOFrequency(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_frequency(&module_parameters.lfos[LFOIndex::Filter as usize], normal_value);
+            set_lfo_frequency(
+                &module_parameters.lfos[LFOIndex::Filter as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::LFOFrequency(LFOIndex::Filter as i32, normal_value))
@@ -880,7 +898,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterModLFOAmount(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_range(&module_parameters.lfos[LFOIndex::Filter as usize], normal_value);
+            set_lfo_range(
+                &module_parameters.lfos[LFOIndex::Filter as usize],
+                normal_value,
+            );
             ui_update_sender
                 .send(UIUpdates::FilterLFOAmount(normal_value))
                 .expect(
@@ -890,7 +911,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterModLFOWaveShape(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_wave_shape(&module_parameters.lfos[LFOIndex::Filter as usize], normal_value);
+            set_lfo_wave_shape(
+                &module_parameters.lfos[LFOIndex::Filter as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::LFOWaveShape(LFOIndex::Filter as i32, normal_value))
@@ -901,7 +925,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterModLFOPhase(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_phase(&module_parameters.lfos[LFOIndex::Filter as usize], normal_value);
+            set_lfo_phase(
+                &module_parameters.lfos[LFOIndex::Filter as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::LFOPhase(LFOIndex::Filter as i32, normal_value))

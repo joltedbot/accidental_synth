@@ -1,6 +1,7 @@
 use crate::audio::OutputStreamParameters;
 use crate::math::load_f32_from_atomic_u32;
 use crate::modules::amplifier::amplify_stereo;
+use crate::modules::effects::Effects;
 use crate::modules::envelope::Envelope;
 use crate::modules::filter::Filter;
 use crate::modules::lfo::Lfo;
@@ -18,7 +19,6 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
 use std::time::Duration;
-use crate::modules::effects::Effects;
 
 struct Modules {
     amp_envelope: Envelope,
@@ -91,11 +91,13 @@ pub fn sample_generator(
             modules
                 .mod_wheel_lfo
                 .set_parameters(&module_parameters.lfos[LFOIndex::ModWheel as usize]);
-            
+
             modules.effects.set_parameters(&module_parameters.effects);
 
             for (index, oscillator) in modules.oscillators.iter_mut().enumerate() {
-                oscillator.set_aftertouch(load_f32_from_atomic_u32(&module_parameters.keyboard.aftertouch_amount));
+                oscillator.set_aftertouch(load_f32_from_atomic_u32(
+                    &module_parameters.keyboard.aftertouch_amount,
+                ));
                 oscillator.set_parameters(&module_parameters.oscillators[index]);
                 oscillator.tune(current_note.midi_note.load(Relaxed));
             }
@@ -151,7 +153,8 @@ pub fn sample_generator(
                     Some(filter_modulation),
                 );
 
-                let (effected_left, effected_right) = modules.effects.process((filtered_left, filtered_right));
+                let (effected_left, effected_right) =
+                    modules.effects.process((filtered_left, filtered_right));
 
                 // Final output level control
                 let (output_left, output_right) = output_mix(

@@ -290,7 +290,7 @@ impl Oscillator {
         }
 
         let boost = dbfs_to_f32_sample(f32::from(self.clipper_boost));
-        let boosted_signal = signal * (boost +  (boost * self.aftertouch));
+        let boosted_signal = signal * (boost + (boost * self.aftertouch));
         boosted_signal.clamp(-1.0, 1.0)
     }
 

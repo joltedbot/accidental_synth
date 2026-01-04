@@ -1,7 +1,5 @@
 use crate::math::load_f32_from_atomic_u32;
-use crate::modules::effects::constants::{
-    NUMBER_OF_EFFECTS, PARAMETERS_PER_EFFECT,
-};
+use crate::modules::effects::constants::{NUMBER_OF_EFFECTS, PARAMETERS_PER_EFFECT};
 use crate::modules::effects::wavefolder::WaveFolder;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU32};
@@ -62,7 +60,6 @@ impl Default for EffectParameters {
     }
 }
 
-
 pub struct Effects {
     effects: Vec<Box<dyn AudioEffect>>,
     parameters: [EffectParameters; NUMBER_OF_EFFECTS],
@@ -105,6 +102,7 @@ fn extract_parameters(source: &AudioEffectParameters) -> EffectParameters {
         parameters: source
             .parameters
             .iter()
-            .map(load_f32_from_atomic_u32).collect(),
+            .map(load_f32_from_atomic_u32)
+            .collect(),
     }
 }

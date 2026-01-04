@@ -287,9 +287,10 @@ pub fn set_effect_is_enabled(
     effect: EffectIndex,
     is_enabled: bool,
 ) {
-    parameters[effect as usize].is_enabled.store(is_enabled, Relaxed);
+    parameters[effect as usize]
+        .is_enabled
+        .store(is_enabled, Relaxed);
 }
-
 
 pub fn set_effect_parameter(
     parameters: &[AudioEffectParameters],
@@ -297,5 +298,8 @@ pub fn set_effect_parameter(
     parameter_index: i32,
     value: f32,
 ) {
-    store_f32_as_atomic_u32(&parameters[effect as usize].parameters[parameter_index as usize], value);
+    store_f32_as_atomic_u32(
+        &parameters[effect as usize].parameters[parameter_index as usize],
+        value,
+    );
 }
