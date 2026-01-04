@@ -272,7 +272,7 @@ export component OscillatorSection inherits VerticalLayout {
                 alignment: space-between;
 
                 ToggleSwitch {
-                    is_enabled: global-option-values.portamento-is-enabled;
+                    is_checked: global-option-values.portamento-is-enabled;
                     label: Theme.osc-options-portamento-label;
                     toggle_switch_updated(is_enabled) => {
                         portamento-enabled(is_enabled);
@@ -333,7 +333,7 @@ export component OscillatorSection inherits VerticalLayout {
 
                     hard_sync := ToggleSwitch {
                         label: Theme.osc-options-hard-sync;
-                        is_enabled: global-option-values.hard-sync-is-enabled;
+                        is_checked: global-option-values.hard-sync-is-enabled;
                         toggle_switch_updated(is_enabled) => {
                             hard-sync-enabled(is_enabled);
                         }
@@ -341,7 +341,7 @@ export component OscillatorSection inherits VerticalLayout {
 
                     key_sync := ToggleSwitch {
                         label: Theme.osc-options-key-sync;
-                        is_enabled: global-option-values.key-sync-is-enabled;
+                        is_checked: global-option-values.key-sync-is-enabled;
                         toggle_switch_updated(is_enabled) => {
                             key-sync-enabled(is_enabled);
                         }

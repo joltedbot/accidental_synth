@@ -1,19 +1,23 @@
+use crate::modules::effects::EffectIndex;
 use crate::modules::lfo::DEFAULT_LFO_PHASE;
 use crate::synthesizer::constants::{
     ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, LFO_INDEX_FILTER, LFO_INDEX_MOD_WHEEL,
 };
 use crate::synthesizer::set_parameters::{
-    set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted,
-    set_envelope_release_time, set_envelope_sustain_level, set_filter_cutoff, set_filter_poles,
-    set_filter_resonance, set_key_tracking_amount, set_lfo_frequency, set_lfo_phase,
-    set_lfo_phase_reset, set_lfo_range, set_oscillator_balance, set_oscillator_clip_boost,
-    set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_hard_sync,
-    set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute,
-    set_oscillator_shape_parameter1, set_oscillator_shape_parameter2, set_output_balance,
-    set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled,
-    set_portamento_time, set_velocity_curve,
+    set_effect_is_enabled, set_effect_parameter, set_envelope_amount, set_envelope_attack_time,
+    set_envelope_decay_time, set_envelope_inverted, set_envelope_release_time,
+    set_envelope_sustain_level, set_filter_cutoff, set_filter_poles, set_filter_resonance,
+    set_key_tracking_amount, set_lfo_frequency, set_lfo_phase, set_lfo_phase_reset, set_lfo_range,
+    set_oscillator_balance, set_oscillator_clip_boost, set_oscillator_course_tune,
+    set_oscillator_fine_tune, set_oscillator_hard_sync, set_oscillator_key_sync,
+    set_oscillator_level, set_oscillator_mute, set_oscillator_shape_parameter1,
+    set_oscillator_shape_parameter2, set_output_balance, set_output_level, set_output_mute,
+    set_pitch_bend_range, set_portamento_enabled, set_portamento_time, set_velocity_curve,
 };
-use crate::synthesizer::{CurrentNote, EnvelopeIndex, LFOIndex, ModuleParameters, OscillatorIndex, SynthesizerUpdateEvents};
+use crate::synthesizer::{
+    CurrentNote, EnvelopeIndex, LFOIndex, ModuleParameters, OscillatorIndex,
+    SynthesizerUpdateEvents,
+};
 use crate::ui::UIUpdates;
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::Arc;
@@ -241,12 +245,14 @@ pub fn start_update_event_listener(
                 }
                 SynthesizerUpdateEvents::LfoFrequency(lfo_index, frequency) => {
                     let frequency = match lfo_index {
-                        LFO_INDEX_MOD_WHEEL => {
-                            set_lfo_frequency(&module_parameters.lfos[LFOIndex::ModWheel as usize], frequency)
-                        }
-                        LFO_INDEX_FILTER => {
-                            set_lfo_frequency(&module_parameters.lfos[LFOIndex::Filter as usize], frequency)
-                        }
+                        LFO_INDEX_MOD_WHEEL => set_lfo_frequency(
+                            &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                            frequency,
+                        ),
+                        LFO_INDEX_FILTER => set_lfo_frequency(
+                            &module_parameters.lfos[LFOIndex::Filter as usize],
+                            frequency,
+                        ),
                         _ => {
                             log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoFrequency: Invalid LFO index: {lfo_index}"
@@ -260,14 +266,12 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::LfoShapeIndex(lfo_index, wave_shape_index) => {
                     match lfo_index {
                         LFO_INDEX_MOD_WHEEL => {
-                            module_parameters
-                                .lfos[LFOIndex::ModWheel as usize]
+                            module_parameters.lfos[LFOIndex::ModWheel as usize]
                                 .wave_shape
                                 .store(wave_shape_index as u8, Relaxed);
                         }
                         LFO_INDEX_FILTER => {
-                            module_parameters
-                                .lfos[LFOIndex::Filter as usize]
+                            module_parameters.lfos[LFOIndex::Filter as usize]
                                 .wave_shape
                                 .store(wave_shape_index as u8, Relaxed);
                         }
@@ -282,9 +286,14 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::LfoPhase(lfo_index, phase) => {
                     match lfo_index {
                         LFO_INDEX_MOD_WHEEL => {
-                            set_lfo_phase(&module_parameters.lfos[LFOIndex::ModWheel as usize], phase);
+                            set_lfo_phase(
+                                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                                phase,
+                            );
                         }
-                        LFO_INDEX_FILTER => set_lfo_phase(&module_parameters.lfos[LFOIndex::Filter as usize], phase),
+                        LFO_INDEX_FILTER => {
+                            set_lfo_phase(&module_parameters.lfos[LFOIndex::Filter as usize], phase)
+                        }
                         _ => {
                             log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhase: Invalid LFO index: {lfo_index}"
@@ -301,9 +310,13 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::LfoPhaseReset(lfo_index) => {
                     match lfo_index {
                         LFO_INDEX_MOD_WHEEL => {
-                            set_lfo_phase_reset(&module_parameters.lfos[LFOIndex::ModWheel as usize]);
+                            set_lfo_phase_reset(
+                                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                            );
                         }
-                        LFO_INDEX_FILTER => set_lfo_phase_reset(&module_parameters.lfos[LFOIndex::Filter as usize]),
+                        LFO_INDEX_FILTER => {
+                            set_lfo_phase_reset(&module_parameters.lfos[LFOIndex::Filter as usize])
+                        }
                         _ => {
                             log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhaseReset: Invalid LFO index: {lfo_index}"
@@ -372,6 +385,31 @@ pub fn start_update_event_listener(
                     } else {
                         log::warn!(
                             "start_ui_event_listener():SynthesizerUpdateEvents::OscillatorMixerMute: Invalid oscillator index: {oscillator_index}"
+                        );
+                    }
+                }
+                SynthesizerUpdateEvents::EffectEnabled(effect_index, is_enabled) => {
+                    if let Some(effect) = EffectIndex::from_i32(effect_index) {
+                        set_effect_is_enabled(&module_parameters.effects, effect, is_enabled);
+                    } else {
+                        log::warn!(
+                            "start_ui_event_listener():SynthesizerUpdateEvents::EffectEnabled: Invalid effect index: \
+                            {effect_index}"
+                        );
+                    }
+                }
+                SynthesizerUpdateEvents::EffectParameters(effect_index, parameter_index, value) => {
+                    if let Some(effect) = EffectIndex::from_i32(effect_index) {
+                        set_effect_parameter(
+                            &module_parameters.effects,
+                            effect,
+                            parameter_index,
+                            value,
+                        );
+                    } else {
+                        log::warn!(
+                            "start_ui_event_listener():SynthesizerUpdateEvents::EffectEnabled: Invalid effect index: \
+                            {effect_index}"
                         );
                     }
                 }

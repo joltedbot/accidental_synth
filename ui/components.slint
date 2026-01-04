@@ -92,6 +92,19 @@ export component SectionLabel inherits VerticalLayout {
     }
 }
 
+export component EffectLabel inherits VerticalLayout {
+    in property <string> label;
+    in property <angle> angle;
+
+    Text {
+        transform-rotation: angle;
+        horizontal-alignment: center;
+        font-size: Theme.effect-label-font-size;
+        font-weight: Theme.effect-label-font-weight;
+        text: label;
+    }
+}
+
 export component ComponentLabel inherits VerticalLayout {
     in property <string> label;
 
@@ -266,26 +279,33 @@ export component FilterControlLabel inherits Rectangle {
 }
 
 export component ToggleSwitch inherits VerticalLayout {
-    in property <bool> is_enabled: false;
+    in-out property <bool> is_checked: false;
     in property <length> switch-height: 30px;
     in property <string> label;
+    in property <bool> enabled: true;
     callback toggle_switch_updated(bool);
+
     alignment: start;
+
+    property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
 
     Text {
         horizontal-alignment: center;
         font-size: Theme.section-label-font-size;
         font-weight: Theme.section-label-font-weight;
+        color: text-color;
         text: label;
     }
 
     HorizontalLayout {
         alignment: center;
         Switch {
+            enabled: enabled;
             height: switch-height;
-            checked: is_enabled;
+            checked: is_checked;
             toggled() => {
                 toggle_switch_updated(self.checked);
+                is_checked = self.checked;
             }
         }
     }
@@ -317,7 +337,7 @@ export component MomentaryButton inherits VerticalLayout {
 export component HorizontalParameterSlider inherits VerticalLayout {
     in property <string> label: Theme.control-label-default-string;
     in property <string> value-units;
-    in property <float> value;
+    in-out property <float> value;
     in property <string> display-value;
     in property <length> slider-width: 100px;
     in property <length> slider-height: 30px;
@@ -342,8 +362,9 @@ export component HorizontalParameterSlider inherits VerticalLayout {
         value: value;
         enabled: enabled;
 
-        updated(value) => {
-            horizontal-parameter-slider-changed(value);
+        updated(new_value) => {
+            value = new_value;
+            horizontal-parameter-slider-changed(new_value);
         }
     }
 }
@@ -603,7 +624,7 @@ export component EnvelopeSection inherits VerticalLayout {
 
         ToggleSwitch {
             label: Theme.envelope-label-inverted;
-            is_enabled: envelope-values.inverted;
+            is_checked: envelope-values.inverted;
             toggle_switch_updated(is_active) => {
                 envelope-invert-changed(is_active);
             }

@@ -1,3 +1,4 @@
+mod effects;
 mod filter;
 mod global;
 mod modulation;
@@ -67,4 +68,7 @@ pub fn register_callbacks(
     global::callback_osc_mixer_balance_update(ui_weak, synthesizer_update_sender.clone());
     global::callback_osc_mixer_level_update(ui_weak, synthesizer_update_sender.clone());
     global::callback_osc_mixer_mute_update(ui_weak, synthesizer_update_sender.clone());
+
+    effects::callback_effect_enable(ui_weak, synthesizer_update_sender.clone());
+    effects::callback_effect_parameter_changed(ui_weak, synthesizer_update_sender.clone());
 }

@@ -1,8 +1,8 @@
 mod constants;
-mod sample_generator;
 mod event_listener;
 mod midi_messages;
 pub mod midi_value_converters;
+mod sample_generator;
 mod set_parameters;
 
 use self::constants::{
@@ -19,15 +19,16 @@ use crate::modules::lfo::LfoParameters;
 use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
 use crate::synthesizer::constants::SYNTHESIZER_MESSAGE_SENDER_CAPACITY;
-use crate::synthesizer::sample_generator::sample_generator;
 use crate::synthesizer::event_listener::start_update_event_listener;
 use crate::synthesizer::midi_messages::{
     process_midi_cc_values, process_midi_channel_pressure_message, process_midi_note_off_message,
     process_midi_note_on_message, process_midi_pitch_bend_message,
 };
+use crate::synthesizer::sample_generator::sample_generator;
 
 use crate::audio::OutputStreamParameters;
 use crate::defaults::Defaults;
+use crate::modules::effects::{AudioEffectParameters, EffectIndex};
 use crate::ui::UIUpdates;
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
@@ -72,6 +73,8 @@ pub enum SynthesizerUpdateEvents {
     OscillatorMixerBalance(i32, f32),
     OscillatorMixerLevel(i32, f32),
     OscillatorMixerMute(i32, bool),
+    EffectEnabled(i32, bool),
+    EffectParameters(i32, i32, f32),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -191,6 +194,7 @@ pub struct ModuleParameters {
     lfos: [LfoParameters; 2],
     envelopes: [EnvelopeParameters; 2],
     oscillators: [OscillatorParameters; 4],
+    effects: Vec<AudioEffectParameters>,
 }
 
 pub struct Synthesizer {
@@ -269,6 +273,11 @@ impl Synthesizer {
         let envelopes = [EnvelopeParameters::default(), filter_envelope_parameters];
         let lfos = [mod_wheel_lfo_parameters, filter_lfo_parameters];
 
+        let mut effects = Vec::with_capacity(EffectIndex::count());
+        for _effect in 0..EffectIndex::count() {
+            effects.push(AudioEffectParameters::default());
+        }
+
         let module_parameters = ModuleParameters {
             filter: filter_parameters,
             mixer: mixer_parameters,
@@ -276,6 +285,7 @@ impl Synthesizer {
             oscillators: Default::default(),
             lfos,
             envelopes,
+            effects,
         };
 
         Self {

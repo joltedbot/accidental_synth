@@ -309,7 +309,7 @@ pub fn process_midi_cc_values(
                 normal_value,
             );
             ui_update_sender
-                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, shape_index as i32))
+                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator wave shape value to the UI. Exiting.",
                 );
@@ -322,7 +322,7 @@ pub fn process_midi_cc_values(
                 normal_value,
             );
             ui_update_sender
-                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, shape_index as i32))
+                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator wave shape value to the UI. Exiting.",
                 );
@@ -335,7 +335,7 @@ pub fn process_midi_cc_values(
                 normal_value,
             );
             ui_update_sender
-                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, shape_index as i32))
+                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator wave shape value to the UI. Exiting.",
                 );
@@ -348,7 +348,7 @@ pub fn process_midi_cc_values(
                 normal_value,
             );
             ui_update_sender
-                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, shape_index as i32))
+                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator wave shape value to the UI. Exiting.",
                 );
@@ -361,7 +361,7 @@ pub fn process_midi_cc_values(
             );
 
             ui_update_sender
-                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
+                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, i32::from(course_tune)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator course-tune interval value to the UI. \
                     Exiting.",
@@ -375,7 +375,7 @@ pub fn process_midi_cc_values(
             );
 
             ui_update_sender
-                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
+                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, i32::from(course_tune)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator course-tune interval value to the UI. \
                     Exiting.",
@@ -389,7 +389,7 @@ pub fn process_midi_cc_values(
             );
 
             ui_update_sender
-                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
+                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, i32::from(course_tune)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator course-tune interval value to the UI. \
                     Exiting.",
@@ -403,7 +403,7 @@ pub fn process_midi_cc_values(
             );
 
             ui_update_sender
-                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
+                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, i32::from(course_tune)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator course-tune interval value to the UI. \
                     Exiting.",
@@ -418,7 +418,7 @@ pub fn process_midi_cc_values(
             );
 
             ui_update_sender
-                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value,cents as i32))
+                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value,i32::from(cents)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator fine-tune value to the UI. Exiting.",
                 );
@@ -431,7 +431,7 @@ pub fn process_midi_cc_values(
                 fine_tune_normal_value,
             );
             ui_update_sender
-                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value,cents as i32))
+                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value,i32::from(cents)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
                 );
@@ -444,7 +444,7 @@ pub fn process_midi_cc_values(
                 fine_tune_normal_value,
             );
             ui_update_sender
-                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value, cents as i32))
+                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value, i32::from(cents)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
                 );
@@ -458,8 +458,7 @@ pub fn process_midi_cc_values(
             );
 
             ui_update_sender
-                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value, cents as
-                    i32))
+                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value, i32::from(cents)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
                 );
@@ -820,7 +819,10 @@ pub fn process_midi_cc_values(
         }
         CC::ModWheelLFOFrequency(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_frequency(&module_parameters.lfos[LFOIndex::ModWheel as usize], normal_value);
+            set_lfo_frequency(
+                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::LFOFrequency(LFOIndex::ModWheel as i32, normal_value))
@@ -831,15 +833,24 @@ pub fn process_midi_cc_values(
         }
         CC::ModWheelLFOCenterValue(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_center_value(&module_parameters.lfos[LFOIndex::ModWheel as usize], normal_value);
+            set_lfo_center_value(
+                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                normal_value,
+            );
         }
         CC::ModWheelLFORange(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_range(&module_parameters.lfos[LFOIndex::ModWheel as usize], normal_value);
+            set_lfo_range(
+                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                normal_value,
+            );
         }
         CC::ModWheelLFOWaveShape(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_wave_shape(&module_parameters.lfos[LFOIndex::ModWheel as usize], normal_value);
+            set_lfo_wave_shape(
+                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::LFOWaveShape(LFOIndex::ModWheel as i32, normal_value))
@@ -850,7 +861,10 @@ pub fn process_midi_cc_values(
         }
         CC::ModWheelLFOPhase(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_phase(&module_parameters.lfos[LFOIndex::ModWheel as usize], normal_value);
+            set_lfo_phase(
+                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::LFOPhase(LFOIndex::ModWheel as i32, normal_value))
@@ -870,7 +884,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterModLFOFrequency(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_frequency(&module_parameters.lfos[LFOIndex::Filter as usize], normal_value);
+            set_lfo_frequency(
+                &module_parameters.lfos[LFOIndex::Filter as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::LFOFrequency(LFOIndex::Filter as i32, normal_value))
@@ -881,7 +898,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterModLFOAmount(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_range(&module_parameters.lfos[LFOIndex::Filter as usize], normal_value);
+            set_lfo_range(
+                &module_parameters.lfos[LFOIndex::Filter as usize],
+                normal_value,
+            );
             ui_update_sender
                 .send(UIUpdates::FilterLFOAmount(normal_value))
                 .expect(
@@ -891,7 +911,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterModLFOWaveShape(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_wave_shape(&module_parameters.lfos[LFOIndex::Filter as usize], normal_value);
+            set_lfo_wave_shape(
+                &module_parameters.lfos[LFOIndex::Filter as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::LFOWaveShape(LFOIndex::Filter as i32, normal_value))
@@ -902,7 +925,10 @@ pub fn process_midi_cc_values(
         }
         CC::FilterModLFOPhase(value) => {
             let normal_value = normalize_midi_value(value);
-            set_lfo_phase(&module_parameters.lfos[LFOIndex::Filter as usize], normal_value);
+            set_lfo_phase(
+                &module_parameters.lfos[LFOIndex::Filter as usize],
+                normal_value,
+            );
 
             ui_update_sender
                 .send(UIUpdates::LFOPhase(LFOIndex::Filter as i32, normal_value))

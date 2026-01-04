@@ -148,6 +148,22 @@ export global Theme {
     out property <string> osc-controls-param2-fm: "Ratio";
     out property <color> green-screen-text: #22AA55;
 
+    // Effects Panel
+    out property <length> effect-box-width: 240px;
+    out property <length> effect-box-height: 212px;
+    out property <length> effect-label-font-size: 14px;
+    out property <int> effect-label-font-weight: 600;
+    out property <length> effects-panel-padding: 0px;
+    out property <length> effects-panel-spacing: 0px;
+    out property <length> effect-box-padding: 5px;
+    out property <length> effect-box-spacing: 10px;
+    out property <string> effect-box-enabled-switch: "Enable";
+    out property <string> wavefolder-title: "Wavefolder";
+    out property <string> wavefolder-parameter1: "Fold Amount";
+    out property <string> wavefolder-parameter2-switch: "Asymmetrical";
+    out property <string> wavefolder-parameter2: "Negative Fold Amount";
+
+
     // Settings Window
     out property <length> settings-panel-width: 600px;
     out property <length> settings-panel-height: 300px;
@@ -155,4 +171,5 @@ export global Theme {
     out property <color> settings-window-background: Palette.background;
     out property <color> settings-window-border-colour: Palette.background.brighter(3);
     out property <length> settings-window-border-radius: 10px;
+
 }

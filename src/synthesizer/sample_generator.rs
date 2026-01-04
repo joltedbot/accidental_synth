@@ -1,6 +1,7 @@
 use crate::audio::OutputStreamParameters;
 use crate::math::load_f32_from_atomic_u32;
 use crate::modules::amplifier::amplify_stereo;
+use crate::modules::effects::Effects;
 use crate::modules::envelope::Envelope;
 use crate::modules::filter::Filter;
 use crate::modules::lfo::Lfo;
@@ -25,6 +26,7 @@ struct Modules {
     filter_lfo: Lfo,
     filter: Filter,
     mod_wheel_lfo: Lfo,
+    effects: Effects,
     oscillators: [Oscillator; 4],
 }
 
@@ -90,8 +92,12 @@ pub fn sample_generator(
                 .mod_wheel_lfo
                 .set_parameters(&module_parameters.lfos[LFOIndex::ModWheel as usize]);
 
+            modules.effects.set_parameters(&module_parameters.effects);
+
             for (index, oscillator) in modules.oscillators.iter_mut().enumerate() {
-                oscillator.set_aftertouch(load_f32_from_atomic_u32(&module_parameters.keyboard.aftertouch_amount));
+                oscillator.set_aftertouch(load_f32_from_atomic_u32(
+                    &module_parameters.keyboard.aftertouch_amount,
+                ));
                 oscillator.set_parameters(&module_parameters.oscillators[index]);
                 oscillator.tune(current_note.midi_note.load(Relaxed));
             }
@@ -147,9 +153,12 @@ pub fn sample_generator(
                     Some(filter_modulation),
                 );
 
+                let (effected_left, effected_right) =
+                    modules.effects.process((filtered_left, filtered_right));
+
                 // Final output level control
                 let (output_left, output_right) = output_mix(
-                    (filtered_left, filtered_right),
+                    (effected_left, effected_right),
                     output_level,
                     output_balance,
                     output_is_muted,
@@ -193,6 +202,7 @@ fn initialize_synth_modules(sample_rate: u32) -> Modules {
         filter_lfo: Lfo::new(sample_rate),
         filter: Filter::new(sample_rate),
         mod_wheel_lfo: Lfo::new(sample_rate),
+        effects: Effects::new(),
         oscillators: [
             Oscillator::new(sample_rate, WaveShape::default()),
             Oscillator::new(sample_rate, WaveShape::default()),

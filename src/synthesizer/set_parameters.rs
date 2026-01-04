@@ -1,4 +1,5 @@
 use crate::math::store_f32_as_atomic_u32;
+use crate::modules::effects::{AudioEffectParameters, EffectIndex};
 use crate::modules::envelope::{
     EnvelopeParameters, MAX_ATTACK_MILLISECONDS, MAX_DECAY_MILLISECONDS, MAX_RELEASE_MILLISECONDS,
     MIN_ATTACK_MILLISECONDS, MIN_DECAY_MILLISECONDS, MIN_RELEASE_MILLISECONDS,
@@ -279,4 +280,26 @@ pub fn set_oscillator_wave_shape(parameters: &OscillatorParameters, normal_value
     let wave_shape_index = normal_value_to_wave_shape_index(normal_value);
     parameters.wave_shape_index.store(wave_shape_index, Relaxed);
     wave_shape_index
+}
+
+pub fn set_effect_is_enabled(
+    parameters: &[AudioEffectParameters],
+    effect: EffectIndex,
+    is_enabled: bool,
+) {
+    parameters[effect as usize]
+        .is_enabled
+        .store(is_enabled, Relaxed);
+}
+
+pub fn set_effect_parameter(
+    parameters: &[AudioEffectParameters],
+    effect: EffectIndex,
+    parameter_index: i32,
+    value: f32,
+) {
+    store_f32_as_atomic_u32(
+        &parameters[effect as usize].parameters[parameter_index as usize],
+        value,
+    );
 }

@@ -628,6 +628,9 @@ fn start_main_audio_output_loop(
                 return;
             };
 
+            // Allow usize cast sign loss: channel indices are small positive values (0-7 typical, 0-31 max)
+            // Right channel check guards against -1 (disabled), the left channel is never negative
+            #[allow(clippy::cast_sign_loss)]
             for frame in buffer.chunks_mut(number_of_channels) {
                 frame[left_channel_index as usize] = samples.next().unwrap_or_default();
                 let right_sample = samples.next().unwrap_or_default();
