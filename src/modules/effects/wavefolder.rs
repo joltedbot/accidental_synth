@@ -1,5 +1,4 @@
-use crate::math::load_f32_from_atomic_u32;
-use crate::modules::effects::{AudioEffect, AudioEffectParameters, EffectParameters};
+use crate::modules::effects::{AudioEffect, EffectParameters};
 use crate::modules::effects::constants::MAX_WAVEFOLDER_THRESHOLD;
 
 pub struct WaveFolder {}

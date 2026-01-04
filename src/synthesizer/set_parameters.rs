@@ -292,7 +292,7 @@ pub fn set_effect_is_enabled(
 
 
 pub fn set_effect_parameter(
-    parameters: &Vec<AudioEffectParameters>,
+    parameters: &[AudioEffectParameters],
     effect: EffectIndex,
     parameter_index: i32,
     value: f32,

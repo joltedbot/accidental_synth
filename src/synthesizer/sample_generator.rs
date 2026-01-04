@@ -14,11 +14,11 @@ use crossbeam_channel::Receiver;
 use log::info;
 use rtrb::Producer;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicU32};
+use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
 use std::time::Duration;
-use crate::modules::effects::{AudioEffectParameters, EffectParameters, Effects};
+use crate::modules::effects::Effects;
 
 struct Modules {
     amp_envelope: Envelope,

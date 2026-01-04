@@ -309,7 +309,7 @@ pub fn process_midi_cc_values(
                 normal_value,
             );
             ui_update_sender
-                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, shape_index as i32))
+                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator wave shape value to the UI. Exiting.",
                 );
@@ -322,7 +322,7 @@ pub fn process_midi_cc_values(
                 normal_value,
             );
             ui_update_sender
-                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, shape_index as i32))
+                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator wave shape value to the UI. Exiting.",
                 );
@@ -335,7 +335,7 @@ pub fn process_midi_cc_values(
                 normal_value,
             );
             ui_update_sender
-                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, shape_index as i32))
+                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator wave shape value to the UI. Exiting.",
                 );
@@ -348,7 +348,7 @@ pub fn process_midi_cc_values(
                 normal_value,
             );
             ui_update_sender
-                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, shape_index as i32))
+                .send(UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator wave shape value to the UI. Exiting.",
                 );
@@ -361,7 +361,7 @@ pub fn process_midi_cc_values(
             );
 
             ui_update_sender
-                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
+                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, i32::from(course_tune)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator course-tune interval value to the UI. \
                     Exiting.",
@@ -375,7 +375,7 @@ pub fn process_midi_cc_values(
             );
 
             ui_update_sender
-                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
+                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, i32::from(course_tune)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator course-tune interval value to the UI. \
                     Exiting.",
@@ -389,7 +389,7 @@ pub fn process_midi_cc_values(
             );
 
             ui_update_sender
-                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
+                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, i32::from(course_tune)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator course-tune interval value to the UI. \
                     Exiting.",
@@ -403,7 +403,7 @@ pub fn process_midi_cc_values(
             );
 
             ui_update_sender
-                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, course_tune as i32))
+                .send(UIUpdates::OscillatorCourseTune(oscillator_index as i32, i32::from(course_tune)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator course-tune interval value to the UI. \
                     Exiting.",
@@ -418,7 +418,7 @@ pub fn process_midi_cc_values(
             );
 
             ui_update_sender
-                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value,cents as i32))
+                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value,i32::from(cents)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator fine-tune value to the UI. Exiting.",
                 );
@@ -431,7 +431,7 @@ pub fn process_midi_cc_values(
                 fine_tune_normal_value,
             );
             ui_update_sender
-                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value,cents as i32))
+                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value,i32::from(cents)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
                 );
@@ -444,7 +444,7 @@ pub fn process_midi_cc_values(
                 fine_tune_normal_value,
             );
             ui_update_sender
-                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value, cents as i32))
+                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value, i32::from(cents)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
                 );
@@ -458,8 +458,7 @@ pub fn process_midi_cc_values(
             );
 
             ui_update_sender
-                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value, cents as
-                    i32))
+                .send(UIUpdates::OscillatorFineTune(oscillator_index as i32, fine_tune_normal_value, i32::from(cents)))
                 .expect(
                     "process_midi_cc_values(): Could not send the oscillator fine-tune cents value to the UI. Exiting.",
                 );

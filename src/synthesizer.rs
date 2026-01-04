@@ -274,7 +274,7 @@ impl Synthesizer {
         let lfos = [mod_wheel_lfo_parameters, filter_lfo_parameters];
 
         let mut effects = Vec::with_capacity(EffectIndex::count());
-        for effect in 0..EffectIndex::count() {
+        for _effect in 0..EffectIndex::count() {
             effects.push(AudioEffectParameters::default());
         }
 

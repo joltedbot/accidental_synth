@@ -1,10 +1,8 @@
 use crate::math::load_f32_from_atomic_u32;
 use crate::modules::effects::constants::{
-    MAX_WAVEFOLDER_THRESHOLD, NUMBER_OF_EFFECTS, PARAMETERS_PER_EFFECT,
+    NUMBER_OF_EFFECTS, PARAMETERS_PER_EFFECT,
 };
 use crate::modules::effects::wavefolder::WaveFolder;
-use coreaudio_sys::os_workgroup_attr_s;
-use std::char::MAX;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU32};
 
@@ -81,7 +79,7 @@ impl Effects {
         }
     }
 
-    pub fn set_parameters(&mut self, parameters: &Vec<AudioEffectParameters>) {
+    pub fn set_parameters(&mut self, parameters: &[AudioEffectParameters]) {
         parameters
             .iter()
             .enumerate()
@@ -93,7 +91,7 @@ impl Effects {
     pub fn process(&self, mut samples: (f32, f32)) -> (f32, f32) {
         for (index, parameter) in self.parameters.iter().enumerate() {
             if parameter.is_enabled {
-                samples = self.effects[index].process_samples(samples, &parameter)
+                samples = self.effects[index].process_samples(samples, parameter);
             }
         }
 
@@ -107,6 +105,6 @@ fn extract_parameters(source: &AudioEffectParameters) -> EffectParameters {
         parameters: source
             .parameters
             .iter()
-            .map(|parameter| load_f32_from_atomic_u32(&parameter)).collect(),
+            .map(load_f32_from_atomic_u32).collect(),
     }
 }
