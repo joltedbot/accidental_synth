@@ -2,7 +2,7 @@ pub struct Defaults {}
 
 impl Defaults {
     // Audio Defaults
-    pub const AUDIO_DEVICE_INDEX: usize = 0;
+    pub const AUDIO_DEVICE_INDEX: i32 = 0;
     pub const LEFT_CHANNEL_INDEX: i32 = 0;
     pub const RIGHT_CHANNEL_INDEX: i32 = 1;
     pub const MONO_CHANNEL_COUNT: u16 = 1;
@@ -22,7 +22,7 @@ impl Defaults {
     pub const QUAD_MIXER_IS_MUTED: bool = false;
 
     // Global Panel Constants
-    pub const PITCH_BEND_RANGE: u32 = 12;
+    pub const PITCH_BEND_RANGE: u8 = 12;
     pub const PORTAMENTO_TIME_NORMAL_VALUE: f32 = 0.0;
     pub const VELOCITY_CURVE_NORMAL_VALUE: f32 = 0.5;
     pub const MINIMUM_PITCH_BEND_RANGE: u32 = 2;
@@ -161,3 +161,5 @@ impl Defaults {
         (12543.854, "G9"),
     ];
 }
+
+pub const MAX_SAMPLE_VALUE: f32 = 1.0;

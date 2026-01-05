@@ -88,3 +88,73 @@ export component Wavefolder inherits EffectBox {
     }
 
 }
+
+export component Clipper inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    title: Theme.clipper-title;
+
+    changed is_enabled => {
+        threshold.enabled = self.is_enabled;
+        pregain.enabled = self.is_enabled;
+        postgain.enabled = self.is_enabled;
+    }
+
+    HorizontalSpacer {}
+
+   threshold := HorizontalParameterSlider {
+        slider-width: 230px;
+        label: Theme.clipper-parameter1;
+        value: 1.0;
+        enabled: false;
+        horizontal-parameter-slider-changed(theshold) => {
+            effect_parameter_changed(parent.effect-index, 0, theshold);
+        }
+    }
+
+    pregain := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.clipper-parameter2;
+        horizontal-parameter-slider-changed(amount) => {
+            self.value = amount;
+            effect_parameter_changed(parent.effect-index, 1, amount);
+        }
+    }
+    
+    postgain := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.clipper-parameter3;
+        horizontal-parameter-slider-changed(amount) => {
+            self.value = amount;
+            effect_parameter_changed(parent.effect-index, 2, amount);
+        }
+    }
+
+}
+
+export component Rectifier inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    title: Theme.rectifier-title;
+
+    changed is_enabled => {
+        full_wave.enabled = self.is_enabled;
+    }
+
+    HorizontalSpacer {}
+
+   full_wave := ToggleSwitch {
+       enabled: false;
+       label: self.is_checked?Theme.rectifier-parameter1-on:Theme.rectifier-parameter1-off;
+       toggle_switch_updated(enabled) => {
+           if (enabled) {
+               effect_parameter_changed(parent.effect-index, 0, 1.0);
+           } else {
+               effect_parameter_changed(parent.effect-index, 0, 0.0);
+           }
+       }
+
+    }
+
+
+}

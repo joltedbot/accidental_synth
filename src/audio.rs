@@ -28,7 +28,7 @@ use thiserror::Error;
 pub struct OutputDevice {
     pub name: String,
     pub device: Device,
-    pub device_index: usize,
+    pub device_index: i32,
 }
 
 pub struct OutputChannels {
@@ -209,9 +209,7 @@ fn restart_main_audio_loop_with_new_device(
         .expect("restart_main_audio_loop_with_new_device(): Could not send device update to the audio output device sender. Exiting. ");
 
     ui_update_sender
-        .send(UIUpdates::AudioDeviceIndex(
-            output_device.device_index as i32,
-        ))
+        .send(UIUpdates::AudioDeviceIndex(output_device.device_index))
         .expect(
             "restart_main_audio_loop_with_new_device(): Could not send audio device index \
                     update to the UI. Exiting.",
@@ -234,6 +232,9 @@ fn restart_main_audio_loop_with_new_device(
                     update to the UI. Exiting ",
         );
 
+    // Indexes are in a fixed range manually configured in a constant array the array will remain a single digit length
+    // as this value is determined by what the hardware supports
+    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     ui_update_sender
         .send(UIUpdates::AudioDeviceSampleRateIndex(output_steam_parameters.sample_rate_index() as i32))
         .expect(
@@ -241,6 +242,9 @@ fn restart_main_audio_loop_with_new_device(
                     update to the UI. Exiting ",
         );
 
+    // Indexes are in a fixed range manually configured in a constant array the array will remain a single digit length
+    // as this value is determined by what the hardware supports
+    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     ui_update_sender
         .send(UIUpdates::AudioDeviceBufferSizeIndex(output_steam_parameters.buffer_size_index() as i32))
         .expect(
@@ -490,8 +494,11 @@ fn update_ui_with_new_device_index(
     let new_device_index = new_output_device_list
         .iter()
         .position(|device_name| device_name == current_output_device_name)
-        .unwrap_or(Defaults::AUDIO_DEVICE_INDEX);
+        .unwrap_or(Defaults::AUDIO_DEVICE_INDEX as usize);
 
+    // The size of this value is limited by the number of audio devices that can be connected to the system.
+    // This can never exceed i32::MAX
+    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     ui_update_sender
         .send(UIUpdates::AudioDeviceIndex(new_device_index as i32))
         .expect(
@@ -560,7 +567,7 @@ fn start_new_output_device(
 ) -> Option<Stream> {
     if let Some(device) = new_output_device {
         ui_update_sender
-            .send(UIUpdates::AudioDeviceIndex(device.device_index as i32)).expect
+            .send(UIUpdates::AudioDeviceIndex(device.device_index)).expect
         ("create_device_monitor(): Could not send audio device list update to the UI. Exiting.");
 
         ui_update_sender
@@ -670,25 +677,28 @@ fn default_audio_output_device() -> Option<OutputDevice> {
 fn new_output_device_from_name(host: &Host, name: &str) -> Option<OutputDevice> {
     let output_devices = host.output_devices().ok()?;
 
-    output_devices
-        .enumerate()
-        .find_map(|(device_index, device)| {
-            if device.description().ok()?.name() == name {
-                let channel_count = device.default_output_config().ok()?.channels();
+    output_devices.enumerate().find_map(|(index, device)| {
+        // The size of this value is limited by the number of audio devices that can be connected to the system.
+        // This can never exceed i32::MAX
+        #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+        let device_index = index as i32;
 
-                if channel_count == 0 {
-                    return None;
-                }
+        if device.description().ok()?.name() == name {
+            let channel_count = device.default_output_config().ok()?.channels();
 
-                Some(OutputDevice {
-                    name: name.to_string(),
-                    device,
-                    device_index,
-                })
-            } else {
-                None
+            if channel_count == 0 {
+                return None;
             }
-        })
+
+            Some(OutputDevice {
+                name: name.to_string(),
+                device,
+                device_index,
+            })
+        } else {
+            None
+        }
+    })
 }
 
 fn default_channels_from_device(output_device: &OutputDevice) -> Result<(i32, i32)> {

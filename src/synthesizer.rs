@@ -28,7 +28,7 @@ use crate::synthesizer::sample_generator::sample_generator;
 
 use crate::audio::OutputStreamParameters;
 use crate::defaults::Defaults;
-use crate::modules::effects::{AudioEffectParameters, EffectIndex};
+use crate::modules::effects::{AudioEffectParameters, default_audio_effect_parameters};
 use crate::ui::UIUpdates;
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
@@ -266,17 +266,14 @@ impl Synthesizer {
             .store(DEFAULT_VIBRATO_LFO_DEPTH.to_bits(), Relaxed);
 
         let keyboard_parameters = KeyboardParameters {
-            pitch_bend_range: AtomicU8::new(Defaults::PITCH_BEND_RANGE as u8),
+            pitch_bend_range: AtomicU8::new(Defaults::PITCH_BEND_RANGE),
             ..KeyboardParameters::default()
         };
 
         let envelopes = [EnvelopeParameters::default(), filter_envelope_parameters];
         let lfos = [mod_wheel_lfo_parameters, filter_lfo_parameters];
 
-        let mut effects = Vec::with_capacity(EffectIndex::count());
-        for _effect in 0..EffectIndex::count() {
-            effects.push(AudioEffectParameters::default());
-        }
+        let effects = default_audio_effect_parameters();
 
         let module_parameters = ModuleParameters {
             filter: filter_parameters,

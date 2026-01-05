@@ -1,7 +1,7 @@
 import { Theme } from "theme.slint";
 import { Panel, PanelLabel, EffectLabel, VerticalSpacer, ToggleSwitch, HorizontalSpacer } from "components.slint";
 import { Switch } from "std-widgets.slint";
-import { EffectBox, Wavefolder } from "effects.slint";
+import { EffectBox, Wavefolder, Clipper, Rectifier } from "effects.slint";
 
 export component EffectsPanel inherits Panel {
     in property <string> title;
@@ -33,12 +33,30 @@ export component EffectsPanel inherits Panel {
                     left-padding: 0px;
                     right-padding: 0px;
                 }
-                EffectBox {}
+                Clipper {
+                    effect-index: 1;
+                    is_enabled: false;
+                    effect_enabled(effect-index, is_enabled) => {
+                        effect_enabled(effect-index, is_enabled);
+                    }
+                    effect_parameter_changed(effect_index, parameter_index, value) => {
+                        effect_parameter_changed(effect_index, parameter_index, value);
+                    }
+                }
                 VerticalSpacer {
                     left-padding: 0px;
                     right-padding: 0px;
                 }
-                EffectBox {}
+                Rectifier {
+                    effect-index: 2;
+                    is_enabled: false;
+                    effect_enabled(effect-index, is_enabled) => {
+                        effect_enabled(effect-index, is_enabled);
+                    }
+                    effect_parameter_changed(effect_index, parameter_index, value) => {
+                        effect_parameter_changed(effect_index, parameter_index, value);
+                    }
+                }
                 VerticalSpacer {
                     left-padding: 0px;
                     right-padding: 0px;

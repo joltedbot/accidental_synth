@@ -34,7 +34,7 @@ impl Default for UIAudioDevice {
             .map(ToString::to_string)
             .collect();
         Self {
-            output_device_index: Defaults::AUDIO_DEVICE_INDEX as i32,
+            output_device_index: Defaults::AUDIO_DEVICE_INDEX,
             left_channel_index: Defaults::LEFT_CHANNEL_INDEX,
             right_channel_index: Defaults::LEFT_CHANNEL_INDEX,
             sample_rate_index: Defaults::SAMPLE_RATE_INDEX as i32,
@@ -156,7 +156,7 @@ impl Default for UIGlobalOptions {
         Self {
             portamento_time: Defaults::PORTAMENTO_TIME_NORMAL_VALUE,
             portamento_is_enabled: false,
-            pitch_bend_range: Defaults::PITCH_BEND_RANGE as i32,
+            pitch_bend_range: i32::from(Defaults::PITCH_BEND_RANGE),
             velocity_curve_slope: Defaults::VELOCITY_CURVE_NORMAL_VALUE,
             hard_sync_is_enabled: false,
             key_sync_is_enabled: false,

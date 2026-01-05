@@ -292,7 +292,7 @@ pub fn start_update_event_listener(
                             );
                         }
                         LFO_INDEX_FILTER => {
-                            set_lfo_phase(&module_parameters.lfos[LFOIndex::Filter as usize], phase)
+                            set_lfo_phase(&module_parameters.lfos[LFOIndex::Filter as usize], phase);
                         }
                         _ => {
                             log::warn!(
@@ -315,7 +315,7 @@ pub fn start_update_event_listener(
                             );
                         }
                         LFO_INDEX_FILTER => {
-                            set_lfo_phase_reset(&module_parameters.lfos[LFOIndex::Filter as usize])
+                            set_lfo_phase_reset(&module_parameters.lfos[LFOIndex::Filter as usize]);
                         }
                         _ => {
                             log::warn!(
