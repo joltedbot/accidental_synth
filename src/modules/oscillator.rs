@@ -32,11 +32,13 @@ use generate_wave_trait::GenerateWave;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
 use std::sync::atomic::{AtomicBool, AtomicI8, AtomicI16, AtomicU8, AtomicU16, AtomicU32};
+use strum_macros::{EnumCount, EnumIter, FromRepr};
 
 pub const FIRST_WAVE_SHAPE_INDEX: u32 = 0;
 pub const LAST_WAVE_SHAPE_INDEX: u32 = 9;
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, EnumCount, EnumIter, FromRepr)]
+#[repr(u8)]
 pub enum WaveShape {
     #[default]
     Sine,
@@ -53,19 +55,7 @@ pub enum WaveShape {
 
 impl WaveShape {
     pub fn from_index(index: u8) -> Self {
-        match index {
-            0 => WaveShape::Sine,
-            1 => WaveShape::Triangle,
-            2 => WaveShape::Square,
-            3 => WaveShape::Saw,
-            4 => WaveShape::Pulse,
-            5 => WaveShape::Ramp,
-            6 => WaveShape::Supersaw,
-            7 => WaveShape::AM,
-            8 => WaveShape::FM,
-            9 => WaveShape::Noise,
-            _ => WaveShape::default(),
-        }
+        Self::from_repr(index).unwrap_or_default()
     }
 }
 
@@ -112,7 +102,7 @@ impl Default for OscillatorParameters {
     }
 }
 
-#[derive(Default, Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 struct Portamento {
     is_enabled: bool,
     time: u16,
@@ -121,20 +111,54 @@ struct Portamento {
     recalculate_increment: bool,
 }
 
-#[derive(Default, Debug)]
+impl Default for Portamento {
+    fn default() -> Self {
+        Self {
+            is_enabled: false,
+            time: DEFAULT_PORTAMENTO_TIME_IN_BUFFERS,
+            target_frequency: DEFAULT_NOTE_FREQUENCY,
+            increment: 0.0,
+            recalculate_increment: false,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct HardSync {
     is_enabled: bool,
     last_sample: f32,
     sync_role: HardSyncRole,
 }
 
-#[derive(Default, Debug, Copy, Clone)]
+impl Default for HardSync {
+    fn default() -> Self {
+        Self {
+            sync_role: HardSyncRole::None,
+            is_enabled: false,
+            last_sample: 0.0,
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
 pub struct Tuning {
     frequency: f32,
     pitch_bend: i16,
     course: i8,
     fine: i8,
     is_sub: bool,
+}
+
+impl Default for Tuning {
+    fn default() -> Self {
+        Self {
+            frequency: DEFAULT_NOTE_FREQUENCY,
+            pitch_bend: 0,
+            course: 0,
+            fine: 0,
+            is_sub: false,
+        }
+    }
 }
 
 pub struct Oscillator {
@@ -154,36 +178,14 @@ impl Oscillator {
         log::debug!("Constructing Oscillator Module: {wave_shape:?}");
         let wave_generator = get_wave_generator_from_wave_shape(sample_rate, wave_shape);
 
-        let portamento = Portamento {
-            is_enabled: false,
-            target_frequency: DEFAULT_NOTE_FREQUENCY,
-            time: DEFAULT_PORTAMENTO_TIME_IN_BUFFERS,
-            recalculate_increment: false,
-            ..Portamento::default()
-        };
-
-        let tuning = Tuning {
-            frequency: DEFAULT_NOTE_FREQUENCY,
-            pitch_bend: 0,
-            course: 0,
-            fine: 0,
-            is_sub: false,
-        };
-
-        let hard_sync = HardSync {
-            sync_role: HardSyncRole::None,
-            is_enabled: false,
-            last_sample: 0.0,
-        };
-
         Self {
             sample_rate,
             wave_generator,
             wave_shape_index: WaveShape::default() as u8,
             key_sync_enabled: DEFAULT_KEY_SYNC_ENABLED,
-            tuning,
-            hard_sync,
-            portamento,
+            tuning: Tuning::default(),
+            hard_sync: HardSync::default(),
+            portamento: Portamento::default(),
             clipper_boost: 0,
             aftertouch: 0.0,
         }

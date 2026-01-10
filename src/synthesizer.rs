@@ -13,8 +13,8 @@ use self::constants::{
 use crate::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
 use crate::midi::Event;
 use crate::modules::envelope::EnvelopeParameters;
+use crate::modules::filter::FilterParameters;
 use crate::modules::filter::max_frequency_from_sample_rate;
-use crate::modules::filter::{DEFAULT_KEY_TRACKING_AMOUNT, FilterParameters};
 use crate::modules::lfo::LfoParameters;
 use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
@@ -38,6 +38,7 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::thread;
+use strum_macros::{EnumCount, EnumIter, FromRepr};
 
 pub enum SynthesizerUpdateEvents {
     WaveShapeIndex(i32, i32),
@@ -91,7 +92,8 @@ enum MidiGateEvent {
     GateOff = 2,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, EnumCount, EnumIter, FromRepr)]
+#[repr(i32)]
 pub enum OscillatorIndex {
     Sub = 0,
     One = 1,
@@ -100,22 +102,13 @@ pub enum OscillatorIndex {
 }
 
 impl OscillatorIndex {
-    pub fn count() -> usize {
-        4
-    }
-
     pub fn from_i32(index: i32) -> Option<Self> {
-        match index {
-            0 => Some(OscillatorIndex::Sub),
-            1 => Some(OscillatorIndex::One),
-            2 => Some(OscillatorIndex::Two),
-            3 => Some(OscillatorIndex::Three),
-            _ => None,
-        }
+        Self::from_repr(index)
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, EnumCount, EnumIter, FromRepr)]
+#[repr(i32)]
 pub enum LFOIndex {
     ModWheel = 0,
     Filter = 1,
@@ -123,15 +116,12 @@ pub enum LFOIndex {
 
 impl LFOIndex {
     pub fn from_i32(index: i32) -> Option<Self> {
-        match index {
-            0 => Some(Self::ModWheel),
-            1 => Some(Self::Filter),
-            _ => None,
-        }
+        Self::from_repr(index)
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, EnumCount, EnumIter, FromRepr)]
+#[repr(i32)]
 pub enum EnvelopeIndex {
     Amp = 0,
     Filter = 1,
@@ -139,19 +129,25 @@ pub enum EnvelopeIndex {
 
 impl EnvelopeIndex {
     pub fn from_i32(index: i32) -> Option<Self> {
-        match index {
-            0 => Some(EnvelopeIndex::Amp),
-            1 => Some(EnvelopeIndex::Filter),
-            _ => None,
-        }
+        Self::from_repr(index)
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 struct CurrentNote {
     midi_note: AtomicU8,
     velocity: AtomicU32,
     velocity_curve: AtomicU32,
+}
+
+impl Default for CurrentNote {
+    fn default() -> Self {
+        Self {
+            midi_note: AtomicU8::new(0),
+            velocity: AtomicU32::new(MAX_MIDI_KEY_VELOCITY.to_bits()),
+            velocity_curve: AtomicU32::new(DEFAULT_VELOCITY_CURVE.to_bits()),
+        }
+    }
 }
 
 #[derive(Default, Debug)]
@@ -178,12 +174,23 @@ impl Default for QuadMixerInput {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 struct MixerParameters {
     output_level: AtomicU32,
     output_balance: AtomicU32,
     output_is_muted: AtomicBool,
     quad_mixer_inputs: [QuadMixerInput; 4],
+}
+
+impl Default for MixerParameters {
+    fn default() -> Self {
+        Self {
+            output_level: AtomicU32::new(Defaults::OUTPUT_MIXER_LEVEL.to_bits()),
+            output_balance: AtomicU32::new(Defaults::OUTPUT_MIXER_BALANCE.to_bits()),
+            output_is_muted: AtomicBool::new(false),
+            quad_mixer_inputs: Default::default(),
+        }
+    }
 }
 
 #[derive(Default, Debug)]
@@ -212,38 +219,17 @@ impl Synthesizer {
         let (ui_update_sender, ui_update_receiver) =
             crossbeam_channel::bounded(SYNTHESIZER_MESSAGE_SENDER_CAPACITY);
 
-        let velocity = AtomicU32::new(0);
-        store_f32_as_atomic_u32(&velocity, MAX_MIDI_KEY_VELOCITY);
-
-        let velocity_curve = AtomicU32::new(0);
-        store_f32_as_atomic_u32(&velocity_curve, DEFAULT_VELOCITY_CURVE);
-        let current_note = CurrentNote {
-            midi_note: AtomicU8::new(60),
-            velocity,
-            velocity_curve,
-        };
-
-        let oscillator_mixer_parameters: [QuadMixerInput; 4] = Default::default();
+        let mixer_parameters: MixerParameters = MixerParameters::default();
         store_f32_as_atomic_u32(
-            &oscillator_mixer_parameters[0].level,
+            &mixer_parameters.quad_mixer_inputs[0].level,
             Defaults::QUAD_MIXER_SUB_LEVEL,
         );
-
-        let mixer_parameters = MixerParameters {
-            output_level: AtomicU32::new(Defaults::OUTPUT_MIXER_LEVEL.to_bits()),
-            output_balance: AtomicU32::new(Defaults::OUTPUT_MIXER_BALANCE.to_bits()),
-            output_is_muted: AtomicBool::new(false),
-            quad_mixer_inputs: oscillator_mixer_parameters,
-        };
 
         let max_filter_frequency =
             max_frequency_from_sample_rate(output_stream_parameters.sample_rate.load(Relaxed));
         let filter_parameters = FilterParameters {
             cutoff_frequency: AtomicU32::new(max_filter_frequency.to_bits()),
-            resonance: AtomicU32::new(0.0_f32.to_bits()),
-            filter_poles: AtomicU8::new(4),
-            key_tracking_amount: AtomicU32::new(DEFAULT_KEY_TRACKING_AMOUNT.to_bits()),
-            current_note_number: AtomicU8::new(0),
+            ..Default::default()
         };
 
         let filter_envelope_parameters: EnvelopeParameters = EnvelopeParameters::default();
@@ -287,7 +273,7 @@ impl Synthesizer {
 
         Self {
             output_stream_parameters,
-            current_note: Arc::new(current_note),
+            current_note: Arc::new(CurrentNote::default()),
             module_parameters: Arc::new(module_parameters),
             ui_update_sender,
             ui_update_receiver,

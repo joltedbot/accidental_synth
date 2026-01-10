@@ -8,6 +8,7 @@ use crate::modules::effects::rectifier::Rectifier;
 use crate::modules::effects::wavefolder::WaveFolder;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU32};
+use strum::{EnumCount, EnumIter, FromRepr, IntoEnumIterator};
 
 mod bitshifter;
 mod clipper;
@@ -19,9 +20,8 @@ pub trait AudioEffect {
     fn process_samples(&self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32);
 }
 
-pub const NUMBER_OF_EFFECTS: usize = 4;
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, EnumCount, EnumIter, FromRepr)]
+#[repr(i32)]
 pub enum EffectIndex {
     WaveFolder,
     Clipper,
@@ -30,18 +30,8 @@ pub enum EffectIndex {
 }
 
 impl EffectIndex {
-    pub fn count() -> usize {
-        NUMBER_OF_EFFECTS
-    }
-
     pub fn from_i32(index: i32) -> Option<Self> {
-        match index {
-            0 => Some(EffectIndex::WaveFolder),
-            1 => Some(EffectIndex::Clipper),
-            2 => Some(EffectIndex::Rectifier),
-            3 => Some(EffectIndex::BitShifter),
-            _ => None,
-        }
+        Self::from_repr(index)
     }
 }
 
@@ -83,7 +73,7 @@ impl Default for EffectParameters {
 
 pub struct Effects {
     effects: Vec<Box<dyn AudioEffect>>,
-    parameters: [EffectParameters; NUMBER_OF_EFFECTS],
+    parameters: [EffectParameters; EffectIndex::COUNT],
 }
 
 impl Effects {
@@ -146,23 +136,21 @@ fn extract_parameters(source: &AudioEffectParameters) -> EffectParameters {
 pub fn default_audio_effect_parameters() -> Vec<AudioEffectParameters> {
     let mut audio_effect_parameters = Vec::new();
 
-    for index in 0..EffectIndex::count() {
-        if let Some(index) = EffectIndex::from_i32(index as i32) {
-            match index {
-                EffectIndex::WaveFolder | EffectIndex::Rectifier | EffectIndex::BitShifter => {
-                    audio_effect_parameters.push(AudioEffectParameters::default());
-                }
-                EffectIndex::Clipper => {
-                    audio_effect_parameters.push(AudioEffectParameters {
-                        is_enabled: AtomicBool::new(false),
-                        parameters: [
-                            AtomicU32::new(MAX_CLIPPER_THRESHOLD.to_bits()),
-                            AtomicU32::new(0.0_f32.to_bits()),
-                            AtomicU32::new(0.0_f32.to_bits()),
-                            AtomicU32::new(PARAMETER_DISABLED_VALUE.to_bits()),
-                        ],
-                    });
-                }
+    for effect in EffectIndex::iter() {
+        match effect {
+            EffectIndex::WaveFolder | EffectIndex::Rectifier | EffectIndex::BitShifter => {
+                audio_effect_parameters.push(AudioEffectParameters::default());
+            }
+            EffectIndex::Clipper => {
+                audio_effect_parameters.push(AudioEffectParameters {
+                    is_enabled: AtomicBool::new(false),
+                    parameters: [
+                        AtomicU32::new(MAX_CLIPPER_THRESHOLD.to_bits()),
+                        AtomicU32::new(0.0_f32.to_bits()),
+                        AtomicU32::new(0.0_f32.to_bits()),
+                        AtomicU32::new(PARAMETER_DISABLED_VALUE.to_bits()),
+                    ],
+                });
             }
         }
     }
@@ -307,7 +295,7 @@ mod tests {
     fn default_audio_effect_parameters_returns_correct_count() {
         let params = default_audio_effect_parameters();
 
-        assert_eq!(params.len(), NUMBER_OF_EFFECTS);
+        assert_eq!(params.len(), EffectIndex::COUNT);
     }
 
     #[test]
@@ -323,7 +311,7 @@ mod tests {
     fn default_audio_effect_parameters_all_effects_disabled() {
         let params = default_audio_effect_parameters();
 
-        for param in params.iter() {
+        for param in &params {
             assert!(!param.is_enabled.load(Relaxed));
         }
     }

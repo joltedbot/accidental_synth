@@ -29,6 +29,7 @@ use slint::{ModelRc, SharedString, VecModel, Weak};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use structs::UIGlobalOptions;
+use strum::EnumCount;
 
 const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
 
@@ -133,18 +134,18 @@ impl UI {
             level: Defaults::QUAD_MIXER_LEVEL,
             is_muted: Defaults::QUAD_MIXER_IS_MUTED,
         };
-        let mut oscillator_mixer = vec![oscillator_mixer; OscillatorIndex::count()];
+        let mut oscillator_mixer = vec![oscillator_mixer; OscillatorIndex::COUNT];
         oscillator_mixer[OscillatorIndex::Sub as usize].level = Defaults::QUAD_MIXER_SUB_LEVEL;
 
         let parameter_values = ParameterValues {
             audio_device: UIAudioDevice::default(),
             midi_port,
-            oscillators: vec![UIOscillator::default(); OscillatorIndex::count()],
+            oscillators: vec![UIOscillator::default(); OscillatorIndex::COUNT],
             amp_envelope: UIEnvelope::default(),
             filter_envelope: UIEnvelope::default(),
             mod_wheel_lfo: UILfo::default(),
             filter_lfo: UILfo::default(),
-            oscillator_fine_tune: vec![0; OscillatorIndex::count()],
+            oscillator_fine_tune: vec![0; OscillatorIndex::COUNT],
             filter_cutoff: UIFilterCutoff::default(),
             filter_options: UIFilterOptions::default(),
             output_mixer,

@@ -16,13 +16,24 @@ pub const DEFAULT_KEY_TRACKING_FREQUENCY_OFFSET: f32 = 1.0;
 const DEFAULT_FILTER_POLES: u8 = 4;
 const MAX_FILTER_PERCENT_OF_NYQUIST: f32 = 0.35;
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct FilterParameters {
     pub cutoff_frequency: AtomicU32,
     pub resonance: AtomicU32,
     pub filter_poles: AtomicU8,
     pub key_tracking_amount: AtomicU32,
     pub current_note_number: AtomicU8,
+}
+impl Default for FilterParameters {
+    fn default() -> Self {
+        Self {
+            cutoff_frequency: AtomicU32::new(0),
+            resonance: AtomicU32::new(0.0_f32.to_bits()),
+            filter_poles: AtomicU8::new(DEFAULT_FILTER_POLES),
+            key_tracking_amount: AtomicU32::new(DEFAULT_KEY_TRACKING_AMOUNT.to_bits()),
+            current_note_number: AtomicU8::new(0),
+        }
+    }
 }
 
 #[derive(Default, Copy, Clone, Debug, PartialEq)]
