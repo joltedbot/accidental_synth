@@ -1,7 +1,14 @@
 import { Theme } from "theme.slint";
-import { Panel, PanelLabel, EffectLabel, VerticalSpacer, ToggleSwitch, HorizontalSpacer } from "components.slint";
+import {
+    Panel,
+    PanelLabel,
+    EffectLabel,
+    VerticalSpacer,
+    ToggleSwitch,
+    HorizontalSpacer,
+} from "components.slint";
 import { Switch } from "std-widgets.slint";
-import { EffectBox, Wavefolder, Clipper, Rectifier } from "effects.slint";
+import { EffectBox, Wavefolder, Clipper, Rectifier, Bitshifter } from "effects.slint";
 
 export component EffectsPanel inherits Panel {
     in property <string> title;
@@ -16,8 +23,8 @@ export component EffectsPanel inherits Panel {
 
         VerticalLayout {
             row1 := HorizontalLayout {
-            padding: Theme.effect-box-padding;
-            spacing: Theme.effect-box-spacing;
+                padding: Theme.effect-box-padding;
+                spacing: Theme.effect-box-spacing;
 
                 Wavefolder {
                     effect-index: 0;
@@ -29,10 +36,12 @@ export component EffectsPanel inherits Panel {
                         effect_parameter_changed(effect_index, parameter_index, value);
                     }
                 }
+
                 VerticalSpacer {
                     left-padding: 0px;
                     right-padding: 0px;
                 }
+
                 Clipper {
                     effect-index: 1;
                     is_enabled: false;
@@ -43,10 +52,12 @@ export component EffectsPanel inherits Panel {
                         effect_parameter_changed(effect_index, parameter_index, value);
                     }
                 }
+
                 VerticalSpacer {
                     left-padding: 0px;
                     right-padding: 0px;
                 }
+
                 Rectifier {
                     effect-index: 2;
                     is_enabled: false;
@@ -57,18 +68,30 @@ export component EffectsPanel inherits Panel {
                         effect_parameter_changed(effect_index, parameter_index, value);
                     }
                 }
+
                 VerticalSpacer {
                     left-padding: 0px;
                     right-padding: 0px;
                 }
-                EffectBox {}
+
+                Bitshifter {
+                    effect-index: 3;
+                    is_enabled: false;
+                    effect_enabled(effect-index, is_enabled) => {
+                        effect_enabled(effect-index, is_enabled);
+                    }
+                    effect_parameter_changed(effect_index, parameter_index, value) => {
+                        effect_parameter_changed(effect_index, parameter_index, value);
+                    }
+                }
+
                 VerticalSpacer {
                     left-padding: 0px;
                     right-padding: 0px;
                 }
-                EffectBox {}
+
+                EffectBox { }
             }
         }
-
     }
 }

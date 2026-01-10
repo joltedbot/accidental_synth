@@ -203,6 +203,8 @@ pub fn set_portamento_time(parameters: &[OscillatorParameters; 4], normal_value:
 }
 
 pub fn set_oscillator_clip_boost(parameters: &OscillatorParameters, normal_value: f32) {
+    // The output value will be in the range of
+    #[allow(clippy::cast_possible_truncation)]
     let boost = normal_value_to_integer_range(
         normal_value,
         u32::from(MIN_CLIP_BOOST),

@@ -1,4 +1,12 @@
-import { Panel, HorizontalParameterSlider, PanelLabel, EffectLabel, VerticalSpacer, ToggleSwitch, HorizontalSpacer } from "components.slint";
+import {
+    Panel,
+    HorizontalParameterSlider,
+    PanelLabel,
+    EffectLabel,
+    VerticalSpacer,
+    ToggleSwitch,
+    HorizontalSpacer,
+} from "components.slint";
 import { Theme } from "theme.slint";
 import { Switch } from "std-widgets.slint";
 import { Constant } from "constants.slint";
@@ -12,34 +20,32 @@ export component EffectBox inherits VerticalLayout {
     callback effect_enabled(int, bool);
     in-out property <bool> is_enabled: false;
 
-   padding: Theme.effect-box-padding;
-   spacing: Theme.effect-box-spacing;
-   width: box-width;
-   height: box-height;
-   alignment: start;
+    padding: Theme.effect-box-padding;
+    spacing: Theme.effect-box-spacing;
+    width: box-width;
+    height: box-height;
+    alignment: start;
 
-   VerticalLayout {
-       padding: Theme.effect-box-padding;
-       spacing: Theme.effect-box-spacing;
+    VerticalLayout {
+        padding: Theme.effect-box-padding;
+        spacing: Theme.effect-box-spacing;
         HorizontalLayout {
             alignment: space-between;
 
             EffectLabel {
-                label:  title;
+                label: title;
                 alignment: center;
             }
 
-           effect-enable := Switch {
+            effect-enable := Switch {
                 toggled() => {
                     is_enabled = effect-enable.checked;
                     effect_enabled(effect-index, self.checked);
                 }
-           }
+            }
         }
     }
-
 }
-
 
 export component Wavefolder inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
@@ -48,12 +54,12 @@ export component Wavefolder inherits EffectBox {
     changed is_enabled => {
         amount.enabled = self.is_enabled;
         negative-switch.enabled = self.is_enabled;
-        negative-amount.enabled = self.is_enabled && negative-switch.is_checked?true:false;
+        negative-amount.enabled = self.is_enabled && negative-switch.is_checked ? true : false;
     }
 
-    HorizontalSpacer {}
+    HorizontalSpacer { }
 
-   amount := HorizontalParameterSlider {
+    amount := HorizontalParameterSlider {
         slider-width: 230px;
         label: Theme.wavefolder-parameter1;
         value: 0;
@@ -67,7 +73,7 @@ export component Wavefolder inherits EffectBox {
         enabled: false;
         label: Theme.wavefolder-parameter2-switch;
         toggle_switch_updated(enabled) => {
-            negative-amount.enabled = parent.is_enabled && enabled?true:false;
+            negative-amount.enabled = parent.is_enabled && enabled ? true : false;
             if (enabled) {
                 effect_parameter_changed(parent.effect-index, 1, negative-amount.value);
             } else {
@@ -75,7 +81,6 @@ export component Wavefolder inherits EffectBox {
             }
         }
     }
-
 
     negative-amount := HorizontalParameterSlider {
         enabled: false;
@@ -86,7 +91,6 @@ export component Wavefolder inherits EffectBox {
             effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
-
 }
 
 export component Clipper inherits EffectBox {
@@ -97,11 +101,12 @@ export component Clipper inherits EffectBox {
         threshold.enabled = self.is_enabled;
         pregain.enabled = self.is_enabled;
         postgain.enabled = self.is_enabled;
+        notch.enabled = self.is_enabled;
     }
 
-    HorizontalSpacer {}
+    HorizontalSpacer { }
 
-   threshold := HorizontalParameterSlider {
+    threshold := HorizontalParameterSlider {
         slider-width: 230px;
         label: Theme.clipper-parameter1;
         value: 1.0;
@@ -120,7 +125,7 @@ export component Clipper inherits EffectBox {
             effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
-    
+
     postgain := HorizontalParameterSlider {
         enabled: false;
         slider-width: 230px;
@@ -131,6 +136,18 @@ export component Clipper inherits EffectBox {
         }
     }
 
+       notch := ToggleSwitch {
+           enabled: false;
+           label: Theme.clipper-parameter4;
+           toggle_switch_updated(enabled) => {
+               if (enabled) {
+                   effect_parameter_changed(parent.effect-index, 3, 1.0);
+               } else {
+                   effect_parameter_changed(parent.effect-index, 3, 0.0);
+               }
+           }
+
+        }
 }
 
 export component Rectifier inherits EffectBox {
@@ -141,20 +158,38 @@ export component Rectifier inherits EffectBox {
         full_wave.enabled = self.is_enabled;
     }
 
-    HorizontalSpacer {}
+    HorizontalSpacer { }
 
-   full_wave := ToggleSwitch {
-       enabled: false;
-       label: self.is_checked?Theme.rectifier-parameter1-on:Theme.rectifier-parameter1-off;
-       toggle_switch_updated(enabled) => {
-           if (enabled) {
-               effect_parameter_changed(parent.effect-index, 0, 1.0);
-           } else {
-               effect_parameter_changed(parent.effect-index, 0, 0.0);
-           }
-       }
+    full_wave := ToggleSwitch {
+        enabled: false;
+        label: self.is_checked ? Theme.rectifier-parameter1-on : Theme.rectifier-parameter1-off;
+        toggle_switch_updated(enabled) => {
+            if (enabled) {
+                effect_parameter_changed(parent.effect-index, 0, 1.0);
+            } else {
+                effect_parameter_changed(parent.effect-index, 0, 0.0);
+            }
+        }
+    }
+}
 
+export component Bitshifter inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    title: Theme.bitshifter-title;
+
+    changed is_enabled => {
+        bits.enabled = self.is_enabled;
     }
 
+    HorizontalSpacer { }
 
+    bits := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.bitshifter-parameter1;
+        horizontal-parameter-slider-changed(amount) => {
+            self.value = amount;
+            effect_parameter_changed(parent.effect-index, 0, amount);
+        }
+    }
 }

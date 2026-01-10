@@ -150,13 +150,13 @@ export global Theme {
 
     // Effects Panel
     out property <length> effect-box-width: 240px;
-    out property <length> effect-box-height: 212px;
+    out property <length> effect-box-height: 250px;
     out property <length> effect-label-font-size: 14px;
     out property <int> effect-label-font-weight: 600;
     out property <length> effects-panel-padding: 0px;
     out property <length> effects-panel-spacing: 0px;
     out property <length> effect-box-padding: 5px;
-    out property <length> effect-box-spacing: 10px;
+    out property <length> effect-box-spacing: 5px;
     out property <string> effect-box-enabled-switch: "Enable";
     out property <string> wavefolder-title: "Wavefolder";
     out property <string> wavefolder-parameter1: "Fold Amount";
@@ -166,9 +166,12 @@ export global Theme {
     out property <string> clipper-parameter1: "Threshold";
     out property <string> clipper-parameter2: "Pre-Clip Boost";
     out property <string> clipper-parameter3: "Post-Clip Makeup Gain";
+    out property <string> clipper-parameter4: "Notch";
     out property <string> rectifier-title: "Rectifier";
     out property <string> rectifier-parameter1-on: "Full Wave";
     out property <string> rectifier-parameter1-off: "Half Wave";
+    out property <string> bitshifter-title: "Bit Shifter";
+    out property <string> bitshifter-parameter1: "Bit Reduction";
 
     // Settings Window
     out property <length> settings-panel-width: 600px;
@@ -177,5 +180,4 @@ export global Theme {
     out property <color> settings-window-background: Palette.background;
     out property <color> settings-window-border-colour: Palette.background.brighter(3);
     out property <length> settings-window-border-radius: 10px;
-
 }

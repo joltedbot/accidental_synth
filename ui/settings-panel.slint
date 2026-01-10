@@ -93,16 +93,16 @@ export component AudioSettings inherits VerticalLayout {
         }
     }
 
-        buffer_size := DropDownMenu {
-            label: "Buffer Size";
-            enabled: true;
-            dropdown-width: Theme.oscillator-panel-widget-width;
-            value-list: audio-device-values.buffer_sizes;
-            value-index: audio-device-values.buffer_size-index;
-            drop_down_changed(index, size) => {
-                audio-buffer-size-changed(size);
-            }
+    buffer_size := DropDownMenu {
+        label: "Buffer Size";
+        enabled: true;
+        dropdown-width: Theme.oscillator-panel-widget-width;
+        value-list: audio-device-values.buffer_sizes;
+        value-index: audio-device-values.buffer_size-index;
+        drop_down_changed(index, size) => {
+            audio-buffer-size-changed(size);
         }
+    }
 }
 
 export component MidiSettings inherits VerticalLayout {
