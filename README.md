@@ -57,10 +57,10 @@ Default (The UI will load, but it is not fully connected yet):
 
 
 ## Usage
-1. Connect your MIDI input device and ensure your audio output device is available.  Midi is hot swappable. Audio is not yet.
-2. Run accidental-synth. By default, it will choose the first MIDI input and first audio output device it discovers. You can change them in the 
-   settings pane.l (Gear icon, top right)
-3. Play from a MIDI keyboard, sequencer, or arpeggiator
+1. Connect your MIDI input device and ensure your audio output device is available. Both MIDI and audio devices are hot-swappable.
+2. Run accidental-synth. By default, it will choose the first MIDI input and first audio output device it discovers. You can change them in the
+   settings panel (gear icon, top right).
+3. Play from a MIDI keyboard, sequencer, or arpeggiator.
 
 ### MIDI
 - AccSyn also presents itself as a MIDI input device in CoreMIDI so you can use it directly from a DAW or other tools.
@@ -71,8 +71,7 @@ Default (The UI will load, but it is not fully connected yet):
 ### Audio
 - By default, the first CoreAudio output device is selected at startup. You can select other devices in the settings panel.
 - Mono devices will use the left channel only and for devices with 2 or more channels you get independently selectable stereo channels.
-- Do to some current crate limitations, audio isn't hot swappable. Once the app is running you will need to restart it to rescan devices. This is 
-  next on the list to fix.
+- Audio devices are hot-swappable - the app will automatically detect when devices are connected or disconnected.
 
 ### CLI Commands
 ```

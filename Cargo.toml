@@ -1,6 +1,6 @@
 [package]
 name = "accidental-synth"
-version = "0.1.0"
+version = "0.1.1"
 description = "Accidental Synthesizer"
 authors = ["Dave White"]
 license = "Apache-2.0"
@@ -23,7 +23,7 @@ anyhow = "1.0.100"
 clap = { version = "4.5.54", features = ["derive"] }
 core-foundation = "0.10.1"
 coreaudio-sys = "0.2.17"
-cpal = "0.17.0"
+cpal = "0.17.1"
 crossbeam-channel = "0.5.15"
 env_logger = { version = "0.11.8", features = ["kv"] }
 log = { version = "0.4.29", features = ["kv"] }
