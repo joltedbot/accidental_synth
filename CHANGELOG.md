@@ -11,16 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Effects system with multiple audio effects:
   - Wave folder (optionally asymmetrical)
   - Clipper with notch option
-  - Bitshifter effect
+  - Bit Shifter effect
   - Full-wave and half-wave rectifiers
 - MIDI aftertouch (channel pressure) now controls oscillator clipper boost
 - Strum crate for improved enum maintainability
 
 ### Fixed
-- Oscillator waveshape switching issue that prevented switching from sine to triangle
+- Oscillator wave shape switching issue that prevented switching from sine to triangle
 
 ### Changed
-- Refactored LFO parameter handling to use array of structs (matching oscillators and envelopes pattern)
+- Refactored LFO parameter handling to use an array of structs (matching oscillators and envelopes pattern)
 - Various code cleanup and refactoring improvements
 
 ## [0.1.0] - Initial Release
