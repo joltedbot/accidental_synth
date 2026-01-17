@@ -7,6 +7,9 @@ use crate::modules::envelope::{
     MIN_DECAY_MILLISECONDS, MIN_RELEASE_MILLISECONDS,
 };
 use crate::modules::lfo::DEFAULT_LFO_FREQUENCY;
+use crate::modules::oscillator::constants::{
+    DEFAULT_HARD_SYNC_ENABLED, DEFAULT_KEY_SYNC_ENABLED, DEFAULT_POLARITY_FLIPPED,
+};
 use crate::ui::constants::DEFAULT_FINE_TUNE_NORMAL_VALUE;
 
 #[derive(Clone)]
@@ -149,6 +152,7 @@ pub struct UIGlobalOptions {
     pub velocity_curve_slope: f32,
     pub hard_sync_is_enabled: bool,
     pub key_sync_is_enabled: bool,
+    pub polarity_is_flipped: bool,
 }
 
 impl Default for UIGlobalOptions {
@@ -158,8 +162,9 @@ impl Default for UIGlobalOptions {
             portamento_is_enabled: false,
             pitch_bend_range: i32::from(Defaults::PITCH_BEND_RANGE),
             velocity_curve_slope: Defaults::VELOCITY_CURVE_NORMAL_VALUE,
-            hard_sync_is_enabled: false,
-            key_sync_is_enabled: false,
+            hard_sync_is_enabled: DEFAULT_HARD_SYNC_ENABLED,
+            key_sync_is_enabled: DEFAULT_KEY_SYNC_ENABLED,
+            polarity_is_flipped: DEFAULT_POLARITY_FLIPPED,
         }
     }
 }

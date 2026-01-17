@@ -10,9 +10,10 @@ use crate::synthesizer::set_parameters::{
     set_key_tracking_amount, set_lfo_frequency, set_lfo_phase, set_lfo_phase_reset, set_lfo_range,
     set_oscillator_balance, set_oscillator_clip_boost, set_oscillator_course_tune,
     set_oscillator_fine_tune, set_oscillator_hard_sync, set_oscillator_key_sync,
-    set_oscillator_level, set_oscillator_mute, set_oscillator_shape_parameter1,
-    set_oscillator_shape_parameter2, set_output_balance, set_output_level, set_output_mute,
-    set_pitch_bend_range, set_portamento_enabled, set_portamento_time, set_velocity_curve,
+    set_oscillator_level, set_oscillator_mute, set_oscillator_polarity,
+    set_oscillator_shape_parameter1, set_oscillator_shape_parameter2, set_output_balance,
+    set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled,
+    set_portamento_time, set_velocity_curve,
 };
 use crate::synthesizer::{
     CurrentNote, EnvelopeIndex, LFOIndex, ModuleParameters, OscillatorIndex,
@@ -350,6 +351,9 @@ pub fn start_update_event_listener(
                 }
                 SynthesizerUpdateEvents::KeySyncEnabled(is_enabled) => {
                     set_oscillator_key_sync(&module_parameters.oscillators, f32::from(is_enabled));
+                }
+                SynthesizerUpdateEvents::PolarityFlipped(is_flipped) => {
+                    set_oscillator_polarity(&module_parameters.common, f32::from(is_flipped));
                 }
                 SynthesizerUpdateEvents::OutputBalance(balance) => {
                     set_output_balance(&module_parameters.mixer, balance);

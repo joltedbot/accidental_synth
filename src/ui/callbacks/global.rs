@@ -96,6 +96,23 @@ pub fn callback_key_sync_enabled(
         });
     }
 }
+
+pub fn callback_polarity_flipped(
+    ui_weak: &Weak<AccidentalSynth>,
+    synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_polarity_flipped(move |is_flipped| {
+            synthesizer_update_sender
+                .send(SynthesizerUpdateEvents::PolarityFlipped(is_flipped))
+                .expect(
+                    "callback_filter_lfo_amount_changed(): Could not send new \
+            polarity state to the synthesizer module.Exiting.",
+                );
+        });
+    }
+}
+
 pub fn callback_output_balance_update(
     ui_weak: &Weak<AccidentalSynth>,
     synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,

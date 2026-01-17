@@ -68,6 +68,7 @@ pub enum SynthesizerUpdateEvents {
     VelocityCurve(f32),
     HardSyncEnabled(bool),
     KeySyncEnabled(bool),
+    PolarityFlipped(bool),
     OutputBalance(f32),
     OutputLevel(f32),
     OutputMute(bool),
@@ -193,6 +194,11 @@ impl Default for MixerParameters {
     }
 }
 
+#[derive(Debug, Default)]
+struct CommonParameters {
+    polarity_flipped: AtomicBool,
+}
+
 #[derive(Default, Debug)]
 pub struct ModuleParameters {
     filter: FilterParameters,
@@ -202,6 +208,7 @@ pub struct ModuleParameters {
     envelopes: [EnvelopeParameters; 2],
     oscillators: [OscillatorParameters; 4],
     effects: Vec<AudioEffectParameters>,
+    common: CommonParameters,
 }
 
 pub struct Synthesizer {
@@ -269,6 +276,7 @@ impl Synthesizer {
             lfos,
             envelopes,
             effects,
+            common: CommonParameters::default(),
         };
 
         Self {

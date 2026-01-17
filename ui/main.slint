@@ -123,6 +123,7 @@ export component AccidentalSynth inherits Window {
         velocity-curve-slope: Constant.DEFAULT_VELOCITY_CURVE_SLOPE,
         hard-sync-is-enabled: Constant.DEFAULT_HARD_SYNC_IS_ENABLED,
         key-sync-is-enabled: Constant.DEFAULT_KEY_SYNC_IS_ENABLED,
+        polarity-is-flipped: Constant.DEFAULT_POLARITY_IS_FLIPPED,
     };
 
     callback portamento-enabled(bool);
@@ -131,6 +132,7 @@ export component AccidentalSynth inherits Window {
     callback velocity-curve-changed(float);
     callback hard-sync-enabled(bool);
     callback key-sync-enabled(bool);
+    callback polarity-flipped(bool);
     callback output-balance-update(float);
     callback output-level-update(float);
     callback output-mute-update(bool);
@@ -269,6 +271,9 @@ export component AccidentalSynth inherits Window {
                                 }
                                 key-sync-enabled(is_enabled) => {
                                     key-sync-enabled(is_enabled);
+                                }
+                                polarity-flipped(is_flipped) => {
+                                    polarity-flipped(is_flipped);
                                 }
                                 output-balance-update(value) => {
                                     output-balance-update(value);

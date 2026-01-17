@@ -9,7 +9,9 @@ use crate::modules::mixer::{MixerInput, output_mix, quad_mix};
 use crate::modules::oscillator::{HardSyncRole, Oscillator, WaveShape};
 use crate::synthesizer;
 use crate::synthesizer::constants::SAMPLE_PRODUCER_LOOP_SLEEP_DURATION_MICROSECONDS;
-use crate::synthesizer::{CurrentNote, EnvelopeIndex, LFOIndex, ModuleParameters, OscillatorIndex};
+use crate::synthesizer::{
+    CommonParameters, CurrentNote, EnvelopeIndex, LFOIndex, ModuleParameters, OscillatorIndex,
+};
 use anyhow::Result;
 use crossbeam_channel::Receiver;
 use log::info;
@@ -28,6 +30,18 @@ struct Modules {
     mod_wheel_lfo: Lfo,
     effects: Effects,
     oscillators: [Oscillator; 4],
+    common: Common,
+}
+
+#[derive(Default)]
+struct Common {
+    polarity_flipped: bool,
+}
+
+impl Common {
+    fn set_parameters(&mut self, parameters: &CommonParameters) {
+        self.polarity_flipped = parameters.polarity_flipped.load(Relaxed);
+    }
 }
 
 pub fn sample_generator(
@@ -94,6 +108,8 @@ pub fn sample_generator(
 
             modules.effects.set_parameters(&module_parameters.effects);
 
+            modules.common.set_parameters(&module_parameters.common);
+
             for (index, oscillator) in modules.oscillators.iter_mut().enumerate() {
                 oscillator.set_aftertouch(load_f32_from_atomic_u32(
                     &module_parameters.keyboard.aftertouch_amount,
@@ -153,8 +169,13 @@ pub fn sample_generator(
                     Some(filter_modulation),
                 );
 
-                let (effected_left, effected_right) =
+                let (mut effected_left, mut effected_right) =
                     modules.effects.process((filtered_left, filtered_right));
+
+                if modules.common.polarity_flipped {
+                    effected_left *= -1.0;
+                    effected_right *= -1.0;
+                }
 
                 // Final output level control
                 let (output_left, output_right) = output_mix(
@@ -209,6 +230,7 @@ fn initialize_synth_modules(sample_rate: u32) -> Modules {
             Oscillator::new(sample_rate, WaveShape::default()),
             Oscillator::new(sample_rate, WaveShape::default()),
         ],
+        common: Common::default(),
     };
 
     modules.oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);

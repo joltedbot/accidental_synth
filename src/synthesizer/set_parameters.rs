@@ -27,7 +27,9 @@ use crate::synthesizer::midi_value_converters::{
     normal_value_to_number_of_filter_poles, normal_value_to_unsigned_integer_range,
     normal_value_to_wave_shape_index, velocity_curve_from_normal_value,
 };
-use crate::synthesizer::{CurrentNote, KeyboardParameters, MixerParameters, OscillatorIndex};
+use crate::synthesizer::{
+    CommonParameters, CurrentNote, KeyboardParameters, MixerParameters, OscillatorIndex,
+};
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 
@@ -172,6 +174,12 @@ pub fn set_oscillator_shape_parameter1(parameters: &OscillatorParameters, normal
 
 pub fn set_oscillator_shape_parameter2(parameters: &OscillatorParameters, normal_value: f32) {
     store_f32_as_atomic_u32(&parameters.shape_parameter2, normal_value);
+}
+
+pub fn set_oscillator_polarity(parameters: &CommonParameters, normal_value: f32) {
+    parameters
+        .polarity_flipped
+        .store(normal_value_to_bool(normal_value), Relaxed);
 }
 
 pub fn set_oscillator_key_sync(parameters: &[OscillatorParameters; 4], normal_value: f32) {

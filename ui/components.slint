@@ -279,7 +279,7 @@ export component FilterControlLabel inherits Rectangle {
 
 export component ToggleSwitch inherits VerticalLayout {
     in-out property <bool> is_checked: false;
-    in property <length> switch-height: 30px;
+    in property <length> switch-height: 27px;
     in property <string> label;
     in property <bool> enabled: true;
     callback toggle_switch_updated(bool);
@@ -290,7 +290,7 @@ export component ToggleSwitch inherits VerticalLayout {
 
     Text {
         horizontal-alignment: center;
-        font-size: Theme.section-label-font-size;
+        font-size: Theme.toggle-switch-font-size;
         font-weight: Theme.section-label-font-weight;
         color: text-color;
         text: label;

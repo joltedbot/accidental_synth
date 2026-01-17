@@ -28,6 +28,9 @@ use self::triangle::Triangle;
 use crate::defaults::Defaults;
 use crate::math;
 use crate::math::{dbfs_to_f32_sample, f32s_are_equal, load_f32_from_atomic_u32};
+use crate::modules::oscillator::constants::{
+    DEFAULT_HARD_SYNC_ENABLED, DEFAULT_PORTAMENTO_ENABLED,
+};
 use generate_wave_trait::GenerateWave;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
@@ -94,8 +97,8 @@ impl Default for OscillatorParameters {
             wave_shape_index: AtomicU8::new(WaveShape::default() as u8),
             gate_flag: AtomicBool::new(false),
             key_sync_enabled: AtomicBool::new(DEFAULT_KEY_SYNC_ENABLED),
-            hard_sync_enabled: AtomicBool::new(false),
-            portamento_enabled: AtomicBool::new(false),
+            hard_sync_enabled: AtomicBool::new(DEFAULT_HARD_SYNC_ENABLED),
+            portamento_enabled: AtomicBool::new(DEFAULT_PORTAMENTO_ENABLED),
             portamento_time: AtomicU16::new(DEFAULT_PORTAMENTO_TIME_IN_BUFFERS),
             clipper_boost: AtomicU8::new(0),
         }

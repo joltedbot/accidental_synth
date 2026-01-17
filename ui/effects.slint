@@ -136,18 +136,17 @@ export component Clipper inherits EffectBox {
         }
     }
 
-       notch := ToggleSwitch {
-           enabled: false;
-           label: Theme.clipper-parameter4;
-           toggle_switch_updated(enabled) => {
-               if (enabled) {
-                   effect_parameter_changed(parent.effect-index, 3, 1.0);
-               } else {
-                   effect_parameter_changed(parent.effect-index, 3, 0.0);
-               }
-           }
-
+    notch := ToggleSwitch {
+        enabled: false;
+        label: Theme.clipper-parameter4;
+        toggle_switch_updated(enabled) => {
+            if (enabled) {
+                effect_parameter_changed(parent.effect-index, 3, 1.0);
+            } else {
+                effect_parameter_changed(parent.effect-index, 3, 0.0);
+            }
         }
+    }
 }
 
 export component Rectifier inherits EffectBox {

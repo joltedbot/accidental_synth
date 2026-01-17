@@ -5,7 +5,9 @@ pub const MAX_PHASE: f32 = 1.0;
 pub const DEFAULT_PHASE: f32 = 0.0;
 pub const DEFAULT_X_COORDINATE: f32 = 0.0;
 pub const DEFAULT_X_INCREMENT: f32 = 1.0;
-pub const DEFAULT_KEY_SYNC_ENABLED: bool = true;
+pub const DEFAULT_KEY_SYNC_ENABLED: bool = false;
+pub const DEFAULT_HARD_SYNC_ENABLED: bool = false;
+pub const DEFAULT_POLARITY_FLIPPED: bool = false;
 pub const MIN_CLIP_BOOST: u8 = 0;
 pub const MAX_CLIP_BOOST: u8 = 30;
 
@@ -22,3 +24,4 @@ pub const MAX_NOTE_FREQUENCY: f32 = 12543.854;
 pub const MIN_NOTE_FREQUENCY: f32 = 8.175;
 pub const DEFAULT_NOTE_FREQUENCY: f32 = 261.625;
 pub const DEFAULT_PORTAMENTO_TIME_IN_BUFFERS: u16 = 7;
+pub const DEFAULT_PORTAMENTO_ENABLED: bool = false;

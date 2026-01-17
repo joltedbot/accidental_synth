@@ -40,7 +40,7 @@ export struct GlobalOptions {
     velocity-curve-slope: float,
     hard-sync-is-enabled: bool,
     key-sync-is-enabled: bool,
-}
+    polarity-is-flipped: bool}
 
 
 export component MixerStrip inherits VerticalLayout {
@@ -256,6 +256,7 @@ export component OscillatorSection inherits VerticalLayout {
     callback velocity-curve-changed(float);
     callback hard-sync-enabled(bool);
     callback key-sync-enabled(bool);
+    callback polarity_flipped(bool);
 
     alignment: start;
 
@@ -269,7 +270,7 @@ export component OscillatorSection inherits VerticalLayout {
             portamento-section := VerticalLayout {
                 padding: Theme.global-panel-padding;
                 spacing: Theme.global-panel-spacing;
-                alignment: space-between;
+                alignment: space-around;
 
                 ToggleSwitch {
                     is_checked: global-option-values.portamento-is-enabled;
@@ -289,6 +290,7 @@ export component OscillatorSection inherits VerticalLayout {
             }
 
             VerticalSpacer {
+                height: 110px;
                 left-padding: 5px;
                 right-padding: 5px;
             }
@@ -324,12 +326,13 @@ export component OscillatorSection inherits VerticalLayout {
                 }
 
                 VerticalSpacer {
+                    height: 110px;
                     left-padding: 5px;
                     right-padding: 5px;
                 }
 
                 VerticalLayout {
-                    alignment: space-between;
+                    alignment: start;
 
                     hard_sync := ToggleSwitch {
                         label: Theme.osc-options-hard-sync;
@@ -346,9 +349,18 @@ export component OscillatorSection inherits VerticalLayout {
                             key-sync-enabled(is_enabled);
                         }
                     }
+
+                    polarity := ToggleSwitch {
+                        label: Theme.osc-options-polarity;
+                        is_checked: global-option-values.polarity-is-flipped;
+                        toggle_switch_updated(is_flipped) => {
+                            polarity_flipped(is_flipped);
+                        }
+                    }
                 }
 
                 VerticalSpacer {
+                    height: 110px;
                     left-padding: 5px;
                     right-padding: 5px;
                 }
@@ -465,6 +477,7 @@ export component GlobalPanel inherits Panel {
     callback velocity-curve-changed(float);
     callback hard-sync-enabled(bool);
     callback key-sync-enabled(bool);
+    callback polarity-flipped(bool);
     callback output-balance-update(float);
     callback output-level-update(float);
     callback output-mute-update(bool);
@@ -566,6 +579,9 @@ export component GlobalPanel inherits Panel {
                 }
                 key-sync-enabled(is_enabled) => {
                     key-sync-enabled(is_enabled);
+                }
+                polarity_flipped(is_flipped) => {
+                    polarity-flipped(is_flipped);
                 }
             }
         }

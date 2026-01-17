@@ -562,6 +562,7 @@ fn slint_global_options_from_ui_global_options(
         velocity_curve_slope: global_option_values.velocity_curve_slope,
         hard_sync_is_enabled: global_option_values.hard_sync_is_enabled,
         key_sync_is_enabled: global_option_values.key_sync_is_enabled,
+        polarity_is_flipped: global_option_values.polarity_is_flipped,
     }
 }
 
