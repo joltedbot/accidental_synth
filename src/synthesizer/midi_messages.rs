@@ -243,7 +243,7 @@ pub fn process_midi_cc_values(
         CC::Oscillator3ShapeParameter1(value) => {
             let parameter1_value = normalize_midi_value(value);
             let oscillator_index = OscillatorIndex::Three;
-            set_oscillator_shape_parameter2(
+            set_oscillator_shape_parameter1(
                 &module_parameters.oscillators[oscillator_index as usize],
                 parameter1_value,
             );
