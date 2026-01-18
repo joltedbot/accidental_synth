@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-01-11
+
+### Added
+- Midi Implementation markdown file in root folder
+- A switch to invert the polarity of output to work around phase cancelation issues
+- A new gate effect that acts like an inverted clipper
+
+### Fixed
+- Oscillator 3 was not responding to MIDI CC 18 to modulate its parameter 1.
+
+### Changed
+- Updated the dependencies to the latest versions
+- Various code cleanup and refactoring improvements
+
 ## [0.1.1] - 2026-01-11
 
 ### Added
@@ -36,3 +50,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hot-swappable MIDI and audio devices
 - CoreAudio integration for macOS
 - Settings panel for device selection and configuration
+
