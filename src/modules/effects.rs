@@ -2,8 +2,9 @@ use crate::math::load_f32_from_atomic_u32;
 use crate::modules::effects::bitshifter::BitShifter;
 use crate::modules::effects::clipper::Clipper;
 use crate::modules::effects::constants::{
-    MAX_CLIPPER_THRESHOLD, PARAMETER_DISABLED_VALUE, PARAMETERS_PER_EFFECT,
+    MAX_CLIPPER_THRESHOLD, MAX_GATE_CUT, PARAMETER_DISABLED_VALUE, PARAMETERS_PER_EFFECT,
 };
+use crate::modules::effects::gate::Gate;
 use crate::modules::effects::rectifier::Rectifier;
 use crate::modules::effects::wavefolder::WaveFolder;
 use std::sync::atomic::Ordering::Relaxed;
@@ -13,6 +14,7 @@ use strum::{EnumCount, EnumIter, FromRepr, IntoEnumIterator};
 mod bitshifter;
 mod clipper;
 mod constants;
+mod gate;
 mod rectifier;
 mod wavefolder;
 
@@ -25,6 +27,7 @@ pub trait AudioEffect {
 pub enum EffectIndex {
     WaveFolder,
     Clipper,
+    Gate,
     Rectifier,
     BitShifter,
 }
@@ -85,6 +88,10 @@ impl Effects {
         let mut clipper_parameters = EffectParameters::default();
         clipper_parameters.parameters[0] = MAX_CLIPPER_THRESHOLD;
 
+        let gate = Box::new(Gate::new());
+        let mut gate_parameters = EffectParameters::default();
+        gate_parameters.parameters[1] = MAX_GATE_CUT;
+
         let rectifier = Box::new(Rectifier::new());
         let rectifier_parameters = EffectParameters::default();
 
@@ -92,10 +99,11 @@ impl Effects {
         let bitshifter_parameters = EffectParameters::default();
 
         Self {
-            effects: vec![wavefolder, clipper, rectifier, bitshifter],
+            effects: vec![wavefolder, clipper, gate, rectifier, bitshifter],
             parameters: [
                 wavefolder_parameters,
                 clipper_parameters,
+                gate_parameters,
                 rectifier_parameters,
                 bitshifter_parameters,
             ],
@@ -152,6 +160,17 @@ pub fn default_audio_effect_parameters() -> Vec<AudioEffectParameters> {
                     ],
                 });
             }
+            EffectIndex::Gate => {
+                audio_effect_parameters.push(AudioEffectParameters {
+                    is_enabled: AtomicBool::new(false),
+                    parameters: [
+                        AtomicU32::new(0.0_f32.to_bits()),
+                        AtomicU32::new(MAX_GATE_CUT.to_bits()),
+                        AtomicU32::new(0.0_f32.to_bits()),
+                        AtomicU32::new(PARAMETER_DISABLED_VALUE.to_bits()),
+                    ],
+                });
+            }
         }
     }
 
@@ -179,7 +198,7 @@ mod tests {
 
     #[test]
     fn effect_index_from_i32_returns_none_for_out_of_range() {
-        let result = EffectIndex::from_i32(4);
+        let result = EffectIndex::from_i32(14);
 
         assert!(result.is_none());
     }
@@ -249,8 +268,8 @@ mod tests {
             AudioEffectParameters::default(),
         ];
         // Enable rectifier with half-wave mode
-        params[2].is_enabled = AtomicBool::new(true);
-        params[2].parameters[0] = AtomicU32::new(0.0_f32.to_bits()); // half-wave
+        params[3].is_enabled = AtomicBool::new(true);
+        params[3].parameters[0] = AtomicU32::new(0.0_f32.to_bits()); // half-wave
         effects.set_parameters(&params);
         let input = (0.5, -0.3);
 
@@ -269,10 +288,11 @@ mod tests {
             AudioEffectParameters::default(),
             AudioEffectParameters::default(),
             AudioEffectParameters::default(),
+            AudioEffectParameters::default(),
         ];
-        // Enable rectifier with full-wave mode (index 2)
-        params[2].is_enabled = AtomicBool::new(true);
-        params[2].parameters[0] = AtomicU32::new(1.0_f32.to_bits()); // full-wave
+        // Enable rectifier with full-wave mode
+        params[3].is_enabled = AtomicBool::new(true);
+        params[3].parameters[0] = AtomicU32::new(1.0_f32.to_bits()); // full-wave
         // Enable clipper (index 1) with low threshold and no gains
         params[1].is_enabled = AtomicBool::new(true);
         params[1].parameters[0] = AtomicU32::new(0.4_f32.to_bits()); // threshold

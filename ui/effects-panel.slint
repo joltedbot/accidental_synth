@@ -12,6 +12,7 @@ import {
     EffectBox,
     Wavefolder,
     Clipper,
+    Gate,
     Rectifier,
     Bitshifter,
 } from "effects.slint";
@@ -64,7 +65,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Rectifier {
+                Gate {
                     effect-index: 2;
                     is_enabled: false;
                     effect_enabled(effect-index, is_enabled) => {
@@ -80,7 +81,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Bitshifter {
+                Rectifier {
                     effect-index: 3;
                     is_enabled: false;
                     effect_enabled(effect-index, is_enabled) => {
@@ -96,7 +97,17 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                EffectBox { }
+                Bitshifter {
+                    effect-index: 4;
+                    is_enabled: false;
+                    effect_enabled(effect-index, is_enabled) => {
+                        effect_enabled(effect-index, is_enabled);
+                    }
+                    effect_parameter_changed(effect_index, parameter_index, value) => {
+                        effect_parameter_changed(effect_index, parameter_index, value);
+                    }
+                }
+
             }
         }
     }

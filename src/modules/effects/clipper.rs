@@ -1,4 +1,5 @@
 use crate::defaults::MAX_SAMPLE_VALUE;
+use crate::modules::effects::constants::MAX_CLIPPER_THRESHOLD;
 use crate::modules::effects::{AudioEffect, EffectParameters};
 use crate::synthesizer::midi_value_converters::normal_value_to_bool;
 
@@ -12,7 +13,7 @@ impl Clipper {
 
 impl AudioEffect for Clipper {
     fn process_samples(&self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
-        if !effect.is_enabled {
+        if !effect.is_enabled || effect.parameters[0] == MAX_CLIPPER_THRESHOLD {
             return samples;
         }
 
@@ -64,11 +65,21 @@ mod tests {
             parameters: vec![0.5, 0.0, 0.0, 0.0],
         };
         let input = (0.8, -0.6);
+        let expected_left = 0.8;
+        let expected_right = -0.6;
 
         let result = clipper.process_samples(input, &effect);
 
-        assert!(f32s_are_equal(result.0, 0.8));
-        assert!(f32s_are_equal(result.1, -0.6));
+        assert!(
+            f32s_are_equal(result.0, expected_left),
+            "Left channel: Expected: {expected_left}, got: {result_left:?}",
+            result_left = result.0
+        );
+        assert!(
+            f32s_are_equal(result.1, expected_right),
+            "Right channel: Expected: {expected_right}, got: {result_right:?}",
+            result_right = result.1
+        );
     }
 
     #[test]
@@ -78,10 +89,14 @@ mod tests {
         let pre_gain = 0.0;
         let post_gain = 0.0;
         let notch = false;
+        let expected_result = 0.3;
 
         let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
 
-        assert!(f32s_are_equal(result, 0.3));
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
     }
 
     #[test]
@@ -91,10 +106,14 @@ mod tests {
         let pre_gain = 0.0;
         let post_gain = 0.0;
         let notch = false;
+        let expected_result = 0.5;
 
         let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
 
-        assert!(f32s_are_equal(result, 0.5));
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
     }
 
     #[test]
@@ -104,10 +123,14 @@ mod tests {
         let pre_gain = 0.0;
         let post_gain = 0.0;
         let notch = false;
+        let expected_result = -0.5;
 
         let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
 
-        assert!(f32s_are_equal(result, -0.5));
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
     }
 
     #[test]
@@ -117,10 +140,14 @@ mod tests {
         let pre_gain = 0.0;
         let post_gain = 0.0;
         let notch = true;
+        let expected_result = 0.0;
 
         let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
 
-        assert!(f32s_are_equal(result, 0.0));
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
     }
 
     #[test]
@@ -130,10 +157,14 @@ mod tests {
         let pre_gain = 0.0;
         let post_gain = 0.0;
         let notch = true;
+        let expected_result = 0.0;
 
         let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
 
-        assert!(f32s_are_equal(result, 0.0));
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
     }
 
     #[test]
@@ -143,10 +174,14 @@ mod tests {
         let pre_gain = 0.0;
         let post_gain = 0.0;
         let notch = false;
+        let expected_result = 0.5;
 
         let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
 
-        assert!(f32s_are_equal(result, 0.5));
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
     }
 
     #[test]
@@ -156,11 +191,14 @@ mod tests {
         let pre_gain = 0.0;
         let post_gain = 0.0;
         let notch = false;
+        let expected_result = 0.5; // Threshold clamped to 1.0, sample is below it
 
         let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
 
-        // Threshold clamped to 1.0, sample is below it
-        assert!(f32s_are_equal(result, 0.5));
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
     }
 
     #[test]
@@ -170,11 +208,14 @@ mod tests {
         let pre_gain = 1.0; // 2x boost
         let post_gain = 0.0;
         let notch = false;
+        let expected_result = 0.5; // Boosted: 0.4 * 2.0 = 0.8, which exceeds 0.5 threshold, clipped to 0.5
 
         let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
 
-        // Boosted: 0.4 * 2.0 = 0.8, which exceeds 0.5 threshold, clipped to 0.5
-        assert!(f32s_are_equal(result, 0.5));
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
     }
 
     #[test]
@@ -184,11 +225,14 @@ mod tests {
         let pre_gain = 0.0;
         let post_gain = 1.0; // 2x boost
         let notch = false;
+        let expected_result = 0.4; // Sample passes through, then boosted: 0.2 * 2.0 = 0.4
 
         let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
 
-        // Sample passes through, then boosted: 0.2 * 2.0 = 0.4
-        assert!(f32s_are_equal(result, 0.4));
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
     }
 
     #[test]
@@ -198,12 +242,14 @@ mod tests {
         let pre_gain = 0.0;
         let post_gain = 1.0; // 2x boost
         let notch = false;
+        let expected_result = 1.0; // Sample passes through (0.8 < 0.9), then boosted: 0.8 * 2.0 = 1.6, clamped to MAX_SAMPLE_VALUE (1.0)
 
         let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
 
-        // Sample passes through (0.8 < 0.9), then boosted: 0.8 * 2.0 = 1.6
-        // Clamped to MAX_SAMPLE_VALUE (1.0)
-        assert!(f32s_are_equal(result, 1.0));
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
     }
 
     #[test]
@@ -213,12 +259,14 @@ mod tests {
         let pre_gain = 0.0;
         let post_gain = 1.0; // 2x boost
         let notch = false;
+        let expected_result = -1.0; // Sample passes through (-0.8 < 0.9), then boosted: -0.8 * 2.0 = -1.6, clamped to -MAX_SAMPLE_VALUE (-1.0)
 
         let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
 
-        // Sample passes through (-0.8 < 0.9), then boosted: -0.8 * 2.0 = -1.6
-        // Clamped to -MAX_SAMPLE_VALUE (-1.0)
-        assert!(f32s_are_equal(result, -1.0));
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
     }
 
     #[test]
@@ -228,11 +276,14 @@ mod tests {
         let pre_gain = -1.0; // abs() = 1.0, so 2x boost
         let post_gain = 0.0;
         let notch = false;
+        let expected_result = 0.5; // Boosted: 0.4 * 2.0 = 0.8, exceeds threshold, clipped to 0.5
 
         let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
 
-        // Boosted: 0.4 * 2.0 = 0.8, exceeds threshold, clipped to 0.5
-        assert!(f32s_are_equal(result, 0.5));
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
     }
 
     #[test]
@@ -242,10 +293,13 @@ mod tests {
         let pre_gain = 0.0;
         let post_gain = -1.0; // abs() = 1.0, so 2x boost
         let notch = false;
+        let expected_result = 0.4; // Sample passes through, then boosted: 0.2 * 2.0 = 0.4
 
         let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
 
-        // Sample passes through, then boosted: 0.2 * 2.0 = 0.4
-        assert!(f32s_are_equal(result, 0.4));
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
     }
 }
