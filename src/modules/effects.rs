@@ -16,6 +16,7 @@ mod clipper;
 mod constants;
 mod gate;
 mod rectifier;
+mod saturation;
 mod wavefolder;
 
 pub trait AudioEffect {
@@ -30,6 +31,7 @@ pub enum EffectIndex {
     Gate,
     Rectifier,
     BitShifter,
+    Saturation,
 }
 
 impl EffectIndex {
@@ -98,14 +100,18 @@ impl Effects {
         let bitshifter = Box::new(BitShifter::new());
         let bitshifter_parameters = EffectParameters::default();
 
+        let saturation = Box::new(saturation::Saturation::new());
+        let saturation_parameters = EffectParameters::default();
+
         Self {
-            effects: vec![wavefolder, clipper, gate, rectifier, bitshifter],
+            effects: vec![wavefolder, clipper, gate, rectifier, bitshifter, saturation],
             parameters: [
                 wavefolder_parameters,
                 clipper_parameters,
                 gate_parameters,
                 rectifier_parameters,
                 bitshifter_parameters,
+                saturation_parameters,
             ],
         }
     }
@@ -167,6 +173,17 @@ pub fn default_audio_effect_parameters() -> Vec<AudioEffectParameters> {
                         AtomicU32::new(0.0_f32.to_bits()),
                         AtomicU32::new(MAX_GATE_CUT.to_bits()),
                         AtomicU32::new(0.0_f32.to_bits()),
+                        AtomicU32::new(PARAMETER_DISABLED_VALUE.to_bits()),
+                    ],
+                });
+            }
+            EffectIndex::Saturation => {
+                audio_effect_parameters.push(AudioEffectParameters {
+                    is_enabled: AtomicBool::new(false),
+                    parameters: [
+                        AtomicU32::new(0.0_f32.to_bits()),
+                        AtomicU32::new(0.0_f32.to_bits()),
+                        AtomicU32::new(PARAMETER_DISABLED_VALUE.to_bits()),
                         AtomicU32::new(PARAMETER_DISABLED_VALUE.to_bits()),
                     ],
                 });
@@ -268,8 +285,8 @@ mod tests {
             AudioEffectParameters::default(),
         ];
         // Enable rectifier with half-wave mode
-        params[3].is_enabled = AtomicBool::new(true);
-        params[3].parameters[0] = AtomicU32::new(0.0_f32.to_bits()); // half-wave
+        params[EffectIndex::Rectifier as usize].is_enabled = AtomicBool::new(true);
+        params[EffectIndex::Rectifier as usize].parameters[0] = AtomicU32::new(0.0_f32.to_bits()); // half-wave
         effects.set_parameters(&params);
         let input = (0.5, -0.3);
 
@@ -291,14 +308,14 @@ mod tests {
             AudioEffectParameters::default(),
         ];
         // Enable rectifier with full-wave mode
-        params[3].is_enabled = AtomicBool::new(true);
-        params[3].parameters[0] = AtomicU32::new(1.0_f32.to_bits()); // full-wave
-        // Enable clipper (index 1) with low threshold and no gains
-        params[1].is_enabled = AtomicBool::new(true);
-        params[1].parameters[0] = AtomicU32::new(0.4_f32.to_bits()); // threshold
-        params[1].parameters[1] = AtomicU32::new(0.0_f32.to_bits()); // pre_gain
-        params[1].parameters[2] = AtomicU32::new(0.0_f32.to_bits()); // post_gain
-        params[1].parameters[3] = AtomicU32::new(0.0_f32.to_bits()); // notch
+        params[EffectIndex::Rectifier as usize].is_enabled = AtomicBool::new(true);
+        params[EffectIndex::Rectifier as usize].parameters[0] = AtomicU32::new(1.0_f32.to_bits()); // full-wave
+        // Enable clipper with low threshold and no gains
+        params[EffectIndex::Clipper as usize].is_enabled = AtomicBool::new(true);
+        params[EffectIndex::Clipper as usize].parameters[0] = AtomicU32::new(0.4_f32.to_bits()); // threshold
+        params[EffectIndex::Clipper as usize].parameters[1] = AtomicU32::new(0.0_f32.to_bits()); // pre_gain
+        params[EffectIndex::Clipper as usize].parameters[2] = AtomicU32::new(0.0_f32.to_bits()); // post_gain
+        params[EffectIndex::Clipper as usize].parameters[3] = AtomicU32::new(0.0_f32.to_bits()); // notch
         effects.set_parameters(&params);
         let input = (0.6, -0.6);
 
@@ -322,8 +339,9 @@ mod tests {
     fn default_audio_effect_parameters_clipper_has_max_threshold() {
         let params = default_audio_effect_parameters();
 
-        // Clipper is at index 1
-        let clipper_threshold = load_f32_from_atomic_u32(&params[1].parameters[0]);
+        // Clipper
+        let clipper_threshold =
+            load_f32_from_atomic_u32(&params[EffectIndex::Clipper as usize].parameters[0]);
         assert!(f32s_are_equal(clipper_threshold, MAX_CLIPPER_THRESHOLD));
     }
 

@@ -17,6 +17,7 @@ export global Constant {
     out property <int> OSCILLATOR_THREE_INDEX: 3;
 
     out property <float> EFFECT_DISABLED_VALUE: -1.0;
+    out property <float> MAX_SLIDER_VALUE: 1.0;
 
     // Control Default Values
     out property <float> DEFAULT_BALANCE_NORMAL: 0.5;
@@ -57,4 +58,12 @@ export global Constant {
     ];
 
     out property <[string]> LFO_WAVE_SHAPES: ["Sine", "Triangle", "Square", "Saw", "Ramp", "Supersaw", "Noise"];
+    out property <[string]> SATURATION_MODES: [
+        "Analog Modeled",
+        "Tube Like",
+        "Soft Clipping",
+        "Wave Shaping",
+        "Sine Shaper",
+        "Polynomial"
+    ];
 }

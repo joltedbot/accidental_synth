@@ -15,6 +15,7 @@ import {
     Gate,
     Rectifier,
     Bitshifter,
+    Saturation,
 } from "effects.slint";
 
 export component EffectsPanel inherits Panel {
@@ -107,7 +108,27 @@ export component EffectsPanel inherits Panel {
                         effect_parameter_changed(effect_index, parameter_index, value);
                     }
                 }
+            }
 
+            row2 := HorizontalLayout {
+                padding: Theme.effect-box-padding;
+                spacing: Theme.effect-box-spacing;
+
+                Saturation {
+                    effect-index: 5;
+                    is_enabled: false;
+                    effect_enabled(effect-index, is_enabled) => {
+                        effect_enabled(effect-index, is_enabled);
+                    }
+                    effect_parameter_changed(effect_index, parameter_index, value) => {
+                        effect_parameter_changed(effect_index, parameter_index, value);
+                    }
+                }
+
+                VerticalSpacer {
+                    left-padding: 0px;
+                    right-padding: 0px;
+                }
             }
         }
     }

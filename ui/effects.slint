@@ -6,6 +6,7 @@ import {
     VerticalSpacer,
     ToggleSwitch,
     HorizontalSpacer,
+    DropDownMenu,
 } from "components.slint";
 import { Theme } from "theme.slint";
 import { Switch } from "std-widgets.slint";
@@ -109,7 +110,7 @@ export component Clipper inherits EffectBox {
     threshold := HorizontalParameterSlider {
         slider-width: 230px;
         label: Theme.clipper-parameter1;
-        value: 1.0;
+        value: Constant.MAX_SLIDER_VALUE;
         enabled: false;
         horizontal-parameter-slider-changed(theshold) => {
             effect_parameter_changed(parent.effect-index, 0, theshold);
@@ -173,7 +174,7 @@ export component Gate inherits EffectBox {
     pregain := HorizontalParameterSlider {
         enabled: false;
         slider-width: 230px;
-        value: 1.0;
+        value: Constant.MAX_SLIDER_VALUE;
         label: Theme.gate-parameter2;
         horizontal-parameter-slider-changed(amount) => {
             self.value = amount;
@@ -236,3 +237,50 @@ export component Bitshifter inherits EffectBox {
     }
 }
 
+export component Saturation inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    title: Theme.saturation-title;
+
+    changed is_enabled => {
+        type.enabled = self.is_enabled;
+        amount.enabled = self.is_enabled;
+        gain.enabled = self.is_enabled;
+    }
+
+    HorizontalSpacer { }
+
+    VerticalLayout {
+        spacing: 20px;
+
+        type := DropDownMenu {
+            label: Theme.saturation-parameter1;
+            value-list: Constant.SATURATION_MODES;
+            dropdown-width: Theme.effect-box-width;
+            enabled: false;
+            drop_down_changed(index, name) => {
+                effect_parameter_changed(root.effect-index, 0, index);
+            }
+        }
+
+        amount := HorizontalParameterSlider {
+            enabled: false;
+            slider-width: 230px;
+            label: Theme.saturation-parameter2;
+            horizontal-parameter-slider-changed(amount) => {
+                self.value = amount;
+                effect_parameter_changed(root.effect-index, 1, amount);
+            }
+        }
+
+        gain := HorizontalParameterSlider {
+            enabled: false;
+            slider-width: 230px;
+            label: Theme.saturation-parameter3;
+            value: Constant.MAX_SLIDER_VALUE;
+            horizontal-parameter-slider-changed(amount) => {
+                self.value = amount;
+                effect_parameter_changed(root.effect-index, 2, amount);
+            }
+        }
+    }
+}
