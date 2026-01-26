@@ -2,7 +2,7 @@ use crate::AccidentalSynth;
 use crate::defaults::Defaults;
 use crate::synthesizer::midi_value_converters::{
     exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool,
-    normal_value_to_integer_range, normal_value_to_number_of_filter_poles,
+    normal_value_to_number_of_filter_poles, normal_value_to_unsigned_integer_range,
     normal_value_to_wave_shape_index,
 };
 use crate::ui::constants::MAX_PHASE_VALUE;
@@ -331,7 +331,7 @@ pub fn start_ui_update_listener(
                 }
                 UIUpdates::PitchBendRange(range) => {
                     let global_options_values = &mut values.global_options;
-                    global_options_values.pitch_bend_range = normal_value_to_integer_range(
+                    global_options_values.pitch_bend_range = normal_value_to_unsigned_integer_range(
                         range,
                         Defaults::MINIMUM_PITCH_BEND_RANGE,
                         Defaults::MAXIMUM_PITCH_BEND_RANGE,

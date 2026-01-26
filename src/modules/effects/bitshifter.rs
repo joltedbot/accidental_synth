@@ -1,6 +1,6 @@
 use crate::modules::effects::constants::{MAX_BITSHIFT_BITS, MIN_BITSHIFT_BITS};
 use crate::modules::effects::{AudioEffect, EffectParameters};
-use crate::synthesizer::midi_value_converters::normal_value_to_integer_range;
+use crate::synthesizer::midi_value_converters::normal_value_to_unsigned_integer_range;
 
 pub struct BitShifter {}
 
@@ -16,7 +16,7 @@ impl AudioEffect for BitShifter {
             return samples;
         }
 
-        let bits = normal_value_to_integer_range(
+        let bits = normal_value_to_unsigned_integer_range(
             1.0 - effect.parameters[0],
             MIN_BITSHIFT_BITS,
             MAX_BITSHIFT_BITS,

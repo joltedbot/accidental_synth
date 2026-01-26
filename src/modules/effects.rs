@@ -1,9 +1,7 @@
 use crate::math::load_f32_from_atomic_u32;
 use crate::modules::effects::bitshifter::BitShifter;
 use crate::modules::effects::clipper::Clipper;
-use crate::modules::effects::constants::{
-    MAX_CLIPPER_THRESHOLD, MAX_GATE_CUT, PARAMETER_DISABLED_VALUE, PARAMETERS_PER_EFFECT,
-};
+use crate::modules::effects::constants::{MAX_GATE_CUT, MAX_THRESHOLD, PARAMETERS_PER_EFFECT};
 use crate::modules::effects::gate::Gate;
 use crate::modules::effects::rectifier::Rectifier;
 use crate::modules::effects::wavefolder::WaveFolder;
@@ -13,6 +11,7 @@ use strum::{EnumCount, EnumIter, FromRepr, IntoEnumIterator};
 
 mod bitshifter;
 mod clipper;
+mod compressor;
 mod constants;
 mod gate;
 mod rectifier;
@@ -32,6 +31,7 @@ pub enum EffectIndex {
     Rectifier,
     BitShifter,
     Saturation,
+    Compressor,
 }
 
 impl EffectIndex {
@@ -52,9 +52,9 @@ impl Default for AudioEffectParameters {
             is_enabled: AtomicBool::new(false),
             parameters: [
                 AtomicU32::new(0.0_f32.to_bits()),
-                AtomicU32::new(PARAMETER_DISABLED_VALUE.to_bits()),
-                AtomicU32::new(PARAMETER_DISABLED_VALUE.to_bits()),
-                AtomicU32::new(PARAMETER_DISABLED_VALUE.to_bits()),
+                AtomicU32::new(0.0_f32.to_bits()),
+                AtomicU32::new(0.0_f32.to_bits()),
+                AtomicU32::new(0.0_f32.to_bits()),
             ],
         }
     }
@@ -88,7 +88,7 @@ impl Effects {
 
         let clipper = Box::new(Clipper::new());
         let mut clipper_parameters = EffectParameters::default();
-        clipper_parameters.parameters[0] = MAX_CLIPPER_THRESHOLD;
+        clipper_parameters.parameters[0] = MAX_THRESHOLD;
 
         let gate = Box::new(Gate::new());
         let mut gate_parameters = EffectParameters::default();
@@ -103,8 +103,14 @@ impl Effects {
         let saturation = Box::new(saturation::Saturation::new());
         let saturation_parameters = EffectParameters::default();
 
+        let compressor = Box::new(compressor::Compressor::new());
+        let mut compressor_parameters = EffectParameters::default();
+        compressor_parameters.parameters[0] = MAX_THRESHOLD;
+
         Self {
-            effects: vec![wavefolder, clipper, gate, rectifier, bitshifter, saturation],
+            effects: vec![
+                wavefolder, clipper, gate, rectifier, bitshifter, saturation, compressor,
+            ],
             parameters: [
                 wavefolder_parameters,
                 clipper_parameters,
@@ -112,6 +118,7 @@ impl Effects {
                 rectifier_parameters,
                 bitshifter_parameters,
                 saturation_parameters,
+                compressor_parameters,
             ],
         }
     }
@@ -152,41 +159,21 @@ pub fn default_audio_effect_parameters() -> Vec<AudioEffectParameters> {
 
     for effect in EffectIndex::iter() {
         match effect {
-            EffectIndex::WaveFolder | EffectIndex::Rectifier | EffectIndex::BitShifter => {
+            EffectIndex::WaveFolder
+            | EffectIndex::Rectifier
+            | EffectIndex::BitShifter
+            | EffectIndex::Saturation => {
                 audio_effect_parameters.push(AudioEffectParameters::default());
             }
-            EffectIndex::Clipper => {
-                audio_effect_parameters.push(AudioEffectParameters {
-                    is_enabled: AtomicBool::new(false),
-                    parameters: [
-                        AtomicU32::new(MAX_CLIPPER_THRESHOLD.to_bits()),
-                        AtomicU32::new(0.0_f32.to_bits()),
-                        AtomicU32::new(0.0_f32.to_bits()),
-                        AtomicU32::new(PARAMETER_DISABLED_VALUE.to_bits()),
-                    ],
-                });
+            EffectIndex::Clipper | EffectIndex::Compressor => {
+                let mut effects_parameters = AudioEffectParameters::default();
+                effects_parameters.parameters[0] = AtomicU32::new(MAX_THRESHOLD.to_bits());
+                audio_effect_parameters.push(effects_parameters);
             }
             EffectIndex::Gate => {
-                audio_effect_parameters.push(AudioEffectParameters {
-                    is_enabled: AtomicBool::new(false),
-                    parameters: [
-                        AtomicU32::new(0.0_f32.to_bits()),
-                        AtomicU32::new(MAX_GATE_CUT.to_bits()),
-                        AtomicU32::new(0.0_f32.to_bits()),
-                        AtomicU32::new(PARAMETER_DISABLED_VALUE.to_bits()),
-                    ],
-                });
-            }
-            EffectIndex::Saturation => {
-                audio_effect_parameters.push(AudioEffectParameters {
-                    is_enabled: AtomicBool::new(false),
-                    parameters: [
-                        AtomicU32::new(0.0_f32.to_bits()),
-                        AtomicU32::new(0.0_f32.to_bits()),
-                        AtomicU32::new(PARAMETER_DISABLED_VALUE.to_bits()),
-                        AtomicU32::new(PARAMETER_DISABLED_VALUE.to_bits()),
-                    ],
-                });
+                let mut effects_parameters = AudioEffectParameters::default();
+                effects_parameters.parameters[1] = AtomicU32::new(MAX_GATE_CUT.to_bits());
+                audio_effect_parameters.push(effects_parameters);
             }
         }
     }
@@ -342,7 +329,7 @@ mod tests {
         // Clipper
         let clipper_threshold =
             load_f32_from_atomic_u32(&params[EffectIndex::Clipper as usize].parameters[0]);
-        assert!(f32s_are_equal(clipper_threshold, MAX_CLIPPER_THRESHOLD));
+        assert!(f32s_are_equal(clipper_threshold, MAX_THRESHOLD));
     }
 
     #[test]

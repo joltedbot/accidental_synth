@@ -23,8 +23,8 @@ use crate::synthesizer::midi_value_converters::{
     exponential_curve_from_normal_value_and_coefficient,
     exponential_curve_level_adjustment_from_normal_value,
     exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool,
-    normal_value_to_f32_range, normal_value_to_integer_range,
-    normal_value_to_number_of_filter_poles, normal_value_to_unsigned_integer_range,
+    normal_value_to_f32_range, normal_value_to_number_of_filter_poles,
+    normal_value_to_signed_integer_range, normal_value_to_unsigned_integer_range,
     normal_value_to_wave_shape_index, velocity_curve_from_normal_value,
 };
 use crate::synthesizer::{
@@ -156,7 +156,7 @@ pub fn set_velocity_curve(current_note: &mut Arc<CurrentNote>, normal_value: f32
 }
 
 pub fn set_pitch_bend_range(parameters: &KeyboardParameters, normal_value: f32) {
-    let range = normal_value_to_integer_range(
+    let range = normal_value_to_unsigned_integer_range(
         normal_value,
         u32::from(MIN_PITCH_BEND_RANGE),
         u32::from(MAX_PITCH_BEND_RANGE),
@@ -213,7 +213,7 @@ pub fn set_portamento_time(parameters: &[OscillatorParameters; 4], normal_value:
 pub fn set_oscillator_clip_boost(parameters: &OscillatorParameters, normal_value: f32) {
     // The output value will be in the range of
     #[allow(clippy::cast_possible_truncation)]
-    let boost = normal_value_to_integer_range(
+    let boost = normal_value_to_unsigned_integer_range(
         normal_value,
         u32::from(MIN_CLIP_BOOST),
         u32::from(MAX_CLIP_BOOST),
@@ -265,7 +265,7 @@ pub fn set_oscillator_level(
 }
 
 pub fn set_oscillator_fine_tune(parameters: &OscillatorParameters, normal_value: f32) -> i8 {
-    let cents = normal_value_to_unsigned_integer_range(
+    let cents = normal_value_to_signed_integer_range(
         normal_value,
         i32::from(OSCILLATOR_FINE_TUNE_MIN_CENTS),
         i32::from(OSCILLATOR_FINE_TUNE_MAX_CENTS),
@@ -276,7 +276,7 @@ pub fn set_oscillator_fine_tune(parameters: &OscillatorParameters, normal_value:
 }
 
 pub fn set_oscillator_course_tune(parameters: &OscillatorParameters, normal_value: f32) -> i8 {
-    let interval = normal_value_to_unsigned_integer_range(
+    let interval = normal_value_to_signed_integer_range(
         normal_value,
         i32::from(OSCILLATOR_COURSE_TUNE_MIN_INTERVAL),
         i32::from(OSCILLATOR_COURSE_TUNE_MAX_INTERVAL),

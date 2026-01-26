@@ -40,7 +40,11 @@ pub fn normal_value_to_f32_range(normal_value: f32, mut minimum: f32, mut maximu
     minimum + (normal_value * range)
 }
 
-pub fn normal_value_to_integer_range(normal_value: f32, mut minimum: u32, mut maximum: u32) -> u32 {
+pub fn normal_value_to_unsigned_integer_range(
+    normal_value: f32,
+    mut minimum: u32,
+    mut maximum: u32,
+) -> u32 {
     if maximum < minimum {
         core::mem::swap(&mut minimum, &mut maximum);
     }
@@ -52,7 +56,7 @@ pub fn normal_value_to_integer_range(normal_value: f32, mut minimum: u32, mut ma
     (f64::from(minimum) + scaled_value).clamp(f64::from(minimum), f64::from(maximum)) as u32
 }
 
-pub fn normal_value_to_unsigned_integer_range(
+pub fn normal_value_to_signed_integer_range(
     normal_value: f32,
     mut minimum: i32,
     mut maximum: i32,
@@ -79,8 +83,12 @@ pub fn normal_value_to_number_of_filter_poles(normal_value: f32) -> u8 {
 }
 
 pub fn normal_value_to_wave_shape_index(normal_value: f32) -> u8 {
-    normal_value_to_integer_range(normal_value, FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX)
-        .clamp(FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX) as u8
+    normal_value_to_unsigned_integer_range(
+        normal_value,
+        FIRST_WAVE_SHAPE_INDEX,
+        LAST_WAVE_SHAPE_INDEX,
+    )
+    .clamp(FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX) as u8
 }
 
 pub fn exponential_curve_filter_cutoff_from_midi_value(normal_value: f32) -> f32 {
@@ -274,7 +282,7 @@ mod tests {
         let min = 0;
         let max = 10;
 
-        let actual = normal_value_to_integer_range(normal_value, min, max);
+        let actual = normal_value_to_unsigned_integer_range(normal_value, min, max);
         let expected = 5;
 
         assert_eq!(actual, expected);
@@ -286,7 +294,7 @@ mod tests {
         let min = 10;
         let max = 0; // Inverted
 
-        let actual = normal_value_to_integer_range(normal_value, min, max);
+        let actual = normal_value_to_unsigned_integer_range(normal_value, min, max);
         let expected = 5; // Should swap and produce correct result
 
         assert_eq!(actual, expected);
@@ -298,11 +306,11 @@ mod tests {
         let max = 10;
 
         // 0.24 * 10 = 2.4, rounds to 2
-        let actual_low = normal_value_to_integer_range(0.24, min, max);
+        let actual_low = normal_value_to_unsigned_integer_range(0.24, min, max);
         let expected_low = 2;
 
         // 0.26 * 10 = 2.6, rounds to 3
-        let actual_high = normal_value_to_integer_range(0.26, min, max);
+        let actual_high = normal_value_to_unsigned_integer_range(0.26, min, max);
         let expected_high = 3;
 
         assert_eq!(actual_low, expected_low);
@@ -315,10 +323,10 @@ mod tests {
         let max = 10;
 
         // Values outside 0-1 should be clamped
-        let actual_below = normal_value_to_integer_range(-0.5, min, max);
+        let actual_below = normal_value_to_unsigned_integer_range(-0.5, min, max);
         let expected_below = 0;
 
-        let actual_above = normal_value_to_integer_range(1.5, min, max);
+        let actual_above = normal_value_to_unsigned_integer_range(1.5, min, max);
         let expected_above = 10;
 
         assert_eq!(actual_below, expected_below);
@@ -332,7 +340,7 @@ mod tests {
         let min = -50;
         let max = 50;
 
-        let actual = normal_value_to_unsigned_integer_range(normal_value, min, max);
+        let actual = normal_value_to_signed_integer_range(normal_value, min, max);
         let expected = 0; // -50 + 0.5 * 100 = 0
 
         assert_eq!(actual, expected);
@@ -344,7 +352,7 @@ mod tests {
         let min = 50;
         let max = -50; // Inverted
 
-        let actual = normal_value_to_unsigned_integer_range(normal_value, min, max);
+        let actual = normal_value_to_signed_integer_range(normal_value, min, max);
         let expected = 0; // Should swap and produce correct result
 
         assert_eq!(actual, expected);

@@ -1,5 +1,4 @@
 use crate::defaults::MAX_SAMPLE_VALUE;
-use crate::modules::effects::constants::MAX_CLIPPER_THRESHOLD;
 use crate::modules::effects::{AudioEffect, EffectParameters};
 use crate::synthesizer::midi_value_converters::normal_value_to_bool;
 
@@ -13,7 +12,7 @@ impl Clipper {
 
 impl AudioEffect for Clipper {
     fn process_samples(&self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
-        if !effect.is_enabled || effect.parameters[0] == MAX_CLIPPER_THRESHOLD {
+        if !effect.is_enabled || effect.parameters[0] == MAX_SAMPLE_VALUE {
             return samples;
         }
 

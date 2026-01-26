@@ -16,6 +16,7 @@ import {
     Rectifier,
     Bitshifter,
     Saturation,
+    Compressor,
 } from "effects.slint";
 
 export component EffectsPanel inherits Panel {
@@ -116,6 +117,22 @@ export component EffectsPanel inherits Panel {
 
                 Saturation {
                     effect-index: 5;
+                    is_enabled: false;
+                    effect_enabled(effect-index, is_enabled) => {
+                        effect_enabled(effect-index, is_enabled);
+                    }
+                    effect_parameter_changed(effect_index, parameter_index, value) => {
+                        effect_parameter_changed(effect_index, parameter_index, value);
+                    }
+                }
+
+                VerticalSpacer {
+                    left-padding: 0px;
+                    right-padding: 0px;
+                }
+
+                Compressor {
+                    effect-index: 6;
                     is_enabled: false;
                     effect_enabled(effect-index, is_enabled) => {
                         effect_enabled(effect-index, is_enabled);

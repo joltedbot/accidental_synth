@@ -284,3 +284,45 @@ export component Saturation inherits EffectBox {
         }
     }
 }
+
+export component Compressor inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    title: Theme.compressor-title;
+    changed is_enabled => {
+        threshold.enabled = self.is_enabled;
+        ratio.enabled = self.is_enabled;
+        postgain.enabled = self.is_enabled;
+    }
+
+    HorizontalSpacer { }
+
+    threshold := HorizontalParameterSlider {
+        slider-width: 230px;
+        label: Theme.compressor-parameter1;
+        value: Constant.MAX_SLIDER_VALUE;
+        enabled: false;
+        horizontal-parameter-slider-changed(theshold) => {
+            effect_parameter_changed(parent.effect-index, 0, theshold);
+        }
+    }
+
+    ratio := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.compressor-parameter2;
+        horizontal-parameter-slider-changed(amount) => {
+            self.value = amount;
+            effect_parameter_changed(parent.effect-index, 1, amount);
+        }
+    }
+
+    postgain := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.compressor-parameter3;
+        horizontal-parameter-slider-changed(amount) => {
+            self.value = amount;
+            effect_parameter_changed(parent.effect-index, 2, amount);
+        }
+    }
+}

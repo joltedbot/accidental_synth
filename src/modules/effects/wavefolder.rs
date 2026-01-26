@@ -1,4 +1,4 @@
-use crate::modules::effects::constants::MAX_WAVEFOLDER_THRESHOLD;
+use crate::modules::effects::constants::MAX_THRESHOLD;
 use crate::modules::effects::{AudioEffect, EffectParameters};
 
 pub struct WaveFolder {}
@@ -18,9 +18,9 @@ impl AudioEffect for WaveFolder {
             return samples;
         }
 
-        let positive_amount = MAX_WAVEFOLDER_THRESHOLD - effect.parameters[0];
+        let positive_amount = MAX_THRESHOLD - effect.parameters[0];
         let negative_amount = if effect.parameters[1].is_sign_positive() {
-            MAX_WAVEFOLDER_THRESHOLD - effect.parameters[1]
+            MAX_THRESHOLD - effect.parameters[1]
         } else {
             positive_amount
         };
@@ -105,7 +105,7 @@ mod tests {
 
         let result = wavefolder.process_samples(input, &effect);
 
-        // positive_amount = MAX_WAVEFOLDER_THRESHOLD - 0.5 = 0.5
+        // positive_amount = MAX_THRESHOLD - 0.5 = 0.5
         // negative_amount = positive_amount = 0.5 (symmetrical)
         // So thresholds are 0.5 and -0.5
         // 0.8 > 0.5, so folded: 0.5 - (0.8 - 0.5) = 0.2
