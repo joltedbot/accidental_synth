@@ -8,9 +8,6 @@ import {
     VerticalSpacer,
     HorizontalSpacer,
     SectionLabel,
-    ToggleSwitch,
-    DropDownMenu,
-    MomentaryButton,
     EnvelopeSection,
     FixedCenterLFOSection,
     EnvelopeValues,
@@ -137,8 +134,6 @@ export component FilterEnvelopeSection inherits VerticalLayout {
         }
     }
 
-    HorizontalSpacer { }
-
     EnvelopeSection {
         envelope-values: filter-envelope-values;
         envelope-attack-changed(milliseconds) => {
@@ -245,6 +240,12 @@ export component FilterPanel inherits Panel {
         }
 
         HorizontalSpacer { }
+
+        HorizontalLayout {
+            SectionLabel {
+                label: Theme.filter-section-label-lfo;
+            }
+        }
 
         FixedCenterLFOSection {
             lfo-values: filter-lfo-values;

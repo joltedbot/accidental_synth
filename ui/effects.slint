@@ -326,3 +326,87 @@ export component Compressor inherits EffectBox {
         }
     }
 }
+
+export component AutoPan inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    title: Theme.autopan-title;
+    changed is_enabled => {
+        threshold.enabled = self.is_enabled;
+        ratio.enabled = self.is_enabled;
+        waveshape.enabled = self.is_enabled;
+    }
+
+    HorizontalSpacer { }
+
+    threshold := HorizontalParameterSlider {
+        slider-width: 230px;
+        label: Theme.autopan-parameter1;
+        value: Constant.MAX_SLIDER_VALUE;
+        enabled: false;
+        horizontal-parameter-slider-changed(theshold) => {
+            effect_parameter_changed(parent.effect-index, 0, theshold);
+        }
+    }
+
+    ratio := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.autopan-parameter2;
+        horizontal-parameter-slider-changed(amount) => {
+            self.value = amount;
+            effect_parameter_changed(parent.effect-index, 1, amount);
+        }
+    }
+
+    waveshape := DropDownMenu {
+        label: Theme.lfo-label-wave-shape;
+        value-list: Constant.OSC_WAVE_SHAPES;
+        dropdown-width: Theme.effect-box-width;
+        enabled: false;
+        drop_down_changed(index, name) => {
+            effect_parameter_changed(root.effect-index, 2, index);
+        }
+    }
+}
+
+export component Tremolo inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    title: Theme.tremolo-title;
+    changed is_enabled => {
+        threshold.enabled = self.is_enabled;
+        ratio.enabled = self.is_enabled;
+        waveshape.enabled = self.is_enabled;
+    }
+
+    HorizontalSpacer { }
+
+    threshold := HorizontalParameterSlider {
+        slider-width: 230px;
+        label: Theme.tremolo-parameter1;
+        value: Constant.MAX_SLIDER_VALUE;
+        enabled: false;
+        horizontal-parameter-slider-changed(theshold) => {
+            effect_parameter_changed(parent.effect-index, 0, theshold);
+        }
+    }
+
+    ratio := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.tremolo-parameter2;
+        horizontal-parameter-slider-changed(amount) => {
+            self.value = amount;
+            effect_parameter_changed(parent.effect-index, 1, amount);
+        }
+    }
+
+    waveshape := DropDownMenu {
+        label: Theme.lfo-label-wave-shape;
+        value-list: Constant.OSC_WAVE_SHAPES;
+        dropdown-width: Theme.effect-box-width;
+        enabled: false;
+        drop_down_changed(index, name) => {
+            effect_parameter_changed(root.effect-index, 2, index);
+        }
+    }
+}
