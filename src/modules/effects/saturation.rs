@@ -12,7 +12,7 @@ impl Saturation {
 }
 
 impl AudioEffect for Saturation {
-    fn process_samples(&self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
+    fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
         let mode_index = effect.parameters[0];
         let mode = SaturationMode::from_f32(mode_index);
         let mut amount = effect.parameters[1];

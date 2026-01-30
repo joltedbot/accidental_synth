@@ -16,7 +16,7 @@ impl Compressor {
 }
 
 impl AudioEffect for Compressor {
-    fn process_samples(&self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
+    fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
         if !effect.is_enabled {
             return samples;
         }

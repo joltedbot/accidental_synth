@@ -10,7 +10,7 @@ impl Gate {
 }
 
 impl AudioEffect for Gate {
-    fn process_samples(&self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
+    fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
         if !effect.is_enabled || effect.parameters[0] == 0.0 {
             return samples;
         }
@@ -49,7 +49,7 @@ mod tests {
 
     #[test]
     fn gate_process_samples_returns_original_when_disabled() {
-        let gate = Gate::new();
+        let mut gate = Gate::new();
         let effect = EffectParameters {
             is_enabled: false,
             parameters: vec![0.5, 0.0, 0.0, 0.0],

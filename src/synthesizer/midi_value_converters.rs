@@ -10,26 +10,6 @@ use crate::synthesizer::constants::{
     NORMAL_TO_BOOL_SWITCH_ON_VALUE, PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT,
 };
 use std::sync::atomic::Ordering::Relaxed;
-/*
-
-    midi module:
-     - receives midi events and filters out unsupported messages
-     - Passed supported midi messages to the synthesizer module
-
-    synthesizer module:
-     - receives the messages
-     - filters the messages by type and sends to a processing function for each type
-     - the processing function either directly processes the received value or for CCs breaks it down by cc to process
-     - processing function: (midi_messages.rs)
-       - normalize the midi value
-       - wraps a more general processing function shared with the ui interaction
-     - storing function:
-       - takes the normal value and output range
-       - translates the normal value to a scaled value for the property it represents
-       - stores it to the correct location
-       - calls a UI callback function that will talk to the UI module to update the UI with the stored real value
-
-*/
 
 pub fn normal_value_to_f32_range(normal_value: f32, mut minimum: f32, mut maximum: f32) -> f32 {
     if maximum < minimum {

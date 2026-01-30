@@ -10,7 +10,7 @@ impl Rectifier {
 }
 
 impl AudioEffect for Rectifier {
-    fn process_samples(&self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
+    fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
         if !effect.is_enabled {
             return samples;
         }
@@ -52,7 +52,7 @@ mod tests {
 
     #[test]
     fn rectifier_process_samples_returns_original_when_disabled() {
-        let rectifier = Rectifier::new();
+        let mut rectifier = Rectifier::new();
         let effect = EffectParameters {
             is_enabled: false,
             parameters: vec![0.0, 0.0, 0.0, 0.0],

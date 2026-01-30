@@ -11,7 +11,7 @@ impl Clipper {
 }
 
 impl AudioEffect for Clipper {
-    fn process_samples(&self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
+    fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
         if !effect.is_enabled || effect.parameters[0] == MAX_SAMPLE_VALUE {
             return samples;
         }
@@ -58,7 +58,7 @@ mod tests {
 
     #[test]
     fn clipper_process_samples_returns_original_when_disabled() {
-        let clipper = Clipper::new();
+        let mut clipper = Clipper::new();
         let effect = EffectParameters {
             is_enabled: false,
             parameters: vec![0.5, 0.0, 0.0, 0.0],

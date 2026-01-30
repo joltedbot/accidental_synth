@@ -17,9 +17,11 @@ mod gate;
 mod rectifier;
 mod saturation;
 mod wavefolder;
+mod autopan;
+mod tremolo;
 
 pub trait AudioEffect {
-    fn process_samples(&self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32);
+    fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32);
 }
 
 #[derive(Debug, Clone, Copy, EnumCount, EnumIter, FromRepr)]
@@ -32,6 +34,8 @@ pub enum EffectIndex {
     BitShifter,
     Saturation,
     Compressor,
+    AutoPan,
+    Tremolo,
 }
 
 impl EffectIndex {
@@ -82,7 +86,7 @@ pub struct Effects {
 }
 
 impl Effects {
-    pub fn new() -> Self {
+    pub fn new(sample_rate: u32) -> Self {
         let wavefolder = Box::new(WaveFolder::new());
         let wavefolder_parameters = EffectParameters::default();
 
@@ -107,9 +111,17 @@ impl Effects {
         let mut compressor_parameters = EffectParameters::default();
         compressor_parameters.parameters[0] = MAX_THRESHOLD;
 
+        let autopan = Box::new(autopan::AutoPan::new(sample_rate));
+        let mut autopan_parameters = EffectParameters::default();
+        autopan_parameters.parameters[0] = MAX_THRESHOLD;
+
+        let tremolo = Box::new(tremolo::Tremolo::new(sample_rate));
+        let mut tremolo_parameters = EffectParameters::default();
+        tremolo_parameters.parameters[0] = MAX_THRESHOLD;
+
         Self {
             effects: vec![
-                wavefolder, clipper, gate, rectifier, bitshifter, saturation, compressor,
+                wavefolder, clipper, gate, rectifier, bitshifter, saturation, compressor,autopan, tremolo
             ],
             parameters: [
                 wavefolder_parameters,
@@ -119,6 +131,8 @@ impl Effects {
                 bitshifter_parameters,
                 saturation_parameters,
                 compressor_parameters,
+                autopan_parameters,
+                tremolo_parameters
             ],
         }
     }
@@ -132,7 +146,7 @@ impl Effects {
             });
     }
 
-    pub fn process(&self, mut samples: (f32, f32)) -> (f32, f32) {
+    pub fn process(&mut self, mut samples: (f32, f32)) -> (f32, f32) {
         for (index, parameter) in self.parameters.iter().enumerate() {
             if parameter.is_enabled {
                 samples = self.effects[index].process_samples(samples, parameter);
@@ -165,12 +179,12 @@ pub fn default_audio_effect_parameters() -> Vec<AudioEffectParameters> {
             | EffectIndex::Saturation => {
                 audio_effect_parameters.push(AudioEffectParameters::default());
             }
-            EffectIndex::Clipper | EffectIndex::Compressor => {
+            EffectIndex::Clipper | EffectIndex::Compressor  => {
                 let mut effects_parameters = AudioEffectParameters::default();
                 effects_parameters.parameters[0] = AtomicU32::new(MAX_THRESHOLD.to_bits());
                 audio_effect_parameters.push(effects_parameters);
             }
-            EffectIndex::Gate => {
+            EffectIndex::Gate | EffectIndex::AutoPan | EffectIndex::Tremolo => {
                 let mut effects_parameters = AudioEffectParameters::default();
                 effects_parameters.parameters[1] = AtomicU32::new(MAX_GATE_CUT.to_bits());
                 audio_effect_parameters.push(effects_parameters);
@@ -246,7 +260,7 @@ mod tests {
 
     #[test]
     fn effects_process_returns_original_when_all_disabled() {
-        let mut effects = Effects::new();
+        let mut effects = Effects::new(48000);
         let params = vec![
             AudioEffectParameters::default(),
             AudioEffectParameters::default(),
@@ -264,7 +278,7 @@ mod tests {
 
     #[test]
     fn effects_process_applies_enabled_effect() {
-        let mut effects = Effects::new();
+        let mut effects = Effects::new(48000);
         let mut params = vec![
             AudioEffectParameters::default(),
             AudioEffectParameters::default(),
@@ -286,7 +300,7 @@ mod tests {
 
     #[test]
     fn effects_process_chains_multiple_effects() {
-        let mut effects = Effects::new();
+        let mut effects = Effects::new(48000);
         let mut params = vec![
             AudioEffectParameters::default(),
             AudioEffectParameters::default(),

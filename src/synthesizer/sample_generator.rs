@@ -223,7 +223,7 @@ fn initialize_synth_modules(sample_rate: u32) -> Modules {
         filter_lfo: Lfo::new(sample_rate),
         filter: Filter::new(sample_rate),
         mod_wheel_lfo: Lfo::new(sample_rate),
-        effects: Effects::new(),
+        effects: Effects::new(sample_rate),
         oscillators: [
             Oscillator::new(sample_rate, WaveShape::default()),
             Oscillator::new(sample_rate, WaveShape::default()),

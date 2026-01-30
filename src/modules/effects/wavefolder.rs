@@ -9,7 +9,7 @@ impl WaveFolder {
 }
 
 impl AudioEffect for WaveFolder {
-    fn process_samples(&self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
+    fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
         if !effect.is_enabled {
             return samples;
         }
@@ -66,7 +66,7 @@ mod tests {
 
     #[test]
     fn wavefolder_process_samples_returns_original_when_disabled() {
-        let wavefolder = WaveFolder::new();
+        let mut wavefolder = WaveFolder::new();
         let effect = EffectParameters {
             is_enabled: false,
             parameters: vec![0.5, 0.5, 0.0, 0.0],
@@ -81,7 +81,7 @@ mod tests {
 
     #[test]
     fn wavefolder_process_samples_returns_original_when_parameter_negative() {
-        let wavefolder = WaveFolder::new();
+        let mut wavefolder = WaveFolder::new();
         let effect = EffectParameters {
             is_enabled: true,
             parameters: vec![-0.1, 0.5, 0.0, 0.0],
@@ -96,7 +96,7 @@ mod tests {
 
     #[test]
     fn wavefolder_process_samples_uses_symmetrical_folding_when_parameter1_negative() {
-        let wavefolder = WaveFolder::new();
+        let mut wavefolder = WaveFolder::new();
         let effect = EffectParameters {
             is_enabled: true,
             parameters: vec![0.5, -1.0, 0.0, 0.0], // parameter[1] negative means symmetrical
@@ -116,7 +116,7 @@ mod tests {
 
     #[test]
     fn wavefolder_process_samples_uses_asymmetrical_folding_when_parameter1_positive() {
-        let wavefolder = WaveFolder::new();
+        let mut wavefolder = WaveFolder::new();
         let effect = EffectParameters {
             is_enabled: true,
             parameters: vec![0.7, 0.3, 0.0, 0.0], // Different positive values for asymmetry
