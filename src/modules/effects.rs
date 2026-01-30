@@ -9,6 +9,7 @@ use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU32};
 use strum::{EnumCount, EnumIter, FromRepr, IntoEnumIterator};
 
+mod autopan;
 mod bitshifter;
 mod clipper;
 mod compressor;
@@ -16,9 +17,8 @@ mod constants;
 mod gate;
 mod rectifier;
 mod saturation;
-mod wavefolder;
-mod autopan;
 mod tremolo;
+mod wavefolder;
 
 pub trait AudioEffect {
     fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32);
@@ -121,7 +121,8 @@ impl Effects {
 
         Self {
             effects: vec![
-                wavefolder, clipper, gate, rectifier, bitshifter, saturation, compressor,autopan, tremolo
+                wavefolder, clipper, gate, rectifier, bitshifter, saturation, compressor, autopan,
+                tremolo,
             ],
             parameters: [
                 wavefolder_parameters,
@@ -132,7 +133,7 @@ impl Effects {
                 saturation_parameters,
                 compressor_parameters,
                 autopan_parameters,
-                tremolo_parameters
+                tremolo_parameters,
             ],
         }
     }
@@ -179,7 +180,7 @@ pub fn default_audio_effect_parameters() -> Vec<AudioEffectParameters> {
             | EffectIndex::Saturation => {
                 audio_effect_parameters.push(AudioEffectParameters::default());
             }
-            EffectIndex::Clipper | EffectIndex::Compressor  => {
+            EffectIndex::Clipper | EffectIndex::Compressor => {
                 let mut effects_parameters = AudioEffectParameters::default();
                 effects_parameters.parameters[0] = AtomicU32::new(MAX_THRESHOLD.to_bits());
                 audio_effect_parameters.push(effects_parameters);
