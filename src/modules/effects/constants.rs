@@ -8,6 +8,5 @@ pub const MAX_RATIO: u8 = 20;
 pub const MIN_MAKEUP_GAIN_FACTOR: f32 = 1.0;
 pub const MAX_MAKEUP_GAIN_FACTOR: f32 = 2.0;
 pub const EFFECTS_LFO_CENTER_VALUE: f32 = 0.5;
-pub const AUTO_PAN_MIN_WIDTH: f32 = 0.0;
 pub const AUTO_PAN_MAX_WIDTH: f32 = 1.0;
 pub const TREMOLO_MAX_DEPTH: f32 = 1.0;

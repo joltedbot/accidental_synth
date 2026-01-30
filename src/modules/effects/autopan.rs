@@ -1,3 +1,4 @@
+use crate::math::f32s_are_equal;
 use crate::modules::effects::constants::{AUTO_PAN_MAX_WIDTH, EFFECTS_LFO_CENTER_VALUE};
 use crate::modules::effects::{AudioEffect, EffectParameters};
 use crate::modules::lfo::Lfo;
@@ -43,19 +44,19 @@ impl AudioEffect for AutoPan {
         let new_width = effect.parameters[1];
         let new_shape = effect.parameters[2];
 
-        if new_frequency != self.lfo_parameters.frequency {
+        if !f32s_are_equal(new_frequency, self.lfo_parameters.frequency) {
             self.lfo_parameters.frequency = new_frequency;
             self.lfo
                 .set_frequency(exponential_curve_lfo_frequency_from_normal_value(
                     new_frequency,
                 ));
         }
-        if new_width != self.lfo_parameters.width {
+        if !f32s_are_equal(new_width, self.lfo_parameters.width) {
             self.lfo_parameters.width = new_width;
             self.lfo.set_range(new_width);
         }
 
-        if new_shape != self.lfo_parameters.oscillator_index {
+        if !f32s_are_equal(new_shape, self.lfo_parameters.oscillator_index) {
             self.lfo_parameters.oscillator_index = new_shape;
             self.lfo.set_wave_shape(new_shape as u8);
         }
