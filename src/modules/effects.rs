@@ -1,7 +1,9 @@
 use crate::math::load_f32_from_atomic_u32;
 use crate::modules::effects::bitshifter::BitShifter;
 use crate::modules::effects::clipper::Clipper;
-use crate::modules::effects::constants::{DELAY_DEFAULT_PARAMETERS, MAX_GATE_CUT, MAX_THRESHOLD, PARAMETERS_PER_EFFECT};
+use crate::modules::effects::constants::{
+    DELAY_DEFAULT_PARAMETERS, MAX_GATE_CUT, MAX_THRESHOLD, PARAMETERS_PER_EFFECT,
+};
 use crate::modules::effects::gate::Gate;
 use crate::modules::effects::rectifier::Rectifier;
 use crate::modules::effects::wavefolder::WaveFolder;
@@ -14,12 +16,12 @@ mod bitshifter;
 mod clipper;
 mod compressor;
 mod constants;
+mod delay;
 mod gate;
 mod rectifier;
 mod saturation;
 mod tremolo;
 mod wavefolder;
-mod delay;
 
 pub trait AudioEffect {
     fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32);
@@ -116,7 +118,7 @@ impl Effects {
         let delay = Box::new(delay::Delay::new());
         let mut delay_parameters = EffectParameters::default();
         delay_parameters.parameters = DELAY_DEFAULT_PARAMETERS.to_vec();
-        
+
         let autopan = Box::new(autopan::AutoPan::new(sample_rate));
         let mut autopan_parameters = EffectParameters::default();
         autopan_parameters.parameters[0] = MAX_THRESHOLD;
@@ -127,8 +129,8 @@ impl Effects {
 
         Self {
             effects: vec![
-                wavefolder, clipper, gate, rectifier, bitshifter, saturation, compressor, delay, autopan,
-                tremolo,
+                wavefolder, clipper, gate, rectifier, bitshifter, saturation, compressor, delay,
+                autopan, tremolo,
             ],
             parameters: [
                 wavefolder_parameters,
@@ -156,7 +158,7 @@ impl Effects {
 
     pub fn process(&mut self, mut samples: (f32, f32)) -> (f32, f32) {
         for (index, parameter) in self.parameters.iter().enumerate() {
-                samples = self.effects[index].process_samples(samples, parameter);
+            samples = self.effects[index].process_samples(samples, parameter);
         }
 
         samples
@@ -197,9 +199,12 @@ pub fn default_audio_effect_parameters() -> Vec<AudioEffectParameters> {
             }
             EffectIndex::Delay => {
                 let mut effects_parameters = AudioEffectParameters::default();
-                effects_parameters.parameters[0] = AtomicU32::new(DELAY_DEFAULT_PARAMETERS[0].to_bits());
-                effects_parameters.parameters[1] = AtomicU32::new(DELAY_DEFAULT_PARAMETERS[1].to_bits());
-                effects_parameters.parameters[2] = AtomicU32::new(DELAY_DEFAULT_PARAMETERS[2].to_bits());
+                effects_parameters.parameters[0] =
+                    AtomicU32::new(DELAY_DEFAULT_PARAMETERS[0].to_bits());
+                effects_parameters.parameters[1] =
+                    AtomicU32::new(DELAY_DEFAULT_PARAMETERS[1].to_bits());
+                effects_parameters.parameters[2] =
+                    AtomicU32::new(DELAY_DEFAULT_PARAMETERS[2].to_bits());
                 audio_effect_parameters.push(effects_parameters);
             }
         }

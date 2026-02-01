@@ -1,7 +1,7 @@
-use std::collections::VecDeque;
+use crate::modules::effects::constants::{MAX_DELAY_SAMPLES, MIN_DELAY_SAMPLES};
 use crate::modules::effects::{AudioEffect, EffectParameters};
-use crate::modules::effects::constants::{DELAY_BUFFER_SIZE, MAX_DELAY_SAMPLES, MIN_DELAY_SAMPLES};
 use crate::synthesizer::midi_value_converters::normal_value_to_unsigned_integer_range;
+use std::collections::VecDeque;
 
 pub struct Delay {
     buffer: VecDeque<(f32, f32)>,
@@ -14,7 +14,7 @@ impl Delay {
 
         Self {
             buffer,
-            is_enabled: false
+            is_enabled: false,
         }
     }
 
@@ -25,7 +25,6 @@ impl Delay {
 
 impl AudioEffect for Delay {
     fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
-
         if self.is_enabled && !effect.is_enabled {
             self.reset();
         }
@@ -37,11 +36,13 @@ impl AudioEffect for Delay {
             return samples;
         }
 
-
         let amount = effect.parameters[0];
-        let delay =  normal_value_to_unsigned_integer_range(effect.parameters[1], MIN_DELAY_SAMPLES, MAX_DELAY_SAMPLES);
+        let delay = normal_value_to_unsigned_integer_range(
+            effect.parameters[1],
+            MIN_DELAY_SAMPLES,
+            MAX_DELAY_SAMPLES,
+        );
         let decay_factor = effect.parameters[2];
-
 
         let buffer_samples = self.buffer[delay as usize];
 
@@ -53,14 +54,20 @@ impl AudioEffect for Delay {
             println!("Infinity detected in delay buffer");
         }
 
-        let delayed_samples = (buffer_samples.0 * decay_factor, buffer_samples.1 * decay_factor);
+        let delayed_samples = (
+            buffer_samples.0 * decay_factor,
+            buffer_samples.1 * decay_factor,
+        );
 
         if self.buffer.len() >= MAX_DELAY_SAMPLES as usize {
             let _throw_away_old_samples = self.buffer.pop_back();
         }
-        self.buffer.push_front((samples.0 + delayed_samples.0 , samples.1 + delayed_samples.1));
+        self.buffer
+            .push_front((samples.0 + delayed_samples.0, samples.1 + delayed_samples.1));
 
-        (samples.0 + delayed_samples.0 * amount, samples.1 + delayed_samples.1 * amount)
-
+        (
+            samples.0 + delayed_samples.0 * amount,
+            samples.1 + delayed_samples.1 * amount,
+        )
     }
 }
