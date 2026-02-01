@@ -10,3 +10,7 @@ pub const MAX_MAKEUP_GAIN_FACTOR: f32 = 2.0;
 pub const EFFECTS_LFO_CENTER_VALUE: f32 = 0.5;
 pub const AUTO_PAN_MAX_WIDTH: f32 = 1.0;
 pub const TREMOLO_MAX_DEPTH: f32 = 1.0;
+pub const DELAY_BUFFER_SIZE: usize = 96_002;
+pub const MIN_DELAY_SAMPLES: u32 = 3_000;
+pub const MAX_DELAY_SAMPLES: u32 = 96_000;
+pub const DELAY_DEFAULT_PARAMETERS: [f32; 4] = [0.5, 0.5, 0.5, 0.0];

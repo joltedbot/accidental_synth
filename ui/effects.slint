@@ -327,6 +327,51 @@ export component Compressor inherits EffectBox {
     }
 }
 
+export component Delay inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    title: Theme.delay-title;
+    changed is_enabled => {
+        amount.enabled = self.is_enabled;
+        delay.enabled = self.is_enabled;
+        decay.enabled = self.is_enabled;
+    }
+
+    HorizontalSpacer { }
+
+    amount := HorizontalParameterSlider {
+        slider-width: 230px;
+        label: Theme.delay-parameter1;
+        value: Constant.SLIDER_MID_POINT;
+        enabled: false;
+        horizontal-parameter-slider-changed(theshold) => {
+            effect_parameter_changed(parent.effect-index, 0, theshold);
+        }
+    }
+
+    delay := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.delay-parameter2;
+        value: Constant.SLIDER_MID_POINT;
+        horizontal-parameter-slider-changed(amount) => {
+            self.value = amount;
+            effect_parameter_changed(parent.effect-index, 1, amount);
+        }
+    }
+
+    decay := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.delay-parameter3;
+        value: Constant.SLIDER_MID_POINT;
+        horizontal-parameter-slider-changed(amount) => {
+            self.value = amount;
+            effect_parameter_changed(parent.effect-index, 2, amount);
+        }
+    }
+
+}
+
 export component AutoPan inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     title: Theme.autopan-title;

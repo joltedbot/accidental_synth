@@ -17,6 +17,7 @@ import {
     Bitshifter,
     Saturation,
     Compressor,
+    Delay,
     AutoPan,
     Tremolo,
 } from "effects.slint";
@@ -149,7 +150,8 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                AutoPan {
+
+                Delay {
                     effect-index: 7;
                     is_enabled: false;
                     effect_enabled(effect-index, is_enabled) => {
@@ -165,8 +167,24 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Tremolo {
+                AutoPan {
                     effect-index: 8;
+                    is_enabled: false;
+                    effect_enabled(effect-index, is_enabled) => {
+                        effect_enabled(effect-index, is_enabled);
+                    }
+                    effect_parameter_changed(effect_index, parameter_index, value) => {
+                        effect_parameter_changed(effect_index, parameter_index, value);
+                    }
+                }
+
+                VerticalSpacer {
+                    left-padding: 0px;
+                    right-padding: 0px;
+                }
+
+                Tremolo {
+                    effect-index: 9;
                     is_enabled: false;
                     effect_enabled(effect-index, is_enabled) => {
                         effect_enabled(effect-index, is_enabled);
