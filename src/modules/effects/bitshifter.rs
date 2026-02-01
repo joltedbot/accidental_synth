@@ -6,6 +6,8 @@ pub struct BitShifter {}
 
 impl BitShifter {
     pub fn new() -> Self {
+        log::debug!("Constructing BitShifter Effect Module");
+
         Self {}
     }
 }

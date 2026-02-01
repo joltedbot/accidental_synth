@@ -4,6 +4,8 @@ use crate::modules::effects::{AudioEffect, EffectParameters};
 pub struct WaveFolder {}
 impl WaveFolder {
     pub fn new() -> Self {
+        log::debug!("Constructing WaveFolder Effect Module");
+
         Self {}
     }
 }

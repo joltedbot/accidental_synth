@@ -10,6 +10,8 @@ pub struct Delay {
 
 impl Delay {
     pub fn new() -> Self {
+        log::debug!("Constructing Delay Effect Module");
+
         let buffer = VecDeque::new();
 
         Self {
@@ -31,7 +33,11 @@ impl AudioEffect for Delay {
 
         self.is_enabled = effect.is_enabled;
 
-        if !self.is_enabled || self.buffer.len() < (MAX_DELAY_SAMPLES - 1) as usize {
+        if !self.is_enabled {
+            return samples;
+        }
+
+        if self.buffer.len() < (MAX_DELAY_SAMPLES - 1) as usize {
             self.buffer.push_front(samples);
             return samples;
         }
@@ -69,5 +75,125 @@ impl AudioEffect for Delay {
             samples.0 + delayed_samples.0 * amount,
             samples.1 + delayed_samples.1 * amount,
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::math::f32s_are_equal;
+
+    #[test]
+    fn delay_process_samples_returns_original_when_disabled() {
+        let mut delay = Delay::new();
+        let effect = EffectParameters {
+            is_enabled: false,
+            parameters: vec![0.5, 0.5, 0.5, 0.0],
+        };
+        let input = (0.7, -0.4);
+
+        let result = delay.process_samples(input, &effect);
+
+        assert!(f32s_are_equal(result.0, 0.7));
+        assert!(f32s_are_equal(result.1, -0.4));
+    }
+
+    #[test]
+    fn delay_process_samples_fills_buffer_when_buffer_not_full() {
+        let mut delay = Delay::new();
+        let effect = EffectParameters {
+            is_enabled: true,
+            parameters: vec![0.5, 0.5, 0.5, 0.0],
+        };
+        let input = (0.5, 0.5);
+
+        // Buffer starts empty
+        assert_eq!(delay.buffer.len(), 0);
+
+        // Process first sample
+        let result = delay.process_samples(input, &effect);
+
+        // Should return original samples and buffer should have one entry
+        assert!(f32s_are_equal(result.0, 0.5));
+        assert!(f32s_are_equal(result.1, 0.5));
+        assert_eq!(delay.buffer.len(), 1);
+    }
+
+    #[test]
+    fn delay_process_samples_resets_buffer_when_disabled_after_enabled() {
+        let mut delay = Delay::new();
+
+        // Enable and process samples to fill buffer
+        let enabled_effect = EffectParameters {
+            is_enabled: true,
+            parameters: vec![0.5, 0.5, 0.5, 0.0],
+        };
+        delay.process_samples((0.5, 0.5), &enabled_effect);
+        assert_eq!(delay.buffer.len(), 1);
+        assert!(delay.is_enabled);
+
+        // Disable effect - should trigger reset and not add samples
+        let disabled_effect = EffectParameters {
+            is_enabled: false,
+            parameters: vec![0.5, 0.5, 0.5, 0.0],
+        };
+        delay.process_samples((0.5, 0.5), &disabled_effect);
+
+        // Buffer should be empty after reset and not add new samples when disabled
+        assert_eq!(delay.buffer.len(), 0);
+        assert!(!delay.is_enabled);
+    }
+
+    #[test]
+    fn delay_process_samples_does_not_buffer_when_disabled() {
+        let mut delay = Delay::new();
+
+        // Start disabled
+        assert!(!delay.is_enabled);
+        assert_eq!(delay.buffer.len(), 0);
+
+        // Process with disabled effect - should not add to buffer
+        let disabled_effect = EffectParameters {
+            is_enabled: false,
+            parameters: vec![0.5, 0.5, 0.5, 0.0],
+        };
+        delay.process_samples((0.5, 0.5), &disabled_effect);
+
+        // Should still be disabled with empty buffer
+        assert!(!delay.is_enabled);
+        assert_eq!(delay.buffer.len(), 0);
+    }
+
+    #[test]
+    fn delay_process_samples_maintains_max_buffer_size() {
+        let mut delay = Delay::new();
+        let effect = EffectParameters {
+            is_enabled: true,
+            parameters: vec![0.5, 0.5, 0.5, 0.0],
+        };
+
+        // Fill buffer beyond MAX_DELAY_SAMPLES
+        for _ in 0..MAX_DELAY_SAMPLES + 10 {
+            delay.process_samples((0.1, 0.1), &effect);
+        }
+
+        // Buffer should not exceed MAX_DELAY_SAMPLES
+        assert!(delay.buffer.len() <= MAX_DELAY_SAMPLES as usize);
+    }
+
+    #[test]
+    fn delay_process_samples_returns_original_when_buffer_filling() {
+        let mut delay = Delay::new();
+        let effect = EffectParameters {
+            is_enabled: true,
+            parameters: vec![0.5, 0.5, 0.5, 0.0],
+        };
+        let input = (0.8, -0.6);
+
+        // First sample should return original since buffer isn't full
+        let result = delay.process_samples(input, &effect);
+
+        assert!(f32s_are_equal(result.0, 0.8));
+        assert!(f32s_are_equal(result.1, -0.6));
     }
 }

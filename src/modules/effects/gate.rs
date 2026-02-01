@@ -5,6 +5,8 @@ pub struct Gate {}
 
 impl Gate {
     pub fn new() -> Self {
+        log::debug!("Constructing Gate Effect Module");
+
         Self {}
     }
 }
