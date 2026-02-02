@@ -1,6 +1,6 @@
 [package]
 name = "accidental-synth"
-version = "0.1.2"
+version = "0.1.3"
 description = "Accidental Synthesizer"
 authors = ["Dave White"]
 license = "Apache-2.0"
