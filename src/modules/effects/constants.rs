@@ -13,3 +13,4 @@ pub const TREMOLO_MAX_DEPTH: f32 = 1.0;
 pub const MIN_DELAY_SAMPLES: u32 = 3_000;
 pub const MAX_DELAY_SAMPLES: u32 = 96_000;
 pub const DELAY_DEFAULT_PARAMETERS: [f32; 4] = [0.5, 0.5, 0.5, 0.0];
+pub const DELAY_SMOOTHING_FACTOR: f32 = 0.001;

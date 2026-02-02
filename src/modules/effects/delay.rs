@@ -1,4 +1,6 @@
-use crate::modules::effects::constants::{MAX_DELAY_SAMPLES, MIN_DELAY_SAMPLES};
+use crate::modules::effects::constants::{
+    DELAY_SMOOTHING_FACTOR, MAX_DELAY_SAMPLES, MIN_DELAY_SAMPLES,
+};
 use crate::modules::effects::{AudioEffect, EffectParameters};
 use crate::synthesizer::midi_value_converters::normal_value_to_unsigned_integer_range;
 use std::collections::VecDeque;
@@ -6,6 +8,7 @@ use std::collections::VecDeque;
 pub struct Delay {
     buffer: VecDeque<(f32, f32)>,
     is_enabled: bool,
+    current_delay_samples: f32,
 }
 
 impl Delay {
@@ -17,11 +20,13 @@ impl Delay {
         Self {
             buffer,
             is_enabled: false,
+            current_delay_samples: MIN_DELAY_SAMPLES as f32,
         }
     }
 
     fn reset(&mut self) {
         self.buffer = VecDeque::new();
+        self.current_delay_samples = MIN_DELAY_SAMPLES as f32;
     }
 }
 
@@ -43,27 +48,45 @@ impl AudioEffect for Delay {
         }
 
         let amount = effect.parameters[0];
-        let delay = normal_value_to_unsigned_integer_range(
+        let feedback = effect.parameters[2];
+        let target_delay = normal_value_to_unsigned_integer_range(
             effect.parameters[1],
             MIN_DELAY_SAMPLES,
             MAX_DELAY_SAMPLES,
-        );
-        let decay_factor = effect.parameters[2];
+        ) as f32;
 
-        let buffer_samples = self.buffer[delay as usize];
+        self.current_delay_samples +=
+            (target_delay - self.current_delay_samples) * DELAY_SMOOTHING_FACTOR;
+        let delay_index = self.current_delay_samples.floor() as usize;
+        let fractional_index = self.current_delay_samples - delay_index as f32;
 
-        if buffer_samples.0.is_nan() || buffer_samples.1.is_nan() {
-            println!("NaN detected in delay buffer");
+        // Read two adjacent samples from buffer for linear interpolation
+        let buffer_samples_a = self.buffer[delay_index];
+        let buffer_samples_b = if delay_index + 1 < self.buffer.len() {
+            self.buffer[delay_index + 1]
+        } else {
+            buffer_samples_a // Use same sample if at buffer edge
+        };
+
+        // Linearly interpolate between adjacent samples
+        let mut interpolated_left =
+            buffer_samples_a.0 * (1.0 - fractional_index) + buffer_samples_b.0 * fractional_index;
+        let mut interpolated_right =
+            buffer_samples_a.1 * (1.0 - fractional_index) + buffer_samples_b.1 * fractional_index;
+
+        if interpolated_left.is_nan() || interpolated_right.is_nan() {
+            log::warn!(target: "effects::delay", "Interpolated sample is NaN.");
+            interpolated_left = buffer_samples_a.0;
+            interpolated_right = buffer_samples_a.1;
         }
 
-        if buffer_samples.0.is_infinite() || buffer_samples.1.is_infinite() {
-            println!("Infinity detected in delay buffer");
+        if interpolated_left.is_infinite() || interpolated_right.is_infinite() {
+            log::warn!(target: "effects::delay", "Interpolated sample is Infinity.");
+            interpolated_left = buffer_samples_a.0;
+            interpolated_right = buffer_samples_a.1;
         }
 
-        let delayed_samples = (
-            buffer_samples.0 * decay_factor,
-            buffer_samples.1 * decay_factor,
-        );
+        let delayed_samples = (interpolated_left * feedback, interpolated_right * feedback);
 
         if self.buffer.len() >= MAX_DELAY_SAMPLES as usize {
             let _throw_away_old_samples = self.buffer.pop_back();
