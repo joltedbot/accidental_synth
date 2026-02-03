@@ -3,10 +3,10 @@ use crate::modules::effects::constants::{
 };
 use crate::modules::effects::{AudioEffect, EffectParameters};
 use crate::synthesizer::midi_value_converters::normal_value_to_unsigned_integer_range;
-use std::collections::VecDeque;
 
 pub struct Delay {
-    buffer: VecDeque<(f32, f32)>,
+    buffer: Vec<(f32, f32)>,
+    write_index: usize,
     is_enabled: bool,
     current_delay_samples: f32,
 }
@@ -15,17 +15,19 @@ impl Delay {
     pub fn new() -> Self {
         log::debug!("Constructing Delay Effect Module");
 
-        let buffer = VecDeque::new();
+        let buffer = vec![(0.0, 0.0); MAX_DELAY_SAMPLES as usize];
 
         Self {
             buffer,
+            write_index: 0,
             is_enabled: false,
             current_delay_samples: MIN_DELAY_SAMPLES as f32,
         }
     }
 
     fn reset(&mut self) {
-        self.buffer = VecDeque::new();
+        self.buffer.fill((0.0, 0.0));
+        self.write_index = 0;
         self.current_delay_samples = MIN_DELAY_SAMPLES as f32;
     }
 }
@@ -42,11 +44,6 @@ impl AudioEffect for Delay {
             return samples;
         }
 
-        if self.buffer.len() < (MAX_DELAY_SAMPLES - 1) as usize {
-            self.buffer.push_front(samples);
-            return samples;
-        }
-
         let amount = effect.parameters[0];
         let feedback = effect.parameters[2];
         let target_delay = normal_value_to_unsigned_integer_range(
@@ -57,18 +54,17 @@ impl AudioEffect for Delay {
 
         self.current_delay_samples +=
             (target_delay - self.current_delay_samples) * DELAY_SMOOTHING_FACTOR;
-        let delay_index = self.current_delay_samples.floor() as usize;
-        let fractional_index = self.current_delay_samples - delay_index as f32;
+        let delay_samples = self.current_delay_samples.floor() as usize;
+        let fractional_index = self.current_delay_samples - delay_samples as f32;
 
-        // Read two adjacent samples from buffer for linear interpolation
-        let buffer_samples_a = self.buffer[delay_index];
-        let buffer_samples_b = if delay_index + 1 < self.buffer.len() {
-            self.buffer[delay_index + 1]
-        } else {
-            buffer_samples_a // Use same sample if at buffer edge
-        };
+        let buffer_len = self.buffer.len();
 
-        // Linearly interpolate between adjacent samples
+        let read_index = (self.write_index + buffer_len - delay_samples) & (buffer_len - 1);
+        let read_index_next = (read_index - 1) & (buffer_len - 1);
+
+        let buffer_samples_a = self.buffer[read_index];
+        let buffer_samples_b = self.buffer[read_index_next];
+
         let mut interpolated_left =
             buffer_samples_a.0 * (1.0 - fractional_index) + buffer_samples_b.0 * fractional_index;
         let mut interpolated_right =
@@ -88,11 +84,9 @@ impl AudioEffect for Delay {
 
         let delayed_samples = (interpolated_left * feedback, interpolated_right * feedback);
 
-        if self.buffer.len() >= MAX_DELAY_SAMPLES as usize {
-            let _throw_away_old_samples = self.buffer.pop_back();
-        }
-        self.buffer
-            .push_front((samples.0 + delayed_samples.0, samples.1 + delayed_samples.1));
+        self.buffer[self.write_index] =
+            (samples.0 + delayed_samples.0, samples.1 + delayed_samples.1);
+        self.write_index = (self.write_index + 1) & (buffer_len - 1);
 
         (
             samples.0 + delayed_samples.0 * amount,
@@ -130,16 +124,15 @@ mod tests {
         };
         let input = (0.5, 0.5);
 
-        // Buffer starts empty
-        assert_eq!(delay.buffer.len(), 0);
+        // Buffer starts pre-allocated
+        assert_eq!(delay.buffer.len(), MAX_DELAY_SAMPLES as usize);
+        assert_eq!(delay.write_index, 0);
 
         // Process first sample
-        let result = delay.process_samples(input, &effect);
+        let _result = delay.process_samples(input, &effect);
 
-        // Should return original samples and buffer should have one entry
-        assert!(f32s_are_equal(result.0, 0.5));
-        assert!(f32s_are_equal(result.1, 0.5));
-        assert_eq!(delay.buffer.len(), 1);
+        // Write index should have advanced
+        assert_eq!(delay.write_index, 1);
     }
 
     #[test]
@@ -152,19 +145,26 @@ mod tests {
             parameters: vec![0.5, 0.5, 0.5, 0.0],
         };
         delay.process_samples((0.5, 0.5), &enabled_effect);
-        assert_eq!(delay.buffer.len(), 1);
+        assert_eq!(delay.write_index, 1);
         assert!(delay.is_enabled);
 
-        // Disable effect - should trigger reset and not add samples
+        // Disable effect - should trigger reset
         let disabled_effect = EffectParameters {
             is_enabled: false,
             parameters: vec![0.5, 0.5, 0.5, 0.0],
         };
         delay.process_samples((0.5, 0.5), &disabled_effect);
 
-        // Buffer should be empty after reset and not add new samples when disabled
-        assert_eq!(delay.buffer.len(), 0);
+        // Buffer should be reset (cleared to zeros and write_index reset)
+        assert_eq!(delay.write_index, 0);
         assert!(!delay.is_enabled);
+        // Verify buffer was cleared
+        assert!(
+            delay
+                .buffer
+                .iter()
+                .all(|&s| f32s_are_equal(s.0, 0.0) && f32s_are_equal(s.1, 0.0))
+        );
     }
 
     #[test]
@@ -173,18 +173,18 @@ mod tests {
 
         // Start disabled
         assert!(!delay.is_enabled);
-        assert_eq!(delay.buffer.len(), 0);
+        let initial_write_index = delay.write_index;
 
-        // Process with disabled effect - should not add to buffer
+        // Process with disabled effect - should not modify write index
         let disabled_effect = EffectParameters {
             is_enabled: false,
             parameters: vec![0.5, 0.5, 0.5, 0.0],
         };
         delay.process_samples((0.5, 0.5), &disabled_effect);
 
-        // Should still be disabled with empty buffer
+        // Should still be disabled with unchanged write index
         assert!(!delay.is_enabled);
-        assert_eq!(delay.buffer.len(), 0);
+        assert_eq!(delay.write_index, initial_write_index);
     }
 
     #[test]
