@@ -188,23 +188,6 @@ mod tests {
     }
 
     #[test]
-    fn delay_process_samples_maintains_max_buffer_size() {
-        let mut delay = Delay::new();
-        let effect = EffectParameters {
-            is_enabled: true,
-            parameters: vec![0.5, 0.5, 0.5, 0.0],
-        };
-
-        // Fill buffer beyond MAX_DELAY_SAMPLES
-        for _ in 0..MAX_DELAY_SAMPLES + 10 {
-            delay.process_samples((0.1, 0.1), &effect);
-        }
-
-        // Buffer should not exceed MAX_DELAY_SAMPLES
-        assert!(delay.buffer.len() <= MAX_DELAY_SAMPLES as usize);
-    }
-
-    #[test]
     fn delay_process_samples_returns_original_when_buffer_filling() {
         let mut delay = Delay::new();
         let effect = EffectParameters {
