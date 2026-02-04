@@ -60,7 +60,7 @@ impl AudioEffect for Delay {
         let buffer_len = self.buffer.len();
 
         let read_index = (self.write_index + buffer_len - delay_samples) & (buffer_len - 1);
-        let read_index_next = (read_index - 1) & (buffer_len - 1);
+        let read_index_next = (read_index + buffer_len - 1) & (buffer_len - 1);
 
         let buffer_samples_a = self.buffer[read_index];
         let buffer_samples_b = self.buffer[read_index_next];
@@ -71,13 +71,11 @@ impl AudioEffect for Delay {
             buffer_samples_a.1 * (1.0 - fractional_index) + buffer_samples_b.1 * fractional_index;
 
         if interpolated_left.is_nan() || interpolated_right.is_nan() {
-            log::warn!(target: "effects::delay", "Interpolated sample is NaN.");
             interpolated_left = buffer_samples_a.0;
             interpolated_right = buffer_samples_a.1;
         }
 
         if interpolated_left.is_infinite() || interpolated_right.is_infinite() {
-            log::warn!(target: "effects::delay", "Interpolated sample is Infinity.");
             interpolated_left = buffer_samples_a.0;
             interpolated_right = buffer_samples_a.1;
         }
@@ -159,12 +157,10 @@ mod tests {
         assert_eq!(delay.write_index, 0);
         assert!(!delay.is_enabled);
         // Verify buffer was cleared
-        assert!(
-            delay
-                .buffer
-                .iter()
-                .all(|&s| f32s_are_equal(s.0, 0.0) && f32s_are_equal(s.1, 0.0))
-        );
+        assert!(delay
+            .buffer
+            .iter()
+            .all(|&s| f32s_are_equal(s.0, 0.0) && f32s_are_equal(s.1, 0.0)));
     }
 
     #[test]
