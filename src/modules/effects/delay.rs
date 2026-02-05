@@ -4,6 +4,9 @@ use crate::modules::effects::constants::{
 use crate::modules::effects::{AudioEffect, EffectParameters};
 use crate::synthesizer::midi_value_converters::normal_value_to_unsigned_integer_range;
 
+// Ensure MAX_DELAY_SAMPLES is a power of 2 to guarantee the bitwise wrapping logic is safe
+const _: () = assert!(MAX_DELAY_SAMPLES.is_power_of_two());
+
 pub struct Delay {
     buffer: Vec<(f32, f32)>,
     write_index: usize,
@@ -157,10 +160,12 @@ mod tests {
         assert_eq!(delay.write_index, 0);
         assert!(!delay.is_enabled);
         // Verify buffer was cleared
-        assert!(delay
-            .buffer
-            .iter()
-            .all(|&s| f32s_are_equal(s.0, 0.0) && f32s_are_equal(s.1, 0.0)));
+        assert!(
+            delay
+                .buffer
+                .iter()
+                .all(|&s| f32s_are_equal(s.0, 0.0) && f32s_are_equal(s.1, 0.0))
+        );
     }
 
     #[test]

@@ -157,8 +157,8 @@ impl Effects {
     }
 
     pub fn process(&mut self, mut samples: (f32, f32)) -> (f32, f32) {
-        for (index, parameter) in self.parameters.iter().enumerate() {
-            samples = self.effects[index].process_samples(samples, parameter);
+        for (effect, parameter) in self.effects.iter_mut().zip(self.parameters.iter()) {
+            samples = effect.process_samples(samples, parameter);
         }
 
         samples
@@ -329,6 +329,7 @@ mod tests {
         // Enable rectifier with full-wave mode
         params[EffectIndex::Rectifier as usize].is_enabled = AtomicBool::new(true);
         params[EffectIndex::Rectifier as usize].parameters[0] = AtomicU32::new(1.0_f32.to_bits()); // full-wave
+
         // Enable clipper with low threshold and no gains
         params[EffectIndex::Clipper as usize].is_enabled = AtomicBool::new(true);
         params[EffectIndex::Clipper as usize].parameters[0] = AtomicU32::new(0.4_f32.to_bits()); // threshold

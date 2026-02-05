@@ -88,6 +88,11 @@ pub fn sample_generator(
                 info!(
                     "Buffer size changed from {previous_buffer_size} samples to {current_buffer_size} samples."
                 );
+
+                if stereo_buffer_size > local_buffer.capacity() {
+                    local_buffer.reserve(stereo_buffer_size - local_buffer.len());
+                }
+
                 previous_buffer_size = current_buffer_size;
             }
 
