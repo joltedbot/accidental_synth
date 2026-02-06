@@ -161,9 +161,7 @@ pub fn default_audio_effect_parameters() -> Vec<AudioEffectParameters> {
 
     for effect in EffectIndex::iter() {
         match effect {
-            EffectIndex::WaveFolder
-            | EffectIndex::Rectifier
-            | EffectIndex::BitShifter => {
+            EffectIndex::WaveFolder | EffectIndex::Rectifier | EffectIndex::BitShifter => {
                 audio_effect_parameters.push(AudioEffectParameters::default());
             }
             EffectIndex::Clipper | EffectIndex::Compressor => {
@@ -181,7 +179,7 @@ pub fn default_audio_effect_parameters() -> Vec<AudioEffectParameters> {
                 effects_parameters.parameters[2] = AtomicU32::new(MAX_THRESHOLD.to_bits());
                 audio_effect_parameters.push(effects_parameters);
             }
-        EffectIndex::Delay => {
+            EffectIndex::Delay => {
                 let mut effects_parameters = AudioEffectParameters::default();
                 effects_parameters.parameters[0] =
                     AtomicU32::new(DELAY_DEFAULT_PARAMETERS[0].to_bits());

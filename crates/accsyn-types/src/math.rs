@@ -348,8 +348,8 @@ mod tests {
     }
 
     #[test]
-    fn map_value_from_linear_to_exponential_scale_returns_correct_result_from_valid_negative_ranges(
-    ) {
+    fn map_value_from_linear_to_exponential_scale_returns_correct_result_from_valid_negative_ranges()
+     {
         let value = 5.0;
         let input_range = (0.0, 10.0);
         let output_range = (-10.0, 100.0);
@@ -377,8 +377,8 @@ mod tests {
     }
 
     #[test]
-    fn map_value_from_linear_to_exponential_scale_returns_correct_result_from_value_at_input_range_extremes(
-    ) {
+    fn map_value_from_linear_to_exponential_scale_returns_correct_result_from_value_at_input_range_extremes()
+     {
         let min_input = 0.0;
         let max_input = 10.0;
         let min_output = 10.0;
@@ -416,8 +416,8 @@ mod tests {
     }
 
     #[test]
-    fn map_value_from_linear_to_exponential_scale_returns_correct_result_from_reversed_output_range(
-    ) {
+    fn map_value_from_linear_to_exponential_scale_returns_correct_result_from_reversed_output_range()
+     {
         let value = 5.0;
         let input_range = (0.0, 10.0);
         let output_range = (100.0, 10.0);
@@ -456,8 +456,8 @@ mod tests {
     }
 
     #[test]
-    fn map_value_from_linear_to_exponential_scale_returns_epsilon_clamped_value_when_output_range_min_is_zero(
-    ) {
+    fn map_value_from_linear_to_exponential_scale_returns_epsilon_clamped_value_when_output_range_min_is_zero()
+     {
         let value = 5.0;
         let input_range = (0.0, 10.0);
         let output_range = (0.0, 100.0);
@@ -470,8 +470,8 @@ mod tests {
     }
 
     #[test]
-    fn map_value_from_linear_to_exponential_scale_returns_range_clamped_value_when_value_is_outside_range(
-    ) {
+    fn map_value_from_linear_to_exponential_scale_returns_range_clamped_value_when_value_is_outside_range()
+     {
         let value = 15.0;
         let input_range = (0.0, 10.0);
         let output_range = (10.0, 100.0);
