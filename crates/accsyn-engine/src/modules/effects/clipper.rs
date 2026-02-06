@@ -1,0 +1,306 @@
+use crate::modules::effects::{AudioEffect, EffectParameters};
+use crate::synthesizer::midi_value_converters::normal_value_to_bool;
+use accsyn_types::defaults::MAX_SAMPLE_VALUE;
+
+pub struct Clipper {}
+
+impl Clipper {
+    pub fn new() -> Self {
+        log::debug!("Constructing Clipper Effect Module");
+
+        Self {}
+    }
+}
+
+impl AudioEffect for Clipper {
+    fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
+        if !effect.is_enabled || effect.parameters[0] == MAX_SAMPLE_VALUE {
+            return samples;
+        }
+
+        (
+            clip_sample(
+                samples.0,
+                effect.parameters[0],
+                effect.parameters[1],
+                effect.parameters[2],
+                normal_value_to_bool(effect.parameters[3]),
+            ),
+            clip_sample(
+                samples.1,
+                effect.parameters[0],
+                effect.parameters[1],
+                effect.parameters[2],
+                normal_value_to_bool(effect.parameters[3]),
+            ),
+        )
+    }
+}
+
+fn clip_sample(sample: f32, mut threshold: f32, pre_gain: f32, post_gain: f32, notch: bool) -> f32 {
+    threshold = threshold.min(MAX_SAMPLE_VALUE);
+
+    let mut boosted_sample = sample * (1.0 + pre_gain.abs());
+
+    if boosted_sample.abs() > threshold {
+        if notch {
+            boosted_sample = 0.0;
+        } else {
+            boosted_sample = threshold * sample.signum();
+        }
+    }
+
+    (boosted_sample * (1.0 + post_gain.abs())).clamp(-MAX_SAMPLE_VALUE, MAX_SAMPLE_VALUE)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use accsyn_types::math::f32s_are_equal;
+
+    #[test]
+    fn clipper_process_samples_returns_original_when_disabled() {
+        let mut clipper = Clipper::new();
+        let effect = EffectParameters {
+            is_enabled: false,
+            parameters: vec![0.5, 0.0, 0.0, 0.0],
+        };
+        let input = (0.8, -0.6);
+        let expected_left = 0.8;
+        let expected_right = -0.6;
+
+        let result = clipper.process_samples(input, &effect);
+
+        assert!(
+            f32s_are_equal(result.0, expected_left),
+            "Left channel: Expected: {expected_left}, got: {result_left:?}",
+            result_left = result.0
+        );
+        assert!(
+            f32s_are_equal(result.1, expected_right),
+            "Right channel: Expected: {expected_right}, got: {result_right:?}",
+            result_right = result.1
+        );
+    }
+
+    #[test]
+    fn clip_sample_passes_sample_below_threshold() {
+        let sample = 0.3;
+        let threshold = 0.5;
+        let pre_gain = 0.0;
+        let post_gain = 0.0;
+        let notch = false;
+        let expected_result = 0.3;
+
+        let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
+
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
+    }
+
+    #[test]
+    fn clip_sample_clips_sample_above_threshold_without_notch() {
+        let sample = 0.8;
+        let threshold = 0.5;
+        let pre_gain = 0.0;
+        let post_gain = 0.0;
+        let notch = false;
+        let expected_result = 0.5;
+
+        let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
+
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
+    }
+
+    #[test]
+    fn clip_sample_clips_negative_sample_above_threshold_without_notch() {
+        let sample = -0.8;
+        let threshold = 0.5;
+        let pre_gain = 0.0;
+        let post_gain = 0.0;
+        let notch = false;
+        let expected_result = -0.5;
+
+        let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
+
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
+    }
+
+    #[test]
+    fn clip_sample_zeroes_sample_above_threshold_with_notch() {
+        let sample = 0.8;
+        let threshold = 0.5;
+        let pre_gain = 0.0;
+        let post_gain = 0.0;
+        let notch = true;
+        let expected_result = 0.0;
+
+        let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
+
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
+    }
+
+    #[test]
+    fn clip_sample_zeroes_negative_sample_above_threshold_with_notch() {
+        let sample = -0.8;
+        let threshold = 0.5;
+        let pre_gain = 0.0;
+        let post_gain = 0.0;
+        let notch = true;
+        let expected_result = 0.0;
+
+        let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
+
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
+    }
+
+    #[test]
+    fn clip_sample_handles_sample_exactly_at_threshold() {
+        let sample = 0.5;
+        let threshold = 0.5;
+        let pre_gain = 0.0;
+        let post_gain = 0.0;
+        let notch = false;
+        let expected_result = 0.5;
+
+        let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
+
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
+    }
+
+    #[test]
+    fn clip_sample_clamps_threshold_to_max_sample_value() {
+        let sample = 0.5;
+        let threshold = 2.0; // Above MAX_SAMPLE_VALUE
+        let pre_gain = 0.0;
+        let post_gain = 0.0;
+        let notch = false;
+        let expected_result = 0.5; // Threshold clamped to 1.0, sample is below it
+
+        let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
+
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
+    }
+
+    #[test]
+    fn clip_sample_applies_pre_gain() {
+        let sample = 0.4;
+        let threshold = 0.5;
+        let pre_gain = 1.0; // 2x boost
+        let post_gain = 0.0;
+        let notch = false;
+        let expected_result = 0.5; // Boosted: 0.4 * 2.0 = 0.8, which exceeds 0.5 threshold, clipped to 0.5
+
+        let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
+
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
+    }
+
+    #[test]
+    fn clip_sample_applies_post_gain() {
+        let sample = 0.2;
+        let threshold = 0.5;
+        let pre_gain = 0.0;
+        let post_gain = 1.0; // 2x boost
+        let notch = false;
+        let expected_result = 0.4; // Sample passes through, then boosted: 0.2 * 2.0 = 0.4
+
+        let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
+
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
+    }
+
+    #[test]
+    fn clip_sample_clamps_output_to_max_sample_value() {
+        let sample = 0.8;
+        let threshold = 0.9;
+        let pre_gain = 0.0;
+        let post_gain = 1.0; // 2x boost
+        let notch = false;
+        let expected_result = 1.0; // Sample passes through (0.8 < 0.9), then boosted: 0.8 * 2.0 = 1.6, clamped to MAX_SAMPLE_VALUE (1.0)
+
+        let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
+
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
+    }
+
+    #[test]
+    fn clip_sample_clamps_negative_output_to_min_sample_value() {
+        let sample = -0.8;
+        let threshold = 0.9;
+        let pre_gain = 0.0;
+        let post_gain = 1.0; // 2x boost
+        let notch = false;
+        let expected_result = -1.0; // Sample passes through (-0.8 < 0.9), then boosted: -0.8 * 2.0 = -1.6, clamped to -MAX_SAMPLE_VALUE (-1.0)
+
+        let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
+
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
+    }
+
+    #[test]
+    fn clip_sample_handles_negative_pre_gain() {
+        let sample = 0.4;
+        let threshold = 0.5;
+        let pre_gain = -1.0; // abs() = 1.0, so 2x boost
+        let post_gain = 0.0;
+        let notch = false;
+        let expected_result = 0.5; // Boosted: 0.4 * 2.0 = 0.8, exceeds threshold, clipped to 0.5
+
+        let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
+
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
+    }
+
+    #[test]
+    fn clip_sample_handles_negative_post_gain() {
+        let sample = 0.2;
+        let threshold = 0.5;
+        let pre_gain = 0.0;
+        let post_gain = -1.0; // abs() = 1.0, so 2x boost
+        let notch = false;
+        let expected_result = 0.4; // Sample passes through, then boosted: 0.2 * 2.0 = 0.4
+
+        let result = clip_sample(sample, threshold, pre_gain, post_gain, notch);
+
+        assert!(
+            f32s_are_equal(result, expected_result),
+            "Expected: {expected_result}, got: {result:?}"
+        );
+    }
+}

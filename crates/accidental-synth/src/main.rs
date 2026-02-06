@@ -1,0 +1,75 @@
+mod ui;
+
+use crate::ui::UI;
+use accsyn_audio::Audio;
+use accsyn_engine::synthesizer::Synthesizer;
+use accsyn_midi::Midi;
+use clap::Parser;
+
+slint::include_modules!();
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+pub struct Arguments {}
+
+fn main() {
+    let application = AccidentalSynth::new().expect("Could not initialize the UI framework.");
+    let _ = Arguments::parse();
+
+    env_logger::init();
+    log::info!(target: "main", "Starting Accidental Synthesizer");
+
+    log::debug!(target: "main", "Initialize the user interface module");
+    let mut ui = UI::new();
+
+    log::debug!(target: "main", "Initialize the audio module");
+    let mut audio = Audio::new().expect("Could not initialize audio module. Exiting.");
+
+    log::debug!(target: "main", "Initialize the synthesizer module");
+    let mut synthesizer = Synthesizer::new(audio.get_output_stream_parameters());
+
+    log::debug!(target: "main", "Initialize the midi module");
+    let mut midi = Midi::new();
+
+    let audio_sample_buffer_receiver = audio.get_sample_buffer_receiver();
+    let audio_output_device_sender = audio.get_device_update_sender();
+    let midi_message_receiver = midi.get_midi_message_receiver();
+    let midi_setting_update_sender = midi.get_device_update_sender();
+    let ui_update_sender = ui.get_ui_update_sender();
+    let synthesizer_update_sender = synthesizer.get_ui_update_sender();
+
+    log::debug!(target: "main", "Run the Audio Module");
+    audio
+        .run(ui_update_sender.clone())
+        .expect("Could not initialize audio module. Exiting.");
+
+    log::debug!(target: "main", "Run the Midi Module");
+    midi.run(ui_update_sender.clone())
+        .expect("Could not initialize midi module. Exiting.");
+
+    log::debug!(target: "main", "Run the Synthesizer Module");
+    synthesizer
+        .run(
+            midi_message_receiver,
+            audio_sample_buffer_receiver,
+            ui_update_sender,
+        )
+        .expect("Could not initialize the synthesizer module. Exiting.");
+
+    log::debug!(target: "main", "Run the UI Module");
+    ui.run(
+        &application.as_weak(),
+        midi_setting_update_sender,
+        &audio_output_device_sender,
+        &synthesizer_update_sender,
+    )
+    .expect("Could build the user interface. Exiting.");
+
+    log::info!(target: "main", "Running Accidental Synthesizer.");
+    println!("Will Loop Forever. Press Ctrl-c to Exit");
+    application
+        .run()
+        .expect("Could not create the user interface.");
+
+    log::info!(target: "main", "Exiting Accidental Synthesizer");
+}

@@ -36,12 +36,6 @@ Planned for MVP:
 
 ## Quick Start
 
-#### ***IMPORTANT NOTE:
-Due to the UI build as well as the Rust compilers optimization of the delay buffer the RELEASE build time on an M1 Pro macbook is about
-**30 minutes**. A cargo run or debug build is about a minute so you might want to try that first before you do a full release build.
-minutes.
-
-
 ### Prerequisites
 - Rust (stable, edition 2024). No specific toolchain version required.
 - macOS (Apple Silicon) -- It might work on Intel macOS but I can't test that myself.

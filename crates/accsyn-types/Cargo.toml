@@ -1,0 +1,12 @@
+[package]
+name = "accsyn-types"
+description = "Shared types and utilities for Accidental Synthesizer"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+strum = { workspace = true }
+strum_macros = { workspace = true }

@@ -1,0 +1,16 @@
+pub const PARAMETERS_PER_EFFECT: usize = 4;
+pub const MAX_THRESHOLD: f32 = 1.0;
+pub const MAX_GATE_CUT: f32 = 1.0;
+pub const MAX_BITSHIFT_BITS: u32 = 16;
+pub const MIN_BITSHIFT_BITS: u32 = 1;
+pub const MIN_RATIO: u8 = 1;
+pub const MAX_RATIO: u8 = 20;
+pub const MIN_MAKEUP_GAIN_FACTOR: f32 = 1.0;
+pub const MAX_MAKEUP_GAIN_FACTOR: f32 = 2.0;
+pub const EFFECTS_LFO_CENTER_VALUE: f32 = 0.5;
+pub const AUTO_PAN_MAX_WIDTH: f32 = 1.0;
+pub const TREMOLO_MAX_DEPTH: f32 = 1.0;
+pub const MIN_DELAY_SAMPLES: u32 = 2048;
+pub const MAX_DELAY_SAMPLES: u32 = 65_536; // Must be a power of 2 as it is used for bitwise operations
+pub const DELAY_DEFAULT_PARAMETERS: [f32; 4] = [0.5, 0.5, 0.5, 0.0];
+pub const DELAY_SMOOTHING_FACTOR: f32 = 0.001;
