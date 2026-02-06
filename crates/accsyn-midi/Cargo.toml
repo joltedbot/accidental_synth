@@ -1,0 +1,16 @@
+[package]
+name = "accsyn-midi"
+description = "MIDI input and device management for Accidental Synthesizer"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+accsyn-types = { workspace = true }
+anyhow = { workspace = true }
+crossbeam-channel = { workspace = true }
+log = { workspace = true }
+midir = { workspace = true }
+thiserror = { workspace = true }

@@ -1,0 +1,70 @@
+export global Constant {
+    out property <float> MAX_LEFT_BALANCE: 1;
+    out property <float> MAX_RIGHT_BALANCE: -1;
+    out property <float> SILENCE_LEVEL_DBFS: -70;
+    out property <float> MAX_OUTPUT_LEVEL_DBFS: 0;
+    out property <int> MIN_COURSE_TUNE_SEMITONES: -12;
+    out property <int> MAX_COURSE_TUNE_SEMITONES: 12;
+    out property <int> LFO_MAX_PHASE_DEGREES: 360;
+    out property <int> ENVELOPE_AMP_INDEX: 0;
+    out property <int> ENVELOPE_FILTER_INDEX: 1;
+    out property <int> LFO_MOD_WHEEL_INDEX: 0;
+    out property <int> LFO_FILTER_INDEX: 1;
+
+    out property <int> OSCILLATOR_SUB_INDEX: 0;
+    out property <int> OSCILLATOR_ONE_INDEX: 1;
+    out property <int> OSCILLATOR_TWO_INDEX: 2;
+    out property <int> OSCILLATOR_THREE_INDEX: 3;
+
+    out property <float> EFFECT_DISABLED_VALUE: -1.0;
+    out property <float> MAX_SLIDER_VALUE: 1.0;
+    out property <float> SLIDER_MID_POINT: 0.5;
+
+    // Control Default Values
+    out property <float> DEFAULT_BALANCE_NORMAL: 0.5;
+    out property <float> DEFAULT_OUTPUT_MIXER_LEVEL_NORMAL: 0.8;
+    out property <float> DEFAULT_OSCILLATOR_LEVEL_NORMAL: 1.0;
+    out property <float> DEFAULT_SUB_OSCILLATOR_LEVEL_NORMAL: 0.0;
+    out property <float> DEFAULT_EG_MILLISECONDS_STAGE_NORMAL: 0.02;
+    out property <float> DEFAULT_EG_SUSTAIN_LEVEL_NORMAL: 0.8;
+    out property <float> DEFAULT_FILTER_CUTOFF_NORMAL: 1.0;
+    out property <float> DEFAULT_FILTER_RESONANCE_NORMAL: 0.0;
+    out property <float> DEFAULT_FINE_TUNE_NORMAL: 0.5;
+    out property <int> DEFAULT_FILTER_POLES: 4;
+    out property <float> DEFAULT_KEY_TRACKING_NORMAL: 0.5;
+    out property <float> DEFAULT_LFO_FREQUENCY_NORMAL: 0.1;
+    out property <float> DEFAULT_LFO_PHASE_NORMAL: 0;
+    out property <int> DEFAULT_LFO_WAVE_SHAPE_INDEX: 0;
+    out property <int> DEFAULT_PITCH_BEND_RANGE: 12;
+    out property <int> PITCH_BEND_MINIMUM: 2;
+    out property <int> PITCH_BEND_MAXIMUM: 12;
+    out property <float> DEFAULT_VELOCITY_CURVE_SLOPE: 0.5;
+    out property <float> DEFAULT_PORTAMENTO_TIME: 0.0;
+    out property <bool> PORTAMENTO_IS_ENABLED: false;
+    out property <bool> DEFAULT_HARD_SYNC_IS_ENABLED: false;
+    out property <bool> DEFAULT_KEY_SYNC_IS_ENABLED: false;
+    out property <bool> DEFAULT_POLARITY_IS_FLIPPED: false;
+
+    out property <[string]> OSC_WAVE_SHAPES: [
+        "Sine",
+        "Triangle",
+        "Square",
+        "Saw",
+        "Pulse",
+        "Ramp",
+        "Supersaw",
+        "AM",
+        "FM",
+        "Noise"
+    ];
+
+    out property <[string]> LFO_WAVE_SHAPES: ["Sine", "Triangle", "Square", "Saw", "Ramp", "Supersaw", "Noise"];
+    out property <[string]> SATURATION_MODES: [
+        "Analog Modeled",
+        "Tube Like",
+        "Soft Clipping",
+        "Wave Shaping",
+        "Sine Shaper",
+        "Polynomial"
+    ];
+}

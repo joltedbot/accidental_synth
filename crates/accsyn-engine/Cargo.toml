@@ -1,0 +1,18 @@
+[package]
+name = "accsyn-engine"
+description = "Synthesizer engine and DSP modules for Accidental Synthesizer"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+accsyn-types = { workspace = true }
+anyhow = { workspace = true }
+crossbeam-channel = { workspace = true }
+log = { workspace = true }
+rand = { workspace = true }
+rtrb = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }

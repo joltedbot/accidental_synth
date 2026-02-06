@@ -1,0 +1,19 @@
+[package]
+name = "accsyn-audio"
+description = "Audio output and device management for Accidental Synthesizer"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+accsyn-types = { workspace = true }
+anyhow = { workspace = true }
+core-foundation = { workspace = true }
+coreaudio-sys = { workspace = true }
+cpal = { workspace = true }
+crossbeam-channel = { workspace = true }
+log = { workspace = true }
+rtrb = { workspace = true }
+thiserror = { workspace = true }

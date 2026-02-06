@@ -1,0 +1,209 @@
+import { Palette } from "std-widgets.slint";
+
+/*  Palette - Fluent Dark
+    foreground - white
+    background - dark gray
+    alternate f - white
+    alternate b - lighter dark grey than  background background
+    control f - white
+    control b - Transparent
+    accent f - black
+    accent b - Control tracks in the theme
+    selection f - black
+    selection b - other blue
+*/
+
+export global Theme {
+
+    // Main Window
+    out property <string> window-title: "Accidental Synthesizer";
+    in property <image> icon: @image-url("images/icon.png");
+    in property <image> settings-image: @image-url("images/gear.png");
+    out property <length> window-width: 1300px;
+    out property <length> window-height: 800px;
+    out property <length> window-border-width: 2px;
+    out property <color> window-background: Palette.background;
+    out property <color> window-border-colour: Palette.border;
+    out property <length> window-border-radius: 15px;
+
+    // Text Defaults
+    out property <length> default-text-size: 14px;
+    out property <string> default-font-family: "HackNerdFontMono";
+    out property <int> default-font-weight: 400;
+    out property <color> default-font-color: Palette.foreground;
+    out property <color> default-font-disabled-color: Palette.control-background;
+    out property <[string]> empty-dropdown-value: ["---"];
+
+    // Panel Defaults
+    out property <length> panel-border-width: 2px;
+    out property <color> panel-background: Palette.background;
+    out property <color> panel-border-colour: Palette.border;
+    out property <length> panel-border-radius: 0px;
+    out property <length> panel-label-font-size: 14px;
+    out property <int> panel-label-font-weight: 600;
+    out property <color> spacer-color: Palette.border;
+    out property <length> section-label-font-size: 13px;
+    out property <int> section-label-font-weight: 500;
+    out property <length> component-label-font-size: 13px;
+    out property <int> component-label-font-weight: 400;
+    out property <length> toggle-switch-font-size: 12px;
+    out property <length> spacer-thickness: 3px;
+
+    // Header Panel
+    in property <image> header-logo: @image-url("images/header.png");
+    out property <length> header-logo-height: 20px;
+    out property <ImageHorizontalAlignment> header-logo-alignment: left;
+    out property <length> header-panel-padding: 10px;
+    out property <length> header-panel-spacing: 0px;
+    out property <length> header-panel-height: 40px;
+    out property <length> header-version-font-size: 10px;
+    out property <string> header-version-prefix: "v";
+    out property <brush> header-panel-background: @radial-gradient(circle, #000000 0%, #101035 100%);
+
+    // Custom Widgets
+    out property <color> handle-border-colour: Palette.background;
+    out property <color> slider-indicator-colour: #0066CC;
+    out property <color> handle-background-colour: slider-indicator-colour;
+    out property <color> slider-track-colour: Palette.border;
+    out property <length> slider-track-width: 6px;
+    out property <length> slider-track-height: 100px;
+    out property <string> control-label-default-string: "---";
+
+    // Main Tabs
+    out property <string> tab-title-oscillators: "Synth";
+    out property <string> tab-title-effects: "Effects";
+
+    // Oscillators Panel
+    out property <length> oscillator-panel-height: 425px;
+    out property <length> oscillator-panel-width: 600px;
+    out property <length> oscillator-panel-padding: 0px;
+    out property <length> oscillator-panel-spacing: 0px;
+    out property <length> oscillator-panel-section-width: 250px;
+    out property <length> oscillator-panel-widget-width: 200px;
+
+    // Filter Panel
+    out property <length> filter-panel-widget-width: 130px;
+    out property <length> filter-panel-width: 300px;
+    out property <string> filter-panel-label: "Filter";
+    out property <string> filter-label-cutoff: "Cutoff";
+    out property <string> filter-label-resonance: "Reso";
+    out property <string> filter-label-poles: "Poles";
+    out property <string> filter-label-key-tracking: "Key Tracking";
+    out property <string> filter-label-envelope-amount: "EG Amount";
+    out property <string> filter-label-lfo-amount: "LFO Amount";
+    out property <string> filter-section-label-envelope: "Filter Envelope";
+    out property <string> envelope-label-attack: "Atk";
+    out property <string> envelope-label-decay: "Dec";
+    out property <string> envelope-label-sustain: "Sus";
+    out property <string> envelope-label-release: "Rel";
+    out property <string> envelope-label-inverted: "Inverted";
+    out property <string> filter-section-label-lfo: "Filter LFO";
+    out property <string> lfo-label-frequency: "Frequency";
+    out property <string> lfo-label-wave-shape: "Wave Shape";
+    out property <string> lfo-label-phase: "Phase";
+    out property <string> lfo-label-reset: "Reset";
+    out property <string> display-units-hertz: "Hz";
+    out property <string> display-units-degrees: "Deg";
+
+    // Global Panel
+    out property <length> global-panel-height: 330px;
+    out property <length> global-panel-width: 999px;
+    out property <length> global-panel-padding: 5px;
+    out property <length> global-panel-spacing: 5px;
+    out property <length> global-panel-widget-width: 120px;
+    out property <string> output-mixer-label: "Output";
+    out property <string> osc-mixer-label: "Mixer";
+    out property <[string]> osc-mixer-titles: ["Sub", "Osc 1", "Osc 2", "Osc 3"];
+    out property <string> mixer-level-label: "Level";
+    out property <string> mixer-balance-label: "Balance";
+    out property <string> mixer-mute-label: "Mute";
+    out property <string> osc-options-section-label: "Oscillator Options";
+    out property <string> osc-options-portamento-label: "Portamento";
+    out property <string> osc-options-portamento-time-label: "Time";
+    out property <string> osc-options-portamento-time-postfix: "ms";
+    out property <string> osc-options-pitch-bend-range: "Pitch Bend Range";
+    out property <string> osc-options-velocity-curve: "Velocity Curve";
+    out property <string> osc-options-hard-sync: "Hard Sync";
+    out property <string> osc-options-key-sync: "Key Sync";
+    out property <string> osc-options-polarity: "Polarity";
+    out property <string> amp-envelope-section-label: "Amp Envelope";
+    out property <string> mod-wheel-section-label: "Mod Wheel";
+    out property <string> midi-screen-title: "Midi Input";
+    out property <length> midi-screen-width: 145px;
+    out property <length> midi-screen-height: 110px;
+
+    // Osciallator Controls Panel
+    out property <length> osc-controls-panel-padding: 8px;
+    out property <length> osc-controls-panel-spacing: 15px;
+    out property <[string]> osc-controls-panel-titles: ["Sub Oscillator", "Oscillator 1", "Oscillator 2", "Oscillator 3"];
+    out property <string> osc-controls-wave-shape: "Wave Shape";
+    out property <string> osc-controls-fine-tune: "Fine Tune";
+    out property <string> osc-controls-course-tune: "Course Tune";
+    out property <string> osc-controls-clipper-boost: "Clipper Boost";
+    out property <string> osc-controls-semitones: "semitones";
+    out property <string> osc-controls-cents: "cents";
+    out property <string> osc-controls-dbfs: "dbfs";
+    out property <string> osc-controls-param1-pulse: "Pulse Width";
+    out property <string> osc-controls-param1-am: "Modulation Amount";
+    out property <string> osc-controls-param2-am: "Ring Mod =>  AM";
+    out property <string> osc-controls-param1-fm: "Modulation Amount";
+    out property <string> osc-controls-param2-fm: "Ratio";
+    out property <color> green-screen-text: #22AA55;
+
+    // Effects Panel
+    out property <length> effect-box-width: 240px;
+    out property <length> effect-box-height: 250px;
+    out property <length> effect-label-font-size: 14px;
+    out property <int> effect-label-font-weight: 600;
+    out property <length> effects-panel-padding: 0px;
+    out property <length> effects-panel-spacing: 0px;
+    out property <length> effect-box-padding: 5px;
+    out property <length> effect-box-spacing: 5px;
+    out property <string> effect-box-enabled-switch: "Enable";
+    out property <string> wavefolder-title: "Wavefolder";
+    out property <string> wavefolder-parameter1: "Fold Amount";
+    out property <string> wavefolder-parameter2-switch: "Asymmetrical";
+    out property <string> wavefolder-parameter2: "Negative Fold Amount";
+    out property <string> clipper-title: "Clipper";
+    out property <string> clipper-parameter1: "Threshold";
+    out property <string> clipper-parameter2: "Pre-Clip Boost";
+    out property <string> clipper-parameter3: "Post-Clip Makeup Gain";
+    out property <string> clipper-parameter4: "Notch";
+    out property <string> gate-title: "Gate";
+    out property <string> gate-parameter1: "Threshold";
+    out property <string> gate-parameter2: "Pre-Gate Cut";
+    out property <string> gate-parameter3: "Post-Gate Makeup Gain";
+    out property <string> rectifier-title: "Rectifier";
+    out property <string> rectifier-parameter1-on: "Full Wave";
+    out property <string> rectifier-parameter1-off: "Half Wave";
+    out property <string> bitshifter-title: "Bit Shifter";
+    out property <string> bitshifter-parameter1: "Bit Reduction";
+    out property <string> saturation-title: "Saturation";
+    out property <string> saturation-parameter1: "Type";
+    out property <string> saturation-parameter2: "Amount";
+    out property <string> saturation-parameter3: "Post Saturation Gain Cut";
+    out property <string> compressor-title: "Colour Compressor";
+    out property <string> compressor-parameter1: "Threshold";
+    out property <string> compressor-parameter2: "Ratio";
+    out property <string> compressor-parameter3: "Makeup Gain";
+    out property <string> delay-title: "Delay";
+    out property <string> delay-parameter1: "Amount";
+    out property <string> delay-parameter2: "Time";
+    out property <string> delay-parameter3: "Feedback";
+    out property <string> autopan-title: "Auto Pan";
+    out property <string> autopan-parameter1: "Rate";
+    out property <string> autopan-parameter2: "Width";
+    out property <string> autopan-parameter3: "Wave Shape";
+    out property <string> tremolo-title: "Tremolo";
+    out property <string> tremolo-parameter1: "Rate";
+    out property <string> tremolo-parameter2: "Depth";
+    out property <string> tremolo-parameter3: "Wave Shape";
+
+    // Settings Window
+    out property <length> settings-panel-width: 600px;
+    out property <length> settings-panel-height: 300px;
+    out property <length> settings-window-border-width: 2px;
+    out property <color> settings-window-background: Palette.background;
+    out property <color> settings-window-border-colour: Palette.background.brighter(3);
+    out property <length> settings-window-border-radius: 10px;
+}

@@ -1,0 +1,709 @@
+import { Theme } from "theme.slint";
+import { Constant } from "constants.slint";
+import {
+    Slider,
+    SpinBox,
+    ComboBox,
+    Switch,
+    Palette,
+    StyleMetrics,
+    Button,
+} from "std-widgets.slint";
+import {
+    VerticalSlider,
+    HorzontalSlider,
+    BalanceSlider,
+} from "custom-widgets.slint";
+
+// Component Structs
+export struct LFOValues  {
+    frequency: float,
+    phase: float,
+    wave-shape-index: int,
+}
+
+export struct EnvelopeValues  {
+    attack: float,
+    decay: float,
+    sustain: float,
+    release: float,
+    inverted: bool,
+}
+
+export component Panel inherits Rectangle {
+    border-width: Theme.panel-border-width;
+    background: Theme.panel-background;
+    border-color: Theme.panel-border-colour;
+    border-bottom-left-radius: Theme.panel-border-radius;
+    border-bottom-right-radius: Theme.panel-border-radius;
+}
+
+export component HorizontalSpacer inherits HorizontalLayout {
+    in property <length> top-padding: 0px;
+    in property <length> bottom-padding: 0px;
+
+    padding-top: top-padding;
+    padding-bottom: bottom-padding;
+
+    Rectangle {
+        background: Theme.spacer-color;
+        height: Theme.spacer-thickness;
+    }
+}
+
+export component VerticalSpacer inherits VerticalLayout {
+    in property <length> left-padding: 10px;
+    in property <length> right-padding: 10px;
+
+    padding-left: left-padding;
+    padding-right: right-padding;
+
+    Rectangle {
+        background: Theme.spacer-color;
+        width: Theme.spacer-thickness;
+    }
+}
+
+export component PanelLabel inherits VerticalLayout {
+    in property <string> label;
+    spacing: 5px;
+    alignment: start;
+
+    Text {
+        horizontal-alignment: center;
+        font-size: Theme.panel-label-font-size;
+        font-weight: Theme.panel-label-font-weight;
+        text: label;
+    }
+
+    HorizontalSpacer { }
+}
+
+export component SectionLabel inherits VerticalLayout {
+    in property <string> label;
+    in property <angle> angle;
+
+    Text {
+        transform-rotation: angle;
+        horizontal-alignment: center;
+        font-size: Theme.section-label-font-size;
+        font-weight: Theme.section-label-font-weight;
+        text: label;
+    }
+}
+
+export component EffectLabel inherits VerticalLayout {
+    in property <string> label;
+    in property <angle> angle;
+
+    Text {
+        transform-rotation: angle;
+        horizontal-alignment: center;
+        font-size: Theme.effect-label-font-size;
+        font-weight: Theme.effect-label-font-weight;
+        text: label;
+    }
+}
+
+export component ComponentLabel inherits VerticalLayout {
+    in property <string> label;
+
+    Text {
+        horizontal-alignment: center;
+        font-size: Theme.component-label-font-size;
+        font-weight: Theme.component-label-font-weight;
+        text: label;
+    }
+}
+
+export component GreenScreenText inherits Text {
+    color: Theme.green-screen-text;
+    horizontal-alignment: center;
+    letter-spacing: 4px;
+    stroke-width: 2px;
+    stroke: darkgreen;
+}
+
+export component GreenScreen inherits Rectangle {
+    in property <string> title;
+    in property <[string]> output;
+    in property <length> screen-width: 100px;
+    in property <length> screen-height: 100px;
+
+    border-width: 7px;
+    border-color: beige.darker(1);
+    border-radius: 20px;
+    clip: true;
+    z: 4;
+
+    background: #111111;
+    width: screen-width;
+    height: screen-height;
+
+    VerticalLayout {
+        padding: 10px;
+        alignment: start;
+
+        GreenScreenText {
+            letter-spacing: 3px;
+            text: title;
+        }
+
+        HorizontalSpacer { }
+
+        HorizontalSpacer { }
+
+        HorizontalLayout {
+            padding: 5px;
+            alignment: center;
+            height: 80px;
+
+            VerticalLayout {
+                slot0 := GreenScreenText {
+                    text: output[0];
+                }
+
+                slot1 := GreenScreenText {
+                    text: output[1];
+                }
+
+                slot2 := GreenScreenText {
+                    text: output[2];
+                }
+
+                slot3 := GreenScreenText {
+                    text: output[3];
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        z: 6;
+        y: 5px;
+        x: -25px;
+        width: parent.width + 50px;
+        height: parent.height + 30px;
+        background: @linear-gradient(0deg, black 0%, green 10%, black 11%, green 20%, black 21%, green 30%, black 31%, green 40%, black 41%, green 50%, black 51%, green 60%, black 61%, green 70%, black 71%, green 80%, black 81%, green 90%, black 91%, green 100%);
+        opacity: 5%;
+    }
+
+    Rectangle {
+        z: 3;
+        width: parent.width;
+        height: parent.height;
+        background: @linear-gradient(0deg, black 0%, green 10%, black 11%, green 20%, black 100%);
+        opacity: 20%;
+    }
+
+    Rectangle {
+        z: 4;
+        background: @linear-gradient(-45deg, black 0%, black 75%, white 100%);
+        opacity: 30%;
+    }
+}
+
+export component HorizontalControlLabel inherits Rectangle {
+    in property <string> label: Theme.control-label-default-string;
+    in property <string> value-units;
+    in property <string> value;
+    in property <bool> show-value: false;
+    in property <bool> enabled: true;
+
+    property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
+
+    HorizontalLayout {
+        Text {
+            font-size: Theme.section-label-font-size;
+            font-weight: Theme.section-label-font-weight;
+            color: text-color;
+            text: label;
+        }
+
+        Text {
+            font-size: Theme.section-label-font-size;
+            font-weight: Theme.section-label-font-weight;
+            color: text-color;
+            horizontal-alignment: right;
+            visible: show-value;
+            text: value;
+        }
+
+        Text {
+            font-size: Theme.section-label-font-size;
+            font-weight: Theme.section-label-font-weight;
+            color: text-color;
+            visible: show-value;
+            text: " " + value-units;
+        }
+    }
+}
+
+export component VerticalControlLabel inherits Rectangle {
+    in property <string> label;
+    in property <string> value-units;
+    in property <string> value;
+    in property <bool> enabled: true;
+    property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
+
+    VerticalLayout {
+        Text {
+            horizontal-alignment: center;
+            text: label + " " + value-units;
+            color: text-color;
+        }
+
+        HorizontalLayout {
+            Text {
+                horizontal-alignment: center;
+                width: 45px;
+                text: value;
+                color: text-color;
+            }
+        }
+    }
+}
+
+export component FilterControlLabel inherits Rectangle {
+    in property <string> label;
+    in property <bool> enabled: true;
+    property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
+
+    Text {
+        horizontal-alignment: center;
+        width: 100px;
+        text: label;
+        color: text-color;
+    }
+}
+
+export component ToggleSwitch inherits VerticalLayout {
+    in-out property <bool> is_checked: false;
+    in property <length> switch-height: 27px;
+    in property <string> label;
+    in property <bool> enabled: true;
+    callback toggle_switch_updated(bool);
+
+    alignment: start;
+
+    property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
+
+    Text {
+        horizontal-alignment: center;
+        font-size: Theme.toggle-switch-font-size;
+        font-weight: Theme.section-label-font-weight;
+        color: text-color;
+        text: label;
+    }
+
+    HorizontalLayout {
+        alignment: center;
+        Switch {
+            enabled: enabled;
+            height: switch-height;
+            checked: is_checked;
+            toggled() => {
+                toggle_switch_updated(self.checked);
+                is_checked = self.checked;
+            }
+        }
+    }
+}
+
+export component MomentaryButton inherits VerticalLayout {
+    in property <string> label;
+    in property <length> button-width: 100px;
+    in property <length> button-height: 30px;
+    callback momentary-button-pressed();
+    alignment: center;
+    spacing: 5px;
+
+    Button {
+        width: button-width;
+        height: button-height;
+        text: label;
+
+        changed pressed => {
+            self.primary = self.pressed;
+        }
+
+        clicked() => {
+            momentary-button-pressed();
+        }
+    }
+}
+
+export component HorizontalParameterSlider inherits VerticalLayout {
+    in property <string> label: Theme.control-label-default-string;
+    in property <string> value-units;
+    in-out property <float> value;
+    in property <string> display-value;
+    in property <length> slider-width: 100px;
+    in property <length> slider-height: 30px;
+    in property <bool> enabled: true;
+    in property <bool> show-value: false;
+
+    callback horizontal-parameter-slider-changed(float);
+
+    spacing: 5px;
+
+    hslider-label := HorizontalControlLabel {
+        label: label;
+        value: display-value;
+        value-units: value-units;
+        show-value: show-value;
+        enabled: enabled;
+    }
+
+    hslider := HorzontalSlider {
+        height: slider-height;
+        width: slider-width;
+        value: value;
+        enabled: enabled;
+
+        updated(new_value) => {
+            value = new_value;
+            horizontal-parameter-slider-changed(new_value);
+        }
+    }
+}
+
+export component CenteredParameterSlider inherits VerticalLayout {
+    in property <string> label;
+    in property <float> display-value;
+    in property <string> value-units;
+    in property <float> value;
+    in property <bool> show-value: false;
+    in property <length> slider-width: 100px;
+    in property <length> slider-height: 25px;
+    in property <bool> enabled: true;
+
+    callback centered-parameter-slider-changed(float);
+
+    alignment: start;
+    spacing: 5px;
+
+    hslider-label := HorizontalControlLabel {
+        label: label;
+        enabled: enabled;
+        value: display-value;
+        value-units: value-units;
+        show-value: show-value;
+    }
+
+    hslider := BalanceSlider {
+        height: slider-height;
+        width: slider-width;
+        enabled: enabled;
+        value: value;
+
+        updated(value) => {
+            centered-parameter-slider-changed(value);
+        }
+    }
+}
+
+export component LabeledVerticalSlider inherits VerticalLayout {
+    in property <string> label;
+    in property <float> minimum: 0;
+    in property <float> maximum: 100;
+    in property <bool> inverse: false;
+    in property <float> value;
+    in property <length> slider-width: 25px;
+    in property <length> slider-height: 100px;
+    in property <bool> enabled: true;
+    callback vertical-slider-changed(float);
+
+    spacing: 10px;
+
+    FilterControlLabel {
+        label: label;
+        enabled: root.enabled;
+    }
+
+    HorizontalLayout {
+        alignment: center;
+        fslider := VerticalSlider {
+            height: slider-height;
+            width: slider-width;
+            value: value;
+            enabled: root.enabled;
+            updated(value) => {
+                vertical-slider-changed(value)
+            }
+        }
+    }
+}
+
+export component IntSpinBox inherits VerticalLayout {
+    in property <string> label;
+    in property <string> value-units;
+    in property <float> value;
+    in property <int> step;
+    in property <int> minimum;
+    in property <int> maximum;
+    in property <bool> enabled: true;
+    in property <length> spinbox-width: 100px;
+    in property <length> spinbox-height: 25px;
+    callback spinbox-changed(float);
+
+    property <int> range: maximum - minimum;
+
+    alignment: start;
+    spacing: 5px;
+
+    hslider-label := HorizontalControlLabel {
+        label: label;
+        enabled: enabled;
+        value-units: value-units;
+    }
+
+    hspinbox := SpinBox {
+        height: spinbox-height;
+        width: spinbox-width;
+        step-size: step;
+        minimum: minimum;
+        maximum: maximum;
+        enabled: enabled;
+        value: value;
+
+        changed value => {
+            spinbox-changed((self.value - minimum) / range);
+        }
+    }
+}
+
+export component DropDownMenu inherits VerticalLayout {
+    in property <string> label;
+    in property <[string]> value-list;
+    in property <int> value-index: 0;
+    in property <length> dropdown-width: 100px;
+    in property <length> dropdown-height: 25px;
+    in property <bool> enabled: true;
+    out property <string> current-value: dropdown.current-value;
+    callback drop_down_changed(int, string);
+
+    spacing: 5px;
+
+    HorizontalControlLabel {
+        label: label;
+        enabled: enabled;
+    }
+
+    dropdown := ComboBox {
+        height: dropdown-height;
+        width: dropdown-width;
+        model: value-list;
+        enabled: enabled;
+        current-index: value-index;
+
+        selected(value) => {
+            drop_down_changed(self.current-index, value);
+        }
+    }
+}
+
+export component MixerMute inherits VerticalLayout {
+    in property <bool> is_muted: false;
+    in property <length> switch-height: 25px;
+    callback mixer_mute_update(bool);
+
+    Text {
+        horizontal-alignment: center;
+        font-size: Theme.section-label-font-size;
+        font-weight: Theme.section-label-font-weight;
+        text: "Mute";
+    }
+
+    HorizontalLayout {
+        alignment: center;
+        Switch {
+            height: switch-height;
+            checked: is_muted;
+            toggled() => {
+                mixer_mute_update(self.checked);
+            }
+        }
+    }
+}
+
+export component MixerBalance inherits VerticalLayout {
+    in property <float> value: Constant.DEFAULT_BALANCE_NORMAL;
+    callback mixer-balance-update(float);
+
+    Text {
+        horizontal-alignment: center;
+        width: slider.width;
+        font-size: Theme.section-label-font-size;
+        font-weight: Theme.section-label-font-weight;
+        text: Theme.mixer-balance-label;
+    }
+
+    slider := BalanceSlider {
+        height: 25px;
+        width: 50px;
+        value: value;
+        updated(value) => {
+            mixer-balance-update(value);
+        }
+    }
+}
+
+export component MixerLevel inherits VerticalLayout {
+    in property <float> value: 0.0;
+    in property <length> slider-height: 100px;
+    callback mixer-level-update(float);
+
+    title := ComponentLabel {
+        height: 20px;
+        label: Theme.mixer-level-label;
+    }
+
+    VerticalSlider {
+        value: value;
+        height: slider-height;
+        updated(value) => {
+            mixer-level-update(value);
+        }
+    }
+}
+
+export component EnvelopeSection inherits VerticalLayout {
+    in property <EnvelopeValues> envelope-values;
+
+    callback envelope-attack-changed(float);
+    callback envelope-decay-changed(float);
+    callback envelope-sustain-changed(float);
+    callback envelope-release-changed(float);
+    callback envelope-invert-changed(bool);
+
+    alignment: start;
+    spacing: 5px;
+
+    HorizontalLayout {
+        padding: Theme.osc-controls-panel-padding;
+        spacing: Theme.osc-controls-panel-spacing;
+        alignment: space-between;
+
+        attack := LabeledVerticalSlider {
+            label: Theme.envelope-label-attack;
+            value: envelope-values.attack;
+            slider-height: 90px;
+            vertical-slider-changed(milliseconds) => {
+                envelope-attack-changed(milliseconds);
+            }
+        }
+
+        decay := LabeledVerticalSlider {
+            label: Theme.envelope-label-decay;
+            value: envelope-values.decay;
+            slider-height: 90px;
+            vertical-slider-changed(milliseconds) => {
+                envelope-decay-changed(milliseconds);
+            }
+        }
+
+        sustain := LabeledVerticalSlider {
+            label: Theme.envelope-label-sustain;
+            value: envelope-values.sustain;
+            slider-height: 90px;
+            vertical-slider-changed(level) => {
+                envelope-sustain-changed(level);
+            }
+        }
+
+        release := LabeledVerticalSlider {
+            label: Theme.envelope-label-release;
+            value: envelope-values.release;
+            slider-height: 90px;
+            vertical-slider-changed(milliseconds) => {
+                envelope-release-changed(milliseconds);
+            }
+        }
+
+        ToggleSwitch {
+            label: Theme.envelope-label-inverted;
+            is_checked: envelope-values.inverted;
+            toggle_switch_updated(is_active) => {
+                envelope-invert-changed(is_active);
+            }
+        }
+    }
+}
+
+export component FixedCenterLFOSection inherits VerticalLayout {
+    in property <LFOValues> lfo-values;
+    in property <int> lfo-phase-display: 0;
+    in property <float> lfo-frequency-display: Constant.DEFAULT_LFO_FREQUENCY_NORMAL;
+
+    property <float> lfo-frequency-rounded: lfo-frequency-display < 1 ? floor(lfo-frequency-display * 100) / 100.0 : floor(lfo-frequency-display);
+
+    callback lfo-frequency-changed(float);
+    callback lfo-shape-changed(int);
+    callback lfo-phase-changed(float);
+    callback lfo-phase-reset();
+
+    alignment: start;
+    spacing: 5px;
+
+    VerticalLayout {
+        alignment: start;
+
+        HorizontalLayout {
+            padding: Theme.osc-controls-panel-padding;
+            spacing: Theme.osc-controls-panel-spacing;
+            alignment: start;
+
+            frequency := HorizontalParameterSlider {
+                label: Theme.lfo-label-frequency;
+                value: lfo-values.frequency;
+                show-value: true;
+                value-units: Theme.display-units-hertz;
+                slider-width: Theme.global-panel-widget-width;
+                display-value: lfo-frequency-rounded;
+                width: Theme.global-panel-widget-width;
+                horizontal-parameter-slider-changed(frequency) => {
+                    lfo-frequency-changed(frequency);
+                }
+            }
+
+            wave-shape := DropDownMenu {
+                label: Theme.lfo-label-wave-shape;
+                value-list: Constant.OSC_WAVE_SHAPES;
+                value-index: lfo-values.wave-shape-index;
+                dropdown-width: Theme.global-panel-widget-width;
+                drop_down_changed(index, name) => {
+                    lfo-shape-changed(index);
+                }
+            }
+        }
+
+        HorizontalLayout {
+            padding: Theme.osc-controls-panel-padding;
+            spacing: Theme.osc-controls-panel-spacing;
+            alignment: start;
+
+            phase := HorizontalParameterSlider {
+                label: Theme.lfo-label-phase;
+                value: lfo-values.phase;
+                show-value: true;
+                value-units: Theme.display-units-degrees;
+                display-value: lfo-phase-display;
+                slider-width: Theme.global-panel-widget-width;
+
+                horizontal-parameter-slider-changed(degrees) => {
+                    lfo-phase-changed(degrees);
+                }
+            }
+
+            reset := MomentaryButton {
+                label: Theme.lfo-label-reset;
+                button-width: 100px;
+                button-height: 27px;
+                momentary-button-pressed => {
+                    lfo-phase-reset();
+                }
+            }
+        }
+    }
+}

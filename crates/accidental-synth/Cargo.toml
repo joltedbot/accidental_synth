@@ -1,0 +1,28 @@
+[package]
+name = "accidental-synth"
+description = "Accidental Synthesizer"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+publish.workspace = true
+build = "build.rs"
+
+[dependencies]
+accsyn-types = { workspace = true }
+accsyn-engine = { workspace = true }
+accsyn-audio = { workspace = true }
+accsyn-midi = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }
+crossbeam-channel = { workspace = true }
+env_logger = { workspace = true }
+log = { workspace = true }
+slint = { workspace = true }
+strum = { workspace = true }
+
+[build-dependencies]
+slint-build = { workspace = true }
+
+[package.metadata.cargo-machete]
+ignored = ["slint-build"]
