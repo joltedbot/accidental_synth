@@ -118,6 +118,7 @@ impl Envelope {
     pub fn generate(&mut self) -> f32 {
         let mut envelope_output_value = self.next_value();
         if self.is_inverted {
+            self.state_action(StageAction::Stop);
             envelope_output_value = ENVELOPE_MAX_LEVEL - envelope_output_value;
         }
         envelope_output_value * self.amount
