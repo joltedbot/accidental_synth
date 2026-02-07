@@ -5,8 +5,14 @@ pub struct Noise {
     shape: WaveShape,
 }
 
+impl Default for Noise {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Noise {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         log::debug!(target: "synth::oscillator", shape = "Noise"; "Constructing wave generator");
         Self {
             shape: WaveShape::Noise,

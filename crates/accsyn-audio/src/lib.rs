@@ -36,7 +36,6 @@ pub struct OutputChannels {
     right: AtomicI32,
 }
 
-/// Extension methods for OutputStreamParameters that depend on cpal types
 pub fn stream_config_from_parameters(params: &OutputStreamParameters) -> StreamConfig {
     let buffer_size_samples = params.buffer_size.load(Relaxed);
     let buffer_size = BufferSize::Fixed(buffer_size_samples);

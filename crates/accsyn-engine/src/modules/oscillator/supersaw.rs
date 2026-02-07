@@ -18,7 +18,7 @@ pub struct Supersaw {
 }
 
 impl Supersaw {
-    pub fn new(sample_rate: u32) -> Self {
+    pub(crate) fn new(sample_rate: u32) -> Self {
         log::debug!(target: "synth::oscillator", shape = "Supersaw"; "Constructing wave generator");
         let x_coordinate = DEFAULT_X_COORDINATE;
         let x_increment = DEFAULT_X_INCREMENT;

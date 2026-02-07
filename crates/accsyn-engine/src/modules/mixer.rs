@@ -8,7 +8,7 @@ pub struct MixerInput {
     pub mute: bool,
 }
 
-pub fn quad_mix(inputs: [MixerInput; 4]) -> (f32, f32) {
+pub(crate) fn quad_mix(inputs: [MixerInput; 4]) -> (f32, f32) {
     let (mut left_input_sum, mut right_input_sum): (f32, f32) = inputs
         .iter()
         .map(|input| apply_quad_balance(apply_quad_level(input), input.balance))
@@ -25,7 +25,7 @@ pub fn quad_mix(inputs: [MixerInput; 4]) -> (f32, f32) {
     (left_input_sum, right_input_sum)
 }
 
-pub fn output_mix(
+pub(crate) fn output_mix(
     stereo_input: (f32, f32),
     level: f32,
     balance: f32,

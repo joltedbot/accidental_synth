@@ -13,7 +13,7 @@ use crossbeam_channel::Sender;
 use midir::{MidiInput, MidiInputConnection, MidiInputPort};
 use std::sync::{Arc, Mutex, PoisonError};
 
-pub fn create_midi_input_listener(
+pub(crate) fn create_midi_input_listener(
     input_port: &MidiInputPort,
     current_channel_arc: Arc<Mutex<Option<u8>>>,
     midi_message_sender: Sender<MidiEvent>,

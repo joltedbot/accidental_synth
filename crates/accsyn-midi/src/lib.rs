@@ -63,6 +63,12 @@ pub struct Midi {
     current_channel: Arc<Mutex<Option<u8>>>,
 }
 
+impl Default for Midi {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Midi {
     pub fn new() -> Self {
         log::debug!(target: "midi", "Constructing Midi module");
@@ -290,7 +296,7 @@ fn midi_port_from_port_name(port_name: &str) -> Option<(usize, MidiInputPort)> {
         .map(|port| (port.0, port.1.clone()))
 }
 
-pub fn create_midi_virtual_input(
+pub(crate) fn create_midi_virtual_input(
     current_channel_arc: Arc<Mutex<Option<u8>>>,
     midi_message_sender: Sender<MidiEvent>,
     current_note_arc: Arc<Mutex<Option<u8>>>,

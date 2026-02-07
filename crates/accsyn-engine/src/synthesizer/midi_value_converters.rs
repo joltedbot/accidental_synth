@@ -71,7 +71,7 @@ pub fn normal_value_to_wave_shape_index(normal_value: f32) -> u8 {
     .clamp(FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX) as u8
 }
 
-pub fn exponential_curve_filter_cutoff_from_midi_value(normal_value: f32) -> f32 {
+pub(crate) fn exponential_curve_filter_cutoff_from_midi_value(normal_value: f32) -> f32 {
     if normal_value == 0.0 {
         return 0.0;
     }
@@ -89,7 +89,7 @@ pub fn exponential_curve_lfo_frequency_from_normal_value(normal_value: f32) -> f
         / 100.0
 }
 
-pub fn exponential_curve_envelope_time_from_normal_value(
+pub(crate) fn exponential_curve_envelope_time_from_normal_value(
     normal_value: f32,
     crossover_values: (f32, f32),
     minimum: u32,
@@ -111,7 +111,7 @@ pub fn exponential_curve_envelope_time_from_normal_value(
     }
 }
 
-pub fn exponential_curve_level_adjustment_from_normal_value(normal_value: f32) -> f32 {
+pub(crate) fn exponential_curve_level_adjustment_from_normal_value(normal_value: f32) -> f32 {
     if normal_value == 0.0 {
         return 0.0;
     }
@@ -119,7 +119,7 @@ pub fn exponential_curve_level_adjustment_from_normal_value(normal_value: f32) -
         / LEVEL_CURVE_LINEAR_RANGE
 }
 
-pub fn exponential_curve_from_normal_value_and_coefficient(
+pub(crate) fn exponential_curve_from_normal_value_and_coefficient(
     normal_value: f32,
     exponential_coefficient: f32,
 ) -> f32 {
@@ -128,7 +128,7 @@ pub fn exponential_curve_from_normal_value_and_coefficient(
     (exponential_coefficient * normal_value).exp()
 }
 
-pub fn velocity_curve_from_normal_value(normal_value: f32) -> f32 {
+pub(crate) fn velocity_curve_from_normal_value(normal_value: f32) -> f32 {
     if normal_value == 0.0 {
         return 0.0;
     }
@@ -152,7 +152,7 @@ pub fn velocity_curve_from_normal_value(normal_value: f32) -> f32 {
     }
 }
 
-pub fn scaled_velocity_from_normal_value(velocity_curve: f32, velocity: f32) -> f32 {
+pub(crate) fn scaled_velocity_from_normal_value(velocity_curve: f32, velocity: f32) -> f32 {
     if f32s_are_equal(velocity_curve, 1.0) {
         return velocity;
     }

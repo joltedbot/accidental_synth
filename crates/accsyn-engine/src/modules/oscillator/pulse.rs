@@ -14,7 +14,7 @@ pub struct Pulse {
 }
 
 impl Pulse {
-    pub fn new(sample_rate: u32) -> Self {
+    pub(crate) fn new(sample_rate: u32) -> Self {
         log::debug!(target: "synth::oscillator", shape = "Pulse"; "Constructing wave generator");
         let x_coordinate = DEFAULT_X_COORDINATE;
 

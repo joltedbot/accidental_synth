@@ -244,8 +244,8 @@ mod tests {
     fn autopan_samples_at_full_left_pan() {
         let samples = (1.0, 1.0);
         let pan = -1.0; // Full left
-        let expected_left = (-1.0 * PI / 2.0).cos(); // cos(-π/2) ≈ 0.0
-        let expected_right = (-1.0 * PI / 2.0).sin(); // sin(-π/2) = -1.0
+        let expected_left = (-PI / 2.0).cos(); // cos(-π/2) ≈ 0.0
+        let expected_right = (-PI / 2.0).sin(); // sin(-π/2) = -1.0
 
         let result = autopan_samples(samples, pan);
 
