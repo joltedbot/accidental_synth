@@ -1,7 +1,9 @@
 use crate::modules::effects::bitshifter::BitShifter;
 use crate::modules::effects::clipper::Clipper;
 use crate::modules::effects::constants::{
-    DELAY_DEFAULT_PARAMETERS, MAX_GATE_CUT, MAX_THRESHOLD, PARAMETERS_PER_EFFECT,
+    AUTOPAN_DEFAULT_PARAMETERS, CLIPPER_DEFAULT_PARAMETERS, COMPRESSOR_DEFAULT_PARAMETERS,
+    DELAY_DEFAULT_PARAMETERS, GATE_DEFAULT_PARAMETERS, MAX_GATE_CUT, MAX_THRESHOLD,
+    PARAMETERS_PER_EFFECT, TREMOLO_DEFAULT_PARAMETERS,
 };
 use crate::modules::effects::gate::Gate;
 use crate::modules::effects::rectifier::Rectifier;
@@ -75,12 +77,16 @@ impl Effects {
         let wavefolder_parameters = EffectParameters::default();
 
         let clipper = Box::new(Clipper::new());
-        let mut clipper_parameters = EffectParameters::default();
-        clipper_parameters.parameters[0] = MAX_THRESHOLD;
+        let clipper_parameters = EffectParameters {
+            is_enabled: false,
+            parameters: CLIPPER_DEFAULT_PARAMETERS.to_vec(),
+        };
 
         let gate = Box::new(Gate::new());
-        let mut gate_parameters = EffectParameters::default();
-        gate_parameters.parameters[1] = MAX_GATE_CUT;
+        let gate_parameters = EffectParameters {
+            is_enabled: false,
+            parameters: GATE_DEFAULT_PARAMETERS.to_vec(),
+        };
 
         let rectifier = Box::new(Rectifier::new());
         let rectifier_parameters = EffectParameters::default();
@@ -92,20 +98,28 @@ impl Effects {
         let saturation_parameters = EffectParameters::default();
 
         let compressor = Box::new(compressor::Compressor::new());
-        let mut compressor_parameters = EffectParameters::default();
-        compressor_parameters.parameters[0] = MAX_THRESHOLD;
+        let compressor_parameters = EffectParameters {
+            is_enabled: false,
+            parameters: COMPRESSOR_DEFAULT_PARAMETERS.to_vec(),
+        };
 
         let delay = Box::new(delay::Delay::new());
-        let mut delay_parameters = EffectParameters::default();
-        delay_parameters.parameters = DELAY_DEFAULT_PARAMETERS.to_vec();
+        let delay_parameters = EffectParameters {
+            is_enabled: false,
+            parameters: DELAY_DEFAULT_PARAMETERS.to_vec(),
+        };
 
         let autopan = Box::new(autopan::AutoPan::new(sample_rate));
-        let mut autopan_parameters = EffectParameters::default();
-        autopan_parameters.parameters[0] = MAX_THRESHOLD;
+        let autopan_parameters = EffectParameters {
+            is_enabled: false,
+            parameters: AUTOPAN_DEFAULT_PARAMETERS.to_vec(),
+        };
 
         let tremolo = Box::new(tremolo::Tremolo::new(sample_rate));
-        let mut tremolo_parameters = EffectParameters::default();
-        tremolo_parameters.parameters[0] = MAX_THRESHOLD;
+        let tremolo_parameters = EffectParameters {
+            is_enabled: false,
+            parameters: TREMOLO_DEFAULT_PARAMETERS.to_vec(),
+        };
 
         Self {
             effects: vec![
@@ -156,7 +170,7 @@ fn extract_parameters(source: &AudioEffectParameters) -> EffectParameters {
     }
 }
 
-pub fn default_audio_effect_parameters() -> Vec<AudioEffectParameters> {
+pub(crate) fn default_audio_effect_parameters() -> Vec<AudioEffectParameters> {
     let mut audio_effect_parameters = Vec::new();
 
     for effect in EffectIndex::iter() {

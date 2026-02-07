@@ -8,7 +8,7 @@ const CENTS_PER_OCTAVE: f32 = 1200.0;
 const MAX_MIDI_VALUE: f32 = 127.0;
 const CENTER_MIDI_VALUE: u8 = 64;
 
-#[inline] 
+#[inline]
 pub fn dbfs_to_f32_sample(dbfs: f32) -> f32 {
     if !dbfs.is_finite() || dbfs <= DBFS_SILENCE_LEVEL {
         return 0.0;

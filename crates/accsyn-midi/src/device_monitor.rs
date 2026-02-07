@@ -20,7 +20,7 @@ impl DeviceMonitor {
             device_update_sender,
         }
     }
-    
+
     pub(crate) fn run(&mut self) -> Result<()> {
         let input_port_sender = self.device_update_sender.clone();
         let midi_input = MidiInput::new(MIDI_INPUT_CLIENT_NAME)?;

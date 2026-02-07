@@ -1,6 +1,8 @@
-use crate::modules::effects::constants::{EFFECTS_LFO_CENTER_VALUE, TREMOLO_MAX_DEPTH};
+use crate::modules::effects::constants::{
+    DEFAULT_LFO_WAVESHAPE_INDEX, EFFECTS_LFO_CENTER_VALUE, TREMOLO_MAX_DEPTH,
+};
 use crate::modules::effects::{AudioEffect, EffectParameters};
-use crate::modules::lfo::Lfo;
+use crate::modules::lfo::{DEFAULT_LFO_FREQUENCY, Lfo};
 use crate::synthesizer::midi_value_converters::exponential_curve_lfo_frequency_from_normal_value;
 use accsyn_types::math::f32s_are_equal;
 
@@ -8,7 +10,7 @@ use accsyn_types::math::f32s_are_equal;
 struct LfoParameters {
     frequency: f32,
     depth: f32,
-    oscillator_index: f32,
+    waveshape_index: f32,
 }
 
 pub struct Tremolo {
@@ -24,8 +26,9 @@ impl Tremolo {
         lfo.set_center_value(EFFECTS_LFO_CENTER_VALUE);
 
         let lfo_parameters = LfoParameters {
+            frequency: DEFAULT_LFO_FREQUENCY,
             depth: TREMOLO_MAX_DEPTH,
-            ..Default::default()
+            waveshape_index: DEFAULT_LFO_WAVESHAPE_INDEX,
         };
 
         Self {
@@ -57,8 +60,8 @@ impl AudioEffect for Tremolo {
             self.lfo.set_range(new_depth);
         }
 
-        if !f32s_are_equal(new_shape, self.lfo_parameters.oscillator_index) {
-            self.lfo_parameters.oscillator_index = new_shape;
+        if !f32s_are_equal(new_shape, self.lfo_parameters.waveshape_index) {
+            self.lfo_parameters.waveshape_index = new_shape;
             self.lfo.set_wave_shape(new_shape as u8);
         }
 
@@ -146,7 +149,7 @@ mod tests {
 
         // Process once to set initial shape
         tremolo.process_samples((0.5, 0.5), &effect);
-        let initial_shape = tremolo.lfo_parameters.oscillator_index;
+        let initial_shape = tremolo.lfo_parameters.waveshape_index;
 
         // Change shape parameter
         let new_effect = EffectParameters {
@@ -157,9 +160,9 @@ mod tests {
 
         assert!(!f32s_are_equal(
             initial_shape,
-            tremolo.lfo_parameters.oscillator_index
+            tremolo.lfo_parameters.waveshape_index
         ));
-        assert!(f32s_are_equal(tremolo.lfo_parameters.oscillator_index, 1.0));
+        assert!(f32s_are_equal(tremolo.lfo_parameters.waveshape_index, 1.0));
     }
 
     #[test]
@@ -174,7 +177,7 @@ mod tests {
         tremolo.process_samples((0.5, 0.5), &effect);
         let initial_frequency = tremolo.lfo_parameters.frequency;
         let initial_depth = tremolo.lfo_parameters.depth;
-        let initial_shape = tremolo.lfo_parameters.oscillator_index;
+        let initial_shape = tremolo.lfo_parameters.waveshape_index;
 
         // Process again with same parameters
         tremolo.process_samples((0.5, 0.5), &effect);
@@ -187,7 +190,7 @@ mod tests {
         assert!(f32s_are_equal(initial_depth, tremolo.lfo_parameters.depth));
         assert!(f32s_are_equal(
             initial_shape,
-            tremolo.lfo_parameters.oscillator_index
+            tremolo.lfo_parameters.waveshape_index
         ));
     }
 }
