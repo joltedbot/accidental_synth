@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-02-07
+
+### Fixed
+- Bumped the dependencies to the latest versions
+- Fixed the defaults for the Autopan and Tremolo effects that didn't match the UI
+- Reworked the inverted mode in the envelopes so that it now works as expected
+
+### Changed
+- Major restructured of the project from a single monolithic binary crate to several library crates and a binary crate for main and the UI.
+- Reduced the release build time from 30 minutes to < 2 minutes with the restructure and turning the build paramaters
+
 ## [0.1.3] - 2026-02-03
 
 ### Added
