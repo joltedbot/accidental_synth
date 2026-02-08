@@ -116,11 +116,7 @@ impl Envelope {
     }
 
     pub fn generate(&mut self) -> f32 {
-        let mut envelope_output_value = self.next_value();
-        if self.is_inverted {
-            self.state_action(StageAction::Stop);
-            envelope_output_value = ENVELOPE_MAX_LEVEL - envelope_output_value;
-        }
+        let envelope_output_value = self.next_value();
         envelope_output_value * self.amount
     }
 
@@ -159,21 +155,37 @@ impl Envelope {
 
     fn set_attack_milliseconds(&mut self, milliseconds: u32) {
         let clamped_milliseconds = (milliseconds as f32).max(self.milliseconds_per_sample);
-        self.attack_level_increment = self.level_increments_from_milliseconds(
-            ENVELOPE_MIN_LEVEL,
-            ENVELOPE_MAX_LEVEL,
-            clamped_milliseconds,
-        );
+        self.attack_level_increment = if self.is_inverted {
+            self.level_increments_from_milliseconds(
+                ENVELOPE_MAX_LEVEL,
+                ENVELOPE_MIN_LEVEL,
+                clamped_milliseconds,
+            )
+        } else {
+            self.level_increments_from_milliseconds(
+                ENVELOPE_MIN_LEVEL,
+                ENVELOPE_MAX_LEVEL,
+                clamped_milliseconds,
+            )
+        };
     }
 
     fn set_decay_milliseconds(&mut self, milliseconds: u32) {
         self.decay_milliseconds = (milliseconds as f32).max(self.milliseconds_per_sample);
 
-        self.decay_level_increment = self.level_increments_from_milliseconds(
-            ENVELOPE_MAX_LEVEL,
-            self.sustain_level,
-            self.decay_milliseconds,
-        );
+        self.decay_level_increment = if self.is_inverted {
+            self.level_increments_from_milliseconds(
+                ENVELOPE_MIN_LEVEL,
+                self.sustain_level,
+                self.decay_milliseconds,
+            )
+        } else {
+            self.level_increments_from_milliseconds(
+                ENVELOPE_MAX_LEVEL,
+                self.sustain_level,
+                self.decay_milliseconds,
+            )
+        };
     }
 
     fn set_sustain_level(&mut self, level: f32) {
@@ -182,13 +194,25 @@ impl Envelope {
                 "set_sustain_level: level exceeded range (0.0-1.0) but was clamped: level: {level}"
             );
         }
-        self.sustain_level = level.clamp(0.0, 1.0);
+        self.sustain_level = if self.is_inverted {
+            MAX_SUSTAIN_LEVEL - level.clamp(0.0, 1.0)
+        } else {
+            level.clamp(0.0, 1.0)
+        };
 
-        self.decay_level_increment = self.level_increments_from_milliseconds(
-            ENVELOPE_MAX_LEVEL,
-            self.sustain_level,
-            self.decay_milliseconds,
-        );
+        self.decay_level_increment = if self.is_inverted {
+            self.level_increments_from_milliseconds(
+                ENVELOPE_MIN_LEVEL,
+                self.sustain_level,
+                self.decay_milliseconds,
+            )
+        } else {
+            self.level_increments_from_milliseconds(
+                ENVELOPE_MAX_LEVEL,
+                self.sustain_level,
+                self.decay_milliseconds,
+            )
+        };
     }
 
     fn set_sustain_pedal(&mut self, sustain_pedal: bool) {
@@ -205,11 +229,20 @@ impl Envelope {
 
     fn set_release_milliseconds(&mut self, milliseconds: u32) {
         let clamped_milliseconds = (milliseconds as f32).max(self.milliseconds_per_sample);
-        self.release_level_increment = self.level_increments_from_milliseconds(
-            ENVELOPE_MAX_LEVEL,
-            ENVELOPE_MIN_LEVEL,
-            clamped_milliseconds,
-        );
+
+        self.release_level_increment = if self.is_inverted {
+            self.level_increments_from_milliseconds(
+                ENVELOPE_MIN_LEVEL,
+                ENVELOPE_MAX_LEVEL,
+                clamped_milliseconds,
+            )
+        } else {
+            self.level_increments_from_milliseconds(
+                ENVELOPE_MAX_LEVEL,
+                ENVELOPE_MIN_LEVEL,
+                clamped_milliseconds,
+            )
+        };
     }
 
     fn set_amount(&mut self, amount: f32) {
@@ -217,6 +250,9 @@ impl Envelope {
     }
 
     fn set_is_inverted(&mut self, is_inverted: bool) {
+        if self.is_inverted != is_inverted {
+            self.level = 1.0 - self.level;
+        }
         self.is_inverted = is_inverted;
     }
 
@@ -236,7 +272,11 @@ impl Envelope {
                 self.stage = Stage::Sustain;
             }
             (StageAction::NextStage, Stage::Release) => {
-                self.level = ENVELOPE_MIN_LEVEL;
+                self.level = if self.is_inverted {
+                    ENVELOPE_MAX_LEVEL
+                } else {
+                    ENVELOPE_MIN_LEVEL
+                };
                 self.stage = Stage::Off;
             }
             (StageAction::NextStage, _) => {
@@ -260,8 +300,16 @@ impl Envelope {
     }
 
     fn attack_next_value(&mut self) -> f32 {
-        self.level += self.attack_level_increment;
+        if self.is_inverted {
+            self.level -= self.attack_level_increment;
+            if self.level <= ENVELOPE_MIN_LEVEL {
+                self.level = ENVELOPE_MIN_LEVEL;
+                self.state_action(StageAction::NextStage);
+            }
+            return self.level;
+        }
 
+        self.level += self.attack_level_increment;
         if self.level >= ENVELOPE_MAX_LEVEL {
             self.level = ENVELOPE_MAX_LEVEL;
             self.state_action(StageAction::NextStage);
@@ -271,8 +319,17 @@ impl Envelope {
     }
 
     fn decay_next_value(&mut self) -> f32 {
-        self.level -= self.decay_level_increment;
+        if self.is_inverted {
+            self.level += self.decay_level_increment;
+            if self.level <= MIN_SUSTAIN_LEVEL {
+                self.level = MIN_SUSTAIN_LEVEL;
+                self.state_action(StageAction::NextStage);
+            }
 
+            return self.level;
+        }
+
+        self.level -= self.decay_level_increment;
         if self.level <= self.sustain_level {
             self.level = self.sustain_level;
             self.state_action(StageAction::NextStage);
@@ -286,8 +343,16 @@ impl Envelope {
     }
 
     fn release_next_value(&mut self) -> f32 {
-        self.level -= self.release_level_increment;
+        if self.is_inverted {
+            self.level += self.release_level_increment;
+            if self.level >= ENVELOPE_MAX_LEVEL {
+                self.level = ENVELOPE_MAX_LEVEL;
+                self.state_action(StageAction::NextStage);
+            }
+            return self.level;
+        }
 
+        self.level -= self.release_level_increment;
         if self.level <= ENVELOPE_MIN_LEVEL {
             self.level = ENVELOPE_MIN_LEVEL;
             self.state_action(StageAction::NextStage);
@@ -302,7 +367,7 @@ impl Envelope {
         target_level: f32,
         milliseconds: f32,
     ) -> f32 {
-        let range = (target_level - current_level).abs();
+        let range = target_level.max(current_level) - current_level.min(target_level);
 
         if milliseconds <= self.milliseconds_per_sample {
             return range;
@@ -651,16 +716,17 @@ mod tests {
         let mut envelope = Envelope::new(44100);
         envelope.is_inverted = true;
 
-        let pre_invert_expected_result = 1.0;
+        let pre_invert_expected_result = 0.0;
         let pre_invert_result = envelope.generate();
         assert!(f32s_are_equal(
             pre_invert_result,
             pre_invert_expected_result
-        ));
+        ), "pre invert result: {}",
+            pre_invert_result);
 
         envelope.set_is_inverted(false);
 
-        let return_to_not_inverted_expected_result = 0.0;
+        let return_to_not_inverted_expected_result = 1.0;
         let return_to_not_inverted_result = envelope.generate();
         assert!(f32s_are_equal(
             return_to_not_inverted_result,
