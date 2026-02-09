@@ -113,7 +113,7 @@ export component EffectsPanel inherits Panel {
                     }
                 }
             }
-
+            HorizontalSpacer {}
             row2 := HorizontalLayout {
                 padding: Theme.effect-box-padding;
                 spacing: Theme.effect-box-spacing;
@@ -193,12 +193,8 @@ export component EffectsPanel inherits Panel {
                         effect_parameter_changed(effect_index, parameter_index, value);
                     }
                 }
-
-                VerticalSpacer {
-                    left-padding: 0px;
-                    right-padding: 0px;
-                }
             }
+            HorizontalSpacer {}
         }
     }
 }
