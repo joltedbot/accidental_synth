@@ -1,4 +1,3 @@
-pub const PARAMETERS_PER_EFFECT: usize = 4;
 pub const MAX_THRESHOLD: f32 = 1.0;
 pub const MAX_GATE_CUT: f32 = 1.0;
 pub const MAX_BITSHIFT_BITS: u32 = 16;

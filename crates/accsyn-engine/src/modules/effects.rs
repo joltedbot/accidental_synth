@@ -1,14 +1,12 @@
 use crate::modules::effects::bitshifter::BitShifter;
 use crate::modules::effects::clipper::Clipper;
-use crate::modules::effects::constants::{MAX_GATE_CUT, MAX_THRESHOLD, PARAMETERS_PER_EFFECT};
+use crate::modules::effects::constants::{MAX_GATE_CUT, MAX_THRESHOLD};
 use crate::modules::effects::gate::Gate;
 use crate::modules::effects::rectifier::Rectifier;
 use crate::modules::effects::wavefolder::WaveFolder;
-use accsyn_types::defaults::{
-    AUTOPAN_DEFAULT_PARAMETERS, CLIPPER_DEFAULT_PARAMETERS, COMPRESSOR_DEFAULT_PARAMETERS,
-    DELAY_DEFAULT_PARAMETERS, GATE_DEFAULT_PARAMETERS, TREMOLO_DEFAULT_PARAMETERS,
-};
-pub use accsyn_types::effects_index::EffectIndex;
+use accsyn_types::defaults::DELAY_DEFAULT_PARAMETERS;
+pub use accsyn_types::effects::EffectIndex;
+use accsyn_types::effects::{AudioEffect, EffectParameters, PARAMETERS_PER_EFFECT};
 use accsyn_types::math::load_f32_from_atomic_u32;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU32};
@@ -26,10 +24,6 @@ mod saturation;
 mod tremolo;
 mod wavefolder;
 
-pub trait AudioEffect {
-    fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32);
-}
-
 #[derive(Debug)]
 pub struct AudioEffectParameters {
     pub is_enabled: AtomicBool,
@@ -46,77 +40,6 @@ impl Default for AudioEffectParameters {
                 AtomicU32::new(0.0_f32.to_bits()),
                 AtomicU32::new(0.0_f32.to_bits()),
             ],
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct EffectParameters {
-    pub is_enabled: bool,
-    pub parameters: Vec<f32>,
-}
-
-impl EffectParameters {
-    pub fn default_all() -> Vec<Self> {
-        let mut effect_parameters = Vec::new();
-
-        for effect in EffectIndex::iter() {
-            match effect {
-                EffectIndex::WaveFolder
-                | EffectIndex::Rectifier
-                | EffectIndex::BitShifter
-                | EffectIndex::Saturation => {
-                    effect_parameters.push(EffectParameters::default());
-                }
-                EffectIndex::Clipper => {
-                    effect_parameters.push(EffectParameters {
-                        is_enabled: false,
-                        parameters: CLIPPER_DEFAULT_PARAMETERS.to_vec(),
-                    });
-                }
-                EffectIndex::Gate => {
-                    effect_parameters.push(EffectParameters {
-                        is_enabled: false,
-                        parameters: GATE_DEFAULT_PARAMETERS.to_vec(),
-                    });
-                }
-                EffectIndex::Compressor => {
-                    effect_parameters.push(EffectParameters {
-                        is_enabled: false,
-                        parameters: COMPRESSOR_DEFAULT_PARAMETERS.to_vec(),
-                    });
-                }
-                EffectIndex::Delay => {
-                    effect_parameters.push(EffectParameters {
-                        is_enabled: false,
-                        parameters: DELAY_DEFAULT_PARAMETERS.to_vec(),
-                    });
-                }
-                EffectIndex::AutoPan => {
-                    effect_parameters.push(EffectParameters {
-                        is_enabled: false,
-                        parameters: AUTOPAN_DEFAULT_PARAMETERS.to_vec(),
-                    });
-                }
-                EffectIndex::Tremolo => {
-                    effect_parameters.push(EffectParameters {
-                        is_enabled: false,
-                        parameters: TREMOLO_DEFAULT_PARAMETERS.to_vec(),
-                    });
-                }
-            }
-        }
-
-        effect_parameters
-    }
-}
-
-impl Default for EffectParameters {
-    fn default() -> Self {
-        let parameters = vec![0.0; PARAMETERS_PER_EFFECT];
-        Self {
-            is_enabled: false,
-            parameters,
         }
     }
 }

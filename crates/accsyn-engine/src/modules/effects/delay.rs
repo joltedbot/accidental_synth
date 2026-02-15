@@ -1,8 +1,8 @@
 use crate::modules::effects::constants::{
     DELAY_SMOOTHING_FACTOR, MAX_DELAY_SAMPLES, MIN_DELAY_SAMPLES,
 };
-use crate::modules::effects::{AudioEffect, EffectParameters};
 use crate::synthesizer::midi_value_converters::normal_value_to_unsigned_integer_range;
+use accsyn_types::effects::{AudioEffect, EffectParameters};
 
 // Ensure MAX_DELAY_SAMPLES is a power of 2 to guarantee the bitwise wrapping logic is safe
 const _: () = assert!(MAX_DELAY_SAMPLES.is_power_of_two());

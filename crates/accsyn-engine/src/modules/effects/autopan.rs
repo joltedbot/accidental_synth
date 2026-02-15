@@ -1,9 +1,9 @@
 use crate::modules::effects::constants::{
     AUTO_PAN_MAX_WIDTH, DEFAULT_LFO_WAVESHAPE_INDEX, EFFECTS_LFO_CENTER_VALUE,
 };
-use crate::modules::effects::{AudioEffect, EffectParameters};
 use crate::modules::lfo::{DEFAULT_LFO_FREQUENCY, Lfo};
 use crate::synthesizer::midi_value_converters::exponential_curve_lfo_frequency_from_normal_value;
+use accsyn_types::effects::{AudioEffect, EffectParameters};
 use accsyn_types::math::f32s_are_equal;
 use std::f32::consts::PI;
 

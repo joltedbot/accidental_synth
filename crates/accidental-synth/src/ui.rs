@@ -17,12 +17,12 @@ use crate::ui::structs::{
     UIOscillator,
 };
 use crate::ui::update_listener::start_ui_update_listener;
-use accsyn_engine::modules::effects::EffectParameters;
 use accsyn_engine::modules::lfo::DEFAULT_LFO_FREQUENCY;
 use accsyn_engine::synthesizer::midi_value_converters::normal_value_to_bool;
 use accsyn_midi::MidiDeviceUpdateEvents;
 use accsyn_types::audio_events::AudioDeviceUpdateEvents;
 use accsyn_types::defaults::Defaults;
+use accsyn_types::effects::EffectParameters;
 use accsyn_types::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
 };

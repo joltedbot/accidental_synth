@@ -1,5 +1,5 @@
-use crate::modules::effects::{AudioEffect, EffectParameters};
 use crate::synthesizer::midi_value_converters::normal_value_to_bool;
+use accsyn_types::effects::{AudioEffect, EffectParameters};
 
 pub struct Rectifier {}
 

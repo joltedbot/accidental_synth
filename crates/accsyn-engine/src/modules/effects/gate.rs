@@ -1,5 +1,5 @@
-use crate::modules::effects::{AudioEffect, EffectParameters};
 use accsyn_types::defaults::MAX_SAMPLE_VALUE;
+use accsyn_types::effects::{AudioEffect, EffectParameters};
 
 pub struct Gate {}
 

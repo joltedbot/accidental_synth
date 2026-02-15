@@ -1,6 +1,6 @@
-use crate::modules::effects::{AudioEffect, EffectParameters};
 use crate::synthesizer::midi_value_converters::normal_value_to_bool;
 use accsyn_types::defaults::MAX_SAMPLE_VALUE;
+use accsyn_types::effects::{AudioEffect, EffectParameters};
 
 pub struct Clipper {}
 

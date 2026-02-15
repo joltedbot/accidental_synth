@@ -1,5 +1,5 @@
 use crate::modules::effects::constants::MAX_THRESHOLD;
-use crate::modules::effects::{AudioEffect, EffectParameters};
+use accsyn_types::effects::{AudioEffect, EffectParameters};
 
 pub struct WaveFolder {}
 impl WaveFolder {

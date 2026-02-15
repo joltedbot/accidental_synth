@@ -1,4 +1,4 @@
-use crate::modules::effects::{AudioEffect, EffectParameters};
+use accsyn_types::effects::{AudioEffect, EffectParameters};
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
 const WAVE_SHAPER_MAX_AMOUNT: f32 = 0.99;
