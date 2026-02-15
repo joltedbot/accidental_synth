@@ -718,11 +718,11 @@ mod tests {
 
         let pre_invert_expected_result = 0.0;
         let pre_invert_result = envelope.generate();
-        assert!(f32s_are_equal(
-            pre_invert_result,
-            pre_invert_expected_result
-        ), "pre invert result: {}",
-            pre_invert_result);
+        assert!(
+            f32s_are_equal(pre_invert_result, pre_invert_expected_result),
+            "pre invert result: {}",
+            pre_invert_result
+        );
 
         envelope.set_is_inverted(false);
 

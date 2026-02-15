@@ -36,7 +36,7 @@ pub enum SynthesizerUpdateEvents {
     OscillatorMixerLevel(i32, f32),
     OscillatorMixerMute(i32, bool),
     EffectEnabled(i32, bool),
-    EffectParameters(i32, i32, f32),
+    EffectParameterValues(i32, i32, f32),
 }
 
 #[derive(Debug, Clone, Copy, EnumCount, EnumIter, FromRepr)]

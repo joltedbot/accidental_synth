@@ -9,6 +9,7 @@ import {
 } from "components.slint";
 import { Switch } from "std-widgets.slint";
 import {
+    EffectsValues,
     EffectBox,
     Wavefolder,
     Clipper,
@@ -24,6 +25,7 @@ import {
 
 export component EffectsPanel inherits Panel {
     in property <string> title;
+    in property <[EffectsValues]> effects_values;
 
     callback effect_enabled(int, bool);
     callback effect_parameter_changed(int, int, float);
@@ -40,7 +42,8 @@ export component EffectsPanel inherits Panel {
 
                 Wavefolder {
                     effect-index: 0;
-                    is_enabled: false;
+                    effect_values: effects_values[self.effect-index];
+
                     effect_enabled(effect-index, is_enabled) => {
                         effect_enabled(effect-index, is_enabled);
                     }
@@ -56,7 +59,8 @@ export component EffectsPanel inherits Panel {
 
                 Clipper {
                     effect-index: 1;
-                    is_enabled: false;
+                    effect_values: effects_values[self.effect-index];
+
                     effect_enabled(effect-index, is_enabled) => {
                         effect_enabled(effect-index, is_enabled);
                     }
@@ -72,7 +76,8 @@ export component EffectsPanel inherits Panel {
 
                 Gate {
                     effect-index: 2;
-                    is_enabled: false;
+                    effect_values: effects_values[self.effect-index];
+
                     effect_enabled(effect-index, is_enabled) => {
                         effect_enabled(effect-index, is_enabled);
                     }
@@ -88,7 +93,8 @@ export component EffectsPanel inherits Panel {
 
                 Rectifier {
                     effect-index: 3;
-                    is_enabled: false;
+                    effect_values: effects_values[self.effect-index];
+
                     effect_enabled(effect-index, is_enabled) => {
                         effect_enabled(effect-index, is_enabled);
                     }
@@ -104,7 +110,8 @@ export component EffectsPanel inherits Panel {
 
                 Bitshifter {
                     effect-index: 4;
-                    is_enabled: false;
+                    effect_values: effects_values[self.effect-index];
+
                     effect_enabled(effect-index, is_enabled) => {
                         effect_enabled(effect-index, is_enabled);
                     }
@@ -120,7 +127,8 @@ export component EffectsPanel inherits Panel {
 
                 Saturation {
                     effect-index: 5;
-                    is_enabled: false;
+                    effect_values: effects_values[self.effect-index];
+
                     effect_enabled(effect-index, is_enabled) => {
                         effect_enabled(effect-index, is_enabled);
                     }
@@ -136,7 +144,8 @@ export component EffectsPanel inherits Panel {
 
                 Compressor {
                     effect-index: 6;
-                    is_enabled: false;
+                    effect_values: effects_values[self.effect-index];
+
                     effect_enabled(effect-index, is_enabled) => {
                         effect_enabled(effect-index, is_enabled);
                     }
@@ -153,7 +162,8 @@ export component EffectsPanel inherits Panel {
 
                 Delay {
                     effect-index: 7;
-                    is_enabled: false;
+                    effect_values: effects_values[self.effect-index];
+
                     effect_enabled(effect-index, is_enabled) => {
                         effect_enabled(effect-index, is_enabled);
                     }
@@ -169,7 +179,8 @@ export component EffectsPanel inherits Panel {
 
                 AutoPan {
                     effect-index: 8;
-                    is_enabled: false;
+                    effect_values: effects_values[self.effect-index];
+
                     effect_enabled(effect-index, is_enabled) => {
                         effect_enabled(effect-index, is_enabled);
                     }
@@ -185,7 +196,8 @@ export component EffectsPanel inherits Panel {
 
                 Tremolo {
                     effect-index: 9;
-                    is_enabled: false;
+                    effect_values: effects_values[self.effect-index];
+
                     effect_enabled(effect-index, is_enabled) => {
                         effect_enabled(effect-index, is_enabled);
                     }

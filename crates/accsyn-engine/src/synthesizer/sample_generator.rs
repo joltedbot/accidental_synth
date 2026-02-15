@@ -30,6 +30,8 @@ struct Modules {
     effects: Effects,
     oscillators: [Oscillator; 4],
     common: Common,
+    #[cfg(debug_assertions)]
+    profile_counter: u64,
 }
 
 #[derive(Default)]
@@ -70,6 +72,9 @@ pub fn sample_generator(
         let mut local_buffer = Vec::<f32>::with_capacity(stereo_buffer_size);
 
         loop {
+            #[cfg(debug_assertions)]
+            let profile_start = std::time::Instant::now();
+
             current_buffer_size = output_stream_parameters.buffer_size.load(Relaxed);
             stereo_buffer_size = current_buffer_size as usize * 2;
 
@@ -193,6 +198,23 @@ pub fn sample_generator(
                 local_buffer.push(output_right);
             }
 
+            // Add a performance counter in debug builds only. use RUST_LOG=hot_loop cargo run to print perf data
+            #[cfg(debug_assertions)]
+            {
+                modules.profile_counter += 1;
+                if modules.profile_counter.is_multiple_of(500) {
+                    let budget_us =
+                        current_buffer_size as f64 / current_sample_rate as f64 * 1_000_000.0;
+                    let elapsed_us = profile_start.elapsed().as_micros();
+                    log::debug!(target: "hot_loop",
+                        "sample_generator: {}μs / {:.0}μs budget ({:.1}%)",
+                        elapsed_us,
+                        budget_us,
+                        elapsed_us as f64 / budget_us * 100.0
+                    );
+                }
+            }
+
             // Wait for sample_buffer to have enough capacity to accept local_buffer, then break to restart the main loop
             loop {
                 // Check for a new sample buffer producer
@@ -235,6 +257,8 @@ fn initialize_synth_modules(sample_rate: u32) -> Modules {
             Oscillator::new(sample_rate, WaveShape::default()),
         ],
         common: Common::default(),
+        #[cfg(debug_assertions)]
+        profile_counter: 0,
     };
 
     modules.oscillators[OscillatorIndex::Sub as usize].set_is_sub_oscillator(true);

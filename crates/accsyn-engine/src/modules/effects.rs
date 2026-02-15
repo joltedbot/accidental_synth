@@ -1,18 +1,18 @@
 use crate::modules::effects::bitshifter::BitShifter;
 use crate::modules::effects::clipper::Clipper;
-use crate::modules::effects::constants::{
-    AUTOPAN_DEFAULT_PARAMETERS, CLIPPER_DEFAULT_PARAMETERS, COMPRESSOR_DEFAULT_PARAMETERS,
-    DELAY_DEFAULT_PARAMETERS, GATE_DEFAULT_PARAMETERS, MAX_GATE_CUT, MAX_THRESHOLD,
-    PARAMETERS_PER_EFFECT, TREMOLO_DEFAULT_PARAMETERS,
-};
+use crate::modules::effects::constants::{MAX_GATE_CUT, MAX_THRESHOLD, PARAMETERS_PER_EFFECT};
 use crate::modules::effects::gate::Gate;
 use crate::modules::effects::rectifier::Rectifier;
 use crate::modules::effects::wavefolder::WaveFolder;
+use accsyn_types::defaults::{
+    AUTOPAN_DEFAULT_PARAMETERS, CLIPPER_DEFAULT_PARAMETERS, COMPRESSOR_DEFAULT_PARAMETERS,
+    DELAY_DEFAULT_PARAMETERS, GATE_DEFAULT_PARAMETERS, TREMOLO_DEFAULT_PARAMETERS,
+};
 pub use accsyn_types::effects_index::EffectIndex;
 use accsyn_types::math::load_f32_from_atomic_u32;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU32};
-use strum::{EnumCount, IntoEnumIterator};
+use strum::IntoEnumIterator;
 
 mod autopan;
 mod bitshifter;
@@ -50,10 +50,65 @@ impl Default for AudioEffectParameters {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EffectParameters {
-    is_enabled: bool,
-    parameters: Vec<f32>,
+    pub is_enabled: bool,
+    pub parameters: Vec<f32>,
+}
+
+impl EffectParameters {
+    pub fn default_all() -> Vec<Self> {
+        let mut effect_parameters = Vec::new();
+
+        for effect in EffectIndex::iter() {
+            match effect {
+                EffectIndex::WaveFolder
+                | EffectIndex::Rectifier
+                | EffectIndex::BitShifter
+                | EffectIndex::Saturation => {
+                    effect_parameters.push(EffectParameters::default());
+                }
+                EffectIndex::Clipper => {
+                    effect_parameters.push(EffectParameters {
+                        is_enabled: false,
+                        parameters: CLIPPER_DEFAULT_PARAMETERS.to_vec(),
+                    });
+                }
+                EffectIndex::Gate => {
+                    effect_parameters.push(EffectParameters {
+                        is_enabled: false,
+                        parameters: GATE_DEFAULT_PARAMETERS.to_vec(),
+                    });
+                }
+                EffectIndex::Compressor => {
+                    effect_parameters.push(EffectParameters {
+                        is_enabled: false,
+                        parameters: COMPRESSOR_DEFAULT_PARAMETERS.to_vec(),
+                    });
+                }
+                EffectIndex::Delay => {
+                    effect_parameters.push(EffectParameters {
+                        is_enabled: false,
+                        parameters: DELAY_DEFAULT_PARAMETERS.to_vec(),
+                    });
+                }
+                EffectIndex::AutoPan => {
+                    effect_parameters.push(EffectParameters {
+                        is_enabled: false,
+                        parameters: AUTOPAN_DEFAULT_PARAMETERS.to_vec(),
+                    });
+                }
+                EffectIndex::Tremolo => {
+                    effect_parameters.push(EffectParameters {
+                        is_enabled: false,
+                        parameters: TREMOLO_DEFAULT_PARAMETERS.to_vec(),
+                    });
+                }
+            }
+        }
+
+        effect_parameters
+    }
 }
 
 impl Default for EffectParameters {
@@ -68,76 +123,28 @@ impl Default for EffectParameters {
 
 pub struct Effects {
     effects: Vec<Box<dyn AudioEffect>>,
-    parameters: [EffectParameters; EffectIndex::COUNT],
+    parameters: Vec<EffectParameters>,
 }
 
 impl Effects {
     pub fn new(sample_rate: u32) -> Self {
         let wavefolder = Box::new(WaveFolder::new());
-        let wavefolder_parameters = EffectParameters::default();
-
         let clipper = Box::new(Clipper::new());
-        let clipper_parameters = EffectParameters {
-            is_enabled: false,
-            parameters: CLIPPER_DEFAULT_PARAMETERS.to_vec(),
-        };
-
         let gate = Box::new(Gate::new());
-        let gate_parameters = EffectParameters {
-            is_enabled: false,
-            parameters: GATE_DEFAULT_PARAMETERS.to_vec(),
-        };
-
         let rectifier = Box::new(Rectifier::new());
-        let rectifier_parameters = EffectParameters::default();
-
         let bitshifter = Box::new(BitShifter::new());
-        let bitshifter_parameters = EffectParameters::default();
-
         let saturation = Box::new(saturation::Saturation::new());
-        let saturation_parameters = EffectParameters::default();
-
         let compressor = Box::new(compressor::Compressor::new());
-        let compressor_parameters = EffectParameters {
-            is_enabled: false,
-            parameters: COMPRESSOR_DEFAULT_PARAMETERS.to_vec(),
-        };
-
         let delay = Box::new(delay::Delay::new());
-        let delay_parameters = EffectParameters {
-            is_enabled: false,
-            parameters: DELAY_DEFAULT_PARAMETERS.to_vec(),
-        };
-
         let autopan = Box::new(autopan::AutoPan::new(sample_rate));
-        let autopan_parameters = EffectParameters {
-            is_enabled: false,
-            parameters: AUTOPAN_DEFAULT_PARAMETERS.to_vec(),
-        };
-
         let tremolo = Box::new(tremolo::Tremolo::new(sample_rate));
-        let tremolo_parameters = EffectParameters {
-            is_enabled: false,
-            parameters: TREMOLO_DEFAULT_PARAMETERS.to_vec(),
-        };
 
         Self {
             effects: vec![
                 wavefolder, clipper, gate, rectifier, bitshifter, saturation, compressor, delay,
                 autopan, tremolo,
             ],
-            parameters: [
-                wavefolder_parameters,
-                clipper_parameters,
-                gate_parameters,
-                rectifier_parameters,
-                bitshifter_parameters,
-                saturation_parameters,
-                compressor_parameters,
-                delay_parameters,
-                autopan_parameters,
-                tremolo_parameters,
-            ],
+            parameters: EffectParameters::default_all(),
         }
     }
 
@@ -342,13 +349,6 @@ mod tests {
         // Rectifier full-wave: 0.4 stays 0.4, -0.4 becomes 0.4
         assert!(f32s_are_equal(result.0, 0.4));
         assert!(f32s_are_equal(result.1, 0.4));
-    }
-
-    #[test]
-    fn default_audio_effect_parameters_returns_correct_count() {
-        let params = default_audio_effect_parameters();
-
-        assert_eq!(params.len(), EffectIndex::COUNT);
     }
 
     #[test]

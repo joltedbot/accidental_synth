@@ -44,6 +44,7 @@ pub enum UIUpdates {
     VelocityCurve(f32),
     HardSync(f32),
     KeySync(f32),
+    Effect(i32, bool, f32, f32, f32, f32),
 }
 
 #[derive(Debug, Clone, Copy)]

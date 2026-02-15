@@ -2,7 +2,7 @@ use crate::AccidentalSynth;
 use crate::ui::constants::MAX_PHASE_VALUE;
 use crate::ui::{
     ParameterValues, set_audio_device_channel_indexes, set_audio_device_channel_list,
-    set_audio_device_values, set_envelope_inverted, set_envelope_stage_value,
+    set_audio_device_values, set_effect_display, set_envelope_inverted, set_envelope_stage_value,
     set_filter_cutoff_values, set_filter_options_values, set_global_options_values,
     set_lfo_frequency_display, set_lfo_phase_display, set_lfo_values, set_midi_port_values,
     set_midi_screen_values, set_oscillator_fine_tune_display, set_oscillator_mixer_values,
@@ -353,6 +353,22 @@ pub fn start_ui_update_listener(
                     let global_options_values = &mut values.global_options;
                     global_options_values.key_sync_is_enabled = normal_value_to_bool(is_enabled);
                     set_global_options_values(&ui_weak_thread, global_options_values);
+                }
+                UIUpdates::Effect(
+                    effect_index,
+                    is_enabled,
+                    parameter1,
+                    parameter2,
+                    parameter3,
+                    parameter4,
+                ) => {
+                    set_effect_display(
+                        &ui_weak_thread,
+                        &mut values.effects,
+                        effect_index,
+                        is_enabled,
+                        vec![parameter1, parameter2, parameter3, parameter4],
+                    );
                 }
             }
         }

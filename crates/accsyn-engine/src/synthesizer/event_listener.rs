@@ -405,7 +405,11 @@ pub fn start_update_event_listener(
                         );
                     }
                 }
-                SynthesizerUpdateEvents::EffectParameters(effect_index, parameter_index, value) => {
+                SynthesizerUpdateEvents::EffectParameterValues(
+                    effect_index,
+                    parameter_index,
+                    value,
+                ) => {
                     if let Some(effect) = EffectIndex::from_i32(effect_index) {
                         set_effect_parameter(
                             &module_parameters.effects,

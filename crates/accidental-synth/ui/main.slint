@@ -11,6 +11,7 @@ import { FilterPanel, FilterCutoff, FilterOptions } from "filter-panel.slint";
 import { OscillatorsPanel, Oscillator } from "oscillator-panel.slint";
 import { Mixer } from "global-panel.slint";
 import { EffectsPanel } from "effects-panel.slint";
+import { EffectsValues } from "effects.slint";
 
 export component AccidentalSynth inherits Window {
     title: Theme.window-title;
@@ -140,8 +141,10 @@ export component AccidentalSynth inherits Window {
     callback osc-mixer-level-update(int, float);
     callback osc-mixer-mute-update(int, bool);
 
+    // Effects Panel Properties & Callbacks
     callback effect_enabled(int, bool);
     callback effect_parameter_changed(int, int, float);
+    in property <[EffectsValues]> effects_values;
 
     top-level := Rectangle {
         background: Theme.window-background;
@@ -358,6 +361,7 @@ export component AccidentalSynth inherits Window {
                 Tab {
                     title: Theme.tab-title-effects;
                     EffectsPanel {
+                        effects_values: effects_values;
                         effect_enabled(effect_index, is_enable) => {
                             effect_enabled(effect_index, is_enable);
                         }

@@ -4,8 +4,8 @@ mod structs;
 mod update_listener;
 
 use super::{
-    AccidentalSynth, AudioDevice, EnvelopeValues, FilterCutoff, FilterOptions, GlobalOptions,
-    LFOValues, MidiPort, Mixer, Oscillator,
+    AccidentalSynth, AudioDevice, EffectsValues, EnvelopeValues, FilterCutoff, FilterOptions,
+    GlobalOptions, LFOValues, MidiPort, Mixer, Oscillator,
 };
 use crate::ui::callbacks::register_callbacks;
 use crate::ui::constants::{
@@ -17,6 +17,7 @@ use crate::ui::structs::{
     UIOscillator,
 };
 use crate::ui::update_listener::start_ui_update_listener;
+use accsyn_engine::modules::effects::EffectParameters;
 use accsyn_engine::modules::lfo::DEFAULT_LFO_FREQUENCY;
 use accsyn_engine::synthesizer::midi_value_converters::normal_value_to_bool;
 use accsyn_midi::MidiDeviceUpdateEvents;
@@ -52,6 +53,7 @@ struct ParameterValues {
     oscillator_mixer: Vec<UIMixer>,
     global_options: UIGlobalOptions,
     midi_screen: Vec<String>,
+    effects: Vec<EffectParameters>,
 }
 
 pub struct UI {
@@ -99,6 +101,7 @@ impl UI {
             oscillator_mixer,
             midi_screen: Vec::with_capacity(MIDI_SCREEN_TOTAL_SLOTS),
             global_options: UIGlobalOptions::default(),
+            effects: EffectParameters::default_all(),
         };
 
         Self {
@@ -158,6 +161,11 @@ fn set_ui_default_values(
         ui.set_filter_envelope_values(slint_envelope_from_ui_envelope(
             &ui_default_values.filter_envelope,
         ));
+
+        ui.set_effects_values(slint_effect_values_from_effect_parameters(
+            &ui_default_values.effects,
+        ));
+        dbg!(&ui_default_values.effects);
         ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&ui_default_values.mod_wheel_lfo));
         ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_default_values.filter_lfo));
         ui.set_mod_wheel_lfo_frequency_display(DEFAULT_LFO_FREQUENCY);
@@ -414,6 +422,25 @@ fn set_global_options_values(
     });
 }
 
+fn set_effect_display(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    effect_values: &mut [EffectParameters],
+    effect_index: i32,
+    is_enabled: bool,
+    parameters: Vec<f32>,
+) {
+    effect_values[effect_index as usize] = EffectParameters {
+        is_enabled,
+        parameters,
+    };
+    let ui_effect_values = effect_values.to_vec();
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_effects_values(slint_effect_values_from_effect_parameters(
+            &ui_effect_values,
+        ));
+    });
+}
+
 fn slint_oscillators_from_oscillators(oscillator_values: &[UIOscillator]) -> ModelRc<Oscillator> {
     let oscillators: VecModel<Oscillator> = oscillator_values
         .iter()
@@ -511,6 +538,20 @@ fn slint_global_options_from_ui_global_options(
         key_sync_is_enabled: global_option_values.key_sync_is_enabled,
         polarity_is_flipped: global_option_values.polarity_is_flipped,
     }
+}
+
+fn slint_effect_values_from_effect_parameters(
+    input_values: &[EffectParameters],
+) -> ModelRc<EffectsValues> {
+    ModelRc::new(VecModel::from(
+        input_values
+            .iter()
+            .map(|effect| EffectsValues {
+                is_enabled: effect.is_enabled,
+                parameters: ModelRc::new(VecModel::from(effect.parameters.clone())),
+            })
+            .collect::<Vec<EffectsValues>>(),
+    ))
 }
 
 fn vec_to_model_rc_shared_string(input_values: &[String]) -> ModelRc<SharedString> {

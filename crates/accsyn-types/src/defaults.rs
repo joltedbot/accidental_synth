@@ -29,6 +29,14 @@ impl Defaults {
     pub const MAXIMUM_PITCH_BEND_RANGE: u32 = 12;
 }
 
+// Effects Defaults
+pub const DELAY_DEFAULT_PARAMETERS: [f32; 4] = [0.5, 0.5, 0.5, 0.0];
+pub const AUTOPAN_DEFAULT_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
+pub const TREMOLO_DEFAULT_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
+pub const COMPRESSOR_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
+pub const CLIPPER_DEFAULT_PARAMETERS: [f32; 4] = [1.0, 0.0, 0.0, 0.0];
+pub const GATE_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
+
 impl Defaults {
     pub const MIDI_NOTE_FREQUENCIES: [(f32, &str); 128] = [
         (8.175, "C-1"),
