@@ -161,11 +161,9 @@ fn set_ui_default_values(
         ui.set_filter_envelope_values(slint_envelope_from_ui_envelope(
             &ui_default_values.filter_envelope,
         ));
-
         ui.set_effects_values(slint_effect_values_from_effect_parameters(
             &ui_default_values.effects,
         ));
-        dbg!(&ui_default_values.effects);
         ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&ui_default_values.mod_wheel_lfo));
         ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_default_values.filter_lfo));
         ui.set_mod_wheel_lfo_frequency_display(DEFAULT_LFO_FREQUENCY);

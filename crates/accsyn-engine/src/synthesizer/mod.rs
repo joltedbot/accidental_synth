@@ -4,6 +4,7 @@ mod midi_messages;
 pub mod midi_value_converters;
 mod sample_generator;
 mod set_parameters;
+pub mod patches;
 
 use self::constants::{
     DEFAULT_FILTER_ENVELOPE_AMOUNT, DEFAULT_VELOCITY_CURVE, DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY,

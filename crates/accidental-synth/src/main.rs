@@ -3,6 +3,7 @@ mod ui;
 use crate::ui::UI;
 use accsyn_audio::Audio;
 use accsyn_engine::synthesizer::Synthesizer;
+use accsyn_engine::synthesizer::patches::Patches;
 use accsyn_midi::Midi;
 use clap::Parser;
 
@@ -27,7 +28,10 @@ fn main() {
 
     log::debug!(target: "main", "Initialize the synthesizer module");
     let mut synthesizer = Synthesizer::new(audio.get_output_stream_parameters());
-
+    Patches::new().expect("Could not initialize patches");
+    
+    
+    
     log::debug!(target: "main", "Initialize the midi module");
     let mut midi = Midi::new();
 
