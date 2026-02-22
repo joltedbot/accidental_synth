@@ -40,7 +40,7 @@ export component AccidentalSynth inherits Window {
     callback midi-input-channel-changed(string);
 
     // Oscillator Panel Properties & Callbacks
-    in property <[Oscillator]> oscillators: [
+    in property <[Oscillator]> oscillator_values: [
         { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
         { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
         { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
@@ -197,7 +197,7 @@ export component AccidentalSynth inherits Window {
 
                         VerticalLayout {
                             oscillator-panel := OscillatorsPanel {
-                                oscillators: oscillators;
+                                oscillators: oscillator_values;
                                 fine-tune-cents: osc-fine-tune-cents;
 
                                 wave-shape-changed(oscillator, shape_index) => {

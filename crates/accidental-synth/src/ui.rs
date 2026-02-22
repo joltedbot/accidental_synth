@@ -22,8 +22,8 @@ use accsyn_midi::MidiDeviceUpdateEvents;
 use accsyn_types::audio_events::AudioDeviceUpdateEvents;
 use accsyn_types::defaults::Defaults;
 use accsyn_types::effects::EffectParameters;
-use accsyn_types::math::{ load_f32_from_atomic_u32,
-    normal_value_from_exponential_curve_and_coefficient,
+use accsyn_types::math::{
+    load_f32_from_atomic_u32, normal_value_from_exponential_curve_and_coefficient,
 };
 use accsyn_types::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
@@ -81,8 +81,6 @@ impl UI {
 
         let parameter_values = init_ui_values_from_module_parameters(parameters);
 
-        dbg!(&parameter_values);
-
         Self {
             ui_update_sender,
             ui_update_receiver,
@@ -108,6 +106,7 @@ impl UI {
             audio_output_device_sender,
             synthesizer_update_sender,
         );
+
         set_ui_default_values(ui_weak, &self.parameter_values)?;
 
         start_ui_update_listener(ui_update_receiver, ui_weak, &self.parameter_values);
@@ -147,6 +146,7 @@ fn set_ui_default_values(
         ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_default_values.filter_lfo));
         ui.set_mod_wheel_lfo_frequency_display(DEFAULT_LFO_FREQUENCY);
         ui.set_filter_lfo_frequency_display(DEFAULT_LFO_FREQUENCY);
+        ui.set_oscillator_values(slint_oscillators_from_oscillators(&ui_default_values.oscillators));
     })?;
 
     Ok(())

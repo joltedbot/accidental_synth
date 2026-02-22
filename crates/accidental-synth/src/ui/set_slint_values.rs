@@ -126,7 +126,7 @@ pub fn set_oscillator_values(
 ) {
     let ui_oscillators = oscillator_values.to_vec();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
-        ui.set_oscillators(ui::slint_oscillators_from_oscillators(&ui_oscillators));
+        ui.set_oscillator_values(ui::slint_oscillators_from_oscillators(&ui_oscillators));
     });
 }
 
