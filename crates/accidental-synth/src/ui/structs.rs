@@ -21,13 +21,12 @@ use accsyn_types::defaults::{
     OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS,
 };
 use accsyn_types::math::{
-    EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_PORTAMENTO_COEFFICIENT, load_f32_from_atomic_u32,
-    normalize_float_range, normalize_unsigned_integer_range,
+    EXPONENTIAL_PORTAMENTO_COEFFICIENT, load_f32_from_atomic_u32, normalize_float_range,
+    normalize_unsigned_integer_range,
 };
 use accsyn_types::math::{
     normal_value_from_exponential_curve_and_coefficient, normalize_signed_integer_range,
 };
-use std::env::home_dir;
 use std::sync::atomic::Ordering::Relaxed;
 
 #[derive(Clone, Debug)]

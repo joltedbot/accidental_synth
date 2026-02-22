@@ -10,7 +10,7 @@ const APP_SUPPORT_DIRECTORY: &str = "Library/Application Support";
 const DATA_DIRECTORY: &str = "AccidentalSynthesizer";
 const USER_PATCH_DIRECTORY: &str = "patches";
 const PRESETS_DIRECTORY: &str = "presets";
-const INIT_PRESET_NAME: &str = "init";
+
 const PATCH_FILE_EXTENSION: &str = "accsyn";
 const INIT_PARAMETERS: &str = include_str!("patches/init.json");
 
