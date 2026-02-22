@@ -8,6 +8,18 @@ const CENTS_PER_OCTAVE: f32 = 1200.0;
 const MAX_MIDI_VALUE: f32 = 127.0;
 const CENTER_MIDI_VALUE: u8 = 64;
 
+pub const EXPONENTIAL_FILTER_COEFFICIENT: f32 = 9.903_487;
+// filter range 20,000hz so ln(20000) = 9.903487
+pub const EXPONENTIAL_LEVEL_COEFFICIENT: f32 = 6.908;
+// Level linear range is 1000x so ln(1000) = 6.908
+pub const EXPONENTIAL_LFO_COEFFICIENT: f32 = 13.81551;
+// ln(100_000) = 13.81551
+pub const EXPONENTIAL_PORTAMENTO_COEFFICIENT: f32 = 6.214_608;
+// ln(500) = 8.517193
+pub const EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES: (f32, f32) = (0.5, 700.0);
+pub const EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES: (f32, f32) = (0.5, 1000.0);
+pub const EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES: (f32, f32) = (0.6, 2000.0);
+
 #[inline]
 pub fn dbfs_to_f32_sample(dbfs: f32) -> f32 {
     if !dbfs.is_finite() || dbfs <= DBFS_SILENCE_LEVEL {
@@ -70,6 +82,24 @@ pub fn normalize_midi_value(midi_value: u8) -> f32 {
 }
 
 #[inline]
+pub fn normalize_unsigned_integer_range(input_value: u32, range_min: u32, range_max: u32) -> f32 {
+    let range = range_max - range_min;
+    (input_value - range_min) as f32 / range as f32
+}
+
+#[inline]
+pub fn normalize_signed_integer_range(input_value: i32, range_min: i32, range_max: i32) -> f32 {
+    let range = range_max - range_min;
+    (input_value - range_min) as f32 / range as f32
+}
+
+#[inline]
+pub fn normalize_float_range(input_value: f32, range_min: f32, range_max: f32) -> f32 {
+    let range = range_max - range_min;
+    (input_value - range_min) / range
+}
+
+#[inline]
 pub fn map_value_from_linear_to_exponential_scale(
     mut input_value: f32,
     mut input_range: (f32, f32),
@@ -119,6 +149,26 @@ pub fn map_value_from_linear_to_exponential_scale(
 #[inline]
 fn swap_tuple_order(tuple: &mut (f32, f32)) {
     std::mem::swap(&mut tuple.0, &mut tuple.1);
+}
+
+#[inline]
+pub fn exponential_curve_from_normal_value_and_coefficient(
+    normal_value: f32,
+    exponential_coefficient: f32,
+) -> f32 {
+    // exponential_coefficient is the log of the effective range for the linear scale you want to map to exponential range
+    // If the range max is 1000x then min, then the exponential_coefficient is log(1000) = 6.908
+    (exponential_coefficient * normal_value).exp()
+}
+
+#[inline]
+pub fn normal_value_from_exponential_curve_and_coefficient(
+    curve_value: f32,
+    exponential_coefficient: f32,
+) -> f32 {
+    // exponential_coefficient is the log of the effective range for the linear scale you want to map to exponential range
+    // If the range max is 1000x then min, then the exponential_coefficient is log(1000) = 6.908
+    curve_value.ln() / exponential_coefficient
 }
 
 #[cfg(test)]

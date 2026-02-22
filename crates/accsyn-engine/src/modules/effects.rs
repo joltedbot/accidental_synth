@@ -8,6 +8,7 @@ use accsyn_types::defaults::DELAY_DEFAULT_PARAMETERS;
 pub use accsyn_types::effects::EffectIndex;
 use accsyn_types::effects::{AudioEffect, EffectParameters, PARAMETERS_PER_EFFECT};
 use accsyn_types::math::load_f32_from_atomic_u32;
+use serde::{Deserialize, Serialize};
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU32};
 use strum::IntoEnumIterator;
@@ -24,7 +25,7 @@ mod saturation;
 mod tremolo;
 mod wavefolder;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AudioEffectParameters {
     pub is_enabled: AtomicBool,
     pub parameters: [AtomicU32; PARAMETERS_PER_EFFECT],

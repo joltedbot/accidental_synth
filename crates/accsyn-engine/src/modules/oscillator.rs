@@ -32,6 +32,7 @@ use accsyn_types::defaults::Defaults;
 use accsyn_types::math;
 use accsyn_types::math::{dbfs_to_f32_sample, f32s_are_equal, load_f32_from_atomic_u32};
 use generate_wave_trait::GenerateWave;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
 use std::sync::atomic::{AtomicBool, AtomicI8, AtomicI16, AtomicU8, AtomicU16, AtomicU32};
@@ -70,7 +71,7 @@ pub enum HardSyncRole {
     Synced(Arc<AtomicBool>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct OscillatorParameters {
     pub fine_tune: AtomicI8,
     pub course_tune: AtomicI8,

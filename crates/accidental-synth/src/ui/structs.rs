@@ -1,18 +1,36 @@
 #![allow(dead_code)]
 
-use crate::ui::constants::DEFAULT_FINE_TUNE_NORMAL_VALUE;
+use crate::ui::constants::{DEFAULT_FINE_TUNE_NORMAL_VALUE, MIDI_CHANNEL_LIST};
 use accsyn_engine::modules::envelope::{
-    DEFAULT_ENVELOPE_MILLISECONDS, DEFAULT_ENVELOPE_SUSTAIN_LEVEL, MAX_ATTACK_MILLISECONDS,
-    MAX_DECAY_MILLISECONDS, MAX_RELEASE_MILLISECONDS, MIN_ATTACK_MILLISECONDS,
-    MIN_DECAY_MILLISECONDS, MIN_RELEASE_MILLISECONDS,
+    DEFAULT_ENVELOPE_MILLISECONDS, DEFAULT_ENVELOPE_SUSTAIN_LEVEL, EnvelopeParameters,
+    MAX_ATTACK_MILLISECONDS, MAX_DECAY_MILLISECONDS, MAX_RELEASE_MILLISECONDS,
+    MIN_ATTACK_MILLISECONDS, MIN_DECAY_MILLISECONDS, MIN_RELEASE_MILLISECONDS,
 };
-use accsyn_engine::modules::lfo::DEFAULT_LFO_FREQUENCY;
+use accsyn_engine::modules::filter::FilterParameters;
+use accsyn_engine::modules::lfo::{
+    DEFAULT_LFO_FREQUENCY, LfoParameters, MAX_LFO_FREQUENCY, MIN_LFO_FREQUENCY,
+};
+use accsyn_engine::modules::oscillator::OscillatorParameters;
 use accsyn_engine::modules::oscillator::constants::{
-    DEFAULT_HARD_SYNC_ENABLED, DEFAULT_KEY_SYNC_ENABLED, DEFAULT_POLARITY_FLIPPED,
+    DEFAULT_HARD_SYNC_ENABLED, DEFAULT_KEY_SYNC_ENABLED, DEFAULT_POLARITY_FLIPPED, MAX_CLIP_BOOST,
+    MIN_CLIP_BOOST,
 };
-use accsyn_types::defaults::Defaults;
+use accsyn_engine::synthesizer::{KeyboardParameters, MixerParameters};
+use accsyn_types::defaults::{
+    Defaults, MAX_FILTER_CUTOFF, MAX_FILTER_RESONANCE, MIN_FILTER_CUTOFF, MIN_FILTER_RESONANCE,
+    OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS,
+};
+use accsyn_types::math::{
+    EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_PORTAMENTO_COEFFICIENT, load_f32_from_atomic_u32,
+    normalize_float_range, normalize_unsigned_integer_range,
+};
+use accsyn_types::math::{
+    normal_value_from_exponential_curve_and_coefficient, normalize_signed_integer_range,
+};
+use std::env::home_dir;
+use std::sync::atomic::Ordering::Relaxed;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct UIAudioDevice {
     pub output_device_index: i32,
     pub left_channel_index: i32,
@@ -51,7 +69,7 @@ impl Default for UIAudioDevice {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Debug)]
 pub struct UIMidiPort {
     pub input_ports: Vec<String>,
     pub input_port_index: i32,
@@ -59,7 +77,18 @@ pub struct UIMidiPort {
     pub channel_index: i32,
 }
 
-#[derive(Clone, Copy)]
+impl Default for UIMidiPort {
+    fn default() -> Self {
+        Self {
+            channels: MIDI_CHANNEL_LIST.iter().map(ToString::to_string).collect(),
+            input_ports: Vec::new(),
+            input_port_index: i32::default(),
+            channel_index: i32::default(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
 pub struct UIOscillator {
     pub wave_shape_index: i32,
     pub fine_tune: f32,
@@ -82,13 +111,52 @@ impl Default for UIOscillator {
     }
 }
 
-#[derive(Clone, Default)]
+impl UIOscillator {
+    pub fn from_synth_parameters(parameters: &OscillatorParameters) -> Self {
+        Self {
+            wave_shape_index: parameters.wave_shape_index.load(Relaxed) as i32,
+            fine_tune: normalize_signed_integer_range(
+                parameters.fine_tune.load(Relaxed) as i32,
+                OSCILLATOR_FINE_TUNE_MIN_CENTS as i32,
+                OSCILLATOR_FINE_TUNE_MAX_CENTS as i32,
+            ),
+            course_tune: parameters.course_tune.load(Relaxed) as i32,
+            clipper_boost: normalize_unsigned_integer_range(
+                parameters.clipper_boost.load(Relaxed) as u32,
+                MIN_CLIP_BOOST as u32,
+                MAX_CLIP_BOOST as u32,
+            ),
+            parameter1: load_f32_from_atomic_u32(&parameters.shape_parameter1),
+            parameter2: load_f32_from_atomic_u32(&parameters.shape_parameter2),
+        }
+    }
+}
+
+#[derive(Clone, Default, Debug)]
 pub struct UIFilterCutoff {
     pub cutoff: f32,
     pub resonance: f32,
 }
 
-#[derive(Clone, Default)]
+impl UIFilterCutoff {
+    pub fn from_synth_parameters(parameters: &FilterParameters) -> Self {
+        let cutoff = normalize_float_range(
+            load_f32_from_atomic_u32(&parameters.cutoff_frequency),
+            MIN_FILTER_CUTOFF,
+            MAX_FILTER_CUTOFF,
+        );
+        Self {
+            cutoff,
+            resonance: normalize_float_range(
+                load_f32_from_atomic_u32(&parameters.resonance),
+                MIN_FILTER_RESONANCE,
+                MAX_FILTER_RESONANCE,
+            ),
+        }
+    }
+}
+
+#[derive(Clone, Default, Debug)]
 pub struct UIFilterOptions {
     pub poles: i32,
     pub key_track: f32,
@@ -96,7 +164,22 @@ pub struct UIFilterOptions {
     pub lfo_amount: f32,
 }
 
-#[derive(Clone)]
+impl UIFilterOptions {
+    pub fn from_synth_parameters(
+        parameters: &FilterParameters,
+        envelope: &EnvelopeParameters,
+        lfo: &LfoParameters,
+    ) -> Self {
+        Self {
+            poles: parameters.filter_poles.load(Relaxed) as i32,
+            key_track: parameters.key_tracking_amount.load(Relaxed) as f32,
+            envelope_amount: envelope.amount.load(Relaxed) as f32,
+            lfo_amount: lfo.range.load(Relaxed) as f32,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct UILfo {
     pub frequency: f32,
     pub phase: f32,
@@ -113,7 +196,21 @@ impl Default for UILfo {
     }
 }
 
-#[derive(Clone)]
+impl UILfo {
+    pub fn from_synth_parameters(parameters: &LfoParameters) -> Self {
+        Self {
+            frequency: normalize_float_range(
+                load_f32_from_atomic_u32(&parameters.frequency),
+                MIN_LFO_FREQUENCY,
+                MAX_LFO_FREQUENCY,
+            ),
+            phase: load_f32_from_atomic_u32(&parameters.phase),
+            wave_shape_index: parameters.wave_shape.load(Relaxed) as i32,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct UIEnvelope {
     pub attack: f32,
     pub decay: f32,
@@ -137,11 +234,60 @@ impl Default for UIEnvelope {
     }
 }
 
-#[derive(Clone, Default)]
+impl UIEnvelope {
+    pub fn from_synth_parameters(parameters: &EnvelopeParameters) -> Self {
+        Self {
+            attack: normalize_unsigned_integer_range(
+                parameters.attack_ms.load(Relaxed),
+                MIN_ATTACK_MILLISECONDS,
+                MAX_ATTACK_MILLISECONDS,
+            ),
+            decay: normalize_unsigned_integer_range(
+                parameters.release_ms.load(Relaxed),
+                MIN_RELEASE_MILLISECONDS,
+                MAX_RELEASE_MILLISECONDS,
+            ),
+            sustain: load_f32_from_atomic_u32(&parameters.sustain_level),
+            release: normalize_unsigned_integer_range(
+                parameters.release_ms.load(Relaxed),
+                MIN_RELEASE_MILLISECONDS,
+                MAX_RELEASE_MILLISECONDS,
+            ),
+            inverted: parameters.is_inverted.load(Relaxed),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct UIMixer {
     pub level: f32,
     pub balance: f32,
     pub is_muted: bool,
+}
+impl UIMixer {
+    fn output_default() -> Self {
+        Self {
+            level: Defaults::OUTPUT_MIXER_LEVEL,
+            balance: Defaults::OUTPUT_MIXER_BALANCE,
+            is_muted: Defaults::OUTPUT_MIXER_IS_MUTED,
+        }
+    }
+
+    fn quad_default() -> Self {
+        Self {
+            level: Defaults::QUAD_MIXER_LEVEL,
+            balance: Defaults::QUAD_MIXER_BALANCE,
+            is_muted: Defaults::QUAD_MIXER_IS_MUTED,
+        }
+    }
+
+    pub fn from_synth_parameters(parameters: &MixerParameters) -> Self {
+        Self {
+            level: load_f32_from_atomic_u32(&parameters.level),
+            balance: load_f32_from_atomic_u32(&parameters.balance),
+            is_muted: parameters.is_muted.load(Relaxed),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -155,6 +301,25 @@ pub struct UIGlobalOptions {
     pub polarity_is_flipped: bool,
 }
 
+impl UIGlobalOptions {
+    pub fn from_synth_parameters(
+        keyboard_parameters: &KeyboardParameters,
+        oscillator_parameters: &OscillatorParameters,
+    ) -> Self {
+        Self {
+            portamento_time: normal_value_from_exponential_curve_and_coefficient(
+                oscillator_parameters.portamento_time.load(Relaxed) as f32,
+                EXPONENTIAL_PORTAMENTO_COEFFICIENT,
+            ),
+            portamento_is_enabled: oscillator_parameters.portamento_enabled.load(Relaxed),
+            pitch_bend_range: keyboard_parameters.pitch_bend_range.load(Relaxed) as i32,
+            velocity_curve_slope: load_f32_from_atomic_u32(&keyboard_parameters.velocity_curve),
+            hard_sync_is_enabled: oscillator_parameters.hard_sync_enabled.load(Relaxed),
+            key_sync_is_enabled: oscillator_parameters.key_sync_enabled.load(Relaxed),
+            polarity_is_flipped: keyboard_parameters.polarity_flipped.load(Relaxed),
+        }
+    }
+}
 impl Default for UIGlobalOptions {
     fn default() -> Self {
         Self {

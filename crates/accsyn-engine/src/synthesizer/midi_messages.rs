@@ -82,7 +82,7 @@ pub fn process_midi_note_on_message(
     ui_update_sender: &Sender<UIUpdates>,
 ) {
     let scaled_velocity = scaled_velocity_from_normal_value(
-        load_f32_from_atomic_u32(&current_note.velocity_curve),
+        load_f32_from_atomic_u32(&module_parameters.keyboard.velocity_curve),
         normalize_midi_value(velocity),
     );
 
@@ -106,7 +106,6 @@ pub fn process_midi_note_on_message(
 #[allow(clippy::too_many_lines)]
 pub fn process_midi_cc_values(
     cc_value: CC,
-    current_note: &mut Arc<CurrentNote>,
     module_parameters: &mut Arc<ModuleParameters>,
     ui_update_sender: &Sender<UIUpdates>,
 ) {
@@ -117,7 +116,7 @@ pub fn process_midi_cc_values(
         }
         CC::VelocityCurve(value) => {
             let normal_value = normalize_midi_value(value);
-            set_velocity_curve(current_note, normalize_midi_value(value));
+            set_velocity_curve(&module_parameters.keyboard, normalize_midi_value(value));
 
             ui_update_sender.send(UIUpdates::VelocityCurve(normal_value))
                             .expect("process_cc_midi_values(): Could not send the velocity curve value to the UI. Exiting");

@@ -150,8 +150,11 @@ dependencies = [
  "log",
  "rand 0.10.0",
  "rtrb",
+ "serde",
+ "serde_json",
  "strum",
  "strum_macros",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

@@ -3,12 +3,15 @@ use crate::modules::oscillator::{
     FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX, OscillatorParameters,
 };
 use crate::synthesizer::constants::{
-    CENTS_PER_SEMITONE, EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT,
-    EXPONENTIAL_LFO_COEFFICIENT, LEVEL_CURVE_LINEAR_RANGE, LINEAR_VELOCITY_CURVE_EXPONENT,
+    CENTS_PER_SEMITONE, LEVEL_CURVE_LINEAR_RANGE, LINEAR_VELOCITY_CURVE_EXPONENT,
     MAX_MIDI_KEY_VELOCITY, MAX_VELOCITY_CURVE_EXPONENT, MIN_VELOCITY_CURVE_EXPONENT,
     NORMAL_TO_BOOL_SWITCH_ON_VALUE, PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT,
 };
-use accsyn_types::math::f32s_are_equal;
+use accsyn_types::math;
+use accsyn_types::math::{
+    EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT,
+    f32s_are_equal,
+};
 use std::sync::atomic::Ordering::Relaxed;
 
 pub fn normal_value_to_f32_range(normal_value: f32, mut minimum: f32, mut maximum: f32) -> f32 {
@@ -71,11 +74,11 @@ pub fn normal_value_to_wave_shape_index(normal_value: f32) -> u8 {
     .clamp(FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX) as u8
 }
 
-pub(crate) fn exponential_curve_filter_cutoff_from_midi_value(normal_value: f32) -> f32 {
+pub(crate) fn exponential_curve_filter_cutoff_from_normal_value(normal_value: f32) -> f32 {
     if normal_value == 0.0 {
         return 0.0;
     }
-    exponential_curve_from_normal_value_and_coefficient(
+    math::exponential_curve_from_normal_value_and_coefficient(
         normal_value,
         EXPONENTIAL_FILTER_COEFFICIENT,
     )
@@ -85,8 +88,10 @@ pub fn exponential_curve_lfo_frequency_from_normal_value(normal_value: f32) -> f
     if normal_value == 0.0 {
         return 0.0;
     }
-    exponential_curve_from_normal_value_and_coefficient(normal_value, EXPONENTIAL_LFO_COEFFICIENT)
-        / 100.0
+    math::exponential_curve_from_normal_value_and_coefficient(
+        normal_value,
+        EXPONENTIAL_LFO_COEFFICIENT,
+    ) / 100.0
 }
 
 pub(crate) fn exponential_curve_envelope_time_from_normal_value(
@@ -115,20 +120,13 @@ pub(crate) fn exponential_curve_level_adjustment_from_normal_value(normal_value:
     if normal_value == 0.0 {
         return 0.0;
     }
-    exponential_curve_from_normal_value_and_coefficient(normal_value, EXPONENTIAL_LEVEL_COEFFICIENT)
-        / LEVEL_CURVE_LINEAR_RANGE
+    math::exponential_curve_from_normal_value_and_coefficient(
+        normal_value,
+        EXPONENTIAL_LEVEL_COEFFICIENT,
+    ) / LEVEL_CURVE_LINEAR_RANGE
 }
 
-pub(crate) fn exponential_curve_from_normal_value_and_coefficient(
-    normal_value: f32,
-    exponential_coefficient: f32,
-) -> f32 {
-    // exponential_coefficient is the log of the effective range for the linear scale you want to map to exponential range
-    // If the range max is 1000x then min, then the exponential_coefficient is log(1000) = 6.908
-    (exponential_coefficient * normal_value).exp()
-}
-
-pub(crate) fn velocity_curve_from_normal_value(normal_value: f32) -> f32 {
+pub fn velocity_curve_from_normal_value(normal_value: f32) -> f32 {
     if normal_value == 0.0 {
         return 0.0;
     }
@@ -562,7 +560,7 @@ mod tests {
     fn test_exponential_filter_cutoff_zero() {
         let normal_value = 0.0;
 
-        let actual = exponential_curve_filter_cutoff_from_midi_value(normal_value);
+        let actual = exponential_curve_filter_cutoff_from_normal_value(normal_value);
         let expected = 0.0;
 
         assert!(f32s_are_equal(actual, expected));

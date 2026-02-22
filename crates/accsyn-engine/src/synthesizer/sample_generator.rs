@@ -7,7 +7,7 @@ use crate::modules::mixer::{MixerInput, output_mix, quad_mix};
 use crate::modules::oscillator::{HardSyncRole, Oscillator, WaveShape};
 use crate::synthesizer;
 use crate::synthesizer::constants::SAMPLE_PRODUCER_LOOP_SLEEP_DURATION_MICROSECONDS;
-use crate::synthesizer::{CommonParameters, CurrentNote, ModuleParameters};
+use crate::synthesizer::{CurrentNote, ModuleParameters};
 use accsyn_types::audio_events::OutputStreamParameters;
 use accsyn_types::math::load_f32_from_atomic_u32;
 use accsyn_types::synth_events::{EnvelopeIndex, LFOIndex, OscillatorIndex};
@@ -29,20 +29,8 @@ struct Modules {
     mod_wheel_lfo: Lfo,
     effects: Effects,
     oscillators: [Oscillator; 4],
-    common: Common,
     #[cfg(debug_assertions)]
     profile_counter: u64,
-}
-
-#[derive(Default)]
-struct Common {
-    polarity_flipped: bool,
-}
-
-impl Common {
-    fn set_parameters(&mut self, parameters: &CommonParameters) {
-        self.polarity_flipped = parameters.polarity_flipped.load(Relaxed);
-    }
 }
 
 pub fn sample_generator(
@@ -117,8 +105,6 @@ pub fn sample_generator(
 
             modules.effects.set_parameters(&module_parameters.effects);
 
-            modules.common.set_parameters(&module_parameters.common);
-
             for (index, oscillator) in modules.oscillators.iter_mut().enumerate() {
                 oscillator.set_aftertouch(load_f32_from_atomic_u32(
                     &module_parameters.keyboard.aftertouch_amount,
@@ -135,9 +121,9 @@ pub fn sample_generator(
                 load_f32_from_atomic_u32(&module_parameters.keyboard.mod_wheel_amount);
             modules.mod_wheel_lfo.set_range(vibrato_amount / 4.0);
 
-            let output_level = load_f32_from_atomic_u32(&module_parameters.mixer.output_level);
-            let output_balance = load_f32_from_atomic_u32(&module_parameters.mixer.output_balance);
-            let output_is_muted = module_parameters.mixer.output_is_muted.load(Relaxed);
+            let output_level = load_f32_from_atomic_u32(&module_parameters.mixer.level);
+            let output_balance = load_f32_from_atomic_u32(&module_parameters.mixer.balance);
+            let output_is_muted = module_parameters.mixer.is_muted.load(Relaxed);
             let velocity = load_f32_from_atomic_u32(&current_note.velocity);
 
             // Loop Here
@@ -181,7 +167,7 @@ pub fn sample_generator(
                 let (mut effected_left, mut effected_right) =
                     modules.effects.process((filtered_left, filtered_right));
 
-                if modules.common.polarity_flipped {
+                if module_parameters.keyboard.polarity_flipped.load(Relaxed) {
                     effected_left *= -1.0;
                     effected_right *= -1.0;
                 }
@@ -256,7 +242,6 @@ fn initialize_synth_modules(sample_rate: u32) -> Modules {
             Oscillator::new(sample_rate, WaveShape::default()),
             Oscillator::new(sample_rate, WaveShape::default()),
         ],
-        common: Common::default(),
         #[cfg(debug_assertions)]
         profile_counter: 0,
     };

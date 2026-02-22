@@ -405,7 +405,6 @@ export component Delay inherits EffectBox {
             effect_parameter_changed(parent.effect-index, 2, amount);
         }
     }
-
 }
 
 export component AutoPan inherits EffectBox {
@@ -460,7 +459,6 @@ export component Tremolo inherits EffectBox {
     in property <EffectsValues> effect_values;
     title: Theme.tremolo-title;
     is_enabled: effect_values.is_enabled;
-    
     changed is_enabled => {
         rate.enabled = self.is_enabled;
         depth.enabled = self.is_enabled;

@@ -1,5 +1,6 @@
 use crate::modules::effects::EffectIndex;
 use crate::modules::lfo::DEFAULT_LFO_PHASE;
+use crate::synthesizer::ModuleParameters;
 use crate::synthesizer::constants::{
     ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, LFO_INDEX_FILTER, LFO_INDEX_MOD_WHEEL,
 };
@@ -15,7 +16,6 @@ use crate::synthesizer::set_parameters::{
     set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled,
     set_portamento_time, set_velocity_curve,
 };
-use crate::synthesizer::{CurrentNote, ModuleParameters};
 use accsyn_types::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
 };
@@ -29,7 +29,6 @@ use std::thread;
 pub fn start_update_event_listener(
     ui_update_receiver: Receiver<SynthesizerUpdateEvents>,
     module_parameters: Arc<ModuleParameters>,
-    mut current_note: Arc<CurrentNote>,
     ui_update_sender: Sender<UIUpdates>,
 ) {
     thread::spawn(move || {
@@ -344,7 +343,7 @@ pub fn start_update_event_listener(
                     set_pitch_bend_range(&module_parameters.keyboard, range);
                 }
                 SynthesizerUpdateEvents::VelocityCurve(curve) => {
-                    set_velocity_curve(&mut current_note, curve);
+                    set_velocity_curve(&module_parameters.keyboard, curve);
                 }
                 SynthesizerUpdateEvents::HardSyncEnabled(is_enabled) => {
                     set_oscillator_hard_sync(&module_parameters.oscillators, f32::from(is_enabled));
@@ -353,7 +352,7 @@ pub fn start_update_event_listener(
                     set_oscillator_key_sync(&module_parameters.oscillators, f32::from(is_enabled));
                 }
                 SynthesizerUpdateEvents::PolarityFlipped(is_flipped) => {
-                    set_oscillator_polarity(&module_parameters.common, f32::from(is_flipped));
+                    set_oscillator_polarity(&module_parameters.keyboard, f32::from(is_flipped));
                 }
                 SynthesizerUpdateEvents::OutputBalance(balance) => {
                     set_output_balance(&module_parameters.mixer, balance);

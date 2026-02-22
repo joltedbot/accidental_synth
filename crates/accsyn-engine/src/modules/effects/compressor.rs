@@ -92,7 +92,7 @@ mod tests {
         let normalized_ratio = 0.5;
         let makeup_gain = 0.5;
 
-        // Should not panic and should clamp threshold
+        // Should not panic and should clamp the threshold
         let result = compress_sample(sample, threshold, normalized_ratio, makeup_gain);
 
         assert!(result.is_finite());
@@ -119,7 +119,7 @@ mod tests {
     #[test]
     fn compress_sample_returns_sample_with_gain_when_at_threshold() {
         let threshold = 0.5;
-        let sample = threshold; // Exactly at threshold
+        let sample = threshold; // Exactly at the threshold
         let normalized_ratio = 0.5;
         let makeup_gain = 0.5;
         let gain_factor =
@@ -143,7 +143,7 @@ mod tests {
 
         let result = compress_sample(sample, threshold, normalized_ratio, makeup_gain);
 
-        // Should be compressed (result should be less than input)
+        // Should be compressed (the result should be less than input)
         assert!(result.abs() < sample);
         assert!(result > 0.0); // Should maintain sign
     }
@@ -206,7 +206,7 @@ mod tests {
         let result_low_gain = compress_sample(sample, threshold, normalized_ratio, low_gain);
         let result_high_gain = compress_sample(sample, threshold, normalized_ratio, high_gain);
 
-        // Higher makeup gain should produce larger result
+        // Higher makeup gain should produce a larger result
         assert!(result_high_gain.abs() > result_low_gain.abs());
     }
 

@@ -171,3 +171,13 @@ impl Defaults {
 }
 
 pub const MAX_SAMPLE_VALUE: f32 = 1.0;
+// Tuner Constants
+pub const OSCILLATOR_FINE_TUNE_MAX_CENTS: i8 = 63;
+pub const OSCILLATOR_FINE_TUNE_MIN_CENTS: i8 = -63;
+pub const OSCILLATOR_COURSE_TUNE_MAX_INTERVAL: i8 = 12;
+pub const OSCILLATOR_COURSE_TUNE_MIN_INTERVAL: i8 = -12;
+pub const MAX_FILTER_CUTOFF: f32 = 20000.0;
+pub const MIN_FILTER_CUTOFF: f32 = 0.0;
+// Filter Constants
+pub const MIN_FILTER_RESONANCE: f32 = 0.0;
+pub const MAX_FILTER_RESONANCE: f32 = 0.90;

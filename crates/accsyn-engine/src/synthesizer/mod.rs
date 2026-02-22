@@ -2,26 +2,22 @@ mod constants;
 mod event_listener;
 mod midi_messages;
 pub mod midi_value_converters;
+pub mod patches;
 mod sample_generator;
 mod set_parameters;
-pub mod patches;
 
-use self::constants::{
-    DEFAULT_FILTER_ENVELOPE_AMOUNT, DEFAULT_VELOCITY_CURVE, DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY,
-    DEFAULT_VIBRATO_LFO_DEPTH, DEFAULT_VIBRATO_LFO_RATE, MAX_MIDI_KEY_VELOCITY,
-};
+use self::constants::MAX_MIDI_KEY_VELOCITY;
 
 use accsyn_types::audio_events::OutputStreamParameters;
 use accsyn_types::defaults::Defaults;
-use accsyn_types::math::{load_f32_from_atomic_u32, store_f32_as_atomic_u32};
+use accsyn_types::math::load_f32_from_atomic_u32;
 use accsyn_types::midi_events::MidiEvent;
 use accsyn_types::synth_events::{OscillatorIndex, SynthesizerUpdateEvents};
 use accsyn_types::ui_events::UIUpdates;
 
-use crate::modules::effects::{AudioEffectParameters, default_audio_effect_parameters};
+use crate::modules::effects::AudioEffectParameters;
 use crate::modules::envelope::EnvelopeParameters;
 use crate::modules::filter::FilterParameters;
-use crate::modules::filter::max_frequency_from_sample_rate;
 use crate::modules::lfo::LfoParameters;
 use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
@@ -33,14 +29,17 @@ use crate::synthesizer::midi_messages::{
 };
 use crate::synthesizer::sample_generator::sample_generator;
 
+use crate::synthesizer::patches::Patches;
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
 use rtrb::Producer;
+use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::thread;
+use strum::EnumCount;
 
 #[derive(Debug, Clone, Copy)]
 enum MidiNoteEvent {
@@ -60,7 +59,6 @@ enum MidiGateEvent {
 struct CurrentNote {
     midi_note: AtomicU8,
     velocity: AtomicU32,
-    velocity_curve: AtomicU32,
 }
 
 impl Default for CurrentNote {
@@ -68,23 +66,24 @@ impl Default for CurrentNote {
         Self {
             midi_note: AtomicU8::new(0),
             velocity: AtomicU32::new(MAX_MIDI_KEY_VELOCITY.to_bits()),
-            velocity_curve: AtomicU32::new(DEFAULT_VELOCITY_CURVE.to_bits()),
         }
     }
 }
 
-#[derive(Default, Debug)]
-struct KeyboardParameters {
+#[derive(Default, Debug, Serialize, Deserialize)]
+pub struct KeyboardParameters {
     mod_wheel_amount: AtomicU32,
     aftertouch_amount: AtomicU32,
-    pitch_bend_range: AtomicU8,
+    pub velocity_curve: AtomicU32,
+    pub polarity_flipped: AtomicBool,
+    pub pitch_bend_range: AtomicU8,
 }
 
-#[derive(Debug)]
-struct QuadMixerInput {
-    level: AtomicU32,
-    balance: AtomicU32,
-    mute: AtomicBool,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct QuadMixerInput {
+    pub level: AtomicU32,
+    pub balance: AtomicU32,
+    pub mute: AtomicBool,
 }
 
 impl Default for QuadMixerInput {
@@ -97,43 +96,38 @@ impl Default for QuadMixerInput {
     }
 }
 
-#[derive(Debug)]
-struct MixerParameters {
-    output_level: AtomicU32,
-    output_balance: AtomicU32,
-    output_is_muted: AtomicBool,
-    quad_mixer_inputs: [QuadMixerInput; 4],
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MixerParameters {
+    pub level: AtomicU32,
+    pub balance: AtomicU32,
+    pub is_muted: AtomicBool,
+    pub quad_mixer_inputs: [QuadMixerInput; 4],
 }
 
 impl Default for MixerParameters {
     fn default() -> Self {
         Self {
-            output_level: AtomicU32::new(Defaults::OUTPUT_MIXER_LEVEL.to_bits()),
-            output_balance: AtomicU32::new(Defaults::OUTPUT_MIXER_BALANCE.to_bits()),
-            output_is_muted: AtomicBool::new(false),
+            level: AtomicU32::new(Defaults::OUTPUT_MIXER_LEVEL.to_bits()),
+            balance: AtomicU32::new(Defaults::OUTPUT_MIXER_BALANCE.to_bits()),
+            is_muted: AtomicBool::new(false),
             quad_mixer_inputs: Default::default(),
         }
     }
 }
 
-#[derive(Debug, Default)]
-struct CommonParameters {
-    polarity_flipped: AtomicBool,
-}
-
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct ModuleParameters {
-    filter: FilterParameters,
-    mixer: MixerParameters,
-    keyboard: KeyboardParameters,
-    lfos: [LfoParameters; 2],
-    envelopes: [EnvelopeParameters; 2],
-    oscillators: [OscillatorParameters; 4],
-    effects: Vec<AudioEffectParameters>,
-    common: CommonParameters,
+    pub filter: FilterParameters,
+    pub mixer: MixerParameters,
+    pub keyboard: KeyboardParameters,
+    pub lfos: [LfoParameters; 2],
+    pub envelopes: [EnvelopeParameters; 2],
+    pub oscillators: [OscillatorParameters; OscillatorIndex::COUNT],
+    pub effects: Vec<AudioEffectParameters>,
 }
 
 pub struct Synthesizer {
+    patches: Patches,
     output_stream_parameters: OutputStreamParameters,
     current_note: Arc<CurrentNote>,
     module_parameters: Arc<ModuleParameters>,
@@ -142,76 +136,31 @@ pub struct Synthesizer {
 }
 
 impl Synthesizer {
-    pub fn new(output_stream_parameters: OutputStreamParameters) -> Self {
+    pub fn new(output_stream_parameters: OutputStreamParameters) -> Result<Self> {
         log::info!(target: "synthesizer", "Constructing Synthesizer Module");
 
         let (ui_update_sender, ui_update_receiver) =
             crossbeam_channel::bounded(SYNTHESIZER_MESSAGE_SENDER_CAPACITY);
 
-        let mixer_parameters: MixerParameters = MixerParameters::default();
-        store_f32_as_atomic_u32(
-            &mixer_parameters.quad_mixer_inputs[0].level,
-            Defaults::QUAD_MIXER_SUB_LEVEL,
-        );
+        let patches = Patches::new()?;
+        let module_parameters = patches.init_module_parameters()?;
 
-        let max_filter_frequency =
-            max_frequency_from_sample_rate(output_stream_parameters.sample_rate.load(Relaxed));
-        let filter_parameters = FilterParameters {
-            cutoff_frequency: AtomicU32::new(max_filter_frequency.to_bits()),
-            ..Default::default()
-        };
-
-        let filter_envelope_parameters: EnvelopeParameters = EnvelopeParameters::default();
-        filter_envelope_parameters
-            .amount
-            .store(DEFAULT_FILTER_ENVELOPE_AMOUNT.to_bits(), Relaxed);
-
-        let filter_lfo_parameters: LfoParameters = LfoParameters::default();
-        store_f32_as_atomic_u32(&filter_lfo_parameters.range, 0.0);
-
-        let mod_wheel_lfo_parameters = LfoParameters::default();
-        mod_wheel_lfo_parameters
-            .frequency
-            .store(DEFAULT_VIBRATO_LFO_RATE.to_bits(), Relaxed);
-        mod_wheel_lfo_parameters
-            .center_value
-            .store(DEFAULT_VIBRATO_LFO_CENTER_FREQUENCY.to_bits(), Relaxed);
-        mod_wheel_lfo_parameters
-            .range
-            .store(DEFAULT_VIBRATO_LFO_DEPTH.to_bits(), Relaxed);
-
-        let keyboard_parameters = KeyboardParameters {
-            pitch_bend_range: AtomicU8::new(Defaults::PITCH_BEND_RANGE),
-            ..KeyboardParameters::default()
-        };
-
-        let envelopes = [EnvelopeParameters::default(), filter_envelope_parameters];
-        let lfos = [mod_wheel_lfo_parameters, filter_lfo_parameters];
-
-        let effects = default_audio_effect_parameters();
-
-        let module_parameters = ModuleParameters {
-            filter: filter_parameters,
-            mixer: mixer_parameters,
-            keyboard: keyboard_parameters,
-            oscillators: Default::default(),
-            lfos,
-            envelopes,
-            effects,
-            common: CommonParameters::default(),
-        };
-
-        Self {
+        Ok(Self {
+            patches,
             output_stream_parameters,
             current_note: Arc::new(CurrentNote::default()),
             module_parameters: Arc::new(module_parameters),
             ui_update_sender,
             ui_update_receiver,
-        }
+        })
     }
 
     pub fn get_ui_update_sender(&self) -> Sender<SynthesizerUpdateEvents> {
         self.ui_update_sender.clone()
+    }
+
+    pub fn get_module_parameters(&self) -> Arc<ModuleParameters> {
+        self.module_parameters.clone()
     }
 
     pub fn run(
@@ -227,7 +176,6 @@ impl Synthesizer {
         start_update_event_listener(
             self.ui_update_receiver.clone(),
             self.module_parameters.clone(),
-            self.current_note.clone(),
             ui_update_sender,
         );
 
@@ -281,12 +229,7 @@ impl Synthesizer {
                         );
                     }
                     MidiEvent::ControlChange(cc_value) => {
-                        process_midi_cc_values(
-                            cc_value,
-                            &mut current_note,
-                            &mut module_parameters,
-                            &ui_update_sender,
-                        );
+                        process_midi_cc_values(cc_value, &mut module_parameters, &ui_update_sender);
                     }
                 }
             }

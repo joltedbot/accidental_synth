@@ -1,5 +1,6 @@
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use accsyn_types::math::{f32s_are_equal, load_f32_from_atomic_u32};
+use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
@@ -15,7 +16,7 @@ const DEFAULT_RANGE: f32 = 2.0;
 pub const DEFAULT_LFO_PHASE: f32 = 0.0;
 pub const DEFAULT_LFO_FREQUENCY: f32 = 0.1;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct LfoParameters {
     pub frequency: AtomicU32,
     pub center_value: AtomicU32,

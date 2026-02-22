@@ -1,11 +1,12 @@
 // Derived from https://www.musicdsp.org/en/latest/Filters/253-perfect-lp4-filter.html
 
+use accsyn_types::defaults::MAX_FILTER_CUTOFF;
 use accsyn_types::math::load_f32_from_atomic_u32;
+use serde::{Deserialize, Serialize};
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicU8, AtomicU32};
 
 pub const NUMBER_OF_FILER_POLES: f32 = 4.0;
-const MAX_FILTER_CUTOFF: f32 = 20000.0;
 const DEFAULT_RESONANCE: f32 = 0.0;
 const NATURAL_LOG_OF_4: f32 = 1.386_294_3;
 const DENORMAL_GUARD: f32 = 1e-25_f32;
@@ -16,7 +17,7 @@ pub const DEFAULT_KEY_TRACKING_FREQUENCY_OFFSET: f32 = 1.0;
 const DEFAULT_FILTER_POLES: u8 = 4;
 const MAX_FILTER_PERCENT_OF_NYQUIST: f32 = 0.35;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FilterParameters {
     pub cutoff_frequency: AtomicU32,
     pub resonance: AtomicU32,

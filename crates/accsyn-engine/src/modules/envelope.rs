@@ -1,4 +1,5 @@
 use accsyn_types::math::load_f32_from_atomic_u32;
+use serde::{Deserialize, Serialize};
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 
@@ -21,7 +22,7 @@ pub const MAX_DECAY_MILLISECONDS: u32 = 5000;
 pub const MIN_RELEASE_MILLISECONDS: u32 = 10;
 pub const MAX_RELEASE_MILLISECONDS: u32 = 10000;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct EnvelopeParameters {
     pub attack_ms: AtomicU32,
     pub decay_ms: AtomicU32,
