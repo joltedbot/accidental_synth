@@ -3,5 +3,6 @@ pub mod defaults;
 pub mod effects;
 pub mod math;
 pub mod midi_events;
+pub mod parameter_types;
 pub mod synth_events;
 pub mod ui_events;
