@@ -1,18 +1,18 @@
 {
   "effects": [
     { "is_enabled": false, "parameters": [0, 0, 0, 0] },
-    { "is_enabled": false, "parameters": [1065353216, 0, 0, 0] },
-    { "is_enabled": false, "parameters": [0, 1065353216, 0, 0] },
+    { "is_enabled": false, "parameters": [1, 0, 0, 0] },
+    { "is_enabled": false, "parameters": [0, 1, 0, 0] },
     { "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "is_enabled": false, "parameters": [0, 0, 0, 0] },
-    { "is_enabled": false, "parameters": [0, 0, 1065353216, 0] },
-    { "is_enabled": false, "parameters": [1065353216, 0, 0, 0] },
+    { "is_enabled": false, "parameters": [0, 0, 1, 0] },
+    { "is_enabled": false, "parameters": [1, 0, 0, 0] },
     {
       "is_enabled": false,
-      "parameters": [1056964608, 1056964608, 1056964608, 0]
+      "parameters": [0.5, 0.5, 0.5, 0]
     },
-    { "is_enabled": false, "parameters": [0, 1065353216, 0, 0] },
-    { "is_enabled": false, "parameters": [0, 1065353216, 0, 0] }
+    { "is_enabled": false, "parameters": [0, 1, 0, 0] },
+    { "is_enabled": false, "parameters": [0, 1, 0, 0] }
   ],
   "envelopes": [
     {
@@ -52,8 +52,8 @@
   },
   "lfos": [
     {
-      "center_value": 1065353216,
-      "frequency": 1092616192,
+      "center_value": 1,
+      "frequency": 10,
       "phase": 0,
       "range": 0,
       "reset": false,
@@ -61,7 +61,7 @@
     },
     {
       "center_value": 0,
-      "frequency": 1036831949,
+      "frequency": 0.1,
       "phase": 0,
       "range": 0,
       "reset": false,
