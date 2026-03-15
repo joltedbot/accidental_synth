@@ -121,8 +121,8 @@ pub fn sample_generator(
                 load_f32_from_atomic_u32(&module_parameters.keyboard.mod_wheel_amount);
             modules.mod_wheel_lfo.set_range(vibrato_amount / 4.0);
 
-            let output_level = load_f32_from_atomic_u32(&module_parameters.mixer.level);
-            let output_balance = load_f32_from_atomic_u32(&module_parameters.mixer.balance);
+            let output_level = module_parameters.mixer.level.load();
+            let output_balance = module_parameters.mixer.balance.load();
             let output_is_muted = module_parameters.mixer.is_muted.load(Relaxed);
             let velocity = load_f32_from_atomic_u32(&current_note.velocity);
 

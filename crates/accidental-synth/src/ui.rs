@@ -227,8 +227,8 @@ fn oscillator_mixer_to_ui_oscillator_mixer(quad_mixer: &[QuadMixerInput]) -> Vec
     let mut ui_quad_mixer_values: Vec<UIMixer> = Vec::new();
     quad_mixer.iter().for_each(|strip| {
         ui_quad_mixer_values.push(UIMixer {
-            level: load_f32_from_atomic_u32(&strip.level),
-            balance: load_f32_from_atomic_u32(&strip.balance),
+            level: strip.level.load(),
+            balance: strip.balance.load(),
             is_muted: strip.mute.load(Relaxed),
         })
     });

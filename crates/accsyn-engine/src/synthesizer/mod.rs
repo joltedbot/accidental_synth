@@ -40,6 +40,7 @@ use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::thread;
 use strum::EnumCount;
+use accsyn_types::parameter_types::{Balance, NormalizedValue};
 
 #[derive(Debug, Clone, Copy)]
 enum MidiNoteEvent {
@@ -81,16 +82,16 @@ pub struct KeyboardParameters {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QuadMixerInput {
-    pub level: AtomicU32,
-    pub balance: AtomicU32,
+    pub level: NormalizedValue,
+    pub balance: Balance,
     pub mute: AtomicBool,
 }
 
 impl Default for QuadMixerInput {
     fn default() -> Self {
         Self {
-            level: AtomicU32::new(Defaults::QUAD_MIXER_LEVEL.to_bits()),
-            balance: AtomicU32::new(Defaults::QUAD_MIXER_BALANCE.to_bits()),
+            level: NormalizedValue::new(Defaults::QUAD_MIXER_LEVEL),
+            balance: Balance::new(Defaults::QUAD_MIXER_BALANCE),
             mute: AtomicBool::new(false),
         }
     }
@@ -98,8 +99,8 @@ impl Default for QuadMixerInput {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MixerParameters {
-    pub level: AtomicU32,
-    pub balance: AtomicU32,
+    pub level: NormalizedValue,
+    pub balance: Balance,
     pub is_muted: AtomicBool,
     pub quad_mixer_inputs: [QuadMixerInput; 4],
 }
@@ -107,8 +108,8 @@ pub struct MixerParameters {
 impl Default for MixerParameters {
     fn default() -> Self {
         Self {
-            level: AtomicU32::new(Defaults::OUTPUT_MIXER_LEVEL.to_bits()),
-            balance: AtomicU32::new(Defaults::OUTPUT_MIXER_BALANCE.to_bits()),
+            level: NormalizedValue::new(Defaults::OUTPUT_MIXER_LEVEL),
+            balance: Balance::new(Defaults::OUTPUT_MIXER_BALANCE),
             is_muted: AtomicBool::new(false),
             quad_mixer_inputs: Default::default(),
         }
@@ -270,10 +271,8 @@ fn create_mixer_input_from_oscillator_parameters(
 ) -> MixerInput {
     MixerInput {
         sample: 0.0,
-        level: load_f32_from_atomic_u32(&parameters.quad_mixer_inputs[oscillator as usize].level),
-        balance: load_f32_from_atomic_u32(
-            &parameters.quad_mixer_inputs[oscillator as usize].balance,
-        ),
+        level: parameters.quad_mixer_inputs[oscillator as usize].level.load(),
+        balance: parameters.quad_mixer_inputs[oscillator as usize].balance.load(),
         mute: parameters.quad_mixer_inputs[oscillator as usize]
             .mute
             .load(Relaxed),

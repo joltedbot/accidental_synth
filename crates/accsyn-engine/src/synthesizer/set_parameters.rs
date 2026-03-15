@@ -137,12 +137,12 @@ pub fn set_filter_cutoff(filter_parameters: &FilterParameters, normal_value: f32
 
 pub fn set_output_balance(parameters: &MixerParameters, normal_value: f32) {
     let output_balance = normal_value_to_f32_range(normal_value, -1.0, 1.0);
-    store_f32_as_atomic_u32(&parameters.balance, output_balance);
+    parameters.balance.store(output_balance);
 }
 
 pub fn set_output_level(parameters: &MixerParameters, normal_value: f32) {
     let output_level = exponential_curve_level_adjustment_from_normal_value(normal_value);
-    store_f32_as_atomic_u32(&parameters.level, output_level);
+    parameters.level.store(output_level);
 }
 
 pub fn set_output_mute(parameters: &MixerParameters, normal_value: f32) {
@@ -235,10 +235,7 @@ pub fn set_oscillator_balance(
     normal_value: f32,
 ) {
     let balance = normal_value_to_f32_range(normal_value, -1.0, 1.0);
-    store_f32_as_atomic_u32(
-        &parameters.quad_mixer_inputs[oscillator as usize].balance,
-        balance,
-    );
+    parameters.quad_mixer_inputs[oscillator as usize].balance.store(balance);
 }
 
 pub fn set_oscillator_mute(
@@ -258,10 +255,7 @@ pub fn set_oscillator_level(
     normal_value: f32,
 ) {
     let level = exponential_curve_level_adjustment_from_normal_value(normal_value);
-    store_f32_as_atomic_u32(
-        &parameters.quad_mixer_inputs[oscillator as usize].level,
-        level,
-    );
+    parameters.quad_mixer_inputs[oscillator as usize].level.store(level);
 }
 
 pub fn set_oscillator_fine_tune(parameters: &OscillatorParameters, normal_value: f32) -> i8 {

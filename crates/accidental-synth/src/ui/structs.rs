@@ -282,8 +282,8 @@ impl UIMixer {
 
     pub fn from_synth_parameters(parameters: &MixerParameters) -> Self {
         Self {
-            level: load_f32_from_atomic_u32(&parameters.level),
-            balance: load_f32_from_atomic_u32(&parameters.balance),
+            level: parameters.level.load(),
+            balance: parameters.balance.load(),
             is_muted: parameters.is_muted.load(Relaxed),
         }
     }
