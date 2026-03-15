@@ -18,7 +18,7 @@ use crate::synthesizer::{
     midi_value_converters,
 };
 use accsyn_types::defaults::Defaults;
-use accsyn_types::math::{load_f32_from_atomic_u32, normalize_midi_value, store_f32_as_atomic_u32};
+use accsyn_types::math::{normalize_midi_value, store_f32_as_atomic_u32};
 use accsyn_types::midi_events::CC;
 use accsyn_types::synth_events::{EnvelopeIndex, LFOIndex, OscillatorIndex};
 use accsyn_types::ui_events::UIUpdates;
@@ -55,7 +55,7 @@ pub fn action_midi_note_events(
 
 pub fn process_midi_channel_pressure_message(parameters: &KeyboardParameters, pressure_value: u8) {
     let aftertouch_amount = normalize_midi_value(pressure_value);
-    store_f32_as_atomic_u32(&parameters.aftertouch_amount, aftertouch_amount);
+    parameters.aftertouch_amount.store(aftertouch_amount);
 }
 
 pub fn process_midi_pitch_bend_message(
@@ -82,7 +82,7 @@ pub fn process_midi_note_on_message(
     ui_update_sender: &Sender<UIUpdates>,
 ) {
     let scaled_velocity = scaled_velocity_from_normal_value(
-        load_f32_from_atomic_u32(&module_parameters.keyboard.velocity_curve),
+        module_parameters.keyboard.velocity_curve.load(),
         normalize_midi_value(velocity),
     );
 

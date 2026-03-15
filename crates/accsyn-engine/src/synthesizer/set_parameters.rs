@@ -28,7 +28,7 @@ use accsyn_types::defaults::{
 use accsyn_types::math::{
     EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES, EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
     EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES, EXPONENTIAL_PORTAMENTO_COEFFICIENT,
-    exponential_curve_from_normal_value_and_coefficient, store_f32_as_atomic_u32,
+    exponential_curve_from_normal_value_and_coefficient,
 };
 use accsyn_types::synth_events::OscillatorIndex;
 use std::sync::atomic::Ordering::Relaxed;
@@ -152,7 +152,7 @@ pub fn set_output_mute(parameters: &MixerParameters, normal_value: f32) {
 
 pub fn set_velocity_curve(parameters: &KeyboardParameters, normal_value: f32) {
     let velocity_curve = velocity_curve_from_normal_value(normal_value);
-    store_f32_as_atomic_u32(&parameters.velocity_curve, velocity_curve);
+    parameters.velocity_curve.store(velocity_curve);
 }
 
 pub fn set_pitch_bend_range(parameters: &KeyboardParameters, normal_value: f32) {
@@ -165,15 +165,15 @@ pub fn set_pitch_bend_range(parameters: &KeyboardParameters, normal_value: f32) 
 }
 
 pub fn set_mod_wheel(parameters: &KeyboardParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&parameters.mod_wheel_amount, normal_value);
+    parameters.mod_wheel_amount.store(normal_value);
 }
 
 pub fn set_oscillator_shape_parameter1(parameters: &OscillatorParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&parameters.shape_parameter1, normal_value);
+    parameters.shape_parameter1.store(normal_value);
 }
 
 pub fn set_oscillator_shape_parameter2(parameters: &OscillatorParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&parameters.shape_parameter2, normal_value);
+    parameters.shape_parameter2.store(normal_value);
 }
 
 pub fn set_oscillator_polarity(parameters: &KeyboardParameters, normal_value: f32) {
@@ -206,7 +206,7 @@ pub fn set_portamento_time(parameters: &[OscillatorParameters; 4], normal_value:
     .round() as u16;
 
     for parameters in parameters {
-        parameters.portamento_time.store(speed, Relaxed);
+        parameters.portamento_time.store(speed);
     }
 }
 
@@ -265,7 +265,7 @@ pub fn set_oscillator_fine_tune(parameters: &OscillatorParameters, normal_value:
         i32::from(OSCILLATOR_FINE_TUNE_MAX_CENTS),
     ) as i8;
 
-    parameters.fine_tune.store(cents, Relaxed);
+    parameters.fine_tune.store(cents);
     cents
 }
 
@@ -276,7 +276,7 @@ pub fn set_oscillator_course_tune(parameters: &OscillatorParameters, normal_valu
         i32::from(OSCILLATOR_COURSE_TUNE_MAX_INTERVAL),
     ) as i8;
 
-    parameters.course_tune.store(interval, Relaxed);
+    parameters.course_tune.store(interval);
     interval
 }
 

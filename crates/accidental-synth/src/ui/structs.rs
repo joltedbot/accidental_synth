@@ -21,7 +21,7 @@ use accsyn_types::defaults::{
     OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS,
 };
 use accsyn_types::math::{
-    EXPONENTIAL_PORTAMENTO_COEFFICIENT, load_f32_from_atomic_u32, normalize_float_range,
+    EXPONENTIAL_PORTAMENTO_COEFFICIENT, normalize_float_range,
     normalize_unsigned_integer_range,
 };
 use accsyn_types::math::{
@@ -115,18 +115,18 @@ impl UIOscillator {
         Self {
             wave_shape_index: parameters.wave_shape_index.load(Relaxed) as i32,
             fine_tune: normalize_signed_integer_range(
-                parameters.fine_tune.load(Relaxed) as i32,
+                parameters.fine_tune.load() as i32,
                 OSCILLATOR_FINE_TUNE_MIN_CENTS as i32,
                 OSCILLATOR_FINE_TUNE_MAX_CENTS as i32,
             ),
-            course_tune: parameters.course_tune.load(Relaxed) as i32,
+            course_tune: parameters.course_tune.load() as i32,
             clipper_boost: normalize_unsigned_integer_range(
                 parameters.clipper_boost.load(Relaxed) as u32,
                 MIN_CLIP_BOOST as u32,
                 MAX_CLIP_BOOST as u32,
             ),
-            parameter1: load_f32_from_atomic_u32(&parameters.shape_parameter1),
-            parameter2: load_f32_from_atomic_u32(&parameters.shape_parameter2),
+            parameter1: parameters.shape_parameter1.load(),
+            parameter2: parameters.shape_parameter2.load(),
         }
     }
 }
@@ -307,12 +307,12 @@ impl UIGlobalOptions {
     ) -> Self {
         Self {
             portamento_time: normal_value_from_exponential_curve_and_coefficient(
-                oscillator_parameters.portamento_time.load(Relaxed) as f32,
+                oscillator_parameters.portamento_time.load() as f32,
                 EXPONENTIAL_PORTAMENTO_COEFFICIENT,
             ),
             portamento_is_enabled: oscillator_parameters.portamento_enabled.load(Relaxed),
             pitch_bend_range: keyboard_parameters.pitch_bend_range.load(Relaxed) as i32,
-            velocity_curve_slope: load_f32_from_atomic_u32(&keyboard_parameters.velocity_curve),
+            velocity_curve_slope: keyboard_parameters.velocity_curve.load(),
             hard_sync_is_enabled: oscillator_parameters.hard_sync_enabled.load(Relaxed),
             key_sync_is_enabled: oscillator_parameters.key_sync_enabled.load(Relaxed),
             polarity_is_flipped: keyboard_parameters.polarity_flipped.load(Relaxed),

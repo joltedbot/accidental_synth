@@ -10,7 +10,6 @@ use self::constants::MAX_MIDI_KEY_VELOCITY;
 
 use accsyn_types::audio_events::OutputStreamParameters;
 use accsyn_types::defaults::Defaults;
-use accsyn_types::math::load_f32_from_atomic_u32;
 use accsyn_types::midi_events::MidiEvent;
 use accsyn_types::synth_events::{OscillatorIndex, SynthesizerUpdateEvents};
 use accsyn_types::ui_events::UIUpdates;
@@ -73,9 +72,9 @@ impl Default for CurrentNote {
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct KeyboardParameters {
-    mod_wheel_amount: AtomicU32,
-    aftertouch_amount: AtomicU32,
-    pub velocity_curve: AtomicU32,
+    mod_wheel_amount: NormalizedValue,
+    aftertouch_amount: NormalizedValue,
+    pub velocity_curve: NormalizedValue,
     pub polarity_flipped: AtomicBool,
     pub pitch_bend_range: AtomicU8,
 }

@@ -22,7 +22,6 @@ use accsyn_midi::MidiDeviceUpdateEvents;
 use accsyn_types::audio_events::AudioDeviceUpdateEvents;
 use accsyn_types::defaults::Defaults;
 use accsyn_types::effects::EffectParameters;
-use accsyn_types::math::load_f32_from_atomic_u32;
 use accsyn_types::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
 };
@@ -203,7 +202,7 @@ fn oscillator_fine_tune_to_ui_oscillator_fine_tune(
 ) -> Vec<i32> {
     oscillators
         .iter()
-        .map(|osc| osc.fine_tune.load(Relaxed) as i32)
+        .map(|osc| osc.fine_tune.load() as i32)
         .collect()
 }
 

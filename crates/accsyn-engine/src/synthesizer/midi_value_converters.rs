@@ -169,15 +169,15 @@ pub fn update_current_note_from_midi_pitch_bend(
     let max_bend_in_cents = u16::from(range_in_semitones) * CENTS_PER_SEMITONE;
     for oscillator in oscillators {
         if pitch_bend_amount == PITCH_BEND_AMOUNT_ZERO_POINT {
-            oscillator.pitch_bend.store(0, Relaxed);
+            oscillator.pitch_bend.store(0);
         } else if pitch_bend_amount >= PITCH_BEND_AMOUNT_MAX_VALUE {
             oscillator
                 .pitch_bend
-                .store(max_bend_in_cents as i16, Relaxed);
+                .store(max_bend_in_cents as i16);
         } else {
             let pitch_bend_in_cents =
                 midi_value_to_pitch_bend_cents(pitch_bend_amount, max_bend_in_cents);
-            oscillator.pitch_bend.store(pitch_bend_in_cents, Relaxed);
+            oscillator.pitch_bend.store(pitch_bend_in_cents);
         }
     }
 }
