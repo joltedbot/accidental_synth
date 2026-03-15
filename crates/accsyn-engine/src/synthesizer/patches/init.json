@@ -38,9 +38,9 @@
   ],
   "filter": {
     "current_note_number": 0,
-    "cutoff_frequency": 1183006720,
+    "cutoff_frequency": 16800,
     "filter_poles": 4,
-    "key_tracking_amount": 1056964608,
+    "key_tracking_amount": 0.5,
     "resonance": 0
   },
   "keyboard": {
