@@ -173,7 +173,7 @@ impl UIFilterOptions {
             poles: parameters.filter_poles.load(Relaxed) as i32,
             key_track: parameters.key_tracking_amount.load(Relaxed) as f32,
             envelope_amount: envelope.amount.load(),
-            lfo_amount: lfo.range.load(Relaxed) as f32,
+            lfo_amount: lfo.range.load(),
         }
     }
 }
@@ -199,11 +199,11 @@ impl UILfo {
     pub fn from_synth_parameters(parameters: &LfoParameters) -> Self {
         Self {
             frequency: normalize_float_range(
-                load_f32_from_atomic_u32(&parameters.frequency),
+                parameters.frequency.load(),
                 MIN_LFO_FREQUENCY,
                 MAX_LFO_FREQUENCY,
             ),
-            phase: load_f32_from_atomic_u32(&parameters.phase),
+            phase: parameters.phase.load(),
             wave_shape_index: parameters.wave_shape.load(Relaxed) as i32,
         }
     }

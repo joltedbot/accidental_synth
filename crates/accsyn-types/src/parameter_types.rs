@@ -92,6 +92,51 @@ impl<'de> Deserialize<'de> for Hertz {
 }
 
 #[derive(Debug)]
+pub struct LfoRange {
+    value: AtomicU32,
+}
+
+impl LfoRange {
+    #[inline]
+    pub fn new(range: f32) -> Self {
+        Self {
+            value: AtomicU32::new(range.to_bits()),
+        }
+    }
+
+    #[inline]
+    pub fn load(&self) -> f32 {
+        f32::from_bits(self.value.load(Ordering::Relaxed))
+    }
+
+    #[inline]
+    pub fn store(&self, range: f32) {
+        self.value.store(range.to_bits(), Ordering::Relaxed);
+    }
+}
+
+impl Default for LfoRange {
+    fn default() -> Self {
+        Self {
+            value: AtomicU32::new(0.0_f32.to_bits()),
+        }
+    }
+}
+
+impl Serialize for LfoRange {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_f32(self.load())
+    }
+}
+
+impl<'de> Deserialize<'de> for LfoRange {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let range = f32::deserialize(deserializer)?;
+        Ok(Self::new(range))
+    }
+}
+
+#[derive(Debug)]
 pub struct Milliseconds {
     value: AtomicU32,
 }

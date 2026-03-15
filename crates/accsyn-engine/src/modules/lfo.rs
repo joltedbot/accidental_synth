@@ -1,9 +1,10 @@
 use crate::modules::oscillator::{Oscillator, WaveShape};
-use accsyn_types::math::{f32s_are_equal, load_f32_from_atomic_u32};
+use accsyn_types::math::f32s_are_equal;
 use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
+use std::sync::atomic::{AtomicBool, AtomicU8};
+use accsyn_types::parameter_types::{Balance, Hertz, LfoRange, NormalizedValue};
 
 pub const MIN_LFO_FREQUENCY: f32 = 0.01;
 pub const MAX_LFO_FREQUENCY: f32 = 20000.0;
@@ -18,10 +19,10 @@ pub const DEFAULT_LFO_FREQUENCY: f32 = 0.1;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LfoParameters {
-    pub frequency: AtomicU32,
-    pub center_value: AtomicU32,
-    pub range: AtomicU32,
-    pub phase: AtomicU32,
+    pub frequency: Hertz,
+    pub center_value: Balance,
+    pub range: LfoRange,
+    pub phase: NormalizedValue,
     pub wave_shape: AtomicU8,
     pub reset: AtomicBool,
 }
@@ -29,10 +30,10 @@ pub struct LfoParameters {
 impl Default for LfoParameters {
     fn default() -> Self {
         Self {
-            frequency: AtomicU32::new(DEFAULT_LFO_FREQUENCY.to_bits()),
-            center_value: AtomicU32::new(DEFAULT_CENTER_VALUE.to_bits()),
-            range: AtomicU32::new(DEFAULT_RANGE.to_bits()),
-            phase: AtomicU32::new(DEFAULT_LFO_PHASE.to_bits()),
+            frequency: Hertz::new(DEFAULT_LFO_FREQUENCY),
+            center_value: Balance::new(DEFAULT_CENTER_VALUE),
+            range: LfoRange::new(DEFAULT_RANGE),
+            phase: NormalizedValue::new(DEFAULT_LFO_PHASE),
             wave_shape: AtomicU8::new(WaveShape::default() as u8),
             reset: AtomicBool::new(false),
         }
@@ -63,10 +64,10 @@ impl Lfo {
     }
 
     pub fn set_parameters(&mut self, parameters: &LfoParameters) {
-        self.set_frequency(load_f32_from_atomic_u32(&parameters.frequency));
-        self.set_center_value(load_f32_from_atomic_u32(&parameters.center_value));
-        self.set_range(load_f32_from_atomic_u32(&parameters.range));
-        self.set_phase(load_f32_from_atomic_u32(&parameters.phase));
+        self.set_frequency(parameters.frequency.load());
+        self.set_center_value(parameters.center_value.load());
+        self.set_range(parameters.range.load());
+        self.set_phase(parameters.phase.load());
         self.set_wave_shape(parameters.wave_shape.load(Relaxed));
         if parameters.reset.load(Relaxed) {
             self.reset();

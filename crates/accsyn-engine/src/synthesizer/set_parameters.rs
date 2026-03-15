@@ -35,22 +35,22 @@ use std::sync::atomic::Ordering::Relaxed;
 
 pub fn set_lfo_frequency(parameters: &LfoParameters, normal_value: f32) -> f32 {
     let frequency = exponential_curve_lfo_frequency_from_normal_value(normal_value);
-    store_f32_as_atomic_u32(&parameters.frequency, frequency);
+    parameters.frequency.store(frequency);
     frequency
 }
 
 pub fn set_lfo_center_value(parameters: &LfoParameters, normal_value: f32) {
     let center_value =
         normal_value_to_f32_range(normal_value, MIN_LFO_CENTER_VALUE, MAX_LFO_CENTER_VALUE);
-    store_f32_as_atomic_u32(&parameters.center_value, center_value);
+    parameters.center_value.store(center_value);
 }
 
 pub fn set_lfo_range(parameters: &LfoParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&parameters.range, normal_value);
+    parameters.range.store(normal_value);
 }
 
 pub fn set_lfo_phase(parameters: &LfoParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&parameters.phase, normal_value);
+    parameters.phase.store(normal_value);
 }
 
 pub fn set_lfo_wave_shape(parameters: &LfoParameters, normal_value: f32) {
@@ -59,7 +59,7 @@ pub fn set_lfo_wave_shape(parameters: &LfoParameters, normal_value: f32) {
 }
 
 pub fn set_lfo_phase_reset(parameters: &LfoParameters) {
-    parameters.phase.store(DEFAULT_LFO_PHASE as u32, Relaxed);
+    parameters.phase.store(DEFAULT_LFO_PHASE);
     parameters.reset.store(true, Relaxed);
 }
 
