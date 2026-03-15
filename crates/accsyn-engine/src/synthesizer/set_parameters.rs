@@ -64,7 +64,7 @@ pub fn set_lfo_phase_reset(parameters: &LfoParameters) {
 }
 
 pub fn set_key_tracking_amount(filter_parameters: &FilterParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&filter_parameters.key_tracking_amount, normal_value);
+    filter_parameters.key_tracking_amount.store(normal_value);
 }
 
 pub fn set_envelope_amount(envelope_parameters: &EnvelopeParameters, normal_value: f32) {
@@ -122,7 +122,7 @@ pub fn set_filter_resonance(filter_parameters: &FilterParameters, normal_value: 
     let resonance =
         normal_value_to_f32_range(normal_value, MIN_FILTER_RESONANCE, MAX_FILTER_RESONANCE);
 
-    store_f32_as_atomic_u32(&filter_parameters.resonance, resonance);
+    filter_parameters.resonance.store(resonance);
 }
 
 pub fn set_filter_poles(filter_parameters: &FilterParameters, normal_value: f32) {
@@ -132,7 +132,7 @@ pub fn set_filter_poles(filter_parameters: &FilterParameters, normal_value: f32)
 
 pub fn set_filter_cutoff(filter_parameters: &FilterParameters, normal_value: f32) {
     let cutoff_frequency = exponential_curve_filter_cutoff_from_normal_value(normal_value);
-    store_f32_as_atomic_u32(&filter_parameters.cutoff_frequency, cutoff_frequency);
+    filter_parameters.cutoff_frequency.store(cutoff_frequency);
 }
 
 pub fn set_output_balance(parameters: &MixerParameters, normal_value: f32) {

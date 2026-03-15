@@ -140,14 +140,14 @@ pub struct UIFilterCutoff {
 impl UIFilterCutoff {
     pub fn from_synth_parameters(parameters: &FilterParameters) -> Self {
         let cutoff = normalize_float_range(
-            load_f32_from_atomic_u32(&parameters.cutoff_frequency),
+            parameters.cutoff_frequency.load(),
             MIN_FILTER_CUTOFF,
             MAX_FILTER_CUTOFF,
         );
         Self {
             cutoff,
             resonance: normalize_float_range(
-                load_f32_from_atomic_u32(&parameters.resonance),
+                parameters.resonance.load(),
                 MIN_FILTER_RESONANCE,
                 MAX_FILTER_RESONANCE,
             ),
@@ -171,7 +171,7 @@ impl UIFilterOptions {
     ) -> Self {
         Self {
             poles: parameters.filter_poles.load(Relaxed) as i32,
-            key_track: parameters.key_tracking_amount.load(Relaxed) as f32,
+            key_track: parameters.key_tracking_amount.load(),
             envelope_amount: envelope.amount.load(),
             lfo_amount: lfo.range.load(),
         }
