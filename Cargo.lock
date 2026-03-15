@@ -173,6 +173,7 @@ dependencies = [
 name = "accsyn-types"
 version = "0.1.4"
 dependencies = [
+ "serde",
  "strum 0.28.0",
  "strum_macros 0.28.0",
 ]

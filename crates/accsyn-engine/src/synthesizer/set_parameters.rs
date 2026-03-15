@@ -68,7 +68,7 @@ pub fn set_key_tracking_amount(filter_parameters: &FilterParameters, normal_valu
 }
 
 pub fn set_envelope_amount(envelope_parameters: &EnvelopeParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&envelope_parameters.amount, normal_value);
+    envelope_parameters.amount.store(normal_value);
 }
 
 pub fn set_envelope_release_time(envelope_parameters: &EnvelopeParameters, normal_value: f32) {
@@ -78,11 +78,11 @@ pub fn set_envelope_release_time(envelope_parameters: &EnvelopeParameters, norma
         MIN_RELEASE_MILLISECONDS,
         MAX_RELEASE_MILLISECONDS,
     );
-    envelope_parameters.release_ms.store(milliseconds, Relaxed);
+    envelope_parameters.release_ms.store(milliseconds);
 }
 
 pub fn set_envelope_sustain_level(envelope_parameters: &EnvelopeParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&envelope_parameters.sustain_level, normal_value);
+    envelope_parameters.sustain_level.store(normal_value);
 }
 
 pub fn set_envelope_sustain_pedal(envelope_parameters: &[EnvelopeParameters], normal_value: f32) {
@@ -100,7 +100,7 @@ pub fn set_envelope_decay_time(envelope_parameters: &EnvelopeParameters, normal_
         MIN_DECAY_MILLISECONDS,
         MAX_DECAY_MILLISECONDS,
     );
-    envelope_parameters.decay_ms.store(milliseconds, Relaxed);
+    envelope_parameters.decay_ms.store(milliseconds);
 }
 
 pub fn set_envelope_attack_time(envelope_parameters: &EnvelopeParameters, normal_value: f32) {
@@ -110,7 +110,7 @@ pub fn set_envelope_attack_time(envelope_parameters: &EnvelopeParameters, normal
         MIN_ATTACK_MILLISECONDS,
         MAX_ATTACK_MILLISECONDS,
     );
-    envelope_parameters.attack_ms.store(milliseconds, Relaxed);
+    envelope_parameters.attack_ms.store(milliseconds);
 }
 
 pub fn set_envelope_inverted(envelope_parameters: &EnvelopeParameters, normal_value: f32) {

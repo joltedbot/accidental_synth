@@ -1,7 +1,7 @@
-use accsyn_types::math::load_f32_from_atomic_u32;
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
+use std::sync::atomic::{AtomicBool, AtomicU8};
+use accsyn_types::parameter_types::{Milliseconds, NormalizedValue};
 
 const ENVELOPE_MAX_LEVEL: f32 = 1.0;
 const ENVELOPE_MIN_LEVEL: f32 = 0.0;
@@ -24,12 +24,12 @@ pub const MAX_RELEASE_MILLISECONDS: u32 = 10000;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EnvelopeParameters {
-    pub attack_ms: AtomicU32,
-    pub decay_ms: AtomicU32,
-    pub release_ms: AtomicU32,
-    pub sustain_level: AtomicU32,
+    pub attack_ms: Milliseconds,
+    pub decay_ms: Milliseconds,
+    pub release_ms: Milliseconds,
+    pub sustain_level: NormalizedValue,
     pub sustain_pedal: AtomicBool,
-    pub amount: AtomicU32,
+    pub amount: NormalizedValue,
     pub is_inverted: AtomicBool,
     pub gate_flag: AtomicU8, // 0 - waiting, 1 - gate on, 2 - gate off
 }
@@ -37,11 +37,11 @@ pub struct EnvelopeParameters {
 impl Default for EnvelopeParameters {
     fn default() -> Self {
         Self {
-            attack_ms: AtomicU32::new(DEFAULT_ENVELOPE_MILLISECONDS),
-            decay_ms: AtomicU32::new(DEFAULT_ENVELOPE_MILLISECONDS),
-            sustain_level: AtomicU32::new(DEFAULT_ENVELOPE_SUSTAIN_LEVEL.to_bits()),
-            release_ms: AtomicU32::new(DEFAULT_ENVELOPE_MILLISECONDS),
-            amount: AtomicU32::new(DEFAULT_ENVELOPE_AMOUNT.to_bits()),
+            attack_ms: Milliseconds::new(DEFAULT_ENVELOPE_MILLISECONDS),
+            decay_ms: Milliseconds::new(DEFAULT_ENVELOPE_MILLISECONDS),
+            sustain_level: NormalizedValue::new(DEFAULT_ENVELOPE_SUSTAIN_LEVEL),
+            release_ms: Milliseconds::new(DEFAULT_ENVELOPE_MILLISECONDS),
+            amount: NormalizedValue::new(DEFAULT_ENVELOPE_AMOUNT),
             is_inverted: AtomicBool::new(false),
             gate_flag: AtomicU8::new(0),
             sustain_pedal: AtomicBool::new(false),
@@ -107,12 +107,12 @@ impl Envelope {
     }
 
     pub fn set_parameters(&mut self, parameters: &EnvelopeParameters) {
-        self.set_attack_milliseconds(parameters.attack_ms.load(Relaxed));
-        self.set_decay_milliseconds(parameters.decay_ms.load(Relaxed));
-        self.set_release_milliseconds(parameters.release_ms.load(Relaxed));
-        self.set_sustain_level(load_f32_from_atomic_u32(&parameters.sustain_level));
+        self.set_attack_milliseconds(parameters.attack_ms.load());
+        self.set_decay_milliseconds(parameters.decay_ms.load());
+        self.set_release_milliseconds(parameters.release_ms.load());
+        self.set_sustain_level(parameters.sustain_level.load());
         self.set_sustain_pedal(parameters.sustain_pedal.load(Relaxed));
-        self.set_amount(load_f32_from_atomic_u32(&parameters.amount));
+        self.set_amount(parameters.amount.load());
         self.set_is_inverted(parameters.is_inverted.load(Relaxed));
     }
 

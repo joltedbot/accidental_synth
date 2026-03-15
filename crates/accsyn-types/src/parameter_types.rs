@@ -1,5 +1,7 @@
-use std::sync::atomic::{AtomicI8, AtomicU8, AtomicU16, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicI8, AtomicI16, AtomicU8, AtomicU16, AtomicU32, Ordering};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+#[derive(Debug)]
 pub struct NormalizedValue {
     value: AtomicU32,
 }
@@ -31,6 +33,20 @@ impl Default for NormalizedValue {
     }
 }
 
+impl Serialize for NormalizedValue {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_f32(self.load())
+    }
+}
+
+impl<'de> Deserialize<'de> for NormalizedValue {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = f32::deserialize(deserializer)?;
+        Ok(Self::new(value))
+    }
+}
+
+#[derive(Debug)]
 pub struct Hertz {
     value: AtomicU32,
 }
@@ -62,6 +78,20 @@ impl Default for Hertz {
     }
 }
 
+impl Serialize for Hertz {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_f32(self.load())
+    }
+}
+
+impl<'de> Deserialize<'de> for Hertz {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = f32::deserialize(deserializer)?;
+        Ok(Self::new(value))
+    }
+}
+
+#[derive(Debug)]
 pub struct Milliseconds {
     value: AtomicU32,
 }
@@ -93,6 +123,20 @@ impl Default for Milliseconds {
     }
 }
 
+impl Serialize for Milliseconds {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_u32(self.load())
+    }
+}
+
+impl<'de> Deserialize<'de> for Milliseconds {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let ms = u32::deserialize(deserializer)?;
+        Ok(Self::new(ms))
+    }
+}
+
+#[derive(Debug)]
 pub struct Cents {
     value: AtomicI8,
 }
@@ -124,6 +168,20 @@ impl Default for Cents {
     }
 }
 
+impl Serialize for Cents {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_i8(self.load())
+    }
+}
+
+impl<'de> Deserialize<'de> for Cents {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let cents = i8::deserialize(deserializer)?;
+        Ok(Self::new(cents))
+    }
+}
+
+#[derive(Debug)]
 pub struct Semitones {
     value: AtomicI8,
 }
@@ -155,6 +213,65 @@ impl Default for Semitones {
     }
 }
 
+impl Serialize for Semitones {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_i8(self.load())
+    }
+}
+
+impl<'de> Deserialize<'de> for Semitones {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let semitones = i8::deserialize(deserializer)?;
+        Ok(Self::new(semitones))
+    }
+}
+
+#[derive(Debug)]
+pub struct PitchBend {
+    value: AtomicI16,
+}
+
+impl PitchBend {
+    #[inline]
+    pub fn new(bend: i16) -> Self {
+        Self {
+            value: AtomicI16::new(bend),
+        }
+    }
+
+    #[inline]
+    pub fn load(&self) -> i16 {
+        self.value.load(Ordering::Relaxed)
+    }
+
+    #[inline]
+    pub fn store(&self, bend: i16) {
+        self.value.store(bend, Ordering::Relaxed);
+    }
+}
+
+impl Default for PitchBend {
+    fn default() -> Self {
+        Self {
+            value: AtomicI16::new(0),
+        }
+    }
+}
+
+impl Serialize for PitchBend {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_i16(self.load())
+    }
+}
+
+impl<'de> Deserialize<'de> for PitchBend {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let bend = i16::deserialize(deserializer)?;
+        Ok(Self::new(bend))
+    }
+}
+
+#[derive(Debug)]
 pub struct FilterPoles {
     value: AtomicU8,
 }
@@ -186,6 +303,20 @@ impl Default for FilterPoles {
     }
 }
 
+impl Serialize for FilterPoles {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_u8(self.load())
+    }
+}
+
+impl<'de> Deserialize<'de> for FilterPoles {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let poles = u8::deserialize(deserializer)?;
+        Ok(Self::new(poles))
+    }
+}
+
+#[derive(Debug)]
 pub struct Balance {
     value: AtomicU32,
 }
@@ -217,6 +348,20 @@ impl Default for Balance {
     }
 }
 
+impl Serialize for Balance {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_f32(self.load())
+    }
+}
+
+impl<'de> Deserialize<'de> for Balance {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = f32::deserialize(deserializer)?;
+        Ok(Self::new(value))
+    }
+}
+
+#[derive(Debug)]
 pub struct PortamentoBuffers {
     value: AtomicU16,
 }
@@ -245,5 +390,18 @@ impl Default for PortamentoBuffers {
         Self {
             value: AtomicU16::new(0),
         }
+    }
+}
+
+impl Serialize for PortamentoBuffers {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_u16(self.load())
+    }
+}
+
+impl<'de> Deserialize<'de> for PortamentoBuffers {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let buffers = u16::deserialize(deserializer)?;
+        Ok(Self::new(buffers))
     }
 }

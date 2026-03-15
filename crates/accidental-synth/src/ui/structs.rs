@@ -172,7 +172,7 @@ impl UIFilterOptions {
         Self {
             poles: parameters.filter_poles.load(Relaxed) as i32,
             key_track: parameters.key_tracking_amount.load(Relaxed) as f32,
-            envelope_amount: envelope.amount.load(Relaxed) as f32,
+            envelope_amount: envelope.amount.load(),
             lfo_amount: lfo.range.load(Relaxed) as f32,
         }
     }
@@ -237,18 +237,18 @@ impl UIEnvelope {
     pub fn from_synth_parameters(parameters: &EnvelopeParameters) -> Self {
         Self {
             attack: normalize_unsigned_integer_range(
-                parameters.attack_ms.load(Relaxed),
+                parameters.attack_ms.load(),
                 MIN_ATTACK_MILLISECONDS,
                 MAX_ATTACK_MILLISECONDS,
             ),
             decay: normalize_unsigned_integer_range(
-                parameters.release_ms.load(Relaxed),
+                parameters.release_ms.load(),
                 MIN_RELEASE_MILLISECONDS,
                 MAX_RELEASE_MILLISECONDS,
             ),
-            sustain: load_f32_from_atomic_u32(&parameters.sustain_level),
+            sustain: parameters.sustain_level.load(),
             release: normalize_unsigned_integer_range(
-                parameters.release_ms.load(Relaxed),
+                parameters.release_ms.load(),
                 MIN_RELEASE_MILLISECONDS,
                 MAX_RELEASE_MILLISECONDS,
             ),
