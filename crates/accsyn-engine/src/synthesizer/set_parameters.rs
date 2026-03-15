@@ -127,7 +127,7 @@ pub fn set_filter_resonance(filter_parameters: &FilterParameters, normal_value: 
 
 pub fn set_filter_poles(filter_parameters: &FilterParameters, normal_value: f32) {
     let filter_poles = normal_value_to_number_of_filter_poles(normal_value);
-    filter_parameters.filter_poles.swap(filter_poles, Relaxed);
+    filter_parameters.filter_poles.store(filter_poles);
 }
 
 pub fn set_filter_cutoff(filter_parameters: &FilterParameters, normal_value: f32) {

@@ -170,7 +170,7 @@ impl UIFilterOptions {
         lfo: &LfoParameters,
     ) -> Self {
         Self {
-            poles: parameters.filter_poles.load(Relaxed) as i32,
+            poles: parameters.filter_poles.load() as i32,
             key_track: parameters.key_tracking_amount.load(),
             envelope_amount: envelope.amount.load(),
             lfo_amount: lfo.range.load(),

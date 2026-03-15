@@ -4,7 +4,7 @@ use accsyn_types::defaults::MAX_FILTER_CUTOFF;
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::AtomicU8;
-use accsyn_types::parameter_types::{Hertz, NormalizedValue};
+use accsyn_types::parameter_types::{FilterPoles, Hertz, NormalizedValue};
 
 pub const NUMBER_OF_FILER_POLES: f32 = 4.0;
 const DEFAULT_RESONANCE: f32 = 0.0;
@@ -21,7 +21,7 @@ const MAX_FILTER_PERCENT_OF_NYQUIST: f32 = 0.35;
 pub struct FilterParameters {
     pub cutoff_frequency: Hertz,
     pub resonance: NormalizedValue,
-    pub filter_poles: AtomicU8,
+    pub filter_poles: FilterPoles,
     pub key_tracking_amount: NormalizedValue,
     pub current_note_number: AtomicU8,
 }
@@ -30,7 +30,7 @@ impl Default for FilterParameters {
         Self {
             cutoff_frequency: Hertz::default(),
             resonance: NormalizedValue::default(),
-            filter_poles: AtomicU8::new(DEFAULT_FILTER_POLES),
+            filter_poles: FilterPoles::new(DEFAULT_FILTER_POLES),
             key_tracking_amount: NormalizedValue::new(DEFAULT_KEY_TRACKING_AMOUNT),
             current_note_number: AtomicU8::new(0),
         }
@@ -222,7 +222,7 @@ impl Filter {
     fn store_filter_parameters(&mut self, parameters: &FilterParameters) {
         self.cutoff_frequency = parameters.cutoff_frequency.load();
         self.resonance = parameters.resonance.load();
-        self.poles = parameters.filter_poles.load(Relaxed);
+        self.poles = parameters.filter_poles.load();
         self.key_tracking_amount = parameters.key_tracking_amount.load();
         self.key_tracking_frequency_offset = get_tracking_offset_from_midi_note_number(
             parameters.current_note_number.load(Relaxed),
