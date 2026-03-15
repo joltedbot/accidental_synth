@@ -215,7 +215,7 @@ fn synthesizer_effects_to_ui_effects(effects: &[AudioEffectParameters]) -> Vec<E
             parameters: effect
                 .parameters
                 .iter()
-                .map(load_f32_from_atomic_u32)
+                .map(|parameter| parameter.load())
                 .collect::<Vec<f32>>(),
         });
     });
