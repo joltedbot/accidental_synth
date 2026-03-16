@@ -69,14 +69,14 @@
     }
   ],
   "mixer": {
-    "balance": 0,
+    "balance": 0.5,
     "is_muted": false,
     "level": 0.8,
     "quad_mixer_inputs": [
-      { "balance": 0, "level": 0, "mute": false },
-      { "balance": 0, "level": 1, "mute": false },
-      { "balance": 0, "level": 1, "mute": false },
-      { "balance": 0, "level": 1, "mute": false }
+      { "balance": 0.5, "level": 0, "mute": false },
+      { "balance": 0.5, "level": 1, "mute": false },
+      { "balance": 0.5, "level": 1, "mute": false },
+      { "balance": 0.5, "level": 1, "mute": false }
     ]
   },
   "oscillators": [
