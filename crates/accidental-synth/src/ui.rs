@@ -68,14 +68,6 @@ impl UI {
 
         let (ui_update_sender, ui_update_receiver) = bounded(UI_UPDATE_CHANNEL_CAPACITY);
 
-        let oscillator_mixer = UIMixer {
-            balance: Defaults::QUAD_MIXER_BALANCE,
-            level: Defaults::QUAD_MIXER_LEVEL,
-            is_muted: Defaults::QUAD_MIXER_IS_MUTED,
-        };
-        let mut oscillator_mixer = vec![oscillator_mixer; OscillatorIndex::COUNT];
-        oscillator_mixer[OscillatorIndex::Sub as usize].level = Defaults::QUAD_MIXER_SUB_LEVEL;
-
         let parameter_values = init_ui_values_from_module_parameters(parameters);
 
         Self {
@@ -146,6 +138,15 @@ fn set_ui_default_values(
         ui.set_oscillator_values(slint_oscillators_from_oscillators(
             &ui_default_values.oscillators,
         ));
+        ui.set_output_mixer_values(slint_mixer_from_ui_mixer_options(&ui_default_values.output_mixer));
+        ui.set_oscillator_mixer_values(slint_oscillator_mixer_from_ui_oscillator_mixer(&ui_default_values.oscillator_mixer));
+        ui.set_global_options_values(slint_global_options_from_ui_global_options(&ui_default_values.global_options));
+        ui.set_filter_cutoff_values(slint_filter_cutoff_from_ui_filter_cutoff(
+            &ui_default_values.filter_cutoff,
+        ));
+        ui.set_filter_options_values(slint_filter_options_from_ui_filter_options(
+            &ui_default_values.filter_options,
+        ))
     })?;
 
     Ok(())
@@ -317,6 +318,18 @@ fn slint_mixer_from_ui_mixer_options(mixer_values: &UIMixer) -> Mixer {
         level: mixer_values.level,
         is_muted: mixer_values.is_muted,
     }
+}
+
+fn slint_oscillator_mixer_from_ui_oscillator_mixer(mixer_values: &[UIMixer]) -> ModelRc<Mixer> {
+    let mixers: VecModel<Mixer> = mixer_values
+        .iter()
+        .map(|mixer| Mixer {
+            balance: mixer.balance,
+            level: mixer.level,
+            is_muted: mixer.is_muted,
+        })
+        .collect();
+    ModelRc::from(Rc::new(mixers))
 }
 
 fn slint_global_options_from_ui_global_options(

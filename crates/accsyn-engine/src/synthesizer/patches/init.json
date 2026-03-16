@@ -47,7 +47,7 @@
     "aftertouch_amount": 0,
     "mod_wheel_amount": 0,
     "pitch_bend_range": 12,
-    "velocity_curve": 1,
+    "velocity_curve": 0.5,
     "polarity_flipped": false
   },
   "lfos": [
@@ -71,7 +71,7 @@
   "mixer": {
     "balance": 0,
     "is_muted": false,
-    "level": 0.5,
+    "level": 0.8,
     "quad_mixer_inputs": [
       { "balance": 0, "level": 0, "mute": false },
       { "balance": 0, "level": 1, "mute": false },
