@@ -25,9 +25,12 @@ mod saturation;
 mod tremolo;
 mod wavefolder;
 
+/// Shared atomic parameters for controlling a single audio effect from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AudioEffectParameters {
+    /// Whether this effect is active in the processing chain.
     pub is_enabled: AtomicBool,
+    /// Effect-specific parameter values.
     pub parameters: [NormalizedValue; PARAMETERS_PER_EFFECT],
 }
 
@@ -45,12 +48,14 @@ impl Default for AudioEffectParameters {
     }
 }
 
+/// Audio effects processing chain that applies enabled effects in sequence.
 pub struct Effects {
     effects: Vec<Box<dyn AudioEffect>>,
     parameters: Vec<EffectParameters>,
 }
 
 impl Effects {
+    /// Creates a new effects chain with all available effects initialized.
     pub fn new(sample_rate: u32) -> Self {
         let wavefolder = Box::new(WaveFolder::new());
         let clipper = Box::new(Clipper::new());
@@ -72,6 +77,7 @@ impl Effects {
         }
     }
 
+    /// Updates all effect parameters from the shared parameter array.
     pub fn set_parameters(&mut self, parameters: &[AudioEffectParameters]) {
         parameters
             .iter()
@@ -81,6 +87,7 @@ impl Effects {
             });
     }
 
+    /// Processes a stereo sample pair through all enabled effects in order.
     pub fn process(&mut self, mut samples: (f32, f32)) -> (f32, f32) {
         for (effect, parameter) in self.effects.iter_mut().zip(self.parameters.iter()) {
             samples = effect.process_samples(samples, parameter);

@@ -1,7 +1,9 @@
 mod constants;
 mod event_listener;
 mod midi_messages;
+/// Functions for converting normalized MIDI values to synthesizer parameter ranges.
 pub mod midi_value_converters;
+/// Patch and preset file management for saving and loading synthesizer state.
 pub mod patches;
 mod sample_generator;
 mod set_parameters;
@@ -70,19 +72,27 @@ impl Default for CurrentNote {
     }
 }
 
+/// Parameters controlled by the MIDI keyboard input.
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct KeyboardParameters {
     mod_wheel_amount: NormalizedValue,
     aftertouch_amount: NormalizedValue,
+    /// Exponent applied to incoming velocity values.
     pub velocity_curve: NormalizedValue,
+    /// Whether the output signal polarity is inverted.
     pub polarity_flipped: AtomicBool,
+    /// Maximum pitch bend range in semitones.
     pub pitch_bend_range: AtomicU8,
 }
 
+/// Level, balance, and mute state for a single oscillator in the quad mixer.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QuadMixerInput {
+    /// Output level for this mixer input.
     pub level: NormalizedValue,
+    /// Stereo balance position for this mixer input.
     pub balance: Balance,
+    /// Whether this mixer input is muted.
     pub mute: AtomicBool,
 }
 
@@ -96,11 +106,16 @@ impl Default for QuadMixerInput {
     }
 }
 
+/// Parameters for the output mixer including per-oscillator sub-mixer inputs.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MixerParameters {
+    /// Master output level.
     pub level: NormalizedValue,
+    /// Master stereo balance position.
     pub balance: Balance,
+    /// Whether the master output is muted.
     pub is_muted: AtomicBool,
+    /// Per-oscillator mixer input controls.
     pub quad_mixer_inputs: [QuadMixerInput; 4],
 }
 
@@ -115,17 +130,26 @@ impl Default for MixerParameters {
     }
 }
 
+/// Shared parameter state for all synthesizer modules, accessed atomically from multiple threads.
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct ModuleParameters {
+    /// Filter module parameters.
     pub filter: FilterParameters,
+    /// Output mixer parameters including per-oscillator levels.
     pub mixer: MixerParameters,
+    /// Keyboard-related parameters such as velocity curve and pitch bend range.
     pub keyboard: KeyboardParameters,
+    /// Parameters for the two LFOs (mod wheel and filter).
     pub lfos: [LfoParameters; 2],
+    /// Parameters for the two envelopes (amplitude and filter).
     pub envelopes: [EnvelopeParameters; 2],
+    /// Parameters for each of the four oscillators.
     pub oscillators: [OscillatorParameters; OscillatorIndex::COUNT],
+    /// Parameters for the audio effects chain.
     pub effects: Vec<AudioEffectParameters>,
 }
 
+/// Top-level synthesizer coordinating MIDI input, DSP processing, and audio output.
 pub struct Synthesizer {
     patches: Patches,
     output_stream_parameters: OutputStreamParameters,
@@ -136,6 +160,7 @@ pub struct Synthesizer {
 }
 
 impl Synthesizer {
+    /// Creates a new synthesizer with the given audio output stream parameters.
     pub fn new(output_stream_parameters: OutputStreamParameters) -> Result<Self> {
         log::info!(target: "synthesizer", "Constructing Synthesizer Module");
 
@@ -157,14 +182,17 @@ impl Synthesizer {
         })
     }
 
+    /// Returns a clone of the channel sender for dispatching synthesizer update events.
     pub fn get_ui_update_sender(&self) -> Sender<SynthesizerUpdateEvents> {
         self.ui_update_sender.clone()
     }
 
+    /// Returns a shared reference to the synthesizer module parameters.
     pub fn get_module_parameters(&self) -> Arc<ModuleParameters> {
         self.module_parameters.clone()
     }
 
+    /// Starts the synthesizer's MIDI listener, event handler, and sample generation threads.
     pub fn run(
         &mut self,
         midi_message_receiver: Receiver<MidiEvent>,

@@ -1,6 +1,7 @@
 use super::WaveShape;
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 
+/// White noise generator producing random samples in the [-1, 1] range.
 pub struct Noise {
     shape: WaveShape,
 }

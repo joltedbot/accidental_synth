@@ -11,6 +11,7 @@ const RATIO_PARAMETER_MAX: f32 = 10.0;
 const RATIO_PARAMETER_MIN: f32 = 0.01;
 const RATIO_PARAMETER_CENTER_POINT: f32 = 0.5;
 
+/// Frequency modulation oscillator using carrier and modulator sine waves.
 pub struct FM {
     shape: WaveShape,
     carrier: Box<dyn GenerateWave + Send + Sync>,
@@ -20,6 +21,7 @@ pub struct FM {
 }
 
 impl FM {
+    /// Creates a new FM oscillator with default modulation amount and ratio.
     pub fn new(sample_rate: u32) -> Self {
         log::debug!(target: "synth::oscillator", shape = "FM"; "Constructing wave generator");
         Self {

@@ -3,6 +3,7 @@ use super::constants::{DEFAULT_X_COORDINATE, DEFAULT_X_INCREMENT};
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use std::f32::consts::PI;
 
+/// Ramp (reverse sawtooth) wave oscillator.
 pub struct Ramp {
     shape: WaveShape,
     x_coordinate: f32,

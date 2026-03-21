@@ -1,14 +1,25 @@
+/// Amplitude modulation oscillator.
 pub mod am;
+/// Shared oscillator constants for tuning, phase, and shape parameters.
 pub mod constants;
+/// Frequency modulation oscillator.
 pub mod fm;
 mod generate_wave_trait;
+/// White noise generator.
 pub mod noise;
+/// Pulse wave oscillator with variable pulse width.
 pub mod pulse;
+/// Ramp (reverse sawtooth) wave oscillator.
 pub mod ramp;
+/// Sawtooth wave oscillator.
 pub mod saw;
+/// Sine wave oscillator.
 pub mod sine;
+/// Square wave oscillator.
 pub mod square;
+/// Multi-voice detuned supersaw oscillator.
 pub mod supersaw;
+/// Triangle wave oscillator.
 pub mod triangle;
 
 use self::am::AM;
@@ -39,52 +50,83 @@ use std::sync::atomic::{AtomicBool, AtomicU8};
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 use accsyn_types::parameter_types::{Cents, NormalizedValue, PitchBend, PortamentoBuffers, Semitones};
 
+/// Index of the first available wave shape variant.
 pub const FIRST_WAVE_SHAPE_INDEX: u32 = 0;
+/// Index of the last available wave shape variant.
 pub const LAST_WAVE_SHAPE_INDEX: u32 = 9;
 
+/// Available waveform shapes for oscillator generation.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, EnumCount, EnumIter, FromRepr)]
 #[repr(u8)]
 pub enum WaveShape {
+    /// Sine wave.
     #[default]
     Sine,
+    /// Triangle wave.
     Triangle,
+    /// Square wave.
     Square,
+    /// Sawtooth wave.
     Saw,
+    /// Pulse wave with variable width.
     Pulse,
+    /// Ramp (reverse sawtooth) wave.
     Ramp,
+    /// Multi-voice detuned supersaw wave.
     Supersaw,
+    /// Amplitude modulation synthesis.
     AM,
+    /// Frequency modulation synthesis.
     FM,
+    /// White noise.
     Noise,
 }
 
 impl WaveShape {
+    /// Converts a numeric index to the corresponding wave shape, defaulting on invalid values.
     pub fn from_index(index: u8) -> Self {
         Self::from_repr(index).unwrap_or_default()
     }
 }
 
+/// Role an oscillator plays in hard sync (source, synced, or none).
 #[derive(Default, Debug)]
 pub enum HardSyncRole {
+    /// No hard sync role assigned.
     #[default]
     None,
+    /// Source oscillator that triggers sync resets via the shared flag.
     Source(Arc<AtomicBool>),
+    /// Synced oscillator that resets its phase when the shared flag is set.
     Synced(Arc<AtomicBool>),
 }
 
+/// Shared atomic parameters for controlling an oscillator from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OscillatorParameters {
+    /// Fine tuning offset in cents.
     pub fine_tune: Cents,
+    /// Coarse tuning offset in semitones.
     pub course_tune: Semitones,
+    /// Pitch bend amount from MIDI controller.
     pub pitch_bend: PitchBend,
+    /// First wave-shape-specific parameter (e.g., FM amount, pulse width).
     pub shape_parameter1: NormalizedValue,
+    /// Second wave-shape-specific parameter (e.g., FM ratio, AM tone).
     pub shape_parameter2: NormalizedValue,
+    /// Index selecting the active wave shape.
     pub wave_shape_index: AtomicU8,
+    /// Flag indicating a new note gate event has occurred.
     pub gate_flag: AtomicBool,
+    /// Whether key sync (phase reset on note-on) is enabled.
     pub key_sync_enabled: AtomicBool,
+    /// Whether hard sync between oscillators is enabled.
     pub hard_sync_enabled: AtomicBool,
+    /// Whether portamento (pitch glide) is enabled.
     pub portamento_enabled: AtomicBool,
+    /// Portamento glide time in buffer increments.
     pub portamento_time: PortamentoBuffers,
+    /// Clipper boost amount in dB for signal saturation.
     pub clipper_boost: AtomicU8,
 }
 
@@ -128,6 +170,7 @@ impl Default for Portamento {
     }
 }
 
+/// Tracks hard sync state between oscillators.
 #[derive(Debug)]
 pub struct HardSync {
     is_enabled: bool,
@@ -145,6 +188,7 @@ impl Default for HardSync {
     }
 }
 
+/// Holds pitch tuning state including frequency, pitch bend, and transposition.
 #[derive(Debug, Copy, Clone)]
 pub struct Tuning {
     frequency: f32,
@@ -166,6 +210,7 @@ impl Default for Tuning {
     }
 }
 
+/// Core oscillator module that generates audio samples using a selectable wave shape.
 pub struct Oscillator {
     sample_rate: u32,
     wave_generator: Box<dyn GenerateWave + Send + Sync>,
@@ -179,6 +224,7 @@ pub struct Oscillator {
 }
 
 impl Oscillator {
+    /// Creates a new oscillator with the given sample rate and initial wave shape.
     pub fn new(sample_rate: u32, wave_shape: WaveShape) -> Self {
         log::debug!("Constructing Oscillator Module: {wave_shape:?}");
         let wave_generator = get_wave_generator_from_wave_shape(sample_rate, wave_shape);
@@ -196,6 +242,7 @@ impl Oscillator {
         }
     }
 
+    /// Updates all oscillator settings from the shared parameter block.
     pub fn set_parameters(&mut self, parameters: &OscillatorParameters) {
         self.set_shape_parameter1(parameters.shape_parameter1.load());
         self.set_shape_parameter2(parameters.shape_parameter2.load());
@@ -213,6 +260,7 @@ impl Oscillator {
         self.set_clipper_boost(parameters.clipper_boost.load(Relaxed));
     }
 
+    /// Generates the next audio sample with optional modulation input.
     pub fn generate(&mut self, mut modulation: Option<f32>) -> f32 {
         if modulation == Some(0.0) {
             modulation = None;
@@ -252,6 +300,7 @@ impl Oscillator {
         }
     }
 
+    /// Changes the oscillator's waveform shape, replacing the wave generator if different.
     pub fn set_wave_shape(&mut self, wave_shape: WaveShape) {
         if wave_shape == self.wave_generator.shape() {
             return;
@@ -261,6 +310,7 @@ impl Oscillator {
         self.wave_generator = get_wave_generator_from_wave_shape(self.sample_rate, wave_shape);
     }
 
+    /// Sets the wave shape by numeric index, updating the generator if changed.
     pub fn set_wave_shape_index(&mut self, wave_shape_index: u8) {
         if wave_shape_index == self.wave_shape_index {
             return;
@@ -271,26 +321,32 @@ impl Oscillator {
         self.wave_shape_index = wave_shape_index;
     }
 
+    /// Sets the oscillator's base tone frequency in Hz.
     pub fn set_frequency(&mut self, tone_frequency: f32) {
         self.tuning.frequency = tone_frequency;
     }
 
+    /// Sets the oscillator's waveform phase position.
     pub fn set_phase(&mut self, phase: f32) {
         self.wave_generator.set_phase(phase);
     }
 
+    /// Assigns a hard sync role (source, synced, or none) to this oscillator.
     pub fn set_hard_sync_role(&mut self, sync_role: HardSyncRole) {
         self.hard_sync.sync_role = sync_role;
     }
 
+    /// Resets the oscillator's wave generator phase to the initial position.
     pub fn reset(&mut self) {
         self.wave_generator.reset();
     }
 
+    /// Sets the MIDI aftertouch pressure value for clipper modulation.
     pub fn set_aftertouch(&mut self, aftertouch: f32) {
         self.aftertouch = aftertouch;
     }
 
+    /// Applies clipper boost and aftertouch saturation to the signal, clamping to [-1, 1].
     pub fn clip_signal(&mut self, signal: f32) -> f32 {
         if self.clipper_boost == 0 && self.aftertouch == 0.0 {
             return signal;
@@ -301,6 +357,7 @@ impl Oscillator {
         boosted_signal.clamp(-1.0, 1.0)
     }
 
+    /// Calculates and sets the oscillator frequency from a MIDI note number with tuning offsets.
     pub fn tune(&mut self, mut note_number: u8) {
         if self.tuning.course != 0 {
             note_number = i16::from(note_number)
@@ -397,6 +454,7 @@ impl Oscillator {
         self.tuning.fine = fine_tune;
     }
 
+    /// Enables or disables sub-oscillator mode, which tunes down one octave.
     pub fn set_is_sub_oscillator(&mut self, is_sub_oscillator: bool) {
         self.tuning.is_sub = is_sub_oscillator;
     }

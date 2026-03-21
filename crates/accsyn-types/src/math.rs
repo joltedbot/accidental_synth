@@ -8,18 +8,26 @@ const CENTS_PER_OCTAVE: f32 = 1200.0;
 const MAX_MIDI_VALUE: f32 = 127.0;
 const CENTER_MIDI_VALUE: u8 = 64;
 
+/// Exponential coefficient for filter cutoff frequency mapping (ln(20000)).
 pub const EXPONENTIAL_FILTER_COEFFICIENT: f32 = 9.903_487;
 // filter range 20,000hz so ln(20000) = 9.903487
+/// Exponential coefficient for level mapping (ln(1000)).
 pub const EXPONENTIAL_LEVEL_COEFFICIENT: f32 = 6.908;
 // Level linear range is 1000x so ln(1000) = 6.908
+/// Exponential coefficient for LFO rate mapping (ln(100000)).
 pub const EXPONENTIAL_LFO_COEFFICIENT: f32 = 13.81551;
 // ln(100_000) = 13.81551
+/// Exponential coefficient for portamento time mapping (ln(500)).
 pub const EXPONENTIAL_PORTAMENTO_COEFFICIENT: f32 = 6.214_608;
 // ln(500) = 6.214608
+/// Exponential curve parameters for envelope attack (min, max) in milliseconds.
 pub const EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES: (f32, f32) = (0.5, 700.0);
+/// Exponential curve parameters for envelope decay (min, max) in milliseconds.
 pub const EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES: (f32, f32) = (0.5, 1000.0);
+/// Exponential curve parameters for envelope release (min, max) in milliseconds.
 pub const EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES: (f32, f32) = (0.6, 2000.0);
 
+/// Converts a dBFS value to a linear f32 sample amplitude.
 #[inline]
 pub fn dbfs_to_f32_sample(dbfs: f32) -> f32 {
     if !dbfs.is_finite() || dbfs <= DBFS_SILENCE_LEVEL {
@@ -29,6 +37,7 @@ pub fn dbfs_to_f32_sample(dbfs: f32) -> f32 {
     10.0_f32.powf(dbfs / 20.0)
 }
 
+/// Converts a linear f32 sample amplitude to dBFS.
 #[inline]
 pub fn f32_sample_to_dbfs(sample: f32) -> f32 {
     if sample.is_nan() || sample == f32::NEG_INFINITY {
@@ -42,6 +51,7 @@ pub fn f32_sample_to_dbfs(sample: f32) -> f32 {
     20.0 * sample_absolute_value.log10()
 }
 
+/// Compares two f32 values for approximate equality within epsilon tolerance.
 #[inline]
 pub fn f32s_are_equal(value_1: f32, value_2: f32) -> bool {
     if value_1.is_nan() && value_2.is_nan() {
@@ -54,16 +64,19 @@ pub fn f32s_are_equal(value_1: f32, value_2: f32) -> bool {
     (value_1 - value_2).abs() <= ALTERNATE_EPSILON
 }
 
+/// Stores an f32 value in an `AtomicU32` using bit representation.
 #[inline]
 pub fn store_f32_as_atomic_u32(atomic: &AtomicU32, value: f32) {
     atomic.store(value.to_bits(), Relaxed);
 }
 
+/// Loads an f32 value from an `AtomicU32` using bit representation.
 #[inline]
 pub fn load_f32_from_atomic_u32(atomic: &AtomicU32) -> f32 {
     f32::from_bits(atomic.load(Relaxed))
 }
 
+/// Calculates a new frequency offset by the given number of cents.
 #[inline]
 pub fn frequency_from_cents(frequency: f32, cents: i16) -> f32 {
     if !frequency.is_finite() || frequency.is_nan() {
@@ -73,6 +86,7 @@ pub fn frequency_from_cents(frequency: f32, cents: i16) -> f32 {
     frequency.abs() * (2.0f32.powf(f32::from(cents) / CENTS_PER_OCTAVE))
 }
 
+/// Normalizes a MIDI value (0–127) to a 0.0–1.0 range.
 #[inline]
 pub fn normalize_midi_value(midi_value: u8) -> f32 {
     if midi_value == CENTER_MIDI_VALUE {
@@ -81,24 +95,28 @@ pub fn normalize_midi_value(midi_value: u8) -> f32 {
     (f32::from(midi_value) / MAX_MIDI_VALUE).clamp(0.0, 1.0)
 }
 
+/// Normalizes an unsigned integer to 0.0–1.0 within the given range.
 #[inline]
 pub fn normalize_unsigned_integer_range(input_value: u32, range_min: u32, range_max: u32) -> f32 {
     let range = range_max - range_min;
     (input_value - range_min) as f32 / range as f32
 }
 
+/// Normalizes a signed integer to 0.0–1.0 within the given range.
 #[inline]
 pub fn normalize_signed_integer_range(input_value: i32, range_min: i32, range_max: i32) -> f32 {
     let range = range_max - range_min;
     (input_value - range_min) as f32 / range as f32
 }
 
+/// Normalizes a float to 0.0–1.0 within the given range.
 #[inline]
 pub fn normalize_float_range(input_value: f32, range_min: f32, range_max: f32) -> f32 {
     let range = range_max - range_min;
     (input_value - range_min) / range
 }
 
+/// Maps a linear input value to an exponential output scale, returning a 0.0–1.0 normalized result.
 #[inline]
 pub fn map_value_from_linear_to_exponential_scale(
     mut input_value: f32,
@@ -151,6 +169,7 @@ fn swap_tuple_order(tuple: &mut (f32, f32)) {
     std::mem::swap(&mut tuple.0, &mut tuple.1);
 }
 
+/// Converts a normalized value (0.0–1.0) to an exponential curve using the given coefficient.
 #[inline]
 pub fn exponential_curve_from_normal_value_and_coefficient(
     normal_value: f32,
@@ -161,6 +180,7 @@ pub fn exponential_curve_from_normal_value_and_coefficient(
     (exponential_coefficient * normal_value).exp()
 }
 
+/// Converts an exponential curve value back to a normalized value (0.0–1.0) using the given coefficient.
 #[inline]
 pub fn normal_value_from_exponential_curve_and_coefficient(
     curve_value: f32,

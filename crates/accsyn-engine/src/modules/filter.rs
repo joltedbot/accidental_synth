@@ -6,23 +6,32 @@ use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::AtomicU8;
 use accsyn_types::parameter_types::{FilterPoles, Hertz, NormalizedValue};
 
+/// Number of filter poles in the ladder topology.
 pub const NUMBER_OF_FILER_POLES: f32 = 4.0;
 const DEFAULT_RESONANCE: f32 = 0.0;
 const NATURAL_LOG_OF_4: f32 = 1.386_294_3;
 const DENORMAL_GUARD: f32 = 1e-25_f32;
 const MIDI_CENTER_NOTE_NUMBER: u8 = 64;
 const NOTES_PER_OCTAVE: u8 = 12;
+/// Default key tracking amount (0.5 = center, no tracking offset).
 pub const DEFAULT_KEY_TRACKING_AMOUNT: f32 = 0.5;
+/// Default frequency offset multiplier from key tracking.
 pub const DEFAULT_KEY_TRACKING_FREQUENCY_OFFSET: f32 = 1.0;
 const DEFAULT_FILTER_POLES: u8 = 4;
 const MAX_FILTER_PERCENT_OF_NYQUIST: f32 = 0.35;
 
+/// Shared atomic parameters for controlling the filter from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FilterParameters {
+    /// Filter cutoff frequency in Hz.
     pub cutoff_frequency: Hertz,
+    /// Filter resonance amount (0.0-1.0).
     pub resonance: NormalizedValue,
+    /// Number of active filter poles (1-4).
     pub filter_poles: FilterPoles,
+    /// Key tracking amount controlling cutoff modulation by note pitch.
     pub key_tracking_amount: NormalizedValue,
+    /// Current MIDI note number used for key tracking calculation.
     pub current_note_number: AtomicU8,
 }
 impl Default for FilterParameters {
@@ -59,6 +68,7 @@ struct LadderState {
     stage3_unit_delay: f32,
 }
 
+/// Resonant lowpass ladder filter with configurable pole count and key tracking.
 #[derive(Default, Debug)]
 pub struct Filter {
     sample_rate: u32,
@@ -75,6 +85,7 @@ pub struct Filter {
 }
 
 impl Filter {
+    /// Creates a new filter initialized with the maximum cutoff for the given sample rate.
     pub fn new(sample_rate: u32) -> Self {
         log::debug!("Constructing Filter Module");
 
@@ -112,11 +123,13 @@ impl Filter {
         }
     }
 
+    /// Updates all filter settings from the shared parameter block and recalculates coefficients.
     pub fn set_parameters(&mut self, filter_parameters: &FilterParameters) {
         self.store_filter_parameters(filter_parameters);
         self.calculate_coefficients();
     }
 
+    /// Processes a stereo sample pair through the ladder filter with optional modulation.
     pub fn process(
         &mut self,
         left_sample: f32,
@@ -133,6 +146,7 @@ impl Filter {
         (left_output, right_output)
     }
 
+    /// Applies external modulation to the filter cutoff frequency.
     pub fn modulate_cutoff_frequency(&mut self, modulation: f32) {
         if modulation == 0.0 {
             return;
@@ -302,6 +316,7 @@ fn calculate_feedback_gain(
         / (adjusted_resonance_factor - 6.0 * resonance_factor)
 }
 
+/// Returns the maximum filter cutoff frequency for the given sample rate.
 pub fn max_frequency_from_sample_rate(sample_rate: u32) -> f32 {
     (sample_rate as f32 * MAX_FILTER_PERCENT_OF_NYQUIST).min(MAX_FILTER_CUTOFF)
 }

@@ -1,12 +1,14 @@
 use std::sync::atomic::{AtomicI8, AtomicI16, AtomicU8, AtomicU16, AtomicU32, Ordering};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+/// Thread-safe normalized float parameter (0.0–1.0) stored as atomic bits.
 #[derive(Debug)]
 pub struct NormalizedValue {
     value: AtomicU32,
 }
 
 impl NormalizedValue {
+    /// Creates a new normalized value from an f32.
     #[inline]
     pub fn new(normalized: f32) -> Self {
         Self {
@@ -14,11 +16,13 @@ impl NormalizedValue {
         }
     }
 
+    /// Loads the current value as an f32.
     #[inline]
     pub fn load(&self) -> f32 {
         f32::from_bits(self.value.load(Ordering::Relaxed))
     }
 
+    /// Stores a new f32 value.
     #[inline]
     pub fn store(&self, normalized: f32) {
         self.value.store(normalized.to_bits(), Ordering::Relaxed);
@@ -46,12 +50,14 @@ impl<'de> Deserialize<'de> for NormalizedValue {
     }
 }
 
+/// Thread-safe frequency parameter in Hz stored as atomic bits.
 #[derive(Debug)]
 pub struct Hertz {
     value: AtomicU32,
 }
 
 impl Hertz {
+    /// Creates a new frequency value from Hz.
     #[inline]
     pub fn new(hz: f32) -> Self {
         Self {
@@ -59,11 +65,13 @@ impl Hertz {
         }
     }
 
+    /// Loads the current frequency in Hz.
     #[inline]
     pub fn load(&self) -> f32 {
         f32::from_bits(self.value.load(Ordering::Relaxed))
     }
 
+    /// Stores a new frequency in Hz.
     #[inline]
     pub fn store(&self, hz: f32) {
         self.value.store(hz.to_bits(), Ordering::Relaxed);
@@ -91,12 +99,14 @@ impl<'de> Deserialize<'de> for Hertz {
     }
 }
 
+/// Thread-safe LFO modulation range parameter stored as atomic bits.
 #[derive(Debug)]
 pub struct LfoRange {
     value: AtomicU32,
 }
 
 impl LfoRange {
+    /// Creates a new LFO range value.
     #[inline]
     pub fn new(range: f32) -> Self {
         Self {
@@ -104,11 +114,13 @@ impl LfoRange {
         }
     }
 
+    /// Loads the current LFO range.
     #[inline]
     pub fn load(&self) -> f32 {
         f32::from_bits(self.value.load(Ordering::Relaxed))
     }
 
+    /// Stores a new LFO range.
     #[inline]
     pub fn store(&self, range: f32) {
         self.value.store(range.to_bits(), Ordering::Relaxed);
@@ -136,12 +148,14 @@ impl<'de> Deserialize<'de> for LfoRange {
     }
 }
 
+/// Thread-safe time duration parameter in milliseconds stored atomically.
 #[derive(Debug)]
 pub struct Milliseconds {
     value: AtomicU32,
 }
 
 impl Milliseconds {
+    /// Creates a new milliseconds value.
     #[inline]
     pub fn new(ms: u32) -> Self {
         Self {
@@ -149,11 +163,13 @@ impl Milliseconds {
         }
     }
 
+    /// Loads the current value in milliseconds.
     #[inline]
     pub fn load(&self) -> u32 {
         self.value.load(Ordering::Relaxed)
     }
 
+    /// Stores a new value in milliseconds.
     #[inline]
     pub fn store(&self, ms: u32) {
         self.value.store(ms, Ordering::Relaxed);
@@ -181,12 +197,14 @@ impl<'de> Deserialize<'de> for Milliseconds {
     }
 }
 
+/// Thread-safe fine-tune offset parameter in cents stored atomically.
 #[derive(Debug)]
 pub struct Cents {
     value: AtomicI8,
 }
 
 impl Cents {
+    /// Creates a new cents value.
     #[inline]
     pub fn new(cents: i8) -> Self {
         Self {
@@ -194,11 +212,13 @@ impl Cents {
         }
     }
 
+    /// Loads the current value in cents.
     #[inline]
     pub fn load(&self) -> i8 {
         self.value.load(Ordering::Relaxed)
     }
 
+    /// Stores a new value in cents.
     #[inline]
     pub fn store(&self, cents: i8) {
         self.value.store(cents, Ordering::Relaxed);
@@ -226,12 +246,14 @@ impl<'de> Deserialize<'de> for Cents {
     }
 }
 
+/// Thread-safe coarse-tune offset parameter in semitones stored atomically.
 #[derive(Debug)]
 pub struct Semitones {
     value: AtomicI8,
 }
 
 impl Semitones {
+    /// Creates a new semitones value.
     #[inline]
     pub fn new(semitones: i8) -> Self {
         Self {
@@ -239,11 +261,13 @@ impl Semitones {
         }
     }
 
+    /// Loads the current value in semitones.
     #[inline]
     pub fn load(&self) -> i8 {
         self.value.load(Ordering::Relaxed)
     }
 
+    /// Stores a new value in semitones.
     #[inline]
     pub fn store(&self, semitones: i8) {
         self.value.store(semitones, Ordering::Relaxed);
@@ -271,12 +295,14 @@ impl<'de> Deserialize<'de> for Semitones {
     }
 }
 
+/// Thread-safe pitch bend parameter stored as a signed 14-bit MIDI value.
 #[derive(Debug)]
 pub struct PitchBend {
     value: AtomicI16,
 }
 
 impl PitchBend {
+    /// Creates a new pitch bend value.
     #[inline]
     pub fn new(bend: i16) -> Self {
         Self {
@@ -284,11 +310,13 @@ impl PitchBend {
         }
     }
 
+    /// Loads the current pitch bend value.
     #[inline]
     pub fn load(&self) -> i16 {
         self.value.load(Ordering::Relaxed)
     }
 
+    /// Stores a new pitch bend value.
     #[inline]
     pub fn store(&self, bend: i16) {
         self.value.store(bend, Ordering::Relaxed);
@@ -316,12 +344,14 @@ impl<'de> Deserialize<'de> for PitchBend {
     }
 }
 
+/// Thread-safe filter pole count parameter (e.g., 2 for 12dB/oct, 4 for 24dB/oct).
 #[derive(Debug)]
 pub struct FilterPoles {
     value: AtomicU8,
 }
 
 impl FilterPoles {
+    /// Creates a new filter poles value.
     #[inline]
     pub fn new(poles: u8) -> Self {
         Self {
@@ -329,11 +359,13 @@ impl FilterPoles {
         }
     }
 
+    /// Loads the current pole count.
     #[inline]
     pub fn load(&self) -> u8 {
         self.value.load(Ordering::Relaxed)
     }
 
+    /// Stores a new pole count.
     #[inline]
     pub fn store(&self, poles: u8) {
         self.value.store(poles, Ordering::Relaxed);
@@ -361,12 +393,14 @@ impl<'de> Deserialize<'de> for FilterPoles {
     }
 }
 
+/// Thread-safe stereo balance parameter (-1.0 left to 1.0 right) stored as atomic bits.
 #[derive(Debug)]
 pub struct Balance {
     value: AtomicU32,
 }
 
 impl Balance {
+    /// Creates a new balance value.
     #[inline]
     pub fn new(balance: f32) -> Self {
         Self {
@@ -374,11 +408,13 @@ impl Balance {
         }
     }
 
+    /// Loads the current balance value.
     #[inline]
     pub fn load(&self) -> f32 {
         f32::from_bits(self.value.load(Ordering::Relaxed))
     }
 
+    /// Stores a new balance value.
     #[inline]
     pub fn store(&self, balance: f32) {
         self.value.store(balance.to_bits(), Ordering::Relaxed);
@@ -406,12 +442,14 @@ impl<'de> Deserialize<'de> for Balance {
     }
 }
 
+/// Thread-safe portamento buffer count parameter stored atomically.
 #[derive(Debug)]
 pub struct PortamentoBuffers {
     value: AtomicU16,
 }
 
 impl PortamentoBuffers {
+    /// Creates a new portamento buffers value.
     #[inline]
     pub fn new(buffers: u16) -> Self {
         Self {
@@ -419,11 +457,13 @@ impl PortamentoBuffers {
         }
     }
 
+    /// Loads the current buffer count.
     #[inline]
     pub fn load(&self) -> u16 {
         self.value.load(Ordering::Relaxed)
     }
 
+    /// Stores a new buffer count.
     #[inline]
     pub fn store(&self, buffers: u16) {
         self.value.store(buffers, Ordering::Relaxed);

@@ -1,43 +1,71 @@
+/// Default values and constants for all synthesizer parameters.
 pub struct Defaults {}
 
 impl Defaults {
     // Audio Defaults
+    /// Default audio output device index.
     pub const AUDIO_DEVICE_INDEX: i32 = 0;
+    /// Default left output channel index.
     pub const LEFT_CHANNEL_INDEX: i32 = 0;
+    /// Default right output channel index.
     pub const RIGHT_CHANNEL_INDEX: i32 = 1;
+    /// Channel count for mono output.
     pub const MONO_CHANNEL_COUNT: u16 = 1;
+    /// Sentinel value indicating a disabled output channel.
     pub const OUTPUT_CHANNEL_DISABLED_VALUE: i32 = -1;
+    /// Default index into [`Defaults::SUPPORTED_SAMPLE_RATES`].
     pub const SAMPLE_RATE_INDEX: usize = 1;
+    /// Available sample rates in Hz.
     pub const SUPPORTED_SAMPLE_RATES: [u32; 3] = [44100, 48000, 96000];
+    /// Default index into [`Defaults::SUPPORTED_BUFFER_SIZES`].
     pub const BUFFER_SIZE_INDEX: usize = 2;
+    /// Available audio buffer sizes in samples.
     pub const SUPPORTED_BUFFER_SIZES: [u32; 5] = [64, 128, 256, 512, 1024];
 
     // Mixer Defaults
+    /// Default output mixer level (0.0–1.0).
     pub const OUTPUT_MIXER_LEVEL: f32 = 0.5;
+    /// Default output mixer stereo balance (-1.0 left to 1.0 right).
     pub const OUTPUT_MIXER_BALANCE: f32 = 0.0;
+    /// Default output mixer mute state.
     pub const OUTPUT_MIXER_IS_MUTED: bool = false;
+    /// Default per-oscillator mixer level (0.0–1.0).
     pub const QUAD_MIXER_LEVEL: f32 = 1.0;
+    /// Default per-oscillator sub-oscillator level (0.0–1.0).
     pub const QUAD_MIXER_SUB_LEVEL: f32 = 0.0;
+    /// Default per-oscillator stereo balance (-1.0 left to 1.0 right).
     pub const QUAD_MIXER_BALANCE: f32 = 0.0;
+    /// Default per-oscillator mute state.
     pub const QUAD_MIXER_IS_MUTED: bool = false;
 
     // Global Panel Constants
+    /// Default pitch bend range in semitones.
     pub const PITCH_BEND_RANGE: u8 = 12;
+    /// Default portamento time as a normalized value (0.0–1.0).
     pub const PORTAMENTO_TIME_NORMAL_VALUE: f32 = 0.0;
+    /// Default velocity curve as a normalized value (0.0–1.0).
     pub const VELOCITY_CURVE_NORMAL_VALUE: f32 = 0.5;
+    /// Minimum allowed pitch bend range in semitones.
     pub const MINIMUM_PITCH_BEND_RANGE: u32 = 2;
+    /// Maximum allowed pitch bend range in semitones.
     pub const MAXIMUM_PITCH_BEND_RANGE: u32 = 12;
 }
 
-// Effects Defaults
+/// Default delay effect parameters: [time, feedback, mix, unused].
 pub const DELAY_DEFAULT_PARAMETERS: [f32; 4] = [0.5, 0.5, 0.5, 0.0];
+/// Default autopan effect parameters: [rate, depth, unused, unused].
 pub const AUTOPAN_DEFAULT_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
+/// Default tremolo effect parameters: [rate, depth, unused, unused].
 pub const TREMOLO_DEFAULT_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
+/// Default compressor effect parameters: [threshold, ratio, unused, unused].
 pub const COMPRESSOR_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
+/// Default clipper effect parameters: [threshold, unused, unused, unused].
 pub const CLIPPER_DEFAULT_PARAMETERS: [f32; 4] = [1.0, 0.0, 0.0, 0.0];
+/// Default gate effect parameters: [threshold, ratio, unused, unused].
 pub const GATE_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
 
 impl Defaults {
+    /// MIDI note number to frequency (Hz) and note name lookup table.
     pub const MIDI_NOTE_FREQUENCIES: [(f32, &str); 128] = [
         (8.175, "C-1"),
         (8.662, "C#(Db)-1"),
@@ -170,14 +198,21 @@ impl Defaults {
     ];
 }
 
+/// Maximum absolute sample value before clipping.
 pub const MAX_SAMPLE_VALUE: f32 = 1.0;
-// Tuner Constants
+/// Maximum oscillator fine-tune offset in cents.
 pub const OSCILLATOR_FINE_TUNE_MAX_CENTS: i8 = 63;
+/// Minimum oscillator fine-tune offset in cents.
 pub const OSCILLATOR_FINE_TUNE_MIN_CENTS: i8 = -63;
+/// Maximum oscillator coarse-tune interval in semitones.
 pub const OSCILLATOR_COURSE_TUNE_MAX_INTERVAL: i8 = 12;
+/// Minimum oscillator coarse-tune interval in semitones.
 pub const OSCILLATOR_COURSE_TUNE_MIN_INTERVAL: i8 = -12;
+/// Maximum filter cutoff frequency in Hz.
 pub const MAX_FILTER_CUTOFF: f32 = 20000.0;
+/// Minimum filter cutoff frequency in Hz.
 pub const MIN_FILTER_CUTOFF: f32 = 0.0;
-// Filter Constants
+/// Minimum filter resonance (0.0–1.0).
 pub const MIN_FILTER_RESONANCE: f32 = 0.0;
+/// Maximum filter resonance (0.0–1.0).
 pub const MAX_FILTER_RESONANCE: f32 = 0.90;

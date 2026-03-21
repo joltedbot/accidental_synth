@@ -5,6 +5,7 @@ use super::constants::{
 };
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 
+/// Pulse wave oscillator with variable duty cycle (pulse width).
 pub struct Pulse {
     shape: WaveShape,
     x_coordinate: f32,
