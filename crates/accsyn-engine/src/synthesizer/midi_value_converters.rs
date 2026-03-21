@@ -12,7 +12,7 @@ use accsyn_types::math::{
     EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT,
     f32s_are_equal,
 };
-use std::sync::atomic::Ordering::Relaxed;
+
 
 pub fn normal_value_to_f32_range(normal_value: f32, mut minimum: f32, mut maximum: f32) -> f32 {
     if maximum < minimum {

@@ -145,6 +145,8 @@ impl Synthesizer {
         let patches = Patches::new()?;
         let module_parameters = patches.init_module_parameters()?;
 
+        patches.create_new_patch("default", &module_parameters)?;
+
         Ok(Self {
             patches,
             output_stream_parameters,

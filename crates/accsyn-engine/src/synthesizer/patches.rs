@@ -1,4 +1,5 @@
-#!allow[unused]
+#!allow[dead_code]
+use std::fs::DirEntry;
 use crate::synthesizer::ModuleParameters;
 use anyhow::{Result, anyhow};
 use serde_json::json;
@@ -11,7 +12,7 @@ const DATA_DIRECTORY: &str = "AccidentalSynthesizer";
 const USER_PATCH_DIRECTORY: &str = "patches";
 const PRESETS_DIRECTORY: &str = "presets";
 
-const PATCH_FILE_EXTENSION: &str = "accsyn";
+const PATCH_FILE_EXTENSION: &str = "json";
 const INIT_PARAMETERS: &str = include_str!("patches/init.json");
 
 #[derive(Debug, Clone, Error)]
@@ -38,7 +39,6 @@ pub struct Patches {
 
 impl Patches {
     pub fn new() -> Result<Self> {
-        // todo: Fix bootstrap issue with init preset. Where should it get created from defaults. Also other presets
         let mut paths = create_data_paths()?;
         initialize_application_storage(&mut paths)?;
         Ok(Self { paths })
@@ -69,7 +69,6 @@ impl Patches {
         Ok(serde_json::from_str(INIT_PARAMETERS)?)
     }
 
-    // todo: CRUD functions for patch files
     fn read_patch_file(&self, name: &str) -> Result<ModuleParameters> {
         let content = read_file(name, &self.paths.user_patches)?;
         Ok(serde_json::from_str(&content)?)

@@ -67,6 +67,7 @@ fn main() {
     )
     .expect("Could build the user interface. Exiting.");
 
+    
     log::info!(target: "main", "Running Accidental Synthesizer.");
     println!("Will Loop Forever. Press Ctrl-c to Exit");
     application

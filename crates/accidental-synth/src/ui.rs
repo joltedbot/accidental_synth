@@ -20,7 +20,6 @@ use accsyn_engine::modules::oscillator::OscillatorParameters;
 use accsyn_engine::synthesizer::{ModuleParameters, QuadMixerInput};
 use accsyn_midi::MidiDeviceUpdateEvents;
 use accsyn_types::audio_events::AudioDeviceUpdateEvents;
-use accsyn_types::defaults::Defaults;
 use accsyn_types::effects::EffectParameters;
 use accsyn_types::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
