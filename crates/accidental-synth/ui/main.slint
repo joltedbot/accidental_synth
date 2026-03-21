@@ -40,12 +40,7 @@ export component AccidentalSynth inherits Window {
     callback midi-input-channel-changed(string);
 
     // Oscillator Panel Properties & Callbacks
-    in property <[Oscillator]> oscillators: [
-        { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
-        { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
-        { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
-        { fine-tune: Constant.DEFAULT_FINE_TUNE_NORMAL },
-    ];
+    in property <[Oscillator]> oscillator_values;
 
     in property <[int]> osc-fine-tune-cents;
 
@@ -57,16 +52,10 @@ export component AccidentalSynth inherits Window {
     callback osc-parameter2-changed(int, float);
 
     // Filter Panel Properties & Callbacks
-    in property <FilterCutoff> filter-cutoff-values: {
-        cutoff: Constant.DEFAULT_FILTER_CUTOFF_NORMAL,
-        resonance: Constant.DEFAULT_FILTER_RESONANCE_NORMAL
-    };
-    in property <FilterOptions> filter-options-values: {
-        poles: Constant.DEFAULT_FILTER_POLES,
-        key-track: Constant.DEFAULT_KEY_TRACKING_NORMAL
-    };
-    in property <EnvelopeValues> filter-envelope-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
-    in property <LFOValues> filter-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
+    in property <FilterCutoff> filter-cutoff-values;
+    in property <FilterOptions> filter-options-values;
+    in property <EnvelopeValues> filter-envelope-values;
+    in property <LFOValues> filter-lfo-values;
     in property <float> filter-lfo-frequency-display;
     in property <int> filter-lfo-phase-display;
 
@@ -87,45 +76,17 @@ export component AccidentalSynth inherits Window {
     callback lfo-phase-reset(int);
 
     // Global Panel Properties & Callbacks
-    in property <Mixer> output-mixer-values: {
-        balance: Constant.DEFAULT_BALANCE_NORMAL,
-        level: Constant.DEFAULT_OUTPUT_MIXER_LEVEL_NORMAL
-    };
-    in property <[Mixer]> oscillator-mixer-values: [
-        {
-            balance: Constant.DEFAULT_BALANCE_NORMAL,
-            level: Constant.DEFAULT_SUB_OSCILLATOR_LEVEL_NORMAL
-        },
-        {
-            balance: Constant.DEFAULT_BALANCE_NORMAL,
-            level: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL
-        },
-        {
-            balance: Constant.DEFAULT_BALANCE_NORMAL,
-            level: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL
-        },
-        {
-            balance: Constant.DEFAULT_BALANCE_NORMAL,
-            level: Constant.DEFAULT_OSCILLATOR_LEVEL_NORMAL
-        }
-    ];
+    in property <Mixer> output-mixer-values;
+    in property <[Mixer]> oscillator-mixer-values;
 
-    in property <EnvelopeValues> amp-envelope-values: { sustain: Constant.DEFAULT_EG_SUSTAIN_LEVEL_NORMAL };
-    in property <LFOValues> mod-wheel-lfo-values: { frequency: Constant.DEFAULT_LFO_FREQUENCY_NORMAL };
+    in property <EnvelopeValues> amp-envelope-values;
+    in property <LFOValues> mod-wheel-lfo-values;
     in property <float> mod-wheel-lfo-frequency-display;
     in property <int> mod-wheel-lfo-phase-display;
 
     in property <[string]> midi-display-values;
 
-    in property <GlobalOptions> global-options-values: {
-        portamento-is-enabled: Constant.PORTAMENTO_IS_ENABLED,
-        portamento-time: Constant.DEFAULT_PORTAMENTO_TIME,
-        pitch-bend-range: Constant.DEFAULT_PITCH_BEND_RANGE,
-        velocity-curve-slope: Constant.DEFAULT_VELOCITY_CURVE_SLOPE,
-        hard-sync-is-enabled: Constant.DEFAULT_HARD_SYNC_IS_ENABLED,
-        key-sync-is-enabled: Constant.DEFAULT_KEY_SYNC_IS_ENABLED,
-        polarity-is-flipped: Constant.DEFAULT_POLARITY_IS_FLIPPED,
-    };
+    in property <GlobalOptions> global-options-values;
 
     callback portamento-enabled(bool);
     callback portamento-time-changed(float);
@@ -197,7 +158,7 @@ export component AccidentalSynth inherits Window {
 
                         VerticalLayout {
                             oscillator-panel := OscillatorsPanel {
-                                oscillators: oscillators;
+                                oscillators: oscillator_values;
                                 fine-tune-cents: osc-fine-tune-cents;
 
                                 wave-shape-changed(oscillator, shape_index) => {

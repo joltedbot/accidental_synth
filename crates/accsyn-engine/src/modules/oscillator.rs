@@ -30,12 +30,14 @@ use crate::modules::oscillator::constants::{
 };
 use accsyn_types::defaults::Defaults;
 use accsyn_types::math;
-use accsyn_types::math::{dbfs_to_f32_sample, f32s_are_equal, load_f32_from_atomic_u32};
+use accsyn_types::math::{dbfs_to_f32_sample, f32s_are_equal};
 use generate_wave_trait::GenerateWave;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
-use std::sync::atomic::{AtomicBool, AtomicI8, AtomicI16, AtomicU8, AtomicU16, AtomicU32};
+use std::sync::atomic::{AtomicBool, AtomicU8};
 use strum_macros::{EnumCount, EnumIter, FromRepr};
+use accsyn_types::parameter_types::{Cents, NormalizedValue, PitchBend, PortamentoBuffers, Semitones};
 
 pub const FIRST_WAVE_SHAPE_INDEX: u32 = 0;
 pub const LAST_WAVE_SHAPE_INDEX: u32 = 9;
@@ -70,36 +72,36 @@ pub enum HardSyncRole {
     Synced(Arc<AtomicBool>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct OscillatorParameters {
-    pub fine_tune: AtomicI8,
-    pub course_tune: AtomicI8,
-    pub pitch_bend: AtomicI16,
-    pub shape_parameter1: AtomicU32,
-    pub shape_parameter2: AtomicU32,
+    pub fine_tune: Cents,
+    pub course_tune: Semitones,
+    pub pitch_bend: PitchBend,
+    pub shape_parameter1: NormalizedValue,
+    pub shape_parameter2: NormalizedValue,
     pub wave_shape_index: AtomicU8,
     pub gate_flag: AtomicBool,
     pub key_sync_enabled: AtomicBool,
     pub hard_sync_enabled: AtomicBool,
     pub portamento_enabled: AtomicBool,
-    pub portamento_time: AtomicU16,
+    pub portamento_time: PortamentoBuffers,
     pub clipper_boost: AtomicU8,
 }
 
 impl Default for OscillatorParameters {
     fn default() -> Self {
         Self {
-            fine_tune: AtomicI8::new(0),
-            course_tune: AtomicI8::new(0),
-            pitch_bend: AtomicI16::new(0),
-            shape_parameter1: AtomicU32::new(0),
-            shape_parameter2: AtomicU32::new(0),
+            fine_tune: Cents::default(),
+            course_tune: Semitones::default(),
+            pitch_bend: PitchBend::default(),
+            shape_parameter1: NormalizedValue::default(),
+            shape_parameter2: NormalizedValue::default(),
             wave_shape_index: AtomicU8::new(WaveShape::default() as u8),
             gate_flag: AtomicBool::new(false),
             key_sync_enabled: AtomicBool::new(DEFAULT_KEY_SYNC_ENABLED),
             hard_sync_enabled: AtomicBool::new(DEFAULT_HARD_SYNC_ENABLED),
             portamento_enabled: AtomicBool::new(DEFAULT_PORTAMENTO_ENABLED),
-            portamento_time: AtomicU16::new(DEFAULT_PORTAMENTO_TIME_IN_BUFFERS),
+            portamento_time: PortamentoBuffers::new(DEFAULT_PORTAMENTO_TIME_IN_BUFFERS),
             clipper_boost: AtomicU8::new(0),
         }
     }
@@ -195,17 +197,17 @@ impl Oscillator {
     }
 
     pub fn set_parameters(&mut self, parameters: &OscillatorParameters) {
-        self.set_shape_parameter1(load_f32_from_atomic_u32(&parameters.shape_parameter1));
-        self.set_shape_parameter2(load_f32_from_atomic_u32(&parameters.shape_parameter2));
+        self.set_shape_parameter1(parameters.shape_parameter1.load());
+        self.set_shape_parameter2(parameters.shape_parameter2.load());
         self.set_wave_shape_index(parameters.wave_shape_index.load(Relaxed));
-        self.set_pitch_bend(parameters.pitch_bend.load(Relaxed));
-        self.set_course_tune(parameters.course_tune.load(Relaxed));
-        self.set_fine_tune(parameters.fine_tune.load(Relaxed));
+        self.set_pitch_bend(parameters.pitch_bend.load());
+        self.set_course_tune(parameters.course_tune.load());
+        self.set_fine_tune(parameters.fine_tune.load());
         self.set_key_sync_enabled(parameters.key_sync_enabled.load(Relaxed));
         self.set_hard_sync_enabled(parameters.hard_sync_enabled.load(Relaxed));
         self.set_portamento(
             parameters.portamento_enabled.load(Relaxed),
-            parameters.portamento_time.load(Relaxed),
+            parameters.portamento_time.load(),
         );
         self.set_gate(&parameters.gate_flag);
         self.set_clipper_boost(parameters.clipper_boost.load(Relaxed));

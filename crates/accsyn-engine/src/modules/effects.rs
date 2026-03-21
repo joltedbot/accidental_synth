@@ -7,10 +7,11 @@ use crate::modules::effects::wavefolder::WaveFolder;
 use accsyn_types::defaults::DELAY_DEFAULT_PARAMETERS;
 pub use accsyn_types::effects::EffectIndex;
 use accsyn_types::effects::{AudioEffect, EffectParameters, PARAMETERS_PER_EFFECT};
-use accsyn_types::math::load_f32_from_atomic_u32;
+use serde::{Deserialize, Serialize};
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::{AtomicBool, AtomicU32};
+use std::sync::atomic::AtomicBool;
 use strum::IntoEnumIterator;
+use accsyn_types::parameter_types::NormalizedValue;
 
 mod autopan;
 mod bitshifter;
@@ -24,10 +25,10 @@ mod saturation;
 mod tremolo;
 mod wavefolder;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AudioEffectParameters {
     pub is_enabled: AtomicBool,
-    pub parameters: [AtomicU32; PARAMETERS_PER_EFFECT],
+    pub parameters: [NormalizedValue; PARAMETERS_PER_EFFECT],
 }
 
 impl Default for AudioEffectParameters {
@@ -35,10 +36,10 @@ impl Default for AudioEffectParameters {
         Self {
             is_enabled: AtomicBool::new(false),
             parameters: [
-                AtomicU32::new(0.0_f32.to_bits()),
-                AtomicU32::new(0.0_f32.to_bits()),
-                AtomicU32::new(0.0_f32.to_bits()),
-                AtomicU32::new(0.0_f32.to_bits()),
+                NormalizedValue::default(),
+                NormalizedValue::default(),
+                NormalizedValue::default(),
+                NormalizedValue::default(),
             ],
         }
     }
@@ -95,7 +96,7 @@ fn extract_parameters(source: &AudioEffectParameters) -> EffectParameters {
         parameters: source
             .parameters
             .iter()
-            .map(load_f32_from_atomic_u32)
+            .map(|parameter| parameter.load())
             .collect(),
     }
 }
@@ -110,27 +111,27 @@ pub(crate) fn default_audio_effect_parameters() -> Vec<AudioEffectParameters> {
             }
             EffectIndex::Clipper | EffectIndex::Compressor => {
                 let mut effects_parameters = AudioEffectParameters::default();
-                effects_parameters.parameters[0] = AtomicU32::new(MAX_THRESHOLD.to_bits());
+                effects_parameters.parameters[0] = NormalizedValue::new(MAX_THRESHOLD);
                 audio_effect_parameters.push(effects_parameters);
             }
             EffectIndex::Gate | EffectIndex::AutoPan | EffectIndex::Tremolo => {
                 let mut effects_parameters = AudioEffectParameters::default();
-                effects_parameters.parameters[1] = AtomicU32::new(MAX_GATE_CUT.to_bits());
+                effects_parameters.parameters[1] = NormalizedValue::new(MAX_GATE_CUT);
                 audio_effect_parameters.push(effects_parameters);
             }
             EffectIndex::Saturation => {
                 let mut effects_parameters = AudioEffectParameters::default();
-                effects_parameters.parameters[2] = AtomicU32::new(MAX_THRESHOLD.to_bits());
+                effects_parameters.parameters[2] = NormalizedValue::new(MAX_THRESHOLD);
                 audio_effect_parameters.push(effects_parameters);
             }
             EffectIndex::Delay => {
                 let mut effects_parameters = AudioEffectParameters::default();
                 effects_parameters.parameters[0] =
-                    AtomicU32::new(DELAY_DEFAULT_PARAMETERS[0].to_bits());
+                    NormalizedValue::new(DELAY_DEFAULT_PARAMETERS[0]);
                 effects_parameters.parameters[1] =
-                    AtomicU32::new(DELAY_DEFAULT_PARAMETERS[1].to_bits());
+                    NormalizedValue::new(DELAY_DEFAULT_PARAMETERS[1]);
                 effects_parameters.parameters[2] =
-                    AtomicU32::new(DELAY_DEFAULT_PARAMETERS[2].to_bits());
+                    NormalizedValue::new(DELAY_DEFAULT_PARAMETERS[2]);
                 audio_effect_parameters.push(effects_parameters);
             }
         }
@@ -170,10 +171,10 @@ mod tests {
         let source = AudioEffectParameters {
             is_enabled: AtomicBool::new(true),
             parameters: [
-                AtomicU32::new(0.5_f32.to_bits()),
-                AtomicU32::new(0.0_f32.to_bits()),
-                AtomicU32::new(0.0_f32.to_bits()),
-                AtomicU32::new(0.0_f32.to_bits()),
+                NormalizedValue::new(0.5_f32),
+                NormalizedValue::new(0.0_f32),
+                NormalizedValue::new(0.0_f32),
+                NormalizedValue::new(0.0_f32),
             ],
         };
 
@@ -187,10 +188,10 @@ mod tests {
         let source = AudioEffectParameters {
             is_enabled: AtomicBool::new(false),
             parameters: [
-                AtomicU32::new(0.5_f32.to_bits()),
-                AtomicU32::new(0.3_f32.to_bits()),
-                AtomicU32::new(0.7_f32.to_bits()),
-                AtomicU32::new(0.1_f32.to_bits()),
+                NormalizedValue::new(0.5_f32),
+                NormalizedValue::new(0.3_f32),
+                NormalizedValue::new(0.7_f32),
+                NormalizedValue::new(0.1_f32),
             ],
         };
 
@@ -231,7 +232,7 @@ mod tests {
         ];
         // Enable rectifier with half-wave mode
         params[EffectIndex::Rectifier as usize].is_enabled = AtomicBool::new(true);
-        params[EffectIndex::Rectifier as usize].parameters[0] = AtomicU32::new(0.0_f32.to_bits()); // half-wave
+        params[EffectIndex::Rectifier as usize].parameters[0] = NormalizedValue::new(0.0_f32); // half-wave
         effects.set_parameters(&params);
         let input = (0.5, -0.3);
 
@@ -254,14 +255,14 @@ mod tests {
         ];
         // Enable rectifier with full-wave mode
         params[EffectIndex::Rectifier as usize].is_enabled = AtomicBool::new(true);
-        params[EffectIndex::Rectifier as usize].parameters[0] = AtomicU32::new(1.0_f32.to_bits()); // full-wave
+        params[EffectIndex::Rectifier as usize].parameters[0] = NormalizedValue::new(1.0_f32); // full-wave
 
         // Enable clipper with low threshold and no gains
         params[EffectIndex::Clipper as usize].is_enabled = AtomicBool::new(true);
-        params[EffectIndex::Clipper as usize].parameters[0] = AtomicU32::new(0.4_f32.to_bits()); // threshold
-        params[EffectIndex::Clipper as usize].parameters[1] = AtomicU32::new(0.0_f32.to_bits()); // pre_gain
-        params[EffectIndex::Clipper as usize].parameters[2] = AtomicU32::new(0.0_f32.to_bits()); // post_gain
-        params[EffectIndex::Clipper as usize].parameters[3] = AtomicU32::new(0.0_f32.to_bits()); // notch
+        params[EffectIndex::Clipper as usize].parameters[0] = NormalizedValue::new(0.4_f32); // threshold
+        params[EffectIndex::Clipper as usize].parameters[1] = NormalizedValue::new(0.0_f32); // pre_gain
+        params[EffectIndex::Clipper as usize].parameters[2] = NormalizedValue::new(0.0_f32); // post_gain
+        params[EffectIndex::Clipper as usize].parameters[3] = NormalizedValue::new(0.0_f32); // notch
         effects.set_parameters(&params);
         let input = (0.6, -0.6);
 
@@ -280,7 +281,7 @@ mod tests {
 
         // Clipper
         let clipper_threshold =
-            load_f32_from_atomic_u32(&params[EffectIndex::Clipper as usize].parameters[0]);
+            params[EffectIndex::Clipper as usize].parameters[0].load();
         assert!(f32s_are_equal(clipper_threshold, MAX_THRESHOLD));
     }
 

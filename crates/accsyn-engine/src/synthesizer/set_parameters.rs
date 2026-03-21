@@ -9,47 +9,48 @@ use crate::modules::lfo::{
 };
 use crate::modules::oscillator::OscillatorParameters;
 use crate::modules::oscillator::constants::{MAX_CLIP_BOOST, MIN_CLIP_BOOST};
-use crate::synthesizer::constants::{
-    EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES, EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
-    EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES, EXPONENTIAL_PORTAMENTO_COEFFICIENT,
-    MAX_FILTER_RESONANCE, MAX_PITCH_BEND_RANGE, MIN_FILTER_RESONANCE, MIN_PITCH_BEND_RANGE,
-    OSCILLATOR_COURSE_TUNE_MAX_INTERVAL, OSCILLATOR_COURSE_TUNE_MIN_INTERVAL,
-    OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS,
-};
+use crate::synthesizer::constants::{MAX_PITCH_BEND_RANGE, MIN_PITCH_BEND_RANGE};
 use crate::synthesizer::midi_value_converters::{
     exponential_curve_envelope_time_from_normal_value,
-    exponential_curve_filter_cutoff_from_midi_value,
-    exponential_curve_from_normal_value_and_coefficient,
+    exponential_curve_filter_cutoff_from_normal_value,
     exponential_curve_level_adjustment_from_normal_value,
     exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool,
     normal_value_to_f32_range, normal_value_to_number_of_filter_poles,
     normal_value_to_signed_integer_range, normal_value_to_unsigned_integer_range,
     normal_value_to_wave_shape_index, velocity_curve_from_normal_value,
 };
-use crate::synthesizer::{CommonParameters, CurrentNote, KeyboardParameters, MixerParameters};
-use accsyn_types::math::store_f32_as_atomic_u32;
+use crate::synthesizer::{KeyboardParameters, MixerParameters};
+use accsyn_types::defaults::{
+    MAX_FILTER_RESONANCE, MIN_FILTER_RESONANCE, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL,
+    OSCILLATOR_COURSE_TUNE_MIN_INTERVAL, OSCILLATOR_FINE_TUNE_MAX_CENTS,
+    OSCILLATOR_FINE_TUNE_MIN_CENTS,
+};
+use accsyn_types::math::{
+    EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES, EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
+    EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES, EXPONENTIAL_PORTAMENTO_COEFFICIENT,
+    exponential_curve_from_normal_value_and_coefficient,
+};
 use accsyn_types::synth_events::OscillatorIndex;
-use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 
 pub fn set_lfo_frequency(parameters: &LfoParameters, normal_value: f32) -> f32 {
     let frequency = exponential_curve_lfo_frequency_from_normal_value(normal_value);
-    store_f32_as_atomic_u32(&parameters.frequency, frequency);
+    parameters.frequency.store(frequency);
     frequency
 }
 
 pub fn set_lfo_center_value(parameters: &LfoParameters, normal_value: f32) {
     let center_value =
         normal_value_to_f32_range(normal_value, MIN_LFO_CENTER_VALUE, MAX_LFO_CENTER_VALUE);
-    store_f32_as_atomic_u32(&parameters.center_value, center_value);
+    parameters.center_value.store(center_value);
 }
 
 pub fn set_lfo_range(parameters: &LfoParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&parameters.range, normal_value);
+    parameters.range.store(normal_value);
 }
 
 pub fn set_lfo_phase(parameters: &LfoParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&parameters.phase, normal_value);
+    parameters.phase.store(normal_value);
 }
 
 pub fn set_lfo_wave_shape(parameters: &LfoParameters, normal_value: f32) {
@@ -58,16 +59,16 @@ pub fn set_lfo_wave_shape(parameters: &LfoParameters, normal_value: f32) {
 }
 
 pub fn set_lfo_phase_reset(parameters: &LfoParameters) {
-    parameters.phase.store(DEFAULT_LFO_PHASE as u32, Relaxed);
+    parameters.phase.store(DEFAULT_LFO_PHASE);
     parameters.reset.store(true, Relaxed);
 }
 
 pub fn set_key_tracking_amount(filter_parameters: &FilterParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&filter_parameters.key_tracking_amount, normal_value);
+    filter_parameters.key_tracking_amount.store(normal_value);
 }
 
 pub fn set_envelope_amount(envelope_parameters: &EnvelopeParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&envelope_parameters.amount, normal_value);
+    envelope_parameters.amount.store(normal_value);
 }
 
 pub fn set_envelope_release_time(envelope_parameters: &EnvelopeParameters, normal_value: f32) {
@@ -77,11 +78,11 @@ pub fn set_envelope_release_time(envelope_parameters: &EnvelopeParameters, norma
         MIN_RELEASE_MILLISECONDS,
         MAX_RELEASE_MILLISECONDS,
     );
-    envelope_parameters.release_ms.store(milliseconds, Relaxed);
+    envelope_parameters.release_ms.store(milliseconds);
 }
 
 pub fn set_envelope_sustain_level(envelope_parameters: &EnvelopeParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&envelope_parameters.sustain_level, normal_value);
+    envelope_parameters.sustain_level.store(normal_value);
 }
 
 pub fn set_envelope_sustain_pedal(envelope_parameters: &[EnvelopeParameters], normal_value: f32) {
@@ -99,7 +100,7 @@ pub fn set_envelope_decay_time(envelope_parameters: &EnvelopeParameters, normal_
         MIN_DECAY_MILLISECONDS,
         MAX_DECAY_MILLISECONDS,
     );
-    envelope_parameters.decay_ms.store(milliseconds, Relaxed);
+    envelope_parameters.decay_ms.store(milliseconds);
 }
 
 pub fn set_envelope_attack_time(envelope_parameters: &EnvelopeParameters, normal_value: f32) {
@@ -109,7 +110,7 @@ pub fn set_envelope_attack_time(envelope_parameters: &EnvelopeParameters, normal
         MIN_ATTACK_MILLISECONDS,
         MAX_ATTACK_MILLISECONDS,
     );
-    envelope_parameters.attack_ms.store(milliseconds, Relaxed);
+    envelope_parameters.attack_ms.store(milliseconds);
 }
 
 pub fn set_envelope_inverted(envelope_parameters: &EnvelopeParameters, normal_value: f32) {
@@ -121,37 +122,37 @@ pub fn set_filter_resonance(filter_parameters: &FilterParameters, normal_value: 
     let resonance =
         normal_value_to_f32_range(normal_value, MIN_FILTER_RESONANCE, MAX_FILTER_RESONANCE);
 
-    store_f32_as_atomic_u32(&filter_parameters.resonance, resonance);
+    filter_parameters.resonance.store(resonance);
 }
 
 pub fn set_filter_poles(filter_parameters: &FilterParameters, normal_value: f32) {
     let filter_poles = normal_value_to_number_of_filter_poles(normal_value);
-    filter_parameters.filter_poles.swap(filter_poles, Relaxed);
+    filter_parameters.filter_poles.store(filter_poles);
 }
 
 pub fn set_filter_cutoff(filter_parameters: &FilterParameters, normal_value: f32) {
-    let cutoff_frequency = exponential_curve_filter_cutoff_from_midi_value(normal_value);
-    store_f32_as_atomic_u32(&filter_parameters.cutoff_frequency, cutoff_frequency);
+    let cutoff_frequency = exponential_curve_filter_cutoff_from_normal_value(normal_value);
+    filter_parameters.cutoff_frequency.store(cutoff_frequency);
 }
 
 pub fn set_output_balance(parameters: &MixerParameters, normal_value: f32) {
     let output_balance = normal_value_to_f32_range(normal_value, -1.0, 1.0);
-    store_f32_as_atomic_u32(&parameters.output_balance, output_balance);
+    parameters.balance.store(output_balance);
 }
 
 pub fn set_output_level(parameters: &MixerParameters, normal_value: f32) {
     let output_level = exponential_curve_level_adjustment_from_normal_value(normal_value);
-    store_f32_as_atomic_u32(&parameters.output_level, output_level);
+    parameters.level.store(output_level);
 }
 
 pub fn set_output_mute(parameters: &MixerParameters, normal_value: f32) {
     let is_muted = normal_value_to_bool(normal_value);
-    parameters.output_is_muted.store(is_muted, Relaxed);
+    parameters.is_muted.store(is_muted, Relaxed);
 }
 
-pub fn set_velocity_curve(current_note: &mut Arc<CurrentNote>, normal_value: f32) {
+pub fn set_velocity_curve(parameters: &KeyboardParameters, normal_value: f32) {
     let velocity_curve = velocity_curve_from_normal_value(normal_value);
-    store_f32_as_atomic_u32(&current_note.velocity_curve, velocity_curve);
+    parameters.velocity_curve.store(velocity_curve);
 }
 
 pub fn set_pitch_bend_range(parameters: &KeyboardParameters, normal_value: f32) {
@@ -164,18 +165,18 @@ pub fn set_pitch_bend_range(parameters: &KeyboardParameters, normal_value: f32) 
 }
 
 pub fn set_mod_wheel(parameters: &KeyboardParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&parameters.mod_wheel_amount, normal_value);
+    parameters.mod_wheel_amount.store(normal_value);
 }
 
 pub fn set_oscillator_shape_parameter1(parameters: &OscillatorParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&parameters.shape_parameter1, normal_value);
+    parameters.shape_parameter1.store(normal_value);
 }
 
 pub fn set_oscillator_shape_parameter2(parameters: &OscillatorParameters, normal_value: f32) {
-    store_f32_as_atomic_u32(&parameters.shape_parameter2, normal_value);
+    parameters.shape_parameter2.store(normal_value);
 }
 
-pub fn set_oscillator_polarity(parameters: &CommonParameters, normal_value: f32) {
+pub fn set_oscillator_polarity(parameters: &KeyboardParameters, normal_value: f32) {
     parameters
         .polarity_flipped
         .store(normal_value_to_bool(normal_value), Relaxed);
@@ -205,7 +206,7 @@ pub fn set_portamento_time(parameters: &[OscillatorParameters; 4], normal_value:
     .round() as u16;
 
     for parameters in parameters {
-        parameters.portamento_time.store(speed, Relaxed);
+        parameters.portamento_time.store(speed);
     }
 }
 
@@ -234,10 +235,7 @@ pub fn set_oscillator_balance(
     normal_value: f32,
 ) {
     let balance = normal_value_to_f32_range(normal_value, -1.0, 1.0);
-    store_f32_as_atomic_u32(
-        &parameters.quad_mixer_inputs[oscillator as usize].balance,
-        balance,
-    );
+    parameters.quad_mixer_inputs[oscillator as usize].balance.store(balance);
 }
 
 pub fn set_oscillator_mute(
@@ -257,10 +255,7 @@ pub fn set_oscillator_level(
     normal_value: f32,
 ) {
     let level = exponential_curve_level_adjustment_from_normal_value(normal_value);
-    store_f32_as_atomic_u32(
-        &parameters.quad_mixer_inputs[oscillator as usize].level,
-        level,
-    );
+    parameters.quad_mixer_inputs[oscillator as usize].level.store(level);
 }
 
 pub fn set_oscillator_fine_tune(parameters: &OscillatorParameters, normal_value: f32) -> i8 {
@@ -270,7 +265,7 @@ pub fn set_oscillator_fine_tune(parameters: &OscillatorParameters, normal_value:
         i32::from(OSCILLATOR_FINE_TUNE_MAX_CENTS),
     ) as i8;
 
-    parameters.fine_tune.store(cents, Relaxed);
+    parameters.fine_tune.store(cents);
     cents
 }
 
@@ -281,7 +276,7 @@ pub fn set_oscillator_course_tune(parameters: &OscillatorParameters, normal_valu
         i32::from(OSCILLATOR_COURSE_TUNE_MAX_INTERVAL),
     ) as i8;
 
-    parameters.course_tune.store(interval, Relaxed);
+    parameters.course_tune.store(interval);
     interval
 }
 
@@ -307,8 +302,5 @@ pub fn set_effect_parameter(
     parameter_index: i32,
     value: f32,
 ) {
-    store_f32_as_atomic_u32(
-        &parameters[effect as usize].parameters[parameter_index as usize],
-        value,
-    );
+    parameters[effect as usize].parameters[parameter_index as usize].store(value);
 }

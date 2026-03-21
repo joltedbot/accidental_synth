@@ -1,11 +1,12 @@
 // Derived from https://www.musicdsp.org/en/latest/Filters/253-perfect-lp4-filter.html
 
-use accsyn_types::math::load_f32_from_atomic_u32;
+use accsyn_types::defaults::MAX_FILTER_CUTOFF;
+use serde::{Deserialize, Serialize};
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::{AtomicU8, AtomicU32};
+use std::sync::atomic::AtomicU8;
+use accsyn_types::parameter_types::{FilterPoles, Hertz, NormalizedValue};
 
 pub const NUMBER_OF_FILER_POLES: f32 = 4.0;
-const MAX_FILTER_CUTOFF: f32 = 20000.0;
 const DEFAULT_RESONANCE: f32 = 0.0;
 const NATURAL_LOG_OF_4: f32 = 1.386_294_3;
 const DENORMAL_GUARD: f32 = 1e-25_f32;
@@ -16,21 +17,21 @@ pub const DEFAULT_KEY_TRACKING_FREQUENCY_OFFSET: f32 = 1.0;
 const DEFAULT_FILTER_POLES: u8 = 4;
 const MAX_FILTER_PERCENT_OF_NYQUIST: f32 = 0.35;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FilterParameters {
-    pub cutoff_frequency: AtomicU32,
-    pub resonance: AtomicU32,
-    pub filter_poles: AtomicU8,
-    pub key_tracking_amount: AtomicU32,
+    pub cutoff_frequency: Hertz,
+    pub resonance: NormalizedValue,
+    pub filter_poles: FilterPoles,
+    pub key_tracking_amount: NormalizedValue,
     pub current_note_number: AtomicU8,
 }
 impl Default for FilterParameters {
     fn default() -> Self {
         Self {
-            cutoff_frequency: AtomicU32::new(0),
-            resonance: AtomicU32::new(0.0_f32.to_bits()),
-            filter_poles: AtomicU8::new(DEFAULT_FILTER_POLES),
-            key_tracking_amount: AtomicU32::new(DEFAULT_KEY_TRACKING_AMOUNT.to_bits()),
+            cutoff_frequency: Hertz::default(),
+            resonance: NormalizedValue::default(),
+            filter_poles: FilterPoles::new(DEFAULT_FILTER_POLES),
+            key_tracking_amount: NormalizedValue::new(DEFAULT_KEY_TRACKING_AMOUNT),
             current_note_number: AtomicU8::new(0),
         }
     }
@@ -219,10 +220,10 @@ impl Filter {
     }
 
     fn store_filter_parameters(&mut self, parameters: &FilterParameters) {
-        self.cutoff_frequency = load_f32_from_atomic_u32(&parameters.cutoff_frequency);
-        self.resonance = load_f32_from_atomic_u32(&parameters.resonance);
-        self.poles = parameters.filter_poles.load(Relaxed);
-        self.key_tracking_amount = load_f32_from_atomic_u32(&parameters.key_tracking_amount);
+        self.cutoff_frequency = parameters.cutoff_frequency.load();
+        self.resonance = parameters.resonance.load();
+        self.poles = parameters.filter_poles.load();
+        self.key_tracking_amount = parameters.key_tracking_amount.load();
         self.key_tracking_frequency_offset = get_tracking_offset_from_midi_note_number(
             parameters.current_note_number.load(Relaxed),
             self.key_tracking_amount,

@@ -1,12 +1,13 @@
 use crate::AccidentalSynth;
+use crate::ui::ParameterValues;
 use crate::ui::constants::MAX_PHASE_VALUE;
-use crate::ui::{
-    ParameterValues, set_audio_device_channel_indexes, set_audio_device_channel_list,
-    set_audio_device_values, set_effect_display, set_envelope_inverted, set_envelope_stage_value,
-    set_filter_cutoff_values, set_filter_options_values, set_global_options_values,
-    set_lfo_frequency_display, set_lfo_phase_display, set_lfo_values, set_midi_port_values,
-    set_midi_screen_values, set_oscillator_fine_tune_display, set_oscillator_mixer_values,
-    set_oscillator_values, set_output_mixer_values,
+use crate::ui::set_slint_values::{
+    set_audio_device_channel_indexes, set_audio_device_channel_list, set_audio_device_values,
+    set_effect_display, set_envelope_inverted, set_envelope_stage_value, set_filter_cutoff_values,
+    set_filter_options_values, set_global_options_values, set_lfo_frequency_display,
+    set_lfo_phase_display, set_lfo_values, set_midi_port_values, set_midi_screen_values,
+    set_oscillator_fine_tune_display, set_oscillator_mixer_values, set_oscillator_values,
+    set_output_mixer_values,
 };
 use accsyn_engine::synthesizer::midi_value_converters::{
     exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool,
