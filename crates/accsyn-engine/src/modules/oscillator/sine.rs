@@ -3,6 +3,7 @@ use super::constants::{DEFAULT_PHASE, MAX_PHASE, MIN_PHASE, RADS_PER_CYCLE};
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use std::f32::consts::PI;
 
+/// Sine wave oscillator using phase accumulation.
 pub struct Sine {
     shape: WaveShape,
     phase: f32,

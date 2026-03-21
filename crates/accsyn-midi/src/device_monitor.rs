@@ -10,11 +10,13 @@ use std::thread;
 use std::thread::sleep;
 use std::time::Duration;
 
+/// Polls for MIDI input device changes and sends updates to the control listener.
 pub struct DeviceMonitor {
     device_update_sender: Sender<MidiDeviceUpdateEvents>,
 }
 
 impl DeviceMonitor {
+    /// Creates a new device monitor with the given update sender.
     pub fn new(device_update_sender: Sender<MidiDeviceUpdateEvents>) -> Self {
         Self {
             device_update_sender,

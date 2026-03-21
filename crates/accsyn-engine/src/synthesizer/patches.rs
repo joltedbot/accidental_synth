@@ -15,35 +15,43 @@ const PRESETS_DIRECTORY: &str = "presets";
 const PATCH_FILE_EXTENSION: &str = "json";
 const INIT_PARAMETERS: &str = include_str!("patches/init.json");
 
+/// Errors that can occur during patch file operations.
 #[derive(Debug, Clone, Error)]
 pub enum PatchesError {
+    /// The macOS Application Support directory was not found.
     #[error("Application support directory does not exist")]
     NoApplicationSupportDirectory,
 
+    /// The user's home directory could not be determined.
     #[error("Could not find home directory")]
     NoHomeDirectory,
 
+    /// A patch file with the given name already exists on disk.
     #[error("Patch file already exists")]
     FileAlreadyExists,
 }
 
+/// File system paths used for application data, patches, and presets storage.
 pub struct Paths {
     base: PathBuf,
     application_data: PathBuf,
     user_patches: PathBuf,
     application_presets: PathBuf,
 }
+/// Manages reading and writing synthesizer patch and preset files.
 pub struct Patches {
     paths: Paths,
 }
 
 impl Patches {
+    /// Creates a new Patches instance, initializing application storage directories if needed.
     pub fn new() -> Result<Self> {
         let mut paths = create_data_paths()?;
         initialize_application_storage(&mut paths)?;
         Ok(Self { paths })
     }
 
+    /// Serializes the current module parameters to a new named patch file.
     pub fn create_new_patch(&self, name: &str, parameters: &ModuleParameters) -> Result<()> {
         let content = create_patch_from_parameters(parameters);
         let file_name = format!("{}.{}", name, PATCH_FILE_EXTENSION);

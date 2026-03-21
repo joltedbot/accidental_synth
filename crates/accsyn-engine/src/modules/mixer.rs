@@ -1,10 +1,15 @@
 const QUAD_MIX_DEFAULT_LEVEL_SUM: f32 = 4.0;
 
+/// Input to the oscillator mixer representing one oscillator's contribution.
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct MixerInput {
+    /// Current audio sample value from the oscillator.
     pub sample: f32,
+    /// Oscillator volume level (0.0–1.0).
     pub level: f32,
+    /// Stereo pan position (-1.0 left, 0.0 center, 1.0 right).
     pub balance: f32,
+    /// Whether this oscillator is muted.
     pub mute: bool,
 }
 

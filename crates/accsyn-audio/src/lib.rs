@@ -1,3 +1,10 @@
+//! CPAL-based audio output with hot-swappable device support for the AccSyn synthesizer.
+//!
+//! Manages audio output streams, device monitoring via CoreAudio, and
+//! sample delivery from the synthesis engine to the audio hardware.
+
+#![warn(missing_docs)]
+
 mod constants;
 mod device_monitor;
 
@@ -24,18 +31,24 @@ use std::thread;
 use std::time::Duration;
 use thiserror::Error;
 
+/// A named audio output device with its CPAL handle and list index.
 #[derive(Clone)]
 pub struct OutputDevice {
+    /// Human-readable device name.
     pub name: String,
+    /// CPAL device handle for audio output.
     pub device: Device,
+    /// Index of this device in the host's output device list.
     pub device_index: i32,
 }
 
+/// Atomic left/right channel index pair for the current output device.
 pub struct OutputChannels {
     left: AtomicI32,
     right: AtomicI32,
 }
 
+/// Creates a CPAL `StreamConfig` from the current output stream parameters.
 pub fn stream_config_from_parameters(params: &OutputStreamParameters) -> StreamConfig {
     let buffer_size_samples = params.buffer_size.load(Relaxed);
     let buffer_size = BufferSize::Fixed(buffer_size_samples);
@@ -47,15 +60,19 @@ pub fn stream_config_from_parameters(params: &OutputStreamParameters) -> StreamC
     }
 }
 
+/// Errors that can occur during audio device initialization.
 #[derive(Debug, Clone, Error)]
 pub enum AudioError {
+    /// No audio output devices were found on the system.
     #[error("No Audio Output Devices Found")]
     NoAudioOutputDevices,
 
+    /// The selected audio device has no output channels.
     #[error("No Audio Output Channels Found")]
     NoAudioOutputChannels,
 }
 
+/// Main audio output manager handling device selection, stream configuration, and sample delivery.
 pub struct Audio {
     output_stream_parameters: OutputStreamParameters,
     sample_buffer_sender: Sender<Producer<f32>>,
@@ -68,6 +85,7 @@ pub struct Audio {
 }
 
 impl Audio {
+    /// Creates a new `Audio` instance with the default output device and configuration.
     pub fn new() -> Result<Self> {
         log::debug!(target: "audio", "Constructing Audio Module");
         let (output_device_sender, output_device_receiver) = bounded(SAMPLE_BUFFER_SENDER_CAPACITY);
@@ -109,18 +127,22 @@ impl Audio {
         })
     }
 
+    /// Returns a clone of the shared output stream parameters.
     pub fn get_output_stream_parameters(&self) -> OutputStreamParameters {
         self.output_stream_parameters.clone()
     }
 
+    /// Returns a clone of the sample buffer receiver for the synthesis engine.
     pub fn get_sample_buffer_receiver(&self) -> Receiver<Producer<f32>> {
         self.sample_buffer_receiver.clone()
     }
 
+    /// Returns a clone of the device update sender for sending device change events.
     pub fn get_device_update_sender(&self) -> Sender<AudioDeviceUpdateEvents> {
         self.device_update_sender.clone()
     }
 
+    /// Starts the audio subsystem: device monitor, dropout logger, and control listener.
     pub fn run(&mut self, ui_update_sender: Sender<UIUpdates>) -> Result<()> {
         log::debug!(target: "audio", "Starting Audio Module");
 

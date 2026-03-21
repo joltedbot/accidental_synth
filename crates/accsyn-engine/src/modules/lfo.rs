@@ -6,24 +6,39 @@ use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8};
 use accsyn_types::parameter_types::{Balance, Hertz, LfoRange, NormalizedValue};
 
+/// Minimum LFO frequency in Hz.
 pub const MIN_LFO_FREQUENCY: f32 = 0.01;
+/// Maximum LFO frequency in Hz.
 pub const MAX_LFO_FREQUENCY: f32 = 20000.0;
+/// Maximum LFO output range (peak-to-peak).
 pub const MAX_LFO_RANGE: f32 = 2.0;
+/// Minimum LFO output range (peak-to-peak).
 pub const MIN_LFO_RANGE: f32 = 0.01;
+/// Maximum LFO center value (bipolar offset).
 pub const MAX_LFO_CENTER_VALUE: f32 = 1.0;
+/// Minimum LFO center value (bipolar offset).
 pub const MIN_LFO_CENTER_VALUE: f32 = -1.0;
 const DEFAULT_CENTER_VALUE: f32 = 0.0;
 const DEFAULT_RANGE: f32 = 2.0;
+/// Default LFO starting phase.
 pub const DEFAULT_LFO_PHASE: f32 = 0.0;
+/// Default LFO frequency in Hz.
 pub const DEFAULT_LFO_FREQUENCY: f32 = 0.1;
 
+/// Shared atomic parameters for controlling an LFO from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LfoParameters {
+    /// LFO oscillation frequency in Hz.
     pub frequency: Hertz,
+    /// Center value (DC offset) of the LFO output.
     pub center_value: Balance,
+    /// Peak-to-peak range of the LFO output.
     pub range: LfoRange,
+    /// Starting phase offset of the LFO waveform.
     pub phase: NormalizedValue,
+    /// Index selecting the LFO wave shape.
     pub wave_shape: AtomicU8,
+    /// Flag to trigger a phase reset on the next processing cycle.
     pub reset: AtomicBool,
 }
 
@@ -40,6 +55,7 @@ impl Default for LfoParameters {
     }
 }
 
+/// Low-frequency oscillator for modulating synthesis parameters.
 pub struct Lfo {
     oscillator: Oscillator,
     frequency: f32,
@@ -50,6 +66,7 @@ pub struct Lfo {
 }
 
 impl Lfo {
+    /// Creates a new LFO with default frequency, range, and sine wave shape.
     pub fn new(sample_rate: u32) -> Self {
         log::debug!("Constructing LFO Module");
         let oscillator = Oscillator::new(sample_rate, WaveShape::Sine);
@@ -63,6 +80,7 @@ impl Lfo {
         }
     }
 
+    /// Updates all LFO settings from the shared parameter block.
     pub fn set_parameters(&mut self, parameters: &LfoParameters) {
         self.set_frequency(parameters.frequency.load());
         self.set_center_value(parameters.center_value.load());
@@ -75,6 +93,7 @@ impl Lfo {
         }
     }
 
+    /// Generates the next LFO output sample, scaled by center value and range.
     pub fn generate(&mut self, modulation: Option<f32>) -> f32 {
         if self.range == 0.0 || self.frequency == 0.0 {
             return 0.0;
@@ -83,15 +102,18 @@ impl Lfo {
         self.center_value + (wave_sample * (self.range / 2.0))
     }
 
+    /// Sets the LFO frequency in Hz, clamped to the valid range.
     pub fn set_frequency(&mut self, frequency: f32) {
         self.frequency = frequency.clamp(MIN_LFO_FREQUENCY, MAX_LFO_FREQUENCY);
         self.oscillator.set_frequency(self.frequency);
     }
 
+    /// Sets the LFO center value (DC offset), clamped to [-1, 1].
     pub fn set_center_value(&mut self, center_value: f32) {
         self.center_value = center_value.clamp(MIN_LFO_CENTER_VALUE, MAX_LFO_CENTER_VALUE);
     }
 
+    /// Sets the LFO output range (peak-to-peak), clamped to valid bounds or zero.
     pub fn set_range(&mut self, range: f32) {
         self.range = if range == 0.0 {
             0.0
@@ -100,6 +122,7 @@ impl Lfo {
         }
     }
 
+    /// Sets the LFO wave shape by numeric index, updating the oscillator if changed.
     pub fn set_wave_shape(&mut self, wave_shape_index: u8) {
         if wave_shape_index != self.wave_shape_index {
             let wave_shape = WaveShape::from_index(wave_shape_index);
@@ -108,6 +131,7 @@ impl Lfo {
         }
     }
 
+    /// Sets the LFO phase offset, updating the oscillator if the value changed.
     pub fn set_phase(&mut self, phase: f32) {
         if !f32s_are_equal(self.phase, phase) {
             self.oscillator.set_phase(phase);

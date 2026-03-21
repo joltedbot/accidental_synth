@@ -9,6 +9,7 @@ const DEFAULT_X_INCREMENT: f32 = 1.0;
 const VOICE_FREQUENCY_SPREAD_CENTS: [i8; 7] = [-12, -7, -4, 0, 4, 7, 12];
 const VOICE_COUNT_OUTPUT_LEVEL_OFFSET: f32 = 0.3;
 
+/// Multi-voice detuned supersaw oscillator blending seven saw waves.
 pub struct Supersaw {
     shape: WaveShape,
     x_coordinate: f32,

@@ -4,6 +4,7 @@ use super::sine::Sine;
 use crate::modules::oscillator::constants::{MAX_PHASE, MIN_PHASE};
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 
+/// Amplitude modulation oscillator using carrier and modulator sine waves.
 pub struct AM {
     shape: WaveShape,
     carrier: Box<dyn GenerateWave + Send + Sync>,
@@ -13,6 +14,7 @@ pub struct AM {
 }
 
 impl AM {
+    /// Creates a new AM oscillator with default modulation depth and tone amount.
     pub fn new(sample_rate: u32) -> Self {
         log::debug!(target: "synth::oscillator", shape = "AM"; "Constructing wave generator");
         Self {

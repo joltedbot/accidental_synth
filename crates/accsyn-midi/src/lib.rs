@@ -1,6 +1,17 @@
+//! MIDI input handling for the AccSyn synthesizer.
+//!
+//! Provides MIDI device monitoring, message parsing, virtual input port creation,
+//! and channel filtering using midir.
+
+#![warn(missing_docs)]
+
+/// MIDI protocol constants: byte indexes, masks, and configuration values.
 pub mod constants;
+/// MIDI Control Change number to synthesizer parameter mapping.
 pub mod control_change;
+/// MIDI input device polling and hot-swap detection.
 pub mod device_monitor;
+/// MIDI input message listener and event processing.
 pub mod input_listener;
 
 use crate::constants::{
@@ -23,11 +34,27 @@ use thiserror::Error;
 /// Errors that can occur during MIDI operations.
 #[derive(Debug, Clone, Error)]
 pub enum MidiError {
+    /// Failed to create a MIDI input connection to the selected port.
     #[error("Failed to create MIDI input connection")]
     InputConnectionFailed,
 
+    /// Failed to send a parsed MIDI message to the synthesizer.
     #[error("MIDI message channel send failed")]
     MessageSendFailed,
+}
+
+/// MIDI device update events. This enum stays in the midi crate because
+/// `InputPort` contains `MidiInputPort` which is a midir-specific type.
+#[derive(PartialEq, Clone)]
+pub enum MidiDeviceUpdateEvents {
+    /// Updated list of available MIDI input port names.
+    InputPortList(Vec<String>),
+    /// A specific input port was selected (index and midir port handle).
+    InputPort(Option<(usize, MidiInputPort)>),
+    /// User selected a MIDI input port from the UI by name.
+    UIMidiInputPort(String),
+    /// User changed the MIDI channel filter from the UI.
+    UIMidiInputChannelIndex(String),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -42,16 +69,7 @@ enum Status {
     Unknown,
 }
 
-/// MIDI device update events. This enum stays in the midi crate because
-/// `InputPort` contains `MidiInputPort` which is a midir-specific type.
-#[derive(PartialEq, Clone)]
-pub enum MidiDeviceUpdateEvents {
-    InputPortList(Vec<String>),
-    InputPort(Option<(usize, MidiInputPort)>),
-    UIMidiInputPort(String),
-    UIMidiInputChannelIndex(String),
-}
-
+/// Main MIDI input manager handling device connections, message routing, and channel filtering.
 pub struct Midi {
     message_sender: Sender<MidiEvent>,
     message_receiver: Receiver<MidiEvent>,
@@ -70,6 +88,7 @@ impl Default for Midi {
 }
 
 impl Midi {
+    /// Creates a new `Midi` instance with message channels and default state.
     pub fn new() -> Self {
         log::debug!(target: "midi", "Constructing Midi module");
 
@@ -91,14 +110,17 @@ impl Midi {
         }
     }
 
+    /// Returns a clone of the MIDI message receiver for the synthesizer.
     pub fn get_midi_message_receiver(&self) -> Receiver<MidiEvent> {
         self.message_receiver.clone()
     }
 
+    /// Returns a clone of the device update sender for sending port change events.
     pub fn get_device_update_sender(&self) -> Sender<MidiDeviceUpdateEvents> {
         self.device_update_sender.clone()
     }
 
+    /// Starts the MIDI subsystem: device monitor, virtual input port, and control listener.
     pub fn run(&mut self, ui_update_sender: Sender<UIUpdates>) -> Result<()> {
         log::debug!(target: "midi", "Starting MIDI module");
 

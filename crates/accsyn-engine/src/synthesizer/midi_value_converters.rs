@@ -14,6 +14,7 @@ use accsyn_types::math::{
 };
 
 
+/// Maps a normalized 0.0-1.0 value to a target f32 range.
 pub fn normal_value_to_f32_range(normal_value: f32, mut minimum: f32, mut maximum: f32) -> f32 {
     if maximum < minimum {
         core::mem::swap(&mut minimum, &mut maximum);
@@ -23,6 +24,7 @@ pub fn normal_value_to_f32_range(normal_value: f32, mut minimum: f32, mut maximu
     minimum + (normal_value * range)
 }
 
+/// Maps a normalized 0.0-1.0 value to a target unsigned integer range with rounding.
 pub fn normal_value_to_unsigned_integer_range(
     normal_value: f32,
     mut minimum: u32,
@@ -39,6 +41,7 @@ pub fn normal_value_to_unsigned_integer_range(
     (f64::from(minimum) + scaled_value).clamp(f64::from(minimum), f64::from(maximum)) as u32
 }
 
+/// Maps a normalized 0.0-1.0 value to a target signed integer range with rounding.
 pub fn normal_value_to_signed_integer_range(
     normal_value: f32,
     mut minimum: i32,
@@ -55,16 +58,19 @@ pub fn normal_value_to_signed_integer_range(
     (f64::from(minimum) + scaled_value).clamp(f64::from(minimum), f64::from(maximum)) as i32
 }
 
+/// Converts a normalized value to a boolean, treating values at or above 0.5 as true.
 pub fn normal_value_to_bool(normal_value: f32) -> bool {
     normal_value >= NORMAL_TO_BOOL_SWITCH_ON_VALUE
 }
 
+/// Converts a normalized value to the number of filter poles (1 to 4).
 pub fn normal_value_to_number_of_filter_poles(normal_value: f32) -> u8 {
     (NUMBER_OF_FILER_POLES * normal_value)
         .ceil()
         .clamp(1.0, NUMBER_OF_FILER_POLES) as u8
 }
 
+/// Converts a normalized value to an oscillator wave shape index.
 pub fn normal_value_to_wave_shape_index(normal_value: f32) -> u8 {
     normal_value_to_unsigned_integer_range(
         normal_value,
@@ -84,6 +90,7 @@ pub(crate) fn exponential_curve_filter_cutoff_from_normal_value(normal_value: f3
     )
 }
 
+/// Converts a normalized value to an LFO frequency using an exponential curve.
 pub fn exponential_curve_lfo_frequency_from_normal_value(normal_value: f32) -> f32 {
     if normal_value == 0.0 {
         return 0.0;
@@ -126,6 +133,7 @@ pub(crate) fn exponential_curve_level_adjustment_from_normal_value(normal_value:
     ) / LEVEL_CURVE_LINEAR_RANGE
 }
 
+/// Converts a normalized value to a velocity curve exponent for dynamic response shaping.
 pub fn velocity_curve_from_normal_value(normal_value: f32) -> f32 {
     if normal_value == 0.0 {
         return 0.0;
@@ -161,6 +169,7 @@ pub(crate) fn scaled_velocity_from_normal_value(velocity_curve: f32, velocity: f
     velocity.powf(velocity_curve)
 }
 
+/// Applies a MIDI pitch bend value to all oscillators based on the configured semitone range.
 pub fn update_current_note_from_midi_pitch_bend(
     pitch_bend_amount: u16,
     range_in_semitones: u8,

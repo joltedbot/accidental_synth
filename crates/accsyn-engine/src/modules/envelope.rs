@@ -8,29 +8,51 @@ const ENVELOPE_MIN_LEVEL: f32 = 0.0;
 const MIN_SUSTAIN_LEVEL: f32 = 0.0;
 const MAX_SUSTAIN_LEVEL: f32 = 1.0;
 const DEFAULT_EG_AMOUNT: f32 = 1.0;
+/// Default per-sample level increment during the attack stage.
 pub const DEFAULT_ATTACK_LEVEL_INCREMENT: f32 = 0.0001;
+/// Default per-sample level increment during the decay stage.
 pub const DEFAULT_DECAY_LEVEL_INCREMENT: f32 = 0.0001;
+/// Default decay time in milliseconds.
 pub const DEFAULT_DECAY_MILLISECONDS: f32 = 200.0;
+/// Default per-sample level increment during the release stage.
 pub const DEFAULT_RELEASE_LEVEL_INCREMENT: f32 = 0.0001;
+/// Default envelope modulation amount (1.0 = full).
 pub const DEFAULT_ENVELOPE_AMOUNT: f32 = 1.0;
+/// Default sustain level as a normalized value.
 pub const DEFAULT_ENVELOPE_SUSTAIN_LEVEL: f32 = 0.8;
+/// Default time in milliseconds for attack, decay, and release stages.
 pub const DEFAULT_ENVELOPE_MILLISECONDS: u32 = 200;
+/// Minimum attack time in milliseconds.
 pub const MIN_ATTACK_MILLISECONDS: u32 = 1;
+/// Maximum attack time in milliseconds.
 pub const MAX_ATTACK_MILLISECONDS: u32 = 5000;
+/// Minimum decay time in milliseconds.
 pub const MIN_DECAY_MILLISECONDS: u32 = 10;
+/// Maximum decay time in milliseconds.
 pub const MAX_DECAY_MILLISECONDS: u32 = 5000;
+/// Minimum release time in milliseconds.
 pub const MIN_RELEASE_MILLISECONDS: u32 = 10;
+/// Maximum release time in milliseconds.
 pub const MAX_RELEASE_MILLISECONDS: u32 = 10000;
 
+/// Shared atomic parameters for controlling an ADSR envelope from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EnvelopeParameters {
+    /// Attack time in milliseconds.
     pub attack_ms: Milliseconds,
+    /// Decay time in milliseconds.
     pub decay_ms: Milliseconds,
+    /// Release time in milliseconds.
     pub release_ms: Milliseconds,
+    /// Sustain level as a normalized 0.0-1.0 value.
     pub sustain_level: NormalizedValue,
+    /// Whether the MIDI sustain pedal is held.
     pub sustain_pedal: AtomicBool,
+    /// Envelope modulation depth amount.
     pub amount: NormalizedValue,
+    /// Whether the envelope output is inverted.
     pub is_inverted: AtomicBool,
+    /// Gate state flag: 0 = waiting, 1 = gate on, 2 = gate off.
     pub gate_flag: AtomicU8, // 0 - waiting, 1 - gate on, 2 - gate off
 }
 
@@ -66,6 +88,7 @@ enum StageAction {
     NextStage,
 }
 
+/// ADSR envelope generator that produces a control signal over time.
 #[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub struct Envelope {
     stage: Stage,
@@ -84,6 +107,7 @@ pub struct Envelope {
 }
 
 impl Envelope {
+    /// Creates a new envelope generator initialized to the Off stage.
     pub fn new(sample_rate: u32) -> Self {
         log::debug!("Constructing Envelope Module");
 
@@ -106,6 +130,7 @@ impl Envelope {
         }
     }
 
+    /// Updates all envelope settings from the shared parameter block.
     pub fn set_parameters(&mut self, parameters: &EnvelopeParameters) {
         self.set_attack_milliseconds(parameters.attack_ms.load());
         self.set_decay_milliseconds(parameters.decay_ms.load());
@@ -116,11 +141,13 @@ impl Envelope {
         self.set_is_inverted(parameters.is_inverted.load(Relaxed));
     }
 
+    /// Generates the next envelope output sample, advancing the stage state machine.
     pub fn generate(&mut self) -> f32 {
         let envelope_output_value = self.next_value();
         envelope_output_value * self.amount
     }
 
+    /// Checks and consumes the gate flag to trigger note-on or note-off transitions.
     pub fn check_gate(&mut self, gate_flag: &AtomicU8) {
         if self.set_gate(gate_flag.load(Relaxed)) {
             gate_flag.store(0, Relaxed);

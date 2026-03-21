@@ -5,6 +5,7 @@ use crate::modules::oscillator::constants::{
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use std::f32::consts::PI;
 
+/// Triangle wave oscillator using arcsine shaping.
 pub struct Triangle {
     shape: WaveShape,
     x_coordinate: f32,

@@ -6,6 +6,7 @@ const SHAPE: WaveShape = WaveShape::Saw;
 const DEFAULT_X_COORDINATE: f32 = 0.0;
 const DEFAULT_X_INCREMENT: f32 = 1.0;
 
+/// Sawtooth wave oscillator using band-limited synthesis.
 pub struct Saw {
     shape: WaveShape,
     x_coordinate: f32,
