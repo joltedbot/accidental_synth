@@ -140,6 +140,26 @@ export component MidiSettings inherits VerticalLayout {
     }
 }
 
+export component Presets inherits VerticalLayout {
+
+    in property <[string]> preset-list;
+    in property <int> selected-index;
+    callback preset-changed(int);
+
+    padding: Theme.osc-controls-panel-padding;
+    spacing: Theme.osc-controls-panel-spacing;
+
+    preset := DropDownMenu {
+        label: "Presets";
+        value-list: preset-list;
+        value-index: selected-index;
+        dropdown-width: Theme.oscillator-panel-widget-width;
+        drop_down_changed(index, preset) => {
+            preset-changed(index);
+        }
+    }
+}
+
 export component SettingsIcon inherits Image {
     source: Theme.settings-image;
     height: Theme.header-logo-height;
@@ -159,6 +179,8 @@ export component SettingsIcon inherits Image {
 export component SettingsWindow inherits PopupWindow {
     in property <AudioDevice> audio-device-values;
     in property <MidiPort> midi-port-values;
+    in property <[string]> preset-list;
+    in-out property <int> selected-preset-index;
 
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
@@ -167,6 +189,7 @@ export component SettingsWindow inherits PopupWindow {
     callback audio-buffer-size-changed(string);
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
+    callback preset-changed(int);
 
     width: Theme.settings-panel-width;
     height: Theme.settings-panel-height;
@@ -250,6 +273,19 @@ export component SettingsWindow inherits PopupWindow {
                             midi-input-channel-changed(channel);
                         }
                     }
+                }
+            }
+
+            PanelLabel {
+                label: "Presets & Patches";
+            }
+
+            Presets {
+                preset-list: preset-list;
+                selected-index: selected-preset-index;
+
+                preset-changed(preset_index) => {
+                    preset-changed(preset_index)
                 }
             }
 

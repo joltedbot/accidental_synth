@@ -33,6 +33,7 @@ use std::sync::atomic::Ordering::Relaxed;
 use std::sync::{Arc, Mutex};
 use structs::UIGlobalOptions;
 use strum::EnumCount;
+use accsyn_engine::synthesizer::patches;
 
 const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
 
@@ -95,7 +96,8 @@ impl UI {
             synthesizer_update_sender,
         );
 
-        set_ui_default_values(ui_weak, &self.parameter_values)?;
+        let preset_list = patches::preset_list();
+        set_ui_default_values(ui_weak, &self.parameter_values, &preset_list)?;
 
         start_ui_update_listener(ui_update_receiver, ui_weak, &self.parameter_values);
 
@@ -105,12 +107,14 @@ impl UI {
 fn set_ui_default_values(
     ui_weak: &Weak<AccidentalSynth>,
     parameter_values: &Arc<Mutex<ParameterValues>>,
+    presets: &[String],
 ) -> Result<()> {
     let values = parameter_values
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
 
     let ui_default_values = values.clone();
+    let preset_values = presets.to_owned();
 
     ui_weak.upgrade_in_event_loop(move |ui| {
         ui.set_version(SharedString::from(env!("CARGO_PKG_VERSION")));
@@ -121,6 +125,7 @@ fn set_ui_default_values(
         ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(
             &ui_default_values.audio_device,
         ));
+        ui.set_preset_list(slint_preset_list_from_ui_preset_list(&preset_values));
         ui.set_amp_envelope_values(slint_envelope_from_ui_envelope(
             &ui_default_values.amp_envelope,
         ));
@@ -263,6 +268,11 @@ fn slint_audio_device_from_ui_audio_device(audio_device_values: &UIAudioDevice) 
         sample_rates: vec_to_model_rc_shared_string(&audio_device_values.sample_rates),
         buffer_sizes: vec_to_model_rc_shared_string(&audio_device_values.buffer_sizes),
     }
+}
+
+fn slint_preset_list_from_ui_preset_list(preset_list: &[String]) -> ModelRc<SharedString> {
+    let slint_presets = preset_list.iter().map(SharedString::from).collect::<Vec<SharedString>>();
+    ModelRc::from(Rc::new(VecModel::from(slint_presets)))
 }
 
 fn slint_envelope_from_ui_envelope(envelope_values: &UIEnvelope) -> EnvelopeValues {

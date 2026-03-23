@@ -1,19 +1,26 @@
-#!allow[dead_code]
 use crate::synthesizer::ModuleParameters;
 use anyhow::{Result, anyhow};
 use serde_json::json;
-use std::fs::{DirEntry, ReadDir};
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use thiserror::Error;
 
 const APP_SUPPORT_DIRECTORY: &str = "Library/Application Support";
 const DATA_DIRECTORY: &str = "AccidentalSynthesizer";
 const USER_PATCH_DIRECTORY: &str = "patches";
-const SYSTEM_PATCHES: &str = "./presets";
-
 const PATCH_FILE_EXTENSION: &str = "json";
-const INIT_PARAMETERS: &str = include_str!("patches/init.json");
+const SYSTEM_PATCHES: &[(&str,&str)] = &[
+    ("Init", include_str!("patches/init.json")),
+    ("Bright Lead", include_str!("patches/bright-lead.json")),
+    ("Deep Bass", include_str!("patches/deep-bass.json")),
+    ("FM Bells", include_str!("patches/fm-bells.json")),
+    ("Industrial", include_str!("patches/harsh-industrial.json")),
+    ("Plucky Keys", include_str!("patches/plucky-keys.json")),
+    ("Sci-Fi", include_str!("patches/sci-fi.json")),
+    ("Supersaw Swirl", include_str!("patches/supersaw-swirl.json")),
+    ("Warm Pad", include_str!("patches/warm-pad.json")),
+];
+const INIT_PARAMETERS: &str = SYSTEM_PATCHES[0].1;
 
 /// Errors that can occur during patch file operations.
 #[derive(Debug, Clone, Error)]
@@ -36,13 +43,11 @@ pub struct Paths {
     base: PathBuf,
     application_data: PathBuf,
     user_patches: PathBuf,
-    system_patches: PathBuf,
 }
+
 /// Manages reading and writing synthesizer patch and preset files.
 pub struct Patches {
     paths: Paths,
-    system: Vec<PathBuf>,
-    user: Vec<PathBuf>,
 }
 
 impl Patches {
@@ -51,13 +56,8 @@ impl Patches {
         let mut paths = create_data_paths()?;
         initialize_application_storage(&mut paths)?;
 
-        let system = load_patches(&mut paths.system_patches)?;
-        let user = load_patches(&mut paths.user_patches)?;
-
         Ok(Self {
             paths,
-            system,
-            user,
         })
     }
 
@@ -83,54 +83,21 @@ impl Patches {
         Ok(())
     }
 
-    pub(crate) fn init_module_parameters(&self) -> Result<ModuleParameters> {
-        Ok(serde_json::from_str(INIT_PARAMETERS)?)
-    }
-
-    pub(crate) fn get_system_patch_names(&self) -> Result<Vec<String>> {
-        let mut names: Vec<String> = vec![];
-
-        names = self
-            .system
-            .iter()
-            .filter_map(|path| path.file_prefix())
-            .filter_map(|name | name.to_str())
-            .map(String::from)
-            .map(|name| name.replace('_', " "))
-            .collect::<Vec<String>>();
-
-        Ok(names)
-    }
-
-    fn read_patch_file(&self, name: &str) -> Result<ModuleParameters> {
-        let content = read_file(name, &self.paths.user_patches)?;
-        Ok(serde_json::from_str(&content)?)
-    }
-
-    fn read_preset_file(&self, name: &str) -> Result<ModuleParameters> {
-        let content = read_file(name, &self.paths.system_patches)?;
-        Ok(serde_json::from_str(&content)?)
-    }
 }
 
-fn load_patches(path: &mut PathBuf) -> Result<Vec<PathBuf>> {
-    let mut patches = Vec::new();
-    let directory = path.clone();
-    let directory_entries = std::fs::read_dir(directory)?;
-    directory_entries.for_each(|entry| {
-        let entry = entry.unwrap();
-        let path = entry.path();
-        if path.is_file() {
-            patches.push(path);
-        }
-    });
-    Ok(patches)
+/// Generates a list of preset names from the building system preset patches
+pub fn preset_list() -> Vec<String> {
+    SYSTEM_PATCHES.iter().map(|(name, _)| name.to_string()).collect()
 }
 
-fn read_file(name: &str, path: &Path) -> Result<String> {
-    let file_name = format!("{name}.{PATCH_FILE_EXTENSION}");
-    let file_path = path.join(file_name);
-    Ok(std::fs::read_to_string(file_path)?)
+/// Loads a preset from the system preset patches by preset index. See `SYSTEM_PATCHES` for the index values.
+pub fn get_preset_from_index(index: usize) -> Result<ModuleParameters> {
+    let content = SYSTEM_PATCHES[index].1;
+    Ok(serde_json::from_str(content)?)
+}
+
+pub(crate) fn init_module_parameters() -> Result<ModuleParameters> {
+    Ok(serde_json::from_str(INIT_PARAMETERS)?)
 }
 
 fn create_data_paths() -> Result<Paths> {
@@ -138,13 +105,11 @@ fn create_data_paths() -> Result<Paths> {
     base.push(APP_SUPPORT_DIRECTORY);
     let application_data = base.join(DATA_DIRECTORY);
     let user_patches = application_data.join(USER_PATCH_DIRECTORY);
-    let system_presets = PathBuf::from(SYSTEM_PATCHES);
 
     let paths = Paths {
         base,
         application_data,
         user_patches,
-        system_patches: system_presets,
     };
 
     Ok(paths)
@@ -171,12 +136,6 @@ fn initialize_application_storage(paths: &mut Paths) -> Result<()> {
         log::debug!(target: "synthesizer::patches", "User patches directory does not exist. Creating: {}", paths
             .user_patches.display());
         std::fs::create_dir(&paths.user_patches)?;
-    }
-
-    if !paths.system_patches.exists() {
-        log::debug!(target: "synthesizer::patches", "Application presets directory does not exist. Creating: {}", paths
-            .system_patches.display());
-        std::fs::create_dir(&paths.system_patches)?;
     }
 
     Ok(())

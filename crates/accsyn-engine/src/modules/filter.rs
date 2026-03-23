@@ -34,6 +34,18 @@ pub struct FilterParameters {
     /// Current MIDI note number used for key tracking calculation.
     pub current_note_number: AtomicU8,
 }
+
+impl FilterParameters {
+    /// Replace all the values in this `FilterParameters` with the values from the provided `FilterParameters`.
+    pub fn assign_from(&self, parameters: &FilterParameters) {
+        self.cutoff_frequency.store(parameters.cutoff_frequency.load());
+        self.resonance.store(parameters.resonance.load());
+        self.filter_poles.store(parameters.filter_poles.load());
+        self.key_tracking_amount.store(parameters.key_tracking_amount.load());
+        self.cutoff_frequency.store(parameters.cutoff_frequency.load());
+    }
+}
+
 impl Default for FilterParameters {
     fn default() -> Self {
         Self {
@@ -45,6 +57,7 @@ impl Default for FilterParameters {
         }
     }
 }
+
 
 #[derive(Default, Copy, Clone, Debug, PartialEq)]
 struct Coefficients {

@@ -1,5 +1,4 @@
 pub const MAX_THRESHOLD: f32 = 1.0;
-pub const MAX_GATE_CUT: f32 = 1.0;
 pub const MAX_BITSHIFT_BITS: u32 = 16;
 pub const MIN_BITSHIFT_BITS: u32 = 1;
 pub const MIN_RATIO: u8 = 1;

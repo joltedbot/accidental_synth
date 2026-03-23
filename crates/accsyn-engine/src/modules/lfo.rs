@@ -42,6 +42,18 @@ pub struct LfoParameters {
     pub reset: AtomicBool,
 }
 
+impl LfoParameters {
+    /// Replace all the values in these `LfoParameters` with the values from the provided `LfoParameters`.
+    pub fn assign_from(&self, parameters: &LfoParameters) {
+        self.frequency.store(parameters.frequency.load());
+        self.center_value.store(parameters.center_value.load());
+        self.range.store(parameters.range.load());
+        self.phase.store(parameters.phase.load());
+        self.wave_shape.store(parameters.wave_shape.load(Relaxed), Relaxed);
+        self.reset.store(parameters.reset.load(Relaxed), Relaxed)
+    }
+}
+
 impl Default for LfoParameters {
     fn default() -> Self {
         Self {

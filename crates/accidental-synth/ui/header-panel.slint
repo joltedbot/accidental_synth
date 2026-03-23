@@ -25,6 +25,8 @@ export component HeaderPanel inherits Panel {
     in property <string> version;
     in property <AudioDevice> audio-device-values;
     in property <MidiPort> midi-port-values;
+    in property <[string]> preset-list;
+    in-out property <int> selected-preset-index;
 
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
@@ -33,6 +35,7 @@ export component HeaderPanel inherits Panel {
     callback audio-buffer-size-changed(string);
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
+    callback preset-changed(int);
 
     height: Theme.header-panel-height;
     background: Theme.header-panel-background;
@@ -40,6 +43,8 @@ export component HeaderPanel inherits Panel {
     settings := SettingsWindow {
         audio-device-values: audio-device-values;
         midi-port-values: midi-port-values;
+        preset-list: preset-list;
+        selected-preset-index: selected-preset-index;
 
         audio-output-device-changed(device) => {
             audio-output-device-changed(device);
@@ -61,6 +66,10 @@ export component HeaderPanel inherits Panel {
         }
         midi-input-channel-changed(channel) => {
             midi-input-channel-changed(channel);
+        }
+        preset-changed(preset_index) => {
+            root.selected-preset-index = preset_index;
+            preset-changed(preset-index);
         }
     }
 

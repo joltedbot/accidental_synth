@@ -36,7 +36,8 @@ fn main() {
     log::debug!(target: "main", "Initialize the synthesizer module");
     let mut synthesizer = Synthesizer::new(audio.get_output_stream_parameters())
         .expect("Could not initialize the synthesizer module. Exiting.");
-
+    
+    
     let default_ui_parameters = synthesizer.get_module_parameters();
     log::debug!(target: "main", "Initialize the user interface module");
     let mut ui = UI::new(default_ui_parameters);

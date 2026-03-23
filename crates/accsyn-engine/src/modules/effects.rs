@@ -1,16 +1,13 @@
 use crate::modules::effects::bitshifter::BitShifter;
 use crate::modules::effects::clipper::Clipper;
-use crate::modules::effects::constants::{MAX_GATE_CUT, MAX_THRESHOLD};
 use crate::modules::effects::gate::Gate;
 use crate::modules::effects::rectifier::Rectifier;
 use crate::modules::effects::wavefolder::WaveFolder;
-use accsyn_types::defaults::DELAY_DEFAULT_PARAMETERS;
 pub use accsyn_types::effects::EffectIndex;
 use accsyn_types::effects::{AudioEffect, EffectParameters, PARAMETERS_PER_EFFECT};
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::AtomicBool;
-use strum::IntoEnumIterator;
 use accsyn_types::parameter_types::NormalizedValue;
 
 mod autopan;
@@ -32,6 +29,16 @@ pub struct AudioEffectParameters {
     pub is_enabled: AtomicBool,
     /// Effect-specific parameter values.
     pub parameters: [NormalizedValue; PARAMETERS_PER_EFFECT],
+}
+
+impl AudioEffectParameters {
+    /// Replace all the values in this `AudioEffectParameters` with the values from the provided `AudioEffectParameters`.
+    pub fn assign_from(&self, effects_parameters: &AudioEffectParameters) {
+        self.is_enabled.store(effects_parameters.is_enabled.load(Relaxed), Relaxed);
+        self.parameters.iter().enumerate().for_each(|(index, parameter)| {
+            parameter.store(effects_parameters.parameters[index].load());
+        });
+    }
 }
 
 impl Default for AudioEffectParameters {
@@ -106,45 +113,6 @@ fn extract_parameters(source: &AudioEffectParameters) -> EffectParameters {
             .map(|parameter| parameter.load())
             .collect(),
     }
-}
-
-pub(crate) fn default_audio_effect_parameters() -> Vec<AudioEffectParameters> {
-    let mut audio_effect_parameters = Vec::new();
-
-    for effect in EffectIndex::iter() {
-        match effect {
-            EffectIndex::WaveFolder | EffectIndex::Rectifier | EffectIndex::BitShifter => {
-                audio_effect_parameters.push(AudioEffectParameters::default());
-            }
-            EffectIndex::Clipper | EffectIndex::Compressor => {
-                let mut effects_parameters = AudioEffectParameters::default();
-                effects_parameters.parameters[0] = NormalizedValue::new(MAX_THRESHOLD);
-                audio_effect_parameters.push(effects_parameters);
-            }
-            EffectIndex::Gate | EffectIndex::AutoPan | EffectIndex::Tremolo => {
-                let mut effects_parameters = AudioEffectParameters::default();
-                effects_parameters.parameters[1] = NormalizedValue::new(MAX_GATE_CUT);
-                audio_effect_parameters.push(effects_parameters);
-            }
-            EffectIndex::Saturation => {
-                let mut effects_parameters = AudioEffectParameters::default();
-                effects_parameters.parameters[2] = NormalizedValue::new(MAX_THRESHOLD);
-                audio_effect_parameters.push(effects_parameters);
-            }
-            EffectIndex::Delay => {
-                let mut effects_parameters = AudioEffectParameters::default();
-                effects_parameters.parameters[0] =
-                    NormalizedValue::new(DELAY_DEFAULT_PARAMETERS[0]);
-                effects_parameters.parameters[1] =
-                    NormalizedValue::new(DELAY_DEFAULT_PARAMETERS[1]);
-                effects_parameters.parameters[2] =
-                    NormalizedValue::new(DELAY_DEFAULT_PARAMETERS[2]);
-                audio_effect_parameters.push(effects_parameters);
-            }
-        }
-    }
-
-    audio_effect_parameters
 }
 
 #[cfg(test)]
@@ -280,24 +248,5 @@ mod tests {
         // Rectifier full-wave: 0.4 stays 0.4, -0.4 becomes 0.4
         assert!(f32s_are_equal(result.0, 0.4));
         assert!(f32s_are_equal(result.1, 0.4));
-    }
-
-    #[test]
-    fn default_audio_effect_parameters_clipper_has_max_threshold() {
-        let params = default_audio_effect_parameters();
-
-        // Clipper
-        let clipper_threshold =
-            params[EffectIndex::Clipper as usize].parameters[0].load();
-        assert!(f32s_are_equal(clipper_threshold, MAX_THRESHOLD));
-    }
-
-    #[test]
-    fn default_audio_effect_parameters_all_effects_disabled() {
-        let params = default_audio_effect_parameters();
-
-        for param in &params {
-            assert!(!param.is_enabled.load(Relaxed));
-        }
     }
 }

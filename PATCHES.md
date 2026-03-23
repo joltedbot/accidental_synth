@@ -1,12 +1,13 @@
 # Patch File Format
 
-This document describes the JSON patch file format used by Accidental Synthesizer to store and load synthesizer configurations.
+This document describes the JSON patch file format used by Accidental Synthesizer for system presets and user created patches.
 
 ## Overview
 
 Patch files are JSON documents that capture the complete state of a synthesizer patch, including oscillator settings, filter parameters, envelope configurations, LFO modulation, mixer levels, keyboard response, and effects processing. They allow users to save, share, and recall synthesizer configurations.
 
-Patch files are located in `crates/accsyn-engine/src/synthesizer/patches/` and use the `.json` file extension. The `init.json` file serves as the default initialization patch.
+System presets are located in `crates/accsyn-engine/src/synthesizer/patches/` and use the `.json` file extension. `init.json` is loade by default 
+at system startup.
 
 ## Root Structure
 
@@ -38,12 +39,12 @@ Array of 4 oscillator objects, in order: Sub, Osc 1, Osc 2, Osc 3.
 | `clipper_boost` | integer | 0-30 | Clipper output boost in dB |
 | `shape_parameter1` | number | 0.0-1.0 | Waveform-dependent (e.g., pulse width, AM/FM depth) |
 | `shape_parameter2` | number | 0.0-1.0 | Waveform-dependent |
-| `pitch_bend` | integer | -8192 to +8191 | MIDI pitch bend value (typically 0 in patches) |
+| `pitch_bend` | integer | see below | Pitch bend offset in cents (see [Pitch Bend](#pitch-bend)) |
 | `portamento_enabled` | boolean | | Enable pitch glide between notes |
 | `portamento_time` | integer | 0-65535 | Glide duration in audio buffers |
 | `hard_sync_enabled` | boolean | | Enable hard sync to master oscillator |
 | `key_sync_enabled` | boolean | | Reset phase on each note |
-| `gate_flag` | boolean | | Runtime state (leave as false in patches) |
+| `gate_flag` | boolean | | [Performance state](#performance-state-fields) — leave as false |
 
 ### Example Oscillator
 
@@ -68,13 +69,13 @@ Array of 4 oscillator objects, in order: Sub, Osc 1, Osc 2, Osc 3.
 
 Single filter object controlling the resonant lowpass filter.
 
-| Field | Type | Range | Description |
-|-------|------|-------|-------------|
+| Field | Type | Range | Description                                               |
+|-------|------|-------|-----------------------------------------------------------|
 | `cutoff_frequency` | number | 0.0-20000.0 | Filter cutoff in Hz (clamped to 35% of Nyquist at runtime) |
-| `filter_poles` | integer | 1-4 | Number of filter poles (filter order) |
-| `resonance` | number | 0.0-0.90 | Filter resonance (peak at cutoff) |
-| `key_tracking_amount` | number | 0.0-1.0 | Sensitivity to keyboard pitch |
-| `current_note_number` | integer | | Runtime state (leave at 0 in patches) |
+| `filter_poles` | integer | 1-4 | Number of filter poles (1 = 6 dB/oct, 2 = 12, 3 = 18, 4 = 24) |
+| `resonance` | number | 0.0-0.90 | Filter resonance (peak at cutoff)                         |
+| `key_tracking_amount` | number | 0.0-1.0 | Bipolar key tracking (see [Key Tracking](#key-tracking))   |
+| `current_note_number` | integer | | [Performance state](#performance-state-fields) — leave at 0 |
 
 ### Example Filter
 
@@ -102,8 +103,8 @@ Each envelope is an ADSR (Attack, Decay, Sustain, Release) generator.
 | `sustain_level` | number | 0.0-1.0 | Sustain level after decay |
 | `release_ms` | integer | 10-10000 | Release time in milliseconds |
 | `is_inverted` | boolean | | Invert the envelope output |
-| `sustain_pedal` | boolean | | Runtime state (leave as false in patches) |
-| `gate_flag` | integer | | Runtime state (leave at 0 in patches) |
+| `sustain_pedal` | boolean | | [Performance state](#performance-state-fields) — leave as false |
+| `gate_flag` | integer | | [Performance state](#performance-state-fields) — leave at 0 |
 
 ### Example Envelope
 
@@ -190,7 +191,7 @@ Single keyboard object controlling MIDI response and velocity sensitivity.
 | Field | Type | Range | Description |
 |-------|------|-------|-------------|
 | `pitch_bend_range` | integer | 2-12 | Maximum pitch bend in semitones |
-| `velocity_curve` | number | 0.0-1.0 | Velocity response curve (0.5 = linear) |
+| `velocity_curve` | number | 0.0-1.0 | Velocity response curve (see [Velocity Curve](#velocity-curve)) |
 | `aftertouch_amount` | number | 0.0-1.0 | Aftertouch modulation depth |
 | `mod_wheel_amount` | number | 0.0-1.0 | Modulation wheel depth |
 | `polarity_flipped` | boolean | | Invert polarity of all pitch-related inputs |
@@ -261,15 +262,50 @@ Both oscillators and LFOs use the same waveform index table:
 
 ## Notes for Manual Patch Editing
 
-### Runtime State Fields
+### Performance State Fields
 
-Some fields reflect runtime state and should be left at their default values when creating patches:
+Some fields reflect live performance state — they are updated in real time by MIDI input or the synth engine during playback. While you can set these in a patch file, they will be overwritten as soon as the corresponding MIDI event occurs. In most cases they should be left at their default values.
 
-- `oscillators[*].gate_flag` — Leave as false
-- `oscillators[*].pitch_bend` — Typically 0 (updated by MIDI pitch bend)
-- `filter.current_note_number` — Leave at 0
-- `envelopes[*].sustain_pedal` — Leave as false
-- `envelopes[*].gate_flag` — Leave at 0
+- `oscillators[*].pitch_bend` — Leave at 0 (overwritten by MIDI pitch bend wheel)
+- `oscillators[*].gate_flag` — Leave as false (overwritten by note on/off)
+- `filter.current_note_number` — Leave at 0 (overwritten by note on)
+- `envelopes[*].sustain_pedal` — Leave as false (overwritten by MIDI sustain pedal)
+- `envelopes[*].gate_flag` — Leave at 0 (overwritten by note on/off)
+
+### Key Tracking
+
+`key_tracking_amount` is stored as a normalized 0.0–1.0 value but represents a bipolar range internally:
+
+| Value | Effective tracking | Meaning |
+|-------|-------------------|---------|
+| 0.0 | -1.0 (full negative) | Higher notes lower the cutoff |
+| 0.5 | 0.0 (no tracking) | Cutoff is independent of pitch — **this is the default** |
+| 1.0 | +1.0 (full positive) | Higher notes raise the cutoff |
+
+The conversion is: `bipolar = (key_tracking_amount - 0.5) * 2.0`. The reference note is MIDI note 64 (E4) — notes above shift the cutoff up or down relative to that center depending on the tracking direction.
+
+### Pitch Bend
+
+`pitch_bend` is stored in **cents** (100 cents = 1 semitone), not raw MIDI values. Its effective range is determined by the `keyboard.pitch_bend_range` setting:
+
+- Maximum positive bend = `pitch_bend_range × 100` cents
+- Maximum negative bend = `-(pitch_bend_range × 100)` cents
+
+For example, with `pitch_bend_range: 12` (12 semitones = 1 octave), the range is -1200 to +1200 cents. With `pitch_bend_range: 2`, the range is -200 to +200 cents.
+
+A value of 0 means no pitch bend (center position). This is a [performance state field](#performance-state-fields) — it will be overwritten by MIDI pitch bend input during playback.
+
+### Velocity Curve
+
+`velocity_curve` controls how MIDI velocity maps to amplitude. The value 0.5 is the midpoint:
+
+| Value | Response | Behavior |
+|-------|----------|----------|
+| 0.0 | Fixed | All velocities produce maximum volume |
+| 0.0–0.5 | Compressed | Softer touch still produces relatively loud output |
+| 0.5 | Linear | Velocity maps 1:1 to amplitude |
+| 0.5–1.0 | Expanded | Requires harder touch for loud output |
+| 1.0 | Maximum expansion | Very sensitive to velocity differences |
 
 ### Parameter Validation
 

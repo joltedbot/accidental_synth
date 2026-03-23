@@ -46,14 +46,28 @@ pub struct EnvelopeParameters {
     pub release_ms: Milliseconds,
     /// Sustain level as a normalized 0.0-1.0 value.
     pub sustain_level: NormalizedValue,
-    /// Whether the MIDI sustain pedal is held.
-    pub sustain_pedal: AtomicBool,
     /// Envelope modulation depth amount.
     pub amount: NormalizedValue,
+    /// Whether the MIDI sustain pedal is held.
+    pub sustain_pedal: AtomicBool,
     /// Whether the envelope output is inverted.
     pub is_inverted: AtomicBool,
     /// Gate state flag: 0 = waiting, 1 = gate on, 2 = gate off.
     pub gate_flag: AtomicU8, // 0 - waiting, 1 - gate on, 2 - gate off
+}
+
+impl EnvelopeParameters {
+    /// Replace all the values in this `EnvelopeParameters` with the values from the provided `EnvelopeParameters`.
+    pub fn assign_from(&self, parameters: &EnvelopeParameters) {
+        self.attack_ms.store(parameters.attack_ms.load());
+        self.decay_ms.store(parameters.decay_ms.load());
+        self.release_ms.store(parameters.release_ms.load());
+        self.sustain_level.store(parameters.sustain_level.load());
+        self.amount.store(parameters.amount.load());
+        self.sustain_pedal.store(parameters.sustain_pedal.load(Relaxed), Relaxed);
+        self.is_inverted.store(parameters.is_inverted.load(Relaxed), Relaxed);
+        self.gate_flag.store(parameters.gate_flag.load(Relaxed), Relaxed);
+    }
 }
 
 impl Default for EnvelopeParameters {

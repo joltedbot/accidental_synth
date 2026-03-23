@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::modules::effects::{AudioEffectParameters, EffectIndex};
 use crate::modules::envelope::{
     EnvelopeParameters, MAX_ATTACK_MILLISECONDS, MAX_DECAY_MILLISECONDS, MAX_RELEASE_MILLISECONDS,
@@ -19,7 +20,7 @@ use crate::synthesizer::midi_value_converters::{
     normal_value_to_signed_integer_range, normal_value_to_unsigned_integer_range,
     normal_value_to_wave_shape_index, velocity_curve_from_normal_value,
 };
-use crate::synthesizer::{KeyboardParameters, MixerParameters};
+use crate::synthesizer::{KeyboardParameters, MixerParameters, ModuleParameters};
 use accsyn_types::defaults::{
     MAX_FILTER_RESONANCE, MIN_FILTER_RESONANCE, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL,
     OSCILLATOR_COURSE_TUNE_MIN_INTERVAL, OSCILLATOR_FINE_TUNE_MAX_CENTS,
@@ -303,4 +304,23 @@ pub fn set_effect_parameter(
     value: f32,
 ) {
     parameters[effect as usize].parameters[parameter_index as usize].store(value);
+}
+
+
+pub fn set_module_parameters_from_preset(parameters: &Arc<ModuleParameters>, preset: &ModuleParameters) {
+    parameters.filter.assign_from(&preset.filter);
+    parameters.mixer.assign_from(&preset.mixer);
+    parameters.keyboard.assign_from(&preset.keyboard);
+    parameters.lfos.iter().enumerate().for_each(|(index, lfo)| {
+        lfo.assign_from(&preset.lfos[index]);
+    });
+    parameters.envelopes.iter().enumerate().for_each(|(index, envelope)| {
+        envelope.assign_from(&preset.envelopes[index]);
+    });
+    parameters.oscillators.iter().enumerate().for_each(|(index, oscillator)| {
+        oscillator.assign_from(&preset.oscillators[index]);
+    });
+    parameters.effects.iter().enumerate().for_each(|(index, effect)| {
+        effect.assign_from(&preset.effects[index]);
+    });
 }

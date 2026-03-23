@@ -30,7 +30,6 @@ use crate::synthesizer::midi_messages::{
 };
 use crate::synthesizer::sample_generator::sample_generator;
 
-use crate::synthesizer::patches::Patches;
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
 use rtrb::Producer;
@@ -85,6 +84,17 @@ pub struct KeyboardParameters {
     pub pitch_bend_range: AtomicU8,
 }
 
+impl KeyboardParameters {
+    /// Replace all the values in this `KeyboardParameters` with the values from the provided `KeyboardParameters`.
+    pub fn assign_from(&self, parameters: &KeyboardParameters) {
+        self.mod_wheel_amount.store(parameters.mod_wheel_amount.load());
+        self.aftertouch_amount.store(parameters.aftertouch_amount.load());
+        self.velocity_curve.store(parameters.velocity_curve.load());
+        self.polarity_flipped.store(parameters.polarity_flipped.load(Relaxed), Relaxed);
+        self.pitch_bend_range.store(parameters.pitch_bend_range.load(Relaxed), Relaxed);
+    }
+}
+
 /// Level, balance, and mute state for a single oscillator in the quad mixer.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QuadMixerInput {
@@ -94,6 +104,15 @@ pub struct QuadMixerInput {
     pub balance: Balance,
     /// Whether this mixer input is muted.
     pub mute: AtomicBool,
+}
+
+impl QuadMixerInput {
+    /// Replace all the values in this QuadMixerInput with the values from the provided QuadMixerInput.
+    pub fn assign_from(&self, parameters: &QuadMixerInput) {
+        self.level.store(parameters.level.load());
+        self.balance.store(parameters.balance.load());
+        self.mute.store(parameters.mute.load(Relaxed), Relaxed);
+    }
 }
 
 impl Default for QuadMixerInput {
@@ -117,6 +136,19 @@ pub struct MixerParameters {
     pub is_muted: AtomicBool,
     /// Per-oscillator mixer input controls.
     pub quad_mixer_inputs: [QuadMixerInput; 4],
+}
+
+impl MixerParameters {
+    /// Replace all the values in this `MixerParameters` with the values from the provided `MixerParameters`.
+    pub fn assign_from(&self, parameters: &MixerParameters) {
+        self.level.store(parameters.level.load());
+        self.balance.store(parameters.balance.load());
+        self.is_muted.store(parameters.is_muted.load(Relaxed), Relaxed);
+
+        parameters.quad_mixer_inputs.iter().enumerate().for_each(|(index, input)| {
+            self.quad_mixer_inputs[index].assign_from(input);
+        });
+    }
 }
 
 impl Default for MixerParameters {
@@ -151,7 +183,6 @@ pub struct ModuleParameters {
 
 /// Top-level synthesizer coordinating MIDI input, DSP processing, and audio output.
 pub struct Synthesizer {
-    patches: Patches,
     output_stream_parameters: OutputStreamParameters,
     current_note: Arc<CurrentNote>,
     module_parameters: Arc<ModuleParameters>,
@@ -167,11 +198,9 @@ impl Synthesizer {
         let (ui_update_sender, ui_update_receiver) =
             crossbeam_channel::bounded(SYNTHESIZER_MESSAGE_SENDER_CAPACITY);
 
-        let patches = Patches::new()?;
-        let module_parameters = patches.init_module_parameters()?;
+        let module_parameters = patches::init_module_parameters()?;
 
         Ok(Self {
-            patches,
             output_stream_parameters,
             current_note: Arc::new(CurrentNote::default()),
             module_parameters: Arc::new(module_parameters),

@@ -74,6 +74,8 @@ pub enum SynthesizerUpdateEvents {
     EffectEnabled(i32, bool),
     /// Change an effect parameter value (effect index, parameter index, value).
     EffectParameterValues(i32, i32, f32),
+    /// Change to a new preset (preset index).
+    PresetChanged(i32),
 }
 
 /// Index identifying each oscillator in the synthesizer.

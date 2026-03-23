@@ -31,6 +31,7 @@ export component AccidentalSynth inherits Window {
         right-channels: Theme.empty-dropdown-value
     };
     in property <MidiPort> midi-port-values;
+    in property <[string]> preset-list;
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
     callback audio-output-right-channel-changed(string);
@@ -38,6 +39,7 @@ export component AccidentalSynth inherits Window {
     callback audio-buffer-size-changed(string);
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
+    callback preset-changed(int);
 
     // Oscillator Panel Properties & Callbacks
     in property <[Oscillator]> oscillator_values;
@@ -126,6 +128,7 @@ export component AccidentalSynth inherits Window {
 
                 audio-device-values: audio-device-values;
                 midi-port-values: midi-port-values;
+                preset-list: preset-list;
 
                 audio-output-device-changed(device) => {
                     audio-output-device-changed(device);
@@ -147,6 +150,9 @@ export component AccidentalSynth inherits Window {
                 }
                 midi-input-channel-changed(channel) => {
                     midi-input-channel-changed(channel);
+                }
+                preset-changed(preset_index) => {
+                    preset-changed(preset-index);
                 }
             }
 
