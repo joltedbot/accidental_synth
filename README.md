@@ -16,22 +16,23 @@ I am, perhaps foolishly, writing it in Rust, largely for my own education and am
 It is a work in progress.
 
 ## Project Status
-In early development. I am actively working towards and MVP that includes the basic functional synth voice and a working UI for the current state 
+In early development. I am actively working towards and MVP that includes the basic functional synth voice and a working UI for the current state
 of the synth.
 
-The synth voice works and is controllable via MIDI though control over the devices and channels is lacking without the UI. 
+The synth voice works and is controllable via MIDI though control over the devices and channels is lacking without the UI.
 
-The UI is more or less functional and usable. There are some tweaks and fixes as well as parameter range changed to be made but all parameters are 
-currently working.
+The UI is more or less functional and usable. There are some tweaks and fixes as well as parameter range changes to be made but all parameters are
+currently working. Preset loading is functional and updates all UI controls to reflect the loaded preset.
 
 ## Features
 Current:
 - Minimal end‑to‑end audio path on macOS using CoreAudio.
 - MIDI input handling (omni mode for now): Note On/Off, Velocity, Pitch Bend, and Control Change (per implementation chart in the Wiki).
-- The initial UI loads and the settings panel allows for device selection but the synth controls are not yet connected to the backend.
+- A functional native UI with all synth parameters connected and controllable.
+- Preset system: load and apply presets that update all UI controls to match the loaded preset configuration.
 
 Planned for MVP:
-- A functional native UI.
+- Preset saving and management.
 
 
 ## Quick Start
