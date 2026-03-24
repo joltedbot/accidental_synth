@@ -96,6 +96,8 @@ pub enum UIUpdates {
     KeySync(f32),
     /// Effect parameters changed (effect index, enabled, param1, param2, param3, param4).
     Effect(i32, bool, f32, f32, f32, f32),
+    /// Preset changed — UI should reload all parameter values from the preset at this index.
+    Presets(i32),
 }
 
 /// ADSR envelope stage identifier.

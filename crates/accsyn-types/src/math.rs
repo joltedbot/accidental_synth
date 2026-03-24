@@ -99,7 +99,7 @@ pub fn normalize_midi_value(midi_value: u8) -> f32 {
 #[inline]
 pub fn normalize_unsigned_integer_range(input_value: u32, range_min: u32, range_max: u32) -> f32 {
     let range = range_max - range_min;
-    (input_value - range_min) as f32 / range as f32
+    (input_value.saturating_sub(range_min) as f32 / range as f32).clamp(0.0, 1.0)
 }
 
 /// Normalizes a signed integer to 0.0–1.0 within the given range.

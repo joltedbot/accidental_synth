@@ -9,6 +9,7 @@ use crate::AccidentalSynth;
 use accsyn_midi::MidiDeviceUpdateEvents;
 use accsyn_types::audio_events::AudioDeviceUpdateEvents;
 use accsyn_types::synth_events::SynthesizerUpdateEvents;
+use accsyn_types::ui_events::UIUpdates;
 use crossbeam_channel::Sender;
 use slint::Weak;
 
@@ -17,6 +18,7 @@ pub fn register_callbacks(
     midi_update_sender: Sender<MidiDeviceUpdateEvents>,
     audio_output_device_sender: &Sender<AudioDeviceUpdateEvents>,
     synthesizer_update_sender: &Sender<SynthesizerUpdateEvents>,
+    ui_update_sender: Sender<UIUpdates>,
 ) {
     settings::callback_midi_input_channel_changed(ui_weak, midi_update_sender.clone());
     settings::callback_midi_input_port_changed(ui_weak, midi_update_sender);
@@ -31,7 +33,7 @@ pub fn register_callbacks(
     );
     settings::callback_audio_sample_rate_changed(ui_weak, audio_output_device_sender.clone());
     settings::callback_audio_buffer_size_changed(ui_weak, audio_output_device_sender.clone());
-    settings::callback_preset_changed(ui_weak, synthesizer_update_sender.clone());
+    settings::callback_preset_changed(ui_weak, synthesizer_update_sender.clone(), ui_update_sender);
 
     oscillators::callback_osc_oscillator_shape_changed(ui_weak, synthesizer_update_sender.clone());
     oscillators::callback_osc_course_tune_changed(ui_weak, synthesizer_update_sender.clone());

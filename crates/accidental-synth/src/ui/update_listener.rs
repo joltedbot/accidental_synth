@@ -1,6 +1,9 @@
 use crate::AccidentalSynth;
 use crate::ui::ParameterValues;
 use crate::ui::constants::MAX_PHASE_VALUE;
+use crate::ui::{init_ui_values_from_module_parameters, push_values_to_ui};
+use accsyn_engine::synthesizer::patches;
+use accsyn_engine::synthesizer::patches::get_preset_from_index;
 use crate::ui::set_slint_values::{
     set_audio_device_channel_indexes, set_audio_device_channel_list, set_audio_device_values,
     set_effect_display, set_envelope_inverted, set_envelope_stage_value, set_filter_cutoff_values,
@@ -370,6 +373,23 @@ pub fn start_ui_update_listener(
                         is_enabled,
                         vec![parameter1, parameter2, parameter3, parameter4],
                     );
+                }
+                UIUpdates::Presets(index) => {
+                    let preset = match get_preset_from_index(index as usize) {
+                        Ok(preset) => preset,
+                        Err(e) => {
+                            log::error!("start_ui_update_listener(): Failed to get preset from index: {e}");
+                            continue;
+                        }
+                    };
+
+                    let new_values = init_ui_values_from_module_parameters(Arc::new(preset));
+                    *values = new_values;
+
+                    let preset_list = patches::preset_list();
+                    if let Err(e) = push_values_to_ui(&ui_weak_thread, &values, &preset_list) {
+                        log::error!("start_ui_update_listener(): Failed to push preset values to UI: {e}");
+                    }
                 }
             }
         }

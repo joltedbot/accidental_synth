@@ -5,6 +5,7 @@ use accsyn_types::audio_events::AudioDeviceUpdateEvents;
 use crossbeam_channel::Sender;
 use slint::Weak;
 use accsyn_types::synth_events::SynthesizerUpdateEvents;
+use accsyn_types::ui_events::UIUpdates;
 
 pub fn callback_midi_input_channel_changed(
     ui_weak: &Weak<AccidentalSynth>,
@@ -103,12 +104,16 @@ pub fn callback_audio_buffer_size_changed(
 pub fn callback_preset_changed(
     ui_weak: &Weak<AccidentalSynth>,
     synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
+    ui_update_sender: Sender<UIUpdates>,
 ) {
     if let Some(ui) = ui_weak.upgrade() {
-            ui.on_preset_changed(move |preset_index| {
-                synthesizer_update_sender.send(SynthesizerUpdateEvents::PresetChanged(preset_index)).expect(
-                    "callback_preset_changed(): Could not send new preset update to the audio module.Exiting.",
-                );
-            });
-        }
+        ui.on_preset_changed(move |preset_index| {
+            synthesizer_update_sender.send(SynthesizerUpdateEvents::PresetChanged(preset_index)).expect(
+                "callback_preset_changed(): Could not send new preset update to the audio module. Exiting.",
+            );
+            ui_update_sender.send(UIUpdates::Presets(preset_index)).expect(
+                "callback_preset_changed(): Could not send preset UI update. Exiting.",
+            );
+        });
+    }
 }

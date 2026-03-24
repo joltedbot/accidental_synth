@@ -38,7 +38,7 @@ use accsyn_engine::synthesizer::patches;
 const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
 
 #[derive(Clone, Debug)]
-struct ParameterValues {
+pub(super) struct ParameterValues {
     audio_device: UIAudioDevice,
     midi_port: UIMidiPort,
     oscillators: Vec<UIOscillator>,
@@ -94,6 +94,7 @@ impl UI {
             midi_update_sender,
             audio_output_device_sender,
             synthesizer_update_sender,
+            self.ui_update_sender.clone(),
         );
 
         let preset_list = patches::preset_list();
@@ -113,6 +114,14 @@ fn set_ui_default_values(
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
 
+    push_values_to_ui(ui_weak, &values, presets)
+}
+
+pub(super) fn push_values_to_ui(
+    ui_weak: &Weak<AccidentalSynth>,
+    values: &ParameterValues,
+    presets: &[String],
+) -> Result<()> {
     let ui_default_values = values.clone();
     let preset_values = presets.to_owned();
 
@@ -156,7 +165,7 @@ fn set_ui_default_values(
     Ok(())
 }
 
-fn init_ui_values_from_module_parameters(parameters: Arc<ModuleParameters>) -> ParameterValues {
+pub(super) fn init_ui_values_from_module_parameters(parameters: Arc<ModuleParameters>) -> ParameterValues {
     ParameterValues {
         audio_device: UIAudioDevice::default(),
         midi_port: UIMidiPort::default(),
