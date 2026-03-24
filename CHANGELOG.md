@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Replaced `.expect()` panics on UI channel sends in the engine and MIDI crates with graceful error logging, preventing engine thread crashes on channel failure
+- Added structured `info!`/`debug!`/`warn!`/`error!` logging throughout `accsyn-engine` and `accsyn-midi` for preset loading, MIDI event processing, file I/O, and unmapped CC/status handling
+
 ## [0.1.4] - 2026-02-07
 
 ### Fixed

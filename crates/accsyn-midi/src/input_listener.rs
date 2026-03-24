@@ -46,6 +46,7 @@ pub(crate) fn process_midi_message(
     current_note_arc: &Arc<Mutex<Option<u8>>>,
 ) {
     if !message_channel_matches_current_channel(message, current_channel_arc) {
+        log::trace!(target: "midi::input", "Dropping message for non-matching channel");
         return;
     }
 
@@ -95,7 +96,10 @@ fn event_from_message_status(
         Status::ControlChange => process_cc_message(message),
         Status::PitchBend => Some(process_pitch_bend_message(message)),
         Status::ChannelPressure => Some(process_channel_pressure_message(message)),
-        _ => None,
+        _ => {
+            log::debug!(target: "midi::input", "Unhandled MIDI status type: 0x{:02X}", message[MESSAGE_STATUS_BYTE_INDEX]);
+            None
+        }
     }
 }
 

@@ -62,8 +62,9 @@ pub fn start_update_event_listener(
                             fine_tune,
                         );
 
-                        ui_update_sender.send(UIUpdates::OscillatorFineTuneCents(oscillator_index, i32::from(cents))).expect
-                        ("start_update_event_listener(): Failed to send oscillator fine-tune display value to the UI.");
+                        if let Err(e) = ui_update_sender.send(UIUpdates::OscillatorFineTuneCents(oscillator_index, i32::from(cents))) {
+                            log::error!(target: "synthesizer::event_listener", "Failed to send oscillator fine-tune display value to the UI: {e}");
+                        }
                     } else {
                         log::warn!(
                             "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
@@ -250,8 +251,9 @@ pub fn start_update_event_listener(
                             return;
                         }
                     };
-                    ui_update_sender.send(UIUpdates::LFOFrequencyDisplay(lfo_index, frequency)).expect
-                    ("start_update_event_listener(): Failed to send oscillator fine-tune display value to the UI.");
+                    if let Err(e) = ui_update_sender.send(UIUpdates::LFOFrequencyDisplay(lfo_index, frequency)) {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send LFO frequency display value to the UI: {e}");
+                    }
                 }
                 SynthesizerUpdateEvents::LfoShapeIndex(lfo_index, wave_shape_index) => {
                     match lfo_index {
@@ -293,12 +295,9 @@ pub fn start_update_event_listener(
                             );
                         }
                     }
-                    ui_update_sender
-                        .send(UIUpdates::LFOPhase(lfo_index, phase))
-                        .expect(
-                            "start_update_event_listener(): \
-                    Failed to send the lfo reset to the UI.",
-                        );
+                    if let Err(e) = ui_update_sender.send(UIUpdates::LFOPhase(lfo_index, phase)) {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send LFO phase to the UI: {e}");
+                    }
                 }
                 SynthesizerUpdateEvents::LfoPhaseReset(lfo_index) => {
                     match lfo_index {
@@ -316,12 +315,9 @@ pub fn start_update_event_listener(
                             );
                         }
                     }
-                    ui_update_sender
-                        .send(UIUpdates::LFOPhase(lfo_index, DEFAULT_LFO_PHASE))
-                        .expect(
-                            "start_update_event_listener(): \
-                    Failed to send the lfo reset to the UI.",
-                        );
+                    if let Err(e) = ui_update_sender.send(UIUpdates::LFOPhase(lfo_index, DEFAULT_LFO_PHASE)) {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send LFO phase reset to the UI: {e}");
+                    }
                 }
                 SynthesizerUpdateEvents::PortamentoEnabled(is_enabled) => {
                     set_portamento_enabled(&module_parameters.oscillators, f32::from(is_enabled));
@@ -417,12 +413,13 @@ pub fn start_update_event_listener(
                    let preset = match get_preset_from_index(preset_index as usize) {
                        Ok(preset) => preset,
                        Err(e) => {
-                           log::error!("start_ui_event_listener(): Failed to get preset from index: {e}");
+                           log::error!(target: "synthesizer::event_listener", "Failed to get preset from index {preset_index}: {e}");
                            return;
                        }
                     };
-                    
+
                     set_module_parameters_from_preset(&module_parameters, &preset);
+                    log::info!(target: "synthesizer::event_listener", "Preset changed to index {preset_index}");
                 }
             }
         }

@@ -77,7 +77,10 @@ pub fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC
         111 => Some(CC::FilterModLFOPhase(cc_value)),
         112 => Some(CC::FilterModLFOReset),
         123 => Some(CC::AllNotesOff),
-        _ => None,
+        _ => {
+            log::debug!(target: "midi::cc", "Unmapped CC number: {cc_number}, value: {cc_value}");
+            None
+        }
     }
 }
 

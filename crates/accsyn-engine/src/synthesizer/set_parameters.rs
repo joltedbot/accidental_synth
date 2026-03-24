@@ -308,6 +308,7 @@ pub fn set_effect_parameter(
 
 
 pub fn set_module_parameters_from_preset(parameters: &Arc<ModuleParameters>, preset: &ModuleParameters) {
+    log::info!(target: "synthesizer::parameters", "Applying preset parameters to synthesizer modules");
     parameters.filter.assign_from(&preset.filter);
     parameters.mixer.assign_from(&preset.mixer);
     parameters.keyboard.assign_from(&preset.keyboard);

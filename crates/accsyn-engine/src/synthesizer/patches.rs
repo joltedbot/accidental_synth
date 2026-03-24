@@ -75,8 +75,14 @@ impl Patches {
             ));
         }
 
-        let mut handle = std::fs::File::create(&patch_file_path)?;
-        handle.write_all(content.as_bytes())?;
+        let mut handle = std::fs::File::create(&patch_file_path).map_err(|e| {
+            log::error!(target: "synthesizer::patches", "Failed to create patch file {}: {e}", patch_file_path.display());
+            e
+        })?;
+        handle.write_all(content.as_bytes()).map_err(|e| {
+            log::error!(target: "synthesizer::patches", "Failed to write patch file {}: {e}", patch_file_path.display());
+            e
+        })?;
 
         log::info!(target: "synthesizer::patches", "Created new patch file: {}", patch_file_path.display());
 
@@ -92,12 +98,22 @@ pub fn preset_list() -> Vec<String> {
 
 /// Loads a preset from the system preset patches by preset index. See `SYSTEM_PATCHES` for the index values.
 pub fn get_preset_from_index(index: usize) -> Result<ModuleParameters> {
-    let content = SYSTEM_PATCHES[index].1;
-    Ok(serde_json::from_str(content)?)
+    let (name, content) = SYSTEM_PATCHES[index];
+    let preset = serde_json::from_str(content).map_err(|e| {
+        log::error!(target: "synthesizer::patches", "Failed to parse preset '{name}' (index {index}): {e}");
+        e
+    })?;
+    log::info!(target: "synthesizer::patches", "Loaded preset '{name}' (index {index})");
+    Ok(preset)
 }
 
 pub(crate) fn init_module_parameters() -> Result<ModuleParameters> {
-    Ok(serde_json::from_str(INIT_PARAMETERS)?)
+    let parameters = serde_json::from_str(INIT_PARAMETERS).map_err(|e| {
+        log::error!(target: "synthesizer::patches", "Failed to parse init parameters: {e}");
+        e
+    })?;
+    log::debug!(target: "synthesizer::patches", "Loaded init parameters");
+    Ok(parameters)
 }
 
 fn create_data_paths() -> Result<Paths> {
@@ -105,6 +121,9 @@ fn create_data_paths() -> Result<Paths> {
     base.push(APP_SUPPORT_DIRECTORY);
     let application_data = base.join(DATA_DIRECTORY);
     let user_patches = application_data.join(USER_PATCH_DIRECTORY);
+
+    log::debug!(target: "synthesizer::patches", "Data paths resolved: base={}, data={}, patches={}",
+        base.display(), application_data.display(), user_patches.display());
 
     let paths = Paths {
         base,
@@ -127,15 +146,22 @@ fn initialize_application_storage(paths: &mut Paths) -> Result<()> {
 
     if !paths.application_data.exists() {
         log::debug!(target: "synthesizer::patches", "Application data directory does not exist. Creating: {}", paths
-            .application_data.display
-            ());
-        std::fs::create_dir(&paths.application_data)?;
+            .application_data.display());
+        std::fs::create_dir(&paths.application_data).map_err(|e| {
+            log::error!(target: "synthesizer::patches", "Failed to create application data directory {}: {e}", paths.application_data.display());
+            e
+        })?;
+        log::info!(target: "synthesizer::patches", "Created application data directory: {}", paths.application_data.display());
     }
 
     if !paths.user_patches.exists() {
         log::debug!(target: "synthesizer::patches", "User patches directory does not exist. Creating: {}", paths
             .user_patches.display());
-        std::fs::create_dir(&paths.user_patches)?;
+        std::fs::create_dir(&paths.user_patches).map_err(|e| {
+            log::error!(target: "synthesizer::patches", "Failed to create user patches directory {}: {e}", paths.user_patches.display());
+            e
+        })?;
+        log::info!(target: "synthesizer::patches", "Created user patches directory: {}", paths.user_patches.display());
     }
 
     Ok(())
