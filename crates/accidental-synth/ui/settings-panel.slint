@@ -8,6 +8,7 @@ import {
     DropDownMenu,
     HorizontalSpacer,
     VerticalControlLabel,
+    TextInput,
 } from "components.slint";
 import { Button, StandardButton } from "std-widgets.slint";
 
@@ -141,7 +142,7 @@ export component MidiSettings inherits VerticalLayout {
 }
 
 export component Presets inherits VerticalLayout {
-
+    in property <string> title;
     in property <[string]> preset-list;
     in property <int> selected-index;
     callback preset-changed(int);
@@ -150,7 +151,7 @@ export component Presets inherits VerticalLayout {
     spacing: Theme.osc-controls-panel-spacing;
 
     preset := DropDownMenu {
-        label: "Presets";
+        label: title;
         value-list: preset-list;
         value-index: selected-index;
         dropdown-width: Theme.oscillator-panel-widget-width;
@@ -180,7 +181,9 @@ export component SettingsWindow inherits PopupWindow {
     in property <AudioDevice> audio-device-values;
     in property <MidiPort> midi-port-values;
     in property <[string]> preset-list;
+    in property <[string]> patch-list;
     in-out property <int> selected-preset-index;
+    in-out property <int> selected-patch-index;
 
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
@@ -190,6 +193,7 @@ export component SettingsWindow inherits PopupWindow {
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
     callback preset-changed(int);
+    callback patch-saved(string);
 
     width: Theme.settings-panel-width;
     height: Theme.settings-panel-height;
@@ -222,7 +226,7 @@ export component SettingsWindow inherits PopupWindow {
                     alignment: start;
 
                     PanelLabel {
-                        label: "Audio Settings";
+                        label: Theme.settings-audio-settings-title;
                     }
 
                     AudioSettings {
@@ -256,7 +260,7 @@ export component SettingsWindow inherits PopupWindow {
                     alignment: start;
 
                     PanelLabel {
-                        label: "Midi Settings";
+                        label: Theme.settings-midi-settings-title;
                     }
 
                     MidiSettings {
@@ -277,15 +281,68 @@ export component SettingsWindow inherits PopupWindow {
             }
 
             PanelLabel {
-                label: "Presets & Patches";
+                label: Theme.settings-patches-presets-title;
             }
 
-            Presets {
-                preset-list: preset-list;
-                selected-index: selected-preset-index;
+            HorizontalLayout {
+                alignment: space-evenly;
 
-                preset-changed(preset_index) => {
-                    preset-changed(preset_index)
+                VerticalLayout {
+                    alignment: start;
+
+                    presets := Presets {
+                        title: Theme.settings-presets-label;
+                        preset-list: preset-list;
+                        selected-index: selected-preset-index;
+
+                        preset-changed(preset_index) => {
+                            preset-changed(preset_index)
+                        }
+                    }
+
+                    patches := Presets {
+                        title: Theme.settings-patches-label;
+                        preset-list: patch-list;
+                        selected-index: selected-patch-index;
+
+                        preset-changed(patch_index) => {
+                            preset-changed(patch_index)
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: center;
+                    VerticalLayout {
+                        alignment: start;
+                        patch-name := TextInput {
+                            label: Theme.settings-patch-name;
+                        }
+
+                        HorizontalLayout {
+                            alignment: center;
+                            save := MomentaryButton {
+                                label: Theme.settings-patch-save;
+                                button-width: 100px;
+                                button-height: 27px;
+                                momentary-button-pressed => {
+                                    if (patch-name.text != "") {
+                                        patch-saved(patch-name.text);
+                                        patch-name.text = "";
+                                        result-status.visible = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        HorizontalLayout {
+                            alignment: space-evenly;
+                            result-status := Text {
+                                text: Theme.settings-saved-status;
+                                visible: false;
+                            }
+                        }
+                    }
                 }
             }
 

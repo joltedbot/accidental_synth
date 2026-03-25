@@ -188,6 +188,7 @@ pub struct Synthesizer {
     module_parameters: Arc<ModuleParameters>,
     ui_update_sender: Sender<SynthesizerUpdateEvents>,
     ui_update_receiver: Receiver<SynthesizerUpdateEvents>,
+    patches: Arc<patches::Patches>,
 }
 
 impl Synthesizer {
@@ -199,13 +200,16 @@ impl Synthesizer {
             crossbeam_channel::bounded(SYNTHESIZER_MESSAGE_SENDER_CAPACITY);
 
         let module_parameters = patches::init_module_parameters()?;
-
+        let patches = patches::Patches::new()?;
+        
+        
         Ok(Self {
             output_stream_parameters,
             current_note: Arc::new(CurrentNote::default()),
             module_parameters: Arc::new(module_parameters),
             ui_update_sender,
             ui_update_receiver,
+            patches: Arc::new(patches),
         })
     }
 
@@ -233,6 +237,7 @@ impl Synthesizer {
         start_update_event_listener(
             self.ui_update_receiver.clone(),
             self.module_parameters.clone(),
+            self.patches.clone(),
             ui_update_sender,
         );
 

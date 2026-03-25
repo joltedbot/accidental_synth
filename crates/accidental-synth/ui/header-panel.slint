@@ -36,6 +36,7 @@ export component HeaderPanel inherits Panel {
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
     callback preset-changed(int);
+    callback patch-saved(string);
 
     height: Theme.header-panel-height;
     background: Theme.header-panel-background;
@@ -70,6 +71,9 @@ export component HeaderPanel inherits Panel {
         preset-changed(preset_index) => {
             root.selected-preset-index = preset_index;
             preset-changed(preset-index);
+        }
+        patch-saved(name) => {
+            patch-saved(name);
         }
     }
 

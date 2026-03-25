@@ -13,12 +13,13 @@ use crossbeam_channel::{Receiver, Sender};
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
-use crate::synthesizer::patches::get_preset_from_index;
+use crate::synthesizer::patches::{get_preset_from_index, Patches};
 
 #[allow(clippy::too_many_lines)]
 pub fn start_update_event_listener(
     ui_update_receiver: Receiver<SynthesizerUpdateEvents>,
     module_parameters: Arc<ModuleParameters>,
+    patches: Arc<Patches>,
     ui_update_sender: Sender<UIUpdates>,
 ) {
     thread::spawn(move || {
@@ -421,6 +422,12 @@ pub fn start_update_event_listener(
                     set_module_parameters_from_preset(&module_parameters, &preset);
                     log::info!(target: "synthesizer::event_listener", "Preset changed to index {preset_index}");
                 }
+                SynthesizerUpdateEvents::PatchSaved(patch_name) => {
+                    if let Err(err) = patches.create_new_patch(&patch_name, &module_parameters) {
+                        log::error!(target: "synthesizer::event_listener", "Could not save patch: {patch_name}: {err}");
+                    };
+                }
+
             }
         }
     });

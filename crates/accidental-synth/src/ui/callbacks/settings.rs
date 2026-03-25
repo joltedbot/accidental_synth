@@ -117,3 +117,16 @@ pub fn callback_preset_changed(
         });
     }
 }
+
+pub fn callback_patch_saved(
+    ui_weak: &Weak<AccidentalSynth>,
+    synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_patch_saved(move |patch_name| {
+            synthesizer_update_sender.send(SynthesizerUpdateEvents::PatchSaved(patch_name.to_string())).expect(
+                "callback_preset_changed(): Could not send new preset update to the audio module. Exiting.",
+            );
+        });
+    }
+}

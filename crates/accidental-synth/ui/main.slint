@@ -40,6 +40,7 @@ export component AccidentalSynth inherits Window {
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
     callback preset-changed(int);
+    callback patch-saved(string);
 
     // Oscillator Panel Properties & Callbacks
     in property <[Oscillator]> oscillator_values;
@@ -153,6 +154,9 @@ export component AccidentalSynth inherits Window {
                 }
                 preset-changed(preset_index) => {
                     preset-changed(preset-index);
+                }
+                patch-saved(name) => {
+                    patch-saved(name);
                 }
             }
 
