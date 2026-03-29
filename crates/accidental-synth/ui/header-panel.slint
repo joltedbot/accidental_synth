@@ -26,7 +26,9 @@ export component HeaderPanel inherits Panel {
     in property <AudioDevice> audio-device-values;
     in property <MidiPort> midi-port-values;
     in property <[string]> preset-list;
+    in property <[string]> patch-list;
     in-out property <int> selected-preset-index;
+    in-out property <int> selected-patch-index;
 
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
@@ -36,6 +38,7 @@ export component HeaderPanel inherits Panel {
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
     callback preset-changed(int);
+    callback patch-changed(int);
     callback patch-saved(string);
 
     height: Theme.header-panel-height;
@@ -45,7 +48,9 @@ export component HeaderPanel inherits Panel {
         audio-device-values: audio-device-values;
         midi-port-values: midi-port-values;
         preset-list: preset-list;
+        patch-list: patch-list;
         selected-preset-index: selected-preset-index;
+        selected-patch-index: selected-patch-index;
 
         audio-output-device-changed(device) => {
             audio-output-device-changed(device);
@@ -71,7 +76,11 @@ export component HeaderPanel inherits Panel {
         preset-changed(preset_index) => {
             root.selected-preset-index = preset_index;
             preset-changed(preset-index);
-        }
+        }          
+        patch-changed(patch_index) => {
+            root.selected-patch-index = patch_index;
+            patch-changed(patch-index);
+        }        
         patch-saved(name) => {
             patch-saved(name);
         }

@@ -98,6 +98,8 @@ pub enum UIUpdates {
     Effect(i32, bool, f32, f32, f32, f32),
     /// Preset changed — UI should reload all parameter values from the preset at this index.
     Presets(i32),
+    /// Patch changed — UI should reload all parameter values from the patch at this index.
+    Patches(i32),
 }
 
 /// ADSR envelope stage identifier.

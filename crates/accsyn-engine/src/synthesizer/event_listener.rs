@@ -4,7 +4,19 @@ use crate::synthesizer::ModuleParameters;
 use crate::synthesizer::constants::{
     ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, LFO_INDEX_FILTER, LFO_INDEX_MOD_WHEEL,
 };
-use crate::synthesizer::set_parameters::{set_effect_is_enabled, set_effect_parameter, set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted, set_envelope_release_time, set_envelope_sustain_level, set_filter_cutoff, set_filter_poles, set_filter_resonance, set_key_tracking_amount, set_lfo_frequency, set_lfo_phase, set_lfo_phase_reset, set_lfo_range, set_module_parameters_from_preset, set_oscillator_balance, set_oscillator_clip_boost, set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_hard_sync, set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute, set_oscillator_polarity, set_oscillator_shape_parameter1, set_oscillator_shape_parameter2, set_output_balance, set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled, set_portamento_time, set_velocity_curve};
+use crate::synthesizer::patches::Patches;
+use crate::synthesizer::set_parameters::{
+    set_effect_is_enabled, set_effect_parameter, set_envelope_amount, set_envelope_attack_time,
+    set_envelope_decay_time, set_envelope_inverted, set_envelope_release_time,
+    set_envelope_sustain_level, set_filter_cutoff, set_filter_poles, set_filter_resonance,
+    set_key_tracking_amount, set_lfo_frequency, set_lfo_phase, set_lfo_phase_reset, set_lfo_range,
+    set_module_parameters_from_preset, set_oscillator_balance, set_oscillator_clip_boost,
+    set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_hard_sync,
+    set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute, set_oscillator_polarity,
+    set_oscillator_shape_parameter1, set_oscillator_shape_parameter2, set_output_balance,
+    set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled,
+    set_portamento_time, set_velocity_curve,
+};
 use accsyn_types::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
 };
@@ -13,7 +25,6 @@ use crossbeam_channel::{Receiver, Sender};
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
-use crate::synthesizer::patches::{get_preset_from_index, Patches};
 
 #[allow(clippy::too_many_lines)]
 pub fn start_update_event_listener(
@@ -63,7 +74,10 @@ pub fn start_update_event_listener(
                             fine_tune,
                         );
 
-                        if let Err(e) = ui_update_sender.send(UIUpdates::OscillatorFineTuneCents(oscillator_index, i32::from(cents))) {
+                        if let Err(e) = ui_update_sender.send(UIUpdates::OscillatorFineTuneCents(
+                            oscillator_index,
+                            i32::from(cents),
+                        )) {
                             log::error!(target: "synthesizer::event_listener", "Failed to send oscillator fine-tune display value to the UI: {e}");
                         }
                     } else {
@@ -252,7 +266,9 @@ pub fn start_update_event_listener(
                             return;
                         }
                     };
-                    if let Err(e) = ui_update_sender.send(UIUpdates::LFOFrequencyDisplay(lfo_index, frequency)) {
+                    if let Err(e) =
+                        ui_update_sender.send(UIUpdates::LFOFrequencyDisplay(lfo_index, frequency))
+                    {
                         log::error!(target: "synthesizer::event_listener", "Failed to send LFO frequency display value to the UI: {e}");
                     }
                 }
@@ -316,7 +332,9 @@ pub fn start_update_event_listener(
                             );
                         }
                     }
-                    if let Err(e) = ui_update_sender.send(UIUpdates::LFOPhase(lfo_index, DEFAULT_LFO_PHASE)) {
+                    if let Err(e) =
+                        ui_update_sender.send(UIUpdates::LFOPhase(lfo_index, DEFAULT_LFO_PHASE))
+                    {
                         log::error!(target: "synthesizer::event_listener", "Failed to send LFO phase reset to the UI: {e}");
                     }
                 }
@@ -409,17 +427,35 @@ pub fn start_update_event_listener(
                             {effect_index}"
                         );
                     }
-                },
+                }
                 SynthesizerUpdateEvents::PresetChanged(preset_index) => {
-                   let preset = match get_preset_from_index(preset_index as usize) {
-                       Ok(preset) => preset,
-                       Err(e) => {
-                           log::error!(target: "synthesizer::event_listener", "Failed to get preset from index {preset_index}: {e}");
-                           return;
-                       }
+                    let preset_list = patches.preset_list();
+                    let preset = match patches
+                        .get_module_parameters_from_patch_index(preset_index as usize, &preset_list)
+                    {
+                        Ok(preset) => preset,
+                        Err(e) => {
+                            log::error!(target: "synthesizer::event_listener", "Failed to get preset from index {preset_index}: {e}");
+                            return;
+                        }
                     };
 
                     set_module_parameters_from_preset(&module_parameters, &preset);
+                    log::info!(target: "synthesizer::event_listener", "Preset changed to index {preset_index}");
+                }
+                SynthesizerUpdateEvents::PatchChanged(preset_index) => {
+                    let patch_list = patches.patch_list();
+                    let patch = match patches
+                        .get_module_parameters_from_patch_index(preset_index as usize, &patch_list)
+                    {
+                        Ok(preset) => preset,
+                        Err(e) => {
+                            log::error!(target: "synthesizer::event_listener", "Failed to get preset from index {preset_index}: {e}");
+                            return;
+                        }
+                    };
+
+                    set_module_parameters_from_preset(&module_parameters, &patch);
                     log::info!(target: "synthesizer::event_listener", "Preset changed to index {preset_index}");
                 }
                 SynthesizerUpdateEvents::PatchSaved(patch_name) => {
@@ -427,7 +463,6 @@ pub fn start_update_event_listener(
                         log::error!(target: "synthesizer::event_listener", "Could not save patch: {patch_name}: {err}");
                     };
                 }
-
             }
         }
     });

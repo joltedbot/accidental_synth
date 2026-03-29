@@ -17,6 +17,7 @@ use crate::ui::update_listener::start_ui_update_listener;
 use accsyn_engine::modules::effects::AudioEffectParameters;
 use accsyn_engine::modules::lfo::DEFAULT_LFO_FREQUENCY;
 use accsyn_engine::modules::oscillator::OscillatorParameters;
+use accsyn_engine::synthesizer::patches::{PatchList, Patches};
 use accsyn_engine::synthesizer::{ModuleParameters, QuadMixerInput};
 use accsyn_midi::MidiDeviceUpdateEvents;
 use accsyn_types::audio_events::AudioDeviceUpdateEvents;
@@ -33,7 +34,6 @@ use std::sync::atomic::Ordering::Relaxed;
 use std::sync::{Arc, Mutex};
 use structs::UIGlobalOptions;
 use strum::EnumCount;
-use accsyn_engine::synthesizer::patches;
 
 const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
 
@@ -68,7 +68,7 @@ impl UI {
 
         let (ui_update_sender, ui_update_receiver) = bounded(UI_UPDATE_CHANNEL_CAPACITY);
 
-        let parameter_values = init_ui_values_from_module_parameters(parameters);
+        let parameter_values = update_ui_values_from_module_parameters(UIAudioDevice::default(), UIMidiPort::default(), parameters.clone());
 
         Self {
             ui_update_sender,
@@ -87,6 +87,7 @@ impl UI {
         midi_update_sender: Sender<MidiDeviceUpdateEvents>,
         audio_output_device_sender: &Sender<AudioDeviceUpdateEvents>,
         synthesizer_update_sender: &Sender<SynthesizerUpdateEvents>,
+        patches: Arc<Patches>,
     ) -> Result<()> {
         let ui_update_receiver = self.ui_update_receiver.clone();
         register_callbacks(
@@ -97,10 +98,11 @@ impl UI {
             self.ui_update_sender.clone(),
         );
 
-        let preset_list = patches::preset_list();
-        set_ui_default_values(ui_weak, &self.parameter_values, &preset_list)?;
+        let preset_list = patches.preset_list();
+        let patch_list = patches.patch_list();
+        set_ui_default_values(ui_weak, &self.parameter_values, &preset_list, &patch_list)?;
 
-        start_ui_update_listener(ui_update_receiver, ui_weak, &self.parameter_values);
+        start_ui_update_listener(ui_update_receiver, ui_weak, &self.parameter_values, patches);
 
         Ok(())
     }
@@ -108,22 +110,24 @@ impl UI {
 fn set_ui_default_values(
     ui_weak: &Weak<AccidentalSynth>,
     parameter_values: &Arc<Mutex<ParameterValues>>,
-    presets: &[String],
+    preset_list: &PatchList,
+    patch_list: &PatchList,
 ) -> Result<()> {
     let values = parameter_values
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
 
-    push_values_to_ui(ui_weak, &values, presets)
+    push_values_to_ui(ui_weak, &values, preset_list.names(), patch_list.names())
 }
 
 pub(super) fn push_values_to_ui(
     ui_weak: &Weak<AccidentalSynth>,
     values: &ParameterValues,
-    presets: &[String],
+    preset_list: Vec<String>,
+    patch_list: Vec<String>,
 ) -> Result<()> {
     let ui_default_values = values.clone();
-    let preset_values = presets.to_owned();
+
 
     ui_weak.upgrade_in_event_loop(move |ui| {
         ui.set_version(SharedString::from(env!("CARGO_PKG_VERSION")));
@@ -134,7 +138,8 @@ pub(super) fn push_values_to_ui(
         ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(
             &ui_default_values.audio_device,
         ));
-        ui.set_preset_list(slint_preset_list_from_ui_preset_list(&preset_values));
+        ui.set_preset_list(slint_patches_list_from_ui_patches_list(&preset_list));
+        ui.set_patch_list(slint_patches_list_from_ui_patches_list(&patch_list));
         ui.set_amp_envelope_values(slint_envelope_from_ui_envelope(
             &ui_default_values.amp_envelope,
         ));
@@ -151,9 +156,15 @@ pub(super) fn push_values_to_ui(
         ui.set_oscillator_values(slint_oscillators_from_oscillators(
             &ui_default_values.oscillators,
         ));
-        ui.set_output_mixer_values(slint_mixer_from_ui_mixer_options(&ui_default_values.output_mixer));
-        ui.set_oscillator_mixer_values(slint_oscillator_mixer_from_ui_oscillator_mixer(&ui_default_values.oscillator_mixer));
-        ui.set_global_options_values(slint_global_options_from_ui_global_options(&ui_default_values.global_options));
+        ui.set_output_mixer_values(slint_mixer_from_ui_mixer_options(
+            &ui_default_values.output_mixer,
+        ));
+        ui.set_oscillator_mixer_values(slint_oscillator_mixer_from_ui_oscillator_mixer(
+            &ui_default_values.oscillator_mixer,
+        ));
+        ui.set_global_options_values(slint_global_options_from_ui_global_options(
+            &ui_default_values.global_options,
+        ));
         ui.set_filter_cutoff_values(slint_filter_cutoff_from_ui_filter_cutoff(
             &ui_default_values.filter_cutoff,
         ));
@@ -165,10 +176,14 @@ pub(super) fn push_values_to_ui(
     Ok(())
 }
 
-pub(super) fn init_ui_values_from_module_parameters(parameters: Arc<ModuleParameters>) -> ParameterValues {
+pub(super) fn update_ui_values_from_module_parameters(
+    audio_device: UIAudioDevice,
+    midi_port: UIMidiPort,
+    parameters: Arc<ModuleParameters>,
+) -> ParameterValues {
     ParameterValues {
-        audio_device: UIAudioDevice::default(),
-        midi_port: UIMidiPort::default(),
+        audio_device,
+        midi_port,
         oscillators: oscillator_values_to_ui_oscillator_values(&parameters.oscillators),
         oscillator_fine_tune: oscillator_fine_tune_to_ui_oscillator_fine_tune(
             &parameters.oscillators,
@@ -279,8 +294,11 @@ fn slint_audio_device_from_ui_audio_device(audio_device_values: &UIAudioDevice) 
     }
 }
 
-fn slint_preset_list_from_ui_preset_list(preset_list: &[String]) -> ModelRc<SharedString> {
-    let slint_presets = preset_list.iter().map(SharedString::from).collect::<Vec<SharedString>>();
+fn slint_patches_list_from_ui_patches_list(patches_list: &[String]) -> ModelRc<SharedString> {
+    let slint_presets = patches_list
+        .iter()
+        .map(SharedString::from)
+        .collect::<Vec<SharedString>>();
     ModelRc::from(Rc::new(VecModel::from(slint_presets)))
 }
 

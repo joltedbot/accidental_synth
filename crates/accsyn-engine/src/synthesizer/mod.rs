@@ -41,6 +41,7 @@ use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::thread;
 use strum::EnumCount;
 use accsyn_types::parameter_types::{Balance, NormalizedValue};
+use crate::synthesizer::patches::Patches;
 
 #[derive(Debug, Clone, Copy)]
 enum MidiNoteEvent {
@@ -188,7 +189,7 @@ pub struct Synthesizer {
     module_parameters: Arc<ModuleParameters>,
     ui_update_sender: Sender<SynthesizerUpdateEvents>,
     ui_update_receiver: Receiver<SynthesizerUpdateEvents>,
-    patches: Arc<patches::Patches>,
+    patches: Arc<Patches>,
 }
 
 impl Synthesizer {
@@ -298,6 +299,11 @@ impl Synthesizer {
 
             log::debug!("run(): MIDI event receiver thread has exited");
         });
+    }
+
+    /// Returns a clone of the Arc<Patches> for this synthesizer.
+    pub fn patches(&self) -> Arc<Patches> {
+        self.patches.clone()
     }
 }
 

@@ -141,22 +141,22 @@ export component MidiSettings inherits VerticalLayout {
     }
 }
 
-export component Presets inherits VerticalLayout {
+export component Patches inherits VerticalLayout {
     in property <string> title;
-    in property <[string]> preset-list;
+    in property <[string]> patch-list;
     in property <int> selected-index;
-    callback preset-changed(int);
+    callback patch-changed(int);
 
     padding: Theme.osc-controls-panel-padding;
     spacing: Theme.osc-controls-panel-spacing;
 
     preset := DropDownMenu {
         label: title;
-        value-list: preset-list;
+        value-list: patch-list;
         value-index: selected-index;
         dropdown-width: Theme.oscillator-panel-widget-width;
         drop_down_changed(index, preset) => {
-            preset-changed(index);
+            patch-changed(index);
         }
     }
 }
@@ -193,6 +193,7 @@ export component SettingsWindow inherits PopupWindow {
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
     callback preset-changed(int);
+    callback patch-changed(int);
     callback patch-saved(string);
 
     width: Theme.settings-panel-width;
@@ -290,23 +291,23 @@ export component SettingsWindow inherits PopupWindow {
                 VerticalLayout {
                     alignment: start;
 
-                    presets := Presets {
+                    presets := Patches {
                         title: Theme.settings-presets-label;
-                        preset-list: preset-list;
+                        patch-list: preset-list;
                         selected-index: selected-preset-index;
 
-                        preset-changed(preset_index) => {
+                        patch-changed(preset_index) => {
                             preset-changed(preset_index)
                         }
                     }
 
-                    patches := Presets {
+                    patches := Patches {
                         title: Theme.settings-patches-label;
-                        preset-list: patch-list;
+                        patch-list: patch-list;
                         selected-index: selected-patch-index;
 
-                        preset-changed(patch_index) => {
-                            preset-changed(patch_index)
+                        patch-changed(patch_index) => {
+                            patch-changed(patch_index)
                         }
                     }
                 }

@@ -32,6 +32,7 @@ export component AccidentalSynth inherits Window {
     };
     in property <MidiPort> midi-port-values;
     in property <[string]> preset-list;
+    in property <[string]> patch-list;
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
     callback audio-output-right-channel-changed(string);
@@ -40,6 +41,7 @@ export component AccidentalSynth inherits Window {
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
     callback preset-changed(int);
+    callback patch-changed(int);
     callback patch-saved(string);
 
     // Oscillator Panel Properties & Callbacks
@@ -130,6 +132,7 @@ export component AccidentalSynth inherits Window {
                 audio-device-values: audio-device-values;
                 midi-port-values: midi-port-values;
                 preset-list: preset-list;
+                patch-list: patch-list;
 
                 audio-output-device-changed(device) => {
                     audio-output-device-changed(device);
@@ -154,6 +157,9 @@ export component AccidentalSynth inherits Window {
                 }
                 preset-changed(preset_index) => {
                     preset-changed(preset-index);
+                }
+                patch-changed(patch_index) => {
+                    patch-changed(patch-index);
                 }
                 patch-saved(name) => {
                     patch-saved(name);

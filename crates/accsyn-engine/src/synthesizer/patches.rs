@@ -2,7 +2,7 @@ use crate::synthesizer::ModuleParameters;
 use anyhow::{Result, anyhow};
 use serde_json::json;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 const APP_SUPPORT_DIRECTORY: &str = "Library/Application Support";
@@ -58,9 +58,48 @@ pub struct Paths {
     user_patches: PathBuf,
 }
 
+/// Stores one patch name and value
+#[derive(Debug, Clone)]
+pub struct Patch {
+    name: String,
+    content: String,
+}
+
+/// Stores a list of patch names and values
+#[derive(Debug, Clone)]
+pub struct PatchList {
+    list: Vec<Patch>,
+}
+
+impl PatchList {
+    /// Returns the names of the patches in the list.
+    pub fn names(&self) -> Vec<String> {
+        self.list.iter().map(|p| p.name.clone()).collect()
+    }
+
+    /// Returns the list of patches as a vector
+    pub fn list(&self) -> Vec<Patch> {
+        self.list.clone()
+    }
+
+    fn from(patches: &[(&str, &str)]) -> Self {
+        Self {
+            list: patches
+                .iter()
+                .map(|(name, content)| Patch {
+                    name: name.to_string(),
+                    content: content.to_string(),
+                })
+                .collect(),
+        }
+    }
+}
+
 /// Manages reading and writing synthesizer patch and preset files.
 pub struct Patches {
     paths: Paths,
+    presets: PatchList,
+    patches: PatchList,
 }
 
 impl Patches {
@@ -68,8 +107,12 @@ impl Patches {
     pub fn new() -> Result<Self> {
         let mut paths = create_data_paths()?;
         initialize_application_storage(&mut paths)?;
-
-        Ok(Self { paths })
+        let patches = load_user_patches(&paths.user_patches);
+        Ok(Self {
+            paths,
+            presets: PatchList::from(SYSTEM_PATCHES),
+            patches,
+        })
     }
 
     /// Serializes the current module parameters to a new named patch file.
@@ -99,25 +142,50 @@ impl Patches {
 
         Ok(())
     }
+
+    /// Get the list of user-created patch names from the files in the patch directory.
+    pub fn patch_list(&self) -> PatchList {
+        self.patches.clone()
+    }
+
+    /// Get the list of system presets.
+    pub fn preset_list(&self) -> PatchList {
+        self.presets.clone()
+    }
+
+    /// Loads a preset from the system preset patches by preset index. See `SYSTEM_PATCHES` for the index values.
+    pub fn get_module_parameters_from_patch_index(
+        &self,
+        index: usize,
+        patch_list: &PatchList,
+    ) -> Result<ModuleParameters> {
+        let patch = &patch_list.list[index];
+        let preset = serde_json::from_str(&patch.content).map_err(|err| {
+            log::error!(target: "synthesizer::patches", "Failed to parse preset '{}' (index {index}): {err}", patch.name);
+            err
+        })?;
+        log::info!(target: "synthesizer::patches", "Loaded preset '{}' (index {index})", patch.name);
+        Ok(preset)
+    }
 }
 
-/// Generates a list of preset names from the building system preset patches
-pub fn preset_list() -> Vec<String> {
-    SYSTEM_PATCHES
-        .iter()
-        .map(|(name, _)| name.to_string())
-        .collect()
-}
 
-/// Loads a preset from the system preset patches by preset index. See `SYSTEM_PATCHES` for the index values.
-pub fn get_preset_from_index(index: usize) -> Result<ModuleParameters> {
-    let (name, content) = SYSTEM_PATCHES[index];
-    let preset = serde_json::from_str(content).map_err(|e| {
-        log::error!(target: "synthesizer::patches", "Failed to parse preset '{name}' (index {index}): {e}");
-        e
-    })?;
-    log::info!(target: "synthesizer::patches", "Loaded preset '{name}' (index {index})");
-    Ok(preset)
+/// Create patch collection from user patches directory.
+pub fn load_user_patches(patch_directory: &Path) -> PatchList {
+    let mut patches = Vec::new();
+
+    if let Ok(entries) = patch_directory.read_dir() {
+        entries.filter_map(|entry| entry.ok()).for_each(|entry| {
+            if let Ok(content) = std::fs::read_to_string(entry.path()) {
+                patches.push(Patch {
+                    name: entry.file_name().to_string_lossy().to_string(),
+                    content,
+                })
+            }
+        });
+    };
+
+    PatchList { list: patches }
 }
 
 pub(crate) fn init_module_parameters() -> Result<ModuleParameters> {

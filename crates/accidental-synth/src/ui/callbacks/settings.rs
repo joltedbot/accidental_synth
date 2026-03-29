@@ -101,6 +101,22 @@ pub fn callback_audio_buffer_size_changed(
     }
 }
 
+pub fn callback_patch_changed(
+    ui_weak: &Weak<AccidentalSynth>,
+    synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
+    ui_update_sender: Sender<UIUpdates>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_patch_changed(move |preset_index| {
+            synthesizer_update_sender.send(SynthesizerUpdateEvents::PatchChanged(preset_index)).expect(
+                "callback_preset_changed(): Could not send new preset update to the audio module. Exiting.",
+            );
+            ui_update_sender.send(UIUpdates::Presets(preset_index)).expect(
+                "callback_preset_changed(): Could not send preset UI update. Exiting.",
+            );
+        });
+    }
+}
 pub fn callback_preset_changed(
     ui_weak: &Weak<AccidentalSynth>,
     synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
@@ -124,7 +140,7 @@ pub fn callback_patch_saved(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_patch_saved(move |patch_name| {
-            synthesizer_update_sender.send(SynthesizerUpdateEvents::PatchSaved(patch_name.to_string())).expect(
+            synthesizer_update_sender.send(SynthesizerUpdateEvents::PatchSaved(patch_name.trim().to_string())).expect(
                 "callback_preset_changed(): Could not send new preset update to the audio module. Exiting.",
             );
         });
