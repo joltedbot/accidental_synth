@@ -34,6 +34,8 @@ use std::sync::atomic::Ordering::Relaxed;
 use std::sync::{Arc, Mutex};
 use structs::UIGlobalOptions;
 use strum::EnumCount;
+use accsyn_types::defaults::Defaults;
+use accsyn_types::math::{normal_value_from_exponential_level_curve, normalize_float_range};
 
 const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
 
@@ -255,8 +257,8 @@ fn oscillator_mixer_to_ui_oscillator_mixer(quad_mixer: &[QuadMixerInput]) -> Vec
     let mut ui_quad_mixer_values: Vec<UIMixer> = Vec::new();
     quad_mixer.iter().for_each(|strip| {
         ui_quad_mixer_values.push(UIMixer {
-            level: strip.level.load(),
-            balance: strip.balance.load(),
+            level: normal_value_from_exponential_level_curve(strip.level.load()),
+            balance: normalize_float_range(strip.balance.load(), Defaults::MINIMUM_BALANCE_RANGE, Defaults::MAXIMUM_BALANCE_RANGE),
             is_muted: strip.mute.load(Relaxed),
         })
     });

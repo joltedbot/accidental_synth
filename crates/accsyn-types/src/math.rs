@@ -14,6 +14,8 @@ pub const EXPONENTIAL_FILTER_COEFFICIENT: f32 = 9.903_487;
 /// Exponential coefficient for level mapping (ln(1000)).
 pub const EXPONENTIAL_LEVEL_COEFFICIENT: f32 = 6.908;
 // Level linear range is 1000x so ln(1000) = 6.908
+/// Level curve linear range: -60 to 0 dBFS = 60dB, so 10^(60/20) = 1000x.
+pub const LEVEL_CURVE_LINEAR_RANGE: f32 = 1000.0;
 /// Exponential coefficient for LFO rate mapping (ln(100000)).
 pub const EXPONENTIAL_LFO_COEFFICIENT: f32 = 13.81551;
 // ln(100_000) = 13.81551
@@ -189,6 +191,16 @@ pub fn normal_value_from_exponential_curve_and_coefficient(
     // exponential_coefficient is the log of the effective range for the linear scale you want to map to exponential range
     // If the range max is 1000x then min, then the exponential_coefficient is log(1000) = 6.908
     curve_value.ln() / exponential_coefficient
+}
+
+/// Inverse of `exponential_curve_level_adjustment_from_normal_value`.
+/// Converts an engine-side level value back to a normalized UI value (0.0–1.0).
+#[inline]
+pub fn normal_value_from_exponential_level_curve(level_value: f32) -> f32 {
+    if level_value == 0.0 {
+        return 0.0;
+    }
+    (level_value * LEVEL_CURVE_LINEAR_RANGE).ln() / EXPONENTIAL_LEVEL_COEFFICIENT
 }
 
 #[cfg(test)]

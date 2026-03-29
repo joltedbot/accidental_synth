@@ -35,6 +35,10 @@ impl Defaults {
     pub const QUAD_MIXER_SUB_LEVEL: f32 = 0.0;
     /// Default per-oscillator stereo balance (-1.0 left to 1.0 right).
     pub const QUAD_MIXER_BALANCE: f32 = 0.0;
+    /// Maximum balance range for output and sub-oscillator mixers.
+    pub const MAXIMUM_BALANCE_RANGE: f32 = 1.0;
+    /// Minimum balance range for output and sub-oscillator mixers.
+    pub const MINIMUM_BALANCE_RANGE: f32 = -1.0;
     /// Default per-oscillator mute state.
     pub const QUAD_MIXER_IS_MUTED: bool = false;
 

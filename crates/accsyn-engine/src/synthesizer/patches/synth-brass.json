@@ -146,22 +146,22 @@
     }
   ],
   "mixer": {
-    "balance": 0.5,
+    "balance": 0.0,
     "is_muted": false,
     "level": 0.7,
     "quad_mixer_inputs": [
       {
-        "balance": 0.35,
+        "balance": -0.15,
         "level": 1.0,
         "mute": false
       },
       {
-        "balance": 0.65,
+        "balance": 0.15,
         "level": 1.0,
         "mute": false
       },
       {
-        "balance": 0.5,
+        "balance": 0.0,
         "level": 0.7,
         "mute": false
       },

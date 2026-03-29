@@ -5,7 +5,6 @@ pub const PITCH_BEND_AMOUNT_MAX_VALUE: u16 = 16383;
 pub const CENTS_PER_SEMITONE: u16 = 100;
 pub const MIN_PITCH_BEND_RANGE: u8 = 2;
 pub const MAX_PITCH_BEND_RANGE: u8 = 12;
-pub const LEVEL_CURVE_LINEAR_RANGE: f32 = 1000.0; // Level range is -60 to 0 = 60dbfs so 10^(60/20) = 1000x
 pub const MAX_MIDI_KEY_VELOCITY: f32 = 1.0;
 pub const MIN_VELOCITY_CURVE_EXPONENT: f32 = 0.25;
 pub const MAX_VELOCITY_CURVE_EXPONENT: f32 = 4.0;
