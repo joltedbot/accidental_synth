@@ -1,18 +1,95 @@
 {
   "effects": [
-    { "is_enabled": false, "parameters": [0, 0, 0, 0] },
-    { "is_enabled": false, "parameters": [1, 0, 0, 0] },
-    { "is_enabled": false, "parameters": [0, 1, 0, 0] },
-    { "is_enabled": false, "parameters": [0, 0, 0, 0] },
-    { "is_enabled": false, "parameters": [0, 0, 0, 0] },
-    { "is_enabled": false, "parameters": [0, 0, 1, 0] },
-    { "is_enabled": false, "parameters": [1, 0, 0, 0] },
     {
       "is_enabled": false,
-      "parameters": [0.5, 0.5, 0.5, 0]
+      "parameters": [
+        0,
+        0,
+        0,
+        0
+      ]
     },
-    { "is_enabled": false, "parameters": [0, 1, 0, 0] },
-    { "is_enabled": false, "parameters": [0, 1, 0, 0] }
+    {
+      "is_enabled": false,
+      "parameters": [
+        1,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        1,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.5,
+        0.5,
+        0.5,
+        0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0,
+        1,
+        0,
+        0
+      ]
+    }
   ],
   "envelopes": [
     {
@@ -73,10 +150,26 @@
     "is_muted": false,
     "level": 0.8,
     "quad_mixer_inputs": [
-      { "balance": 0.5, "level": 0, "mute": false },
-      { "balance": 0.5, "level": 1, "mute": false },
-      { "balance": 0.5, "level": 1, "mute": false },
-      { "balance": 0.5, "level": 1, "mute": false }
+      {
+        "balance": 0.5,
+        "level": 0,
+        "mute": false
+      },
+      {
+        "balance": 0.5,
+        "level": 1,
+        "mute": false
+      },
+      {
+        "balance": 0.5,
+        "level": 1,
+        "mute": false
+      },
+      {
+        "balance": 0.5,
+        "level": 1,
+        "mute": false
+      }
     ]
   },
   "oscillators": [

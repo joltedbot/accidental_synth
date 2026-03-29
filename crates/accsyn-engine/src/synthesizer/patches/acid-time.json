@@ -1,28 +1,95 @@
 {
   "effects": [
-    { "is_enabled": false, "parameters": [0.0, 0.0, 0.0, 0.0] },
-    { "is_enabled": false, "parameters": [0.0, 0.0, 0.0, 0.0] },
-    { "is_enabled": false, "parameters": [0.0, 0.0, 0.0, 0.0] },
-    { "is_enabled": false, "parameters": [0.0, 0.0, 0.0, 0.0] },
-    { "is_enabled": true, "parameters": [0.4166949689388275, 0.0, 0.0, 0.0] },
     {
-      "is_enabled": true,
-      "parameters": [0.25, 0.6215353012084961, 0.18534307181835175, 0.0]
-    },
-    {
-      "is_enabled": true,
+      "is_enabled": false,
       "parameters": [
-        0.036905571818351746, 0.47095787525177, 0.532099187374115, 0.0
+        0.0,
+        0.0,
+        0.0,
+        0.0
       ]
     },
     {
       "is_enabled": false,
       "parameters": [
-        0.3499999940395355, 0.30000001192092896, 0.44999998807907104, 0.0
+        0.0,
+        0.0,
+        0.0,
+        0.0
       ]
     },
-    { "is_enabled": false, "parameters": [0.0, 0.0, 0.0, 0.0] },
-    { "is_enabled": false, "parameters": [0.0, 0.0, 0.0, 0.0] }
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": true,
+      "parameters": [
+        0.4166949689388275,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": true,
+      "parameters": [
+        0.25,
+        0.6215353012084961,
+        0.18534307181835175,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": true,
+      "parameters": [
+        0.036905571818351746,
+        0.47095787525177,
+        0.532099187374115,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.3499999940395355,
+        0.30000001192092896,
+        0.44999998807907104,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
   ],
   "envelopes": [
     {
@@ -83,10 +150,26 @@
     "is_muted": false,
     "level": 0.5572304725646973,
     "quad_mixer_inputs": [
-      { "balance": 0.5, "level": 1.0, "mute": false },
-      { "balance": 0.5, "level": 0.5, "mute": false },
-      { "balance": 0.5, "level": 0.8271863460540771, "mute": false },
-      { "balance": 0.5, "level": 0.019829491153359413, "mute": false }
+      {
+        "balance": 0.5,
+        "level": 1.0,
+        "mute": false
+      },
+      {
+        "balance": 0.5,
+        "level": 0.5,
+        "mute": false
+      },
+      {
+        "balance": 0.5,
+        "level": 0.8271863460540771,
+        "mute": false
+      },
+      {
+        "balance": 0.5,
+        "level": 0.019829491153359413,
+        "mute": false
+      }
     ]
   },
   "oscillators": [

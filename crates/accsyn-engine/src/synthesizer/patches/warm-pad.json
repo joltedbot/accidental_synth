@@ -1,15 +1,95 @@
 {
   "effects": [
-    { "is_enabled": false, "parameters": [0.0, 0.0, 0.0, 0.0] },
-    { "is_enabled": false, "parameters": [0.0, 0.0, 0.0, 0.0] },
-    { "is_enabled": true, "parameters": [0.0, 0.0, 0.0, 0.0] },
-    { "is_enabled": false, "parameters": [0.0, 0.0, 0.0, 0.0] },
-    { "is_enabled": false, "parameters": [0.0, 0.0, 0.0, 0.0] },
-    { "is_enabled": false, "parameters": [0.0, 0.0, 0.0, 0.0] },
-    { "is_enabled": false, "parameters": [0.0, 0.0, 0.0, 0.0] },
-    { "is_enabled": true, "parameters": [0.4, 0.7, 0.6, 0.0] },
-    { "is_enabled": true, "parameters": [0.3, 0.5, 0.0, 0.0] },
-    { "is_enabled": false, "parameters": [0.0, 0.0, 0.0, 0.0] }
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": true,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": true,
+      "parameters": [
+        0.4,
+        0.7,
+        0.6,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": true,
+      "parameters": [
+        0.3,
+        0.5,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
   ],
   "envelopes": [
     {
@@ -70,10 +150,26 @@
     "is_muted": false,
     "level": 0.65,
     "quad_mixer_inputs": [
-      { "balance": 0.3, "level": 0.8, "mute": false },
-      { "balance": 0.7, "level": 0.8, "mute": false },
-      { "balance": 0.4, "level": 0.6, "mute": false },
-      { "balance": 0.6, "level": 0.5, "mute": false }
+      {
+        "balance": 0.3,
+        "level": 0.8,
+        "mute": false
+      },
+      {
+        "balance": 0.7,
+        "level": 0.8,
+        "mute": false
+      },
+      {
+        "balance": 0.4,
+        "level": 0.6,
+        "mute": false
+      },
+      {
+        "balance": 0.6,
+        "level": 0.5,
+        "mute": false
+      }
     ]
   },
   "oscillators": [
