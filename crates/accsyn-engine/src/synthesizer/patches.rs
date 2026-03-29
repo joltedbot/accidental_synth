@@ -9,15 +9,28 @@ const APP_SUPPORT_DIRECTORY: &str = "Library/Application Support";
 const DATA_DIRECTORY: &str = "AccidentalSynthesizer";
 const USER_PATCH_DIRECTORY: &str = "patches";
 const PATCH_FILE_EXTENSION: &str = "json";
-const SYSTEM_PATCHES: &[(&str,&str)] = &[
+const SYSTEM_PATCHES: &[(&str, &str)] = &[
     ("Init", include_str!("patches/init.json")),
+    ("Acid Squelch", include_str!("patches/acid-squelch.json")),
+    ("Acid Time", include_str!("patches/acid-time.json")),
+    ("Ambient Drone", include_str!("patches/ambient-drone.json")),
     ("Bright Lead", include_str!("patches/bright-lead.json")),
     ("Deep Bass", include_str!("patches/deep-bass.json")),
+    (
+        "Dirty Bass Echo",
+        include_str!("patches/dirty-bass-echo.json"),
+    ),
     ("FM Bells", include_str!("patches/fm-bells.json")),
+    ("Glass Marimba", include_str!("patches/glass-marimba.json")),
     ("Industrial", include_str!("patches/harsh-industrial.json")),
     ("Plucky Keys", include_str!("patches/plucky-keys.json")),
     ("Sci-Fi", include_str!("patches/sci-fi.json")),
-    ("Supersaw Swirl", include_str!("patches/supersaw-swirl.json")),
+    (
+        "Supersaw Swirl",
+        include_str!("patches/supersaw-swirl.json"),
+    ),
+    ("Synth Brass", include_str!("patches/synth-brass.json")),
+    ("Vintage Organ", include_str!("patches/vintage-organ.json")),
     ("Warm Pad", include_str!("patches/warm-pad.json")),
 ];
 const INIT_PARAMETERS: &str = SYSTEM_PATCHES[0].1;
@@ -56,9 +69,7 @@ impl Patches {
         let mut paths = create_data_paths()?;
         initialize_application_storage(&mut paths)?;
 
-        Ok(Self {
-            paths,
-        })
+        Ok(Self { paths })
     }
 
     /// Serializes the current module parameters to a new named patch file.
@@ -88,12 +99,14 @@ impl Patches {
 
         Ok(())
     }
-
 }
 
 /// Generates a list of preset names from the building system preset patches
 pub fn preset_list() -> Vec<String> {
-    SYSTEM_PATCHES.iter().map(|(name, _)| name.to_string()).collect()
+    SYSTEM_PATCHES
+        .iter()
+        .map(|(name, _)| name.to_string())
+        .collect()
 }
 
 /// Loads a preset from the system preset patches by preset index. See `SYSTEM_PATCHES` for the index values.
@@ -168,5 +181,5 @@ fn initialize_application_storage(paths: &mut Paths) -> Result<()> {
 }
 
 fn create_patch_from_parameters(parameters: &ModuleParameters) -> String {
-    json!(parameters).to_string()
+    serde_json::to_string_pretty(&parameters).unwrap_or(json!(parameters).to_string())
 }
