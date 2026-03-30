@@ -13,25 +13,16 @@ const SYSTEM_PATCHES: &[(&str, &str)] = &[
     ("Init", include_str!("patches/init.json")),
     ("Acid Squelch", include_str!("patches/acid-squelch.json")),
     ("Acid Time", include_str!("patches/acid-time.json")),
+    ("Alien Invasion", include_str!("patches/alien-invasion.json")),
     ("Ambient Drone", include_str!("patches/ambient-drone.json")),
     ("Bright Lead", include_str!("patches/bright-lead.json")),
     ("Deep Bass", include_str!("patches/deep-bass.json")),
-    (
-        "Dirty Bass Echo",
-        include_str!("patches/dirty-bass-echo.json"),
-    ),
+    ("Dirty Bass Echo", include_str!("patches/dirty-bass-echo.json"),),
+    ("Drifting Pad", include_str!("patches/drifting-pad.json")),
     ("FM Bells", include_str!("patches/fm-bells.json")),
-    ("Glass Marimba", include_str!("patches/glass-marimba.json")),
-    ("Industrial", include_str!("patches/harsh-industrial.json")),
     ("Plucky Keys", include_str!("patches/plucky-keys.json")),
     ("Sci-Fi", include_str!("patches/sci-fi.json")),
-    (
-        "Supersaw Swirl",
-        include_str!("patches/supersaw-swirl.json"),
-    ),
-    ("Synth Brass", include_str!("patches/synth-brass.json")),
-    ("Vintage Organ", include_str!("patches/vintage-organ.json")),
-    ("Warm Pad", include_str!("patches/warm-pad.json")),
+    ("Supersaw Swirl", include_str!("patches/supersaw-swirl.json")),
 ];
 const INIT_PARAMETERS: &str = SYSTEM_PATCHES[0].1;
 
