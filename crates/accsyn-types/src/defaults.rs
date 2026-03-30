@@ -49,6 +49,8 @@ impl Defaults {
     pub const PORTAMENTO_TIME_NORMAL_VALUE: f32 = 0.0;
     /// Default velocity curve as a normalized value (0.0–1.0).
     pub const VELOCITY_CURVE_NORMAL_VALUE: f32 = 0.5;
+    /// Default velocity curve value.
+    pub const LINEAR_VELOCITY_CURVE_EXPONENT: f32 = 1.0;
     /// Minimum allowed pitch bend range in semitones.
     pub const MINIMUM_PITCH_BEND_RANGE: u32 = 2;
     /// Maximum allowed pitch bend range in semitones.

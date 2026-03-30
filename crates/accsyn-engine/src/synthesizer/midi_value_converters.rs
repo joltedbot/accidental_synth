@@ -1,17 +1,15 @@
+use accsyn_types::defaults::Defaults;
 use crate::modules::filter::NUMBER_OF_FILER_POLES;
 use crate::modules::oscillator::{
-    FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX, OscillatorParameters,
+    OscillatorParameters, FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX,
 };
 use crate::synthesizer::constants::{
-    CENTS_PER_SEMITONE, LINEAR_VELOCITY_CURVE_EXPONENT,
+    CENTS_PER_SEMITONE,
     MAX_MIDI_KEY_VELOCITY, MAX_VELOCITY_CURVE_EXPONENT, MIN_VELOCITY_CURVE_EXPONENT,
     NORMAL_TO_BOOL_SWITCH_ON_VALUE, PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT,
 };
 use accsyn_types::math;
-use accsyn_types::math::{
-    EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT,
-    LEVEL_CURVE_LINEAR_RANGE, f32s_are_equal,
-};
+use accsyn_types::math::{f32s_are_equal, normalize_float_range, EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT, LEVEL_CURVE_LINEAR_RANGE};
 
 
 /// Maps a normalized 0.0-1.0 value to a target f32 range.
@@ -146,16 +144,38 @@ pub fn velocity_curve_from_normal_value(normal_value: f32) -> f32 {
         normal_value_to_f32_range(
             renormaled_value,
             MIN_VELOCITY_CURVE_EXPONENT,
-            LINEAR_VELOCITY_CURVE_EXPONENT,
+            Defaults::LINEAR_VELOCITY_CURVE_EXPONENT,
         )
     } else {
         let renormaled_value = (normal_value - 0.5) / linear_normal_value;
         normal_value_to_f32_range(
             renormaled_value,
-            LINEAR_VELOCITY_CURVE_EXPONENT,
+            Defaults::LINEAR_VELOCITY_CURVE_EXPONENT,
             MAX_VELOCITY_CURVE_EXPONENT,
         )
     }
+}
+
+/// Converts a velocity curve exponent to normal value
+pub fn normal_value_from_velocity_curve(velocity_curve_value: f32) -> f32 {
+    if velocity_curve_value == 0.0 {
+        return 0.0;
+    }
+
+    if velocity_curve_value <= Defaults::LINEAR_VELOCITY_CURVE_EXPONENT {
+        normalize_float_range(
+            velocity_curve_value,
+            MIN_VELOCITY_CURVE_EXPONENT,
+            Defaults::LINEAR_VELOCITY_CURVE_EXPONENT,
+        ) * Defaults::VELOCITY_CURVE_NORMAL_VALUE
+    } else {
+        normalize_float_range(
+            velocity_curve_value,
+            Defaults::LINEAR_VELOCITY_CURVE_EXPONENT,
+            MAX_VELOCITY_CURVE_EXPONENT,
+        ) * Defaults::VELOCITY_CURVE_NORMAL_VALUE + Defaults::VELOCITY_CURVE_NORMAL_VALUE
+    }
+
 }
 
 pub(crate) fn scaled_velocity_from_normal_value(velocity_curve: f32, velocity: f32) -> f32 {
@@ -464,7 +484,7 @@ mod tests {
 
         let actual = velocity_curve_from_normal_value(normal_value);
         // At midpoint, renormalized to 1.0, maps to LINEAR_VELOCITY_CURVE_EXPONENT
-        let expected = LINEAR_VELOCITY_CURVE_EXPONENT; // 1.0
+        let expected = Defaults::LINEAR_VELOCITY_CURVE_EXPONENT; // 1.0
 
         assert!(f32s_are_equal(actual, expected));
     }
