@@ -74,8 +74,6 @@ pub enum SynthesizerUpdateEvents {
     EffectEnabled(i32, bool),
     /// Change an effect parameter value (effect index, parameter index, value).
     EffectParameterValues(i32, i32, f32),
-    /// Change to a new preset (preset index).
-    PresetChanged(i32),
     /// Change to a new patch (patch index).
     PatchChanged(i32),
     /// Save the current module parameters to a patch file

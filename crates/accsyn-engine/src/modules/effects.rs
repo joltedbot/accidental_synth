@@ -5,10 +5,10 @@ use crate::modules::effects::rectifier::Rectifier;
 use crate::modules::effects::wavefolder::WaveFolder;
 pub use accsyn_types::effects::EffectIndex;
 use accsyn_types::effects::{AudioEffect, EffectParameters, PARAMETERS_PER_EFFECT};
-use serde::{Deserialize, Serialize};
-use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::AtomicBool;
 use accsyn_types::parameter_types::NormalizedValue;
+use serde::{Deserialize, Serialize};
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering::Relaxed;
 
 mod autopan;
 mod bitshifter;
@@ -34,10 +34,14 @@ pub struct AudioEffectParameters {
 impl AudioEffectParameters {
     /// Replace all the values in this `AudioEffectParameters` with the values from the provided `AudioEffectParameters`.
     pub fn assign_from(&self, effects_parameters: &AudioEffectParameters) {
-        self.is_enabled.store(effects_parameters.is_enabled.load(Relaxed), Relaxed);
-        self.parameters.iter().enumerate().for_each(|(index, parameter)| {
-            parameter.store(effects_parameters.parameters[index].load());
-        });
+        self.is_enabled
+            .store(effects_parameters.is_enabled.load(Relaxed), Relaxed);
+        self.parameters
+            .iter()
+            .enumerate()
+            .for_each(|(index, parameter)| {
+                parameter.store(effects_parameters.parameters[index].load());
+            });
     }
 }
 

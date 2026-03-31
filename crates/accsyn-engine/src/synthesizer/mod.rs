@@ -30,6 +30,8 @@ use crate::synthesizer::midi_messages::{
 };
 use crate::synthesizer::sample_generator::sample_generator;
 
+use crate::synthesizer::patches::Patches;
+use accsyn_types::parameter_types::{Balance, NormalizedValue};
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
 use rtrb::Producer;
@@ -40,8 +42,6 @@ use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::thread;
 use strum::EnumCount;
-use accsyn_types::parameter_types::{Balance, NormalizedValue};
-use crate::synthesizer::patches::Patches;
 
 #[derive(Debug, Clone, Copy)]
 enum MidiNoteEvent {
@@ -88,11 +88,15 @@ pub struct KeyboardParameters {
 impl KeyboardParameters {
     /// Replace all the values in this `KeyboardParameters` with the values from the provided `KeyboardParameters`.
     pub fn assign_from(&self, parameters: &KeyboardParameters) {
-        self.mod_wheel_amount.store(parameters.mod_wheel_amount.load());
-        self.aftertouch_amount.store(parameters.aftertouch_amount.load());
+        self.mod_wheel_amount
+            .store(parameters.mod_wheel_amount.load());
+        self.aftertouch_amount
+            .store(parameters.aftertouch_amount.load());
         self.velocity_curve.store(parameters.velocity_curve.load());
-        self.polarity_flipped.store(parameters.polarity_flipped.load(Relaxed), Relaxed);
-        self.pitch_bend_range.store(parameters.pitch_bend_range.load(Relaxed), Relaxed);
+        self.polarity_flipped
+            .store(parameters.polarity_flipped.load(Relaxed), Relaxed);
+        self.pitch_bend_range
+            .store(parameters.pitch_bend_range.load(Relaxed), Relaxed);
     }
 }
 
@@ -144,11 +148,16 @@ impl MixerParameters {
     pub fn assign_from(&self, parameters: &MixerParameters) {
         self.level.store(parameters.level.load());
         self.balance.store(parameters.balance.load());
-        self.is_muted.store(parameters.is_muted.load(Relaxed), Relaxed);
+        self.is_muted
+            .store(parameters.is_muted.load(Relaxed), Relaxed);
 
-        parameters.quad_mixer_inputs.iter().enumerate().for_each(|(index, input)| {
-            self.quad_mixer_inputs[index].assign_from(input);
-        });
+        parameters
+            .quad_mixer_inputs
+            .iter()
+            .enumerate()
+            .for_each(|(index, input)| {
+                self.quad_mixer_inputs[index].assign_from(input);
+            });
     }
 }
 
@@ -202,8 +211,7 @@ impl Synthesizer {
 
         let module_parameters = patches::init_module_parameters()?;
         let patches = patches::Patches::new()?;
-        
-        
+
         Ok(Self {
             output_stream_parameters,
             current_note: Arc::new(CurrentNote::default()),
@@ -338,8 +346,12 @@ fn create_mixer_input_from_oscillator_parameters(
 ) -> MixerInput {
     MixerInput {
         sample: 0.0,
-        level: parameters.quad_mixer_inputs[oscillator as usize].level.load(),
-        balance: parameters.quad_mixer_inputs[oscillator as usize].balance.load(),
+        level: parameters.quad_mixer_inputs[oscillator as usize]
+            .level
+            .load(),
+        balance: parameters.quad_mixer_inputs[oscillator as usize]
+            .balance
+            .load(),
         mute: parameters.quad_mixer_inputs[oscillator as usize]
             .mute
             .load(Relaxed),

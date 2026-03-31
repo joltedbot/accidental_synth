@@ -37,8 +37,7 @@ fn main() {
     let mut synthesizer = Synthesizer::new(audio.get_output_stream_parameters())
         .expect("Could not initialize the synthesizer module. Exiting.");
     let patches = synthesizer.patches();
-    
-    
+
     let default_ui_parameters = synthesizer.get_module_parameters();
     log::debug!(target: "main", "Initialize the user interface module");
     let mut ui = UI::new(default_ui_parameters);
@@ -77,11 +76,10 @@ fn main() {
         midi_setting_update_sender,
         &audio_output_device_sender,
         &synthesizer_update_sender,
-        patches
+        patches,
     )
     .expect("Could build the user interface. Exiting.");
 
-    
     log::info!(target: "main", "Running Accidental Synthesizer.");
     println!("Will Loop Forever. Press Ctrl-c to Exit");
     application

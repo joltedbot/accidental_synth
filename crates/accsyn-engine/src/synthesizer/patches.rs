@@ -13,16 +13,25 @@ const SYSTEM_PATCHES: &[(&str, &str)] = &[
     ("Init", include_str!("patches/init.json")),
     ("Acid Squelch", include_str!("patches/acid-squelch.json")),
     ("Acid Time", include_str!("patches/acid-time.json")),
-    ("Alien Invasion", include_str!("patches/alien-invasion.json")),
+    (
+        "Alien Invasion",
+        include_str!("patches/alien-invasion.json"),
+    ),
     ("Ambient Drone", include_str!("patches/ambient-drone.json")),
     ("Bright Lead", include_str!("patches/bright-lead.json")),
     ("Deep Bass", include_str!("patches/deep-bass.json")),
-    ("Dirty Bass Echo", include_str!("patches/dirty-bass-echo.json"),),
+    (
+        "Dirty Bass Echo",
+        include_str!("patches/dirty-bass-echo.json"),
+    ),
     ("Drifting Pad", include_str!("patches/drifting-pad.json")),
     ("FM Bells", include_str!("patches/fm-bells.json")),
     ("Plucky Keys", include_str!("patches/plucky-keys.json")),
     ("Sci-Fi", include_str!("patches/sci-fi.json")),
-    ("Supersaw Swirl", include_str!("patches/supersaw-swirl.json")),
+    (
+        "Supersaw Swirl",
+        include_str!("patches/supersaw-swirl.json"),
+    ),
 ];
 const INIT_PARAMETERS: &str = SYSTEM_PATCHES[0].1;
 
@@ -72,24 +81,11 @@ impl PatchList {
     pub fn list(&self) -> Vec<Patch> {
         self.list.clone()
     }
-
-    fn from(patches: &[(&str, &str)]) -> Self {
-        Self {
-            list: patches
-                .iter()
-                .map(|(name, content)| Patch {
-                    name: name.to_string(),
-                    content: content.to_string(),
-                })
-                .collect(),
-        }
-    }
 }
 
 /// Manages reading and writing synthesizer patch and preset files.
 pub struct Patches {
     paths: Paths,
-    presets: PatchList,
     patches: PatchList,
 }
 
@@ -98,12 +94,8 @@ impl Patches {
     pub fn new() -> Result<Self> {
         let mut paths = create_data_paths()?;
         initialize_application_storage(&mut paths)?;
-        let patches = load_user_patches(&paths.user_patches);
-        Ok(Self {
-            paths,
-            presets: PatchList::from(SYSTEM_PATCHES),
-            patches,
-        })
+        let patches = load_patches(&paths.user_patches);
+        Ok(Self { paths, patches })
     }
 
     /// Serializes the current module parameters to a new named patch file.
@@ -139,11 +131,6 @@ impl Patches {
         self.patches.clone()
     }
 
-    /// Get the list of system presets.
-    pub fn preset_list(&self) -> PatchList {
-        self.presets.clone()
-    }
-
     /// Loads a preset from the system preset patches by preset index. See `SYSTEM_PATCHES` for the index values.
     pub fn get_module_parameters_from_patch_index(
         &self,
@@ -160,10 +147,19 @@ impl Patches {
     }
 }
 
+fn load_presets() -> Vec<Patch> {
+    SYSTEM_PATCHES
+        .iter()
+        .map(|(name, content)| Patch {
+            name: name.to_string(),
+            content: content.to_string(),
+        })
+        .collect()
+}
 
 /// Create patch collection from user patches directory.
-pub fn load_user_patches(patch_directory: &Path) -> PatchList {
-    let mut patches = Vec::new();
+pub fn load_patches(patch_directory: &Path) -> PatchList {
+    let mut patches = load_presets();
 
     if let Ok(entries) = patch_directory.read_dir() {
         entries.filter_map(|entry| entry.ok()).for_each(|entry| {

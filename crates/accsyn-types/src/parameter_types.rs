@@ -1,5 +1,5 @@
-use std::sync::atomic::{AtomicI8, AtomicI16, AtomicU8, AtomicU16, AtomicU32, Ordering};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::sync::atomic::{AtomicI8, AtomicI16, AtomicU8, AtomicU16, AtomicU32, Ordering};
 
 /// Thread-safe normalized float parameter (0.0–1.0) stored as atomic bits.
 #[derive(Debug)]

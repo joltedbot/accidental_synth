@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use crate::modules::effects::{AudioEffectParameters, EffectIndex};
 use crate::modules::envelope::{
     EnvelopeParameters, MAX_ATTACK_MILLISECONDS, MAX_DECAY_MILLISECONDS, MAX_RELEASE_MILLISECONDS,
@@ -32,6 +31,7 @@ use accsyn_types::math::{
     exponential_curve_from_normal_value_and_coefficient,
 };
 use accsyn_types::synth_events::OscillatorIndex;
+use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 
 pub fn set_lfo_frequency(parameters: &LfoParameters, normal_value: f32) -> f32 {
@@ -236,7 +236,9 @@ pub fn set_oscillator_balance(
     normal_value: f32,
 ) {
     let balance = normal_value_to_f32_range(normal_value, -1.0, 1.0);
-    parameters.quad_mixer_inputs[oscillator as usize].balance.store(balance);
+    parameters.quad_mixer_inputs[oscillator as usize]
+        .balance
+        .store(balance);
 }
 
 pub fn set_oscillator_mute(
@@ -256,7 +258,9 @@ pub fn set_oscillator_level(
     normal_value: f32,
 ) {
     let level = exponential_curve_level_adjustment_from_normal_value(normal_value);
-    parameters.quad_mixer_inputs[oscillator as usize].level.store(level);
+    parameters.quad_mixer_inputs[oscillator as usize]
+        .level
+        .store(level);
 }
 
 pub fn set_oscillator_fine_tune(parameters: &OscillatorParameters, normal_value: f32) -> i8 {
@@ -306,8 +310,10 @@ pub fn set_effect_parameter(
     parameters[effect as usize].parameters[parameter_index as usize].store(value);
 }
 
-
-pub fn set_module_parameters_from_preset(parameters: &Arc<ModuleParameters>, preset: &ModuleParameters) {
+pub fn set_module_parameters_from_preset(
+    parameters: &Arc<ModuleParameters>,
+    preset: &ModuleParameters,
+) {
     log::info!(target: "synthesizer::parameters", "Applying preset parameters to synthesizer modules");
     parameters.filter.assign_from(&preset.filter);
     parameters.mixer.assign_from(&preset.mixer);
@@ -315,13 +321,25 @@ pub fn set_module_parameters_from_preset(parameters: &Arc<ModuleParameters>, pre
     parameters.lfos.iter().enumerate().for_each(|(index, lfo)| {
         lfo.assign_from(&preset.lfos[index]);
     });
-    parameters.envelopes.iter().enumerate().for_each(|(index, envelope)| {
-        envelope.assign_from(&preset.envelopes[index]);
-    });
-    parameters.oscillators.iter().enumerate().for_each(|(index, oscillator)| {
-        oscillator.assign_from(&preset.oscillators[index]);
-    });
-    parameters.effects.iter().enumerate().for_each(|(index, effect)| {
-        effect.assign_from(&preset.effects[index]);
-    });
+    parameters
+        .envelopes
+        .iter()
+        .enumerate()
+        .for_each(|(index, envelope)| {
+            envelope.assign_from(&preset.envelopes[index]);
+        });
+    parameters
+        .oscillators
+        .iter()
+        .enumerate()
+        .for_each(|(index, oscillator)| {
+            oscillator.assign_from(&preset.oscillators[index]);
+        });
+    parameters
+        .effects
+        .iter()
+        .enumerate()
+        .for_each(|(index, effect)| {
+            effect.assign_from(&preset.effects[index]);
+        });
 }

@@ -1,6 +1,11 @@
-import { Panel, VerticalSpacer } from "components.slint";
+import {
+    Panel,
+    DropDownMenu,
+    VerticalSpacer,
+    HorizontalControlLabel,
+} from "components.slint";
 import { Theme } from "theme.slint";
-import { Button } from "std-widgets.slint";
+import { Button, ComboBox, HorizontalBox } from "std-widgets.slint";
 import {
     SettingsIcon,
     SettingsWindow,
@@ -19,15 +24,39 @@ export component Logo inherits Image {
     source: Theme.header-logo;
     horizontal-alignment: Theme.header-logo-alignment;
     height: Theme.header-logo-height;
+    width: Theme.header-logo-width;
+}
+
+export component Patches inherits HorizontalLayout {
+    in property <string> title;
+    in property <[string]> patch-list;
+    in property <int> selected-index;
+    callback patch-changed(int);
+
+    VerticalLayout {
+        alignment: center;
+        HorizontalControlLabel {
+            label: "Patches";
+        }
+    }
+
+    preset := ComboBox {
+        height: 25px;
+        width: Theme.oscillator-panel-widget-width;
+        model: patch-list;
+        current-index: selected-index;
+
+        selected(value) => {
+            patch-changed(self.current-index);
+        }
+    }
 }
 
 export component HeaderPanel inherits Panel {
     in property <string> version;
     in property <AudioDevice> audio-device-values;
     in property <MidiPort> midi-port-values;
-    in property <[string]> preset-list;
     in property <[string]> patch-list;
-    in-out property <int> selected-preset-index;
     in-out property <int> selected-patch-index;
 
     callback audio-output-device-changed(string);
@@ -37,7 +66,6 @@ export component HeaderPanel inherits Panel {
     callback audio-buffer-size-changed(string);
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
-    callback preset-changed(int);
     callback patch-changed(int);
     callback patch-saved(string);
 
@@ -47,10 +75,6 @@ export component HeaderPanel inherits Panel {
     settings := SettingsWindow {
         audio-device-values: audio-device-values;
         midi-port-values: midi-port-values;
-        preset-list: preset-list;
-        patch-list: patch-list;
-        selected-preset-index: selected-preset-index;
-        selected-patch-index: selected-patch-index;
 
         audio-output-device-changed(device) => {
             audio-output-device-changed(device);
@@ -73,37 +97,41 @@ export component HeaderPanel inherits Panel {
         midi-input-channel-changed(channel) => {
             midi-input-channel-changed(channel);
         }
-        preset-changed(preset_index) => {
-            root.selected-preset-index = preset_index;
-            preset-changed(preset-index);
-        }          
-        patch-changed(patch_index) => {
-            root.selected-patch-index = patch_index;
-            patch-changed(patch-index);
-        }        
         patch-saved(name) => {
             patch-saved(name);
         }
     }
 
     HorizontalLayout {
+
         padding: Theme.header-panel-padding;
         spacing: Theme.header-panel-spacing;
+
         alignment: space-between;
 
-        Logo { }
+        logo := Logo { }
 
-        header-spacer := Rectangle { }
+        patches := Patches {
+            title: Theme.settings-patches-label;
+            patch-list: patch-list;
+            selected-index: selected-patch-index;
 
-        Version {
-            version: version;
+            patch-changed(patch_index) => {
+                patch-changed(patch_index)
+            }
         }
 
-        VerticalSpacer { }
+        HorizontalLayout {
+            Version {
+                version: version;
+            }
 
-        SettingsIcon {
-            open-settings => {
-                settings.show();
+            VerticalSpacer { }
+
+            SettingsIcon {
+                open-settings => {
+                    settings.show();
+                }
             }
         }
     }

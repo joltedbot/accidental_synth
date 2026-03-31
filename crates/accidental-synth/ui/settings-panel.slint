@@ -141,26 +141,6 @@ export component MidiSettings inherits VerticalLayout {
     }
 }
 
-export component Patches inherits VerticalLayout {
-    in property <string> title;
-    in property <[string]> patch-list;
-    in property <int> selected-index;
-    callback patch-changed(int);
-
-    padding: Theme.osc-controls-panel-padding;
-    spacing: Theme.osc-controls-panel-spacing;
-
-    preset := DropDownMenu {
-        label: title;
-        value-list: patch-list;
-        value-index: selected-index;
-        dropdown-width: Theme.oscillator-panel-widget-width;
-        drop_down_changed(index, preset) => {
-            patch-changed(index);
-        }
-    }
-}
-
 export component SettingsIcon inherits Image {
     source: Theme.settings-image;
     height: Theme.header-logo-height;
@@ -180,8 +160,6 @@ export component SettingsIcon inherits Image {
 export component SettingsWindow inherits PopupWindow {
     in property <AudioDevice> audio-device-values;
     in property <MidiPort> midi-port-values;
-    in property <[string]> preset-list;
-    in property <[string]> patch-list;
     in-out property <int> selected-preset-index;
     in-out property <int> selected-patch-index;
 
@@ -192,8 +170,6 @@ export component SettingsWindow inherits PopupWindow {
     callback audio-buffer-size-changed(string);
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
-    callback preset-changed(int);
-    callback patch-changed(int);
     callback patch-saved(string);
 
     width: Theme.settings-panel-width;
@@ -283,34 +259,6 @@ export component SettingsWindow inherits PopupWindow {
 
             PanelLabel {
                 label: Theme.settings-patches-presets-title;
-            }
-
-            HorizontalLayout {
-                alignment: space-evenly;
-
-                VerticalLayout {
-                    alignment: start;
-
-                    presets := Patches {
-                        title: Theme.settings-presets-label;
-                        patch-list: preset-list;
-                        selected-index: selected-preset-index;
-
-                        patch-changed(preset_index) => {
-                            preset-changed(preset_index)
-                        }
-                    }
-
-                    patches := Patches {
-                        title: Theme.settings-patches-label;
-                        patch-list: patch-list;
-                        selected-index: selected-patch-index;
-
-                        patch-changed(patch_index) => {
-                            patch-changed(patch_index)
-                        }
-                    }
-                }
 
                 HorizontalLayout {
                     alignment: center;

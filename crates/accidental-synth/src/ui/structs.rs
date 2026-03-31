@@ -7,9 +7,7 @@ use accsyn_engine::modules::envelope::{
     MIN_ATTACK_MILLISECONDS, MIN_DECAY_MILLISECONDS, MIN_RELEASE_MILLISECONDS,
 };
 use accsyn_engine::modules::filter::FilterParameters;
-use accsyn_engine::modules::lfo::{
-    DEFAULT_LFO_FREQUENCY, LfoParameters
-};
+use accsyn_engine::modules::lfo::{DEFAULT_LFO_FREQUENCY, LfoParameters};
 use accsyn_engine::modules::oscillator::OscillatorParameters;
 use accsyn_engine::modules::oscillator::constants::{
     DEFAULT_HARD_SYNC_ENABLED, DEFAULT_KEY_SYNC_ENABLED, DEFAULT_POLARITY_FLIPPED, MAX_CLIP_BOOST,
@@ -17,10 +15,13 @@ use accsyn_engine::modules::oscillator::constants::{
 };
 use accsyn_engine::synthesizer::{KeyboardParameters, MixerParameters};
 use accsyn_types::defaults::{
-    Defaults, MAX_FILTER_RESONANCE, MIN_FILTER_RESONANCE,
-    OSCILLATOR_FINE_TUNE_MAX_CENTS, OSCILLATOR_FINE_TUNE_MIN_CENTS,
+    Defaults, MAX_FILTER_RESONANCE, MIN_FILTER_RESONANCE, OSCILLATOR_FINE_TUNE_MAX_CENTS,
+    OSCILLATOR_FINE_TUNE_MIN_CENTS,
 };
-use accsyn_types::math::{EXPONENTIAL_PORTAMENTO_COEFFICIENT, normalize_float_range, normalize_unsigned_integer_range, EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT};
+use accsyn_types::math::{
+    EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT,
+    EXPONENTIAL_PORTAMENTO_COEFFICIENT, normalize_float_range, normalize_unsigned_integer_range,
+};
 use accsyn_types::math::{
     normal_value_from_exponential_curve_and_coefficient, normal_value_from_exponential_level_curve,
     normalize_signed_integer_range,
@@ -137,7 +138,10 @@ pub struct UIFilterCutoff {
 
 impl UIFilterCutoff {
     pub fn from_synth_parameters(parameters: &FilterParameters) -> Self {
-        let cutoff = normal_value_from_exponential_curve_and_coefficient(parameters.cutoff_frequency.load(), EXPONENTIAL_FILTER_COEFFICIENT);
+        let cutoff = normal_value_from_exponential_curve_and_coefficient(
+            parameters.cutoff_frequency.load(),
+            EXPONENTIAL_FILTER_COEFFICIENT,
+        );
         Self {
             cutoff,
             resonance: normalize_float_range(
@@ -192,7 +196,10 @@ impl Default for UILfo {
 impl UILfo {
     pub fn from_synth_parameters(parameters: &LfoParameters) -> Self {
         Self {
-            frequency: normal_value_from_exponential_curve_and_coefficient(parameters.frequency.load(), EXPONENTIAL_LFO_COEFFICIENT),
+            frequency: normal_value_from_exponential_curve_and_coefficient(
+                parameters.frequency.load(),
+                EXPONENTIAL_LFO_COEFFICIENT,
+            ),
             phase: parameters.phase.load(),
             wave_shape_index: parameters.wave_shape.load(Relaxed) as i32,
         }
@@ -273,7 +280,11 @@ impl UIMixer {
     pub fn from_synth_parameters(parameters: &MixerParameters) -> Self {
         Self {
             level: normal_value_from_exponential_level_curve(parameters.level.load()),
-            balance: normalize_float_range(parameters.balance.load(), Defaults::MINIMUM_BALANCE_RANGE, Defaults::MAXIMUM_BALANCE_RANGE),
+            balance: normalize_float_range(
+                parameters.balance.load(),
+                Defaults::MINIMUM_BALANCE_RANGE,
+                Defaults::MAXIMUM_BALANCE_RANGE,
+            ),
             is_muted: parameters.is_muted.load(Relaxed),
         }
     }

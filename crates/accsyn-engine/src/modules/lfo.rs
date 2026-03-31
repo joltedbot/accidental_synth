@@ -1,10 +1,10 @@
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use accsyn_types::math::f32s_are_equal;
+use accsyn_types::parameter_types::{Balance, Hertz, LfoRange, NormalizedValue};
 use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8};
-use accsyn_types::parameter_types::{Balance, Hertz, LfoRange, NormalizedValue};
 
 /// Minimum LFO frequency in Hz.
 pub const MIN_LFO_FREQUENCY: f32 = 0.01;
@@ -49,7 +49,8 @@ impl LfoParameters {
         self.center_value.store(parameters.center_value.load());
         self.range.store(parameters.range.load());
         self.phase.store(parameters.phase.load());
-        self.wave_shape.store(parameters.wave_shape.load(Relaxed), Relaxed);
+        self.wave_shape
+            .store(parameters.wave_shape.load(Relaxed), Relaxed);
         self.reset.store(parameters.reset.load(Relaxed), Relaxed)
     }
 }

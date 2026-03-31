@@ -9,7 +9,6 @@ pub const MAX_MIDI_KEY_VELOCITY: f32 = 1.0;
 pub const MIN_VELOCITY_CURVE_EXPONENT: f32 = 0.25;
 pub const MAX_VELOCITY_CURVE_EXPONENT: f32 = 4.0;
 
-
 // Envelope Constants
 pub const ENVELOPE_INDEX_AMP: i32 = 0;
 pub const ENVELOPE_INDEX_FILTER: i32 = 1;

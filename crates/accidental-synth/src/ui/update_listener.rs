@@ -1,8 +1,6 @@
 use crate::AccidentalSynth;
 use crate::ui::ParameterValues;
 use crate::ui::constants::MAX_PHASE_VALUE;
-use crate::ui::{update_ui_values_from_module_parameters, push_values_to_ui};
-use accsyn_engine::synthesizer::patches::Patches;
 use crate::ui::set_slint_values::{
     set_audio_device_channel_indexes, set_audio_device_channel_list, set_audio_device_values,
     set_effect_display, set_envelope_inverted, set_envelope_stage_value, set_filter_cutoff_values,
@@ -11,11 +9,13 @@ use crate::ui::set_slint_values::{
     set_oscillator_fine_tune_display, set_oscillator_mixer_values, set_oscillator_values,
     set_output_mixer_values,
 };
+use crate::ui::{push_values_to_ui, update_ui_values_from_module_parameters};
 use accsyn_engine::synthesizer::midi_value_converters::{
     exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool,
     normal_value_to_number_of_filter_poles, normal_value_to_unsigned_integer_range,
     normal_value_to_wave_shape_index,
 };
+use accsyn_engine::synthesizer::patches::Patches;
 use accsyn_types::defaults::Defaults;
 use accsyn_types::synth_events::{EnvelopeIndex, LFOIndex};
 use accsyn_types::ui_events::{EnvelopeStage, UIUpdates};
@@ -374,44 +374,33 @@ pub fn start_ui_update_listener(
                         vec![parameter1, parameter2, parameter3, parameter4],
                     );
                 }
-                UIUpdates::Presets(index) => {
-                    let preset_list = patches.preset_list();
-                    let preset = match patches.get_module_parameters_from_patch_index(index as usize, &preset_list) {
-                        Ok(preset) => preset,
-                        Err(e) => {
-                            log::error!("start_ui_update_listener(): Failed to get preset from index: {e}");
-                            continue;
-                        }
-                    };
-
-                    let new_values = update_ui_values_from_module_parameters(values.audio_device.clone(), values
-                        .midi_port.clone(), Arc::new(preset));
-                    *values = new_values;
-
-
-                    let patch_list = patches.patch_list().names();
-                    if let Err(e) = push_values_to_ui(&ui_weak_thread, &values, preset_list.names(), patch_list) {
-                        log::error!("start_ui_update_listener(): Failed to push preset values to UI: {e}");
-                    }
-                }
                 UIUpdates::Patches(index) => {
                     let patch_list = patches.patch_list();
-                    let patch = match patches.get_module_parameters_from_patch_index(index as usize, &patch_list) {
+                    let patch = match patches
+                        .get_module_parameters_from_patch_index(index as usize, &patch_list)
+                    {
                         Ok(patch) => patch,
                         Err(e) => {
-                            log::error!("start_ui_update_listener(): Failed to get preset from index: {e}");
+                            log::error!(
+                                "start_ui_update_listener(): Failed to get preset from index: {e}"
+                            );
                             continue;
                         }
                     };
 
-                    let new_values = update_ui_values_from_module_parameters(values.audio_device.clone(), values
-                        .midi_port.clone(), Arc::new(patch));
+                    let new_values = update_ui_values_from_module_parameters(
+                        values.audio_device.clone(),
+                        values.midi_port.clone(),
+                        Arc::new(patch),
+                    );
 
                     *values = new_values;
 
-                    let preset_list = patches.preset_list().names();
-                    if let Err(e) = push_values_to_ui(&ui_weak_thread, &values, preset_list, patch_list.names()) {
-                        log::error!("start_ui_update_listener(): Failed to push preset values to UI: {e}");
+                    if let Err(e) = push_values_to_ui(&ui_weak_thread, &values, None)
+                    {
+                        log::error!(
+                            "start_ui_update_listener(): Failed to push preset values to UI: {e}"
+                        );
                     }
                 }
             }

@@ -1,7 +1,7 @@
+use accsyn_types::parameter_types::{Milliseconds, NormalizedValue};
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8};
-use accsyn_types::parameter_types::{Milliseconds, NormalizedValue};
 
 const ENVELOPE_MAX_LEVEL: f32 = 1.0;
 const ENVELOPE_MIN_LEVEL: f32 = 0.0;
@@ -64,9 +64,12 @@ impl EnvelopeParameters {
         self.release_ms.store(parameters.release_ms.load());
         self.sustain_level.store(parameters.sustain_level.load());
         self.amount.store(parameters.amount.load());
-        self.sustain_pedal.store(parameters.sustain_pedal.load(Relaxed), Relaxed);
-        self.is_inverted.store(parameters.is_inverted.load(Relaxed), Relaxed);
-        self.gate_flag.store(parameters.gate_flag.load(Relaxed), Relaxed);
+        self.sustain_pedal
+            .store(parameters.sustain_pedal.load(Relaxed), Relaxed);
+        self.is_inverted
+            .store(parameters.is_inverted.load(Relaxed), Relaxed);
+        self.gate_flag
+            .store(parameters.gate_flag.load(Relaxed), Relaxed);
     }
 }
 

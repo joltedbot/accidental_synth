@@ -42,13 +42,15 @@ use crate::modules::oscillator::constants::{
 use accsyn_types::defaults::Defaults;
 use accsyn_types::math;
 use accsyn_types::math::{dbfs_to_f32_sample, f32s_are_equal};
+use accsyn_types::parameter_types::{
+    Cents, NormalizedValue, PitchBend, PortamentoBuffers, Semitones,
+};
 use generate_wave_trait::GenerateWave;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
 use std::sync::atomic::{AtomicBool, AtomicU8};
 use strum_macros::{EnumCount, EnumIter, FromRepr};
-use accsyn_types::parameter_types::{Cents, NormalizedValue, PitchBend, PortamentoBuffers, Semitones};
 
 /// Index of the first available wave shape variant.
 pub const FIRST_WAVE_SHAPE_INDEX: u32 = 0;
@@ -136,15 +138,24 @@ impl OscillatorParameters {
         self.fine_tune.store(parameters.fine_tune.load());
         self.course_tune.store(parameters.course_tune.load());
         self.pitch_bend.store(parameters.pitch_bend.load());
-        self.shape_parameter1.store(parameters.shape_parameter1.load());
-        self.shape_parameter2.store(parameters.shape_parameter2.load());
-        self.wave_shape_index.store(parameters.wave_shape_index.load(Relaxed), Relaxed);
-        self.gate_flag.store(parameters.gate_flag.load(Relaxed), Relaxed);
-        self.key_sync_enabled.store(parameters.key_sync_enabled.load(Relaxed), Relaxed);
-        self.hard_sync_enabled.store(parameters.hard_sync_enabled.load(Relaxed), Relaxed);
-        self.portamento_enabled.store(parameters.portamento_enabled.load(Relaxed), Relaxed);
-        self.portamento_time.store(parameters.portamento_time.load());
-        self.clipper_boost.store(parameters.clipper_boost.load(Relaxed), Relaxed);
+        self.shape_parameter1
+            .store(parameters.shape_parameter1.load());
+        self.shape_parameter2
+            .store(parameters.shape_parameter2.load());
+        self.wave_shape_index
+            .store(parameters.wave_shape_index.load(Relaxed), Relaxed);
+        self.gate_flag
+            .store(parameters.gate_flag.load(Relaxed), Relaxed);
+        self.key_sync_enabled
+            .store(parameters.key_sync_enabled.load(Relaxed), Relaxed);
+        self.hard_sync_enabled
+            .store(parameters.hard_sync_enabled.load(Relaxed), Relaxed);
+        self.portamento_enabled
+            .store(parameters.portamento_enabled.load(Relaxed), Relaxed);
+        self.portamento_time
+            .store(parameters.portamento_time.load());
+        self.clipper_boost
+            .store(parameters.clipper_boost.load(Relaxed), Relaxed);
     }
 }
 

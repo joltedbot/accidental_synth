@@ -1,10 +1,10 @@
 // Derived from https://www.musicdsp.org/en/latest/Filters/253-perfect-lp4-filter.html
 
 use accsyn_types::defaults::MAX_FILTER_CUTOFF;
-use serde::{Deserialize, Serialize};
-use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::AtomicU8;
 use accsyn_types::parameter_types::{FilterPoles, Hertz, NormalizedValue};
+use serde::{Deserialize, Serialize};
+use std::sync::atomic::AtomicU8;
+use std::sync::atomic::Ordering::Relaxed;
 
 /// Number of filter poles in the ladder topology.
 pub const NUMBER_OF_FILER_POLES: f32 = 4.0;
@@ -38,11 +38,14 @@ pub struct FilterParameters {
 impl FilterParameters {
     /// Replace all the values in this `FilterParameters` with the values from the provided `FilterParameters`.
     pub fn assign_from(&self, parameters: &FilterParameters) {
-        self.cutoff_frequency.store(parameters.cutoff_frequency.load());
+        self.cutoff_frequency
+            .store(parameters.cutoff_frequency.load());
         self.resonance.store(parameters.resonance.load());
         self.filter_poles.store(parameters.filter_poles.load());
-        self.key_tracking_amount.store(parameters.key_tracking_amount.load());
-        self.cutoff_frequency.store(parameters.cutoff_frequency.load());
+        self.key_tracking_amount
+            .store(parameters.key_tracking_amount.load());
+        self.cutoff_frequency
+            .store(parameters.cutoff_frequency.load());
     }
 }
 
@@ -57,7 +60,6 @@ impl Default for FilterParameters {
         }
     }
 }
-
 
 #[derive(Default, Copy, Clone, Debug, PartialEq)]
 struct Coefficients {

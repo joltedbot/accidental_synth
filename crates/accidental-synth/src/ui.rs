@@ -21,7 +21,9 @@ use accsyn_engine::synthesizer::patches::{PatchList, Patches};
 use accsyn_engine::synthesizer::{ModuleParameters, QuadMixerInput};
 use accsyn_midi::MidiDeviceUpdateEvents;
 use accsyn_types::audio_events::AudioDeviceUpdateEvents;
+use accsyn_types::defaults::Defaults;
 use accsyn_types::effects::EffectParameters;
+use accsyn_types::math::{normal_value_from_exponential_level_curve, normalize_float_range};
 use accsyn_types::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
 };
@@ -34,8 +36,6 @@ use std::sync::atomic::Ordering::Relaxed;
 use std::sync::{Arc, Mutex};
 use structs::UIGlobalOptions;
 use strum::EnumCount;
-use accsyn_types::defaults::Defaults;
-use accsyn_types::math::{normal_value_from_exponential_level_curve, normalize_float_range};
 
 const UI_UPDATE_CHANNEL_CAPACITY: usize = 10;
 
@@ -70,7 +70,11 @@ impl UI {
 
         let (ui_update_sender, ui_update_receiver) = bounded(UI_UPDATE_CHANNEL_CAPACITY);
 
-        let parameter_values = update_ui_values_from_module_parameters(UIAudioDevice::default(), UIMidiPort::default(), parameters.clone());
+        let parameter_values = update_ui_values_from_module_parameters(
+            UIAudioDevice::default(),
+            UIMidiPort::default(),
+            parameters.clone(),
+        );
 
         Self {
             ui_update_sender,
@@ -100,9 +104,8 @@ impl UI {
             self.ui_update_sender.clone(),
         );
 
-        let preset_list = patches.preset_list();
         let patch_list = patches.patch_list();
-        set_ui_default_values(ui_weak, &self.parameter_values, &preset_list, &patch_list)?;
+        set_ui_default_values(ui_weak, &self.parameter_values, &patch_list)?;
 
         start_ui_update_listener(ui_update_receiver, ui_weak, &self.parameter_values, patches);
 
@@ -112,24 +115,21 @@ impl UI {
 fn set_ui_default_values(
     ui_weak: &Weak<AccidentalSynth>,
     parameter_values: &Arc<Mutex<ParameterValues>>,
-    preset_list: &PatchList,
     patch_list: &PatchList,
 ) -> Result<()> {
     let values = parameter_values
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
 
-    push_values_to_ui(ui_weak, &values, preset_list.names(), patch_list.names())
+    push_values_to_ui(ui_weak, &values, Some(patch_list.names()))
 }
 
 pub(super) fn push_values_to_ui(
     ui_weak: &Weak<AccidentalSynth>,
     values: &ParameterValues,
-    preset_list: Vec<String>,
-    patch_list: Vec<String>,
+    patch_list: Option<Vec<String>>,
 ) -> Result<()> {
     let ui_default_values = values.clone();
-
 
     ui_weak.upgrade_in_event_loop(move |ui| {
         ui.set_version(SharedString::from(env!("CARGO_PKG_VERSION")));
@@ -140,8 +140,9 @@ pub(super) fn push_values_to_ui(
         ui.set_audio_device_values(slint_audio_device_from_ui_audio_device(
             &ui_default_values.audio_device,
         ));
-        ui.set_preset_list(slint_patches_list_from_ui_patches_list(&preset_list));
-        ui.set_patch_list(slint_patches_list_from_ui_patches_list(&patch_list));
+        if let Some(ref patch_list) = patch_list {
+            ui.set_patch_list(slint_patches_list_from_ui_patches_list(patch_list));
+        }
         ui.set_amp_envelope_values(slint_envelope_from_ui_envelope(
             &ui_default_values.amp_envelope,
         ));
@@ -258,7 +259,11 @@ fn oscillator_mixer_to_ui_oscillator_mixer(quad_mixer: &[QuadMixerInput]) -> Vec
     quad_mixer.iter().for_each(|strip| {
         ui_quad_mixer_values.push(UIMixer {
             level: normal_value_from_exponential_level_curve(strip.level.load()),
-            balance: normalize_float_range(strip.balance.load(), Defaults::MINIMUM_BALANCE_RANGE, Defaults::MAXIMUM_BALANCE_RANGE),
+            balance: normalize_float_range(
+                strip.balance.load(),
+                Defaults::MINIMUM_BALANCE_RANGE,
+                Defaults::MAXIMUM_BALANCE_RANGE,
+            ),
             is_muted: strip.mute.load(Relaxed),
         })
     });

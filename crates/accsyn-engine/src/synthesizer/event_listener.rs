@@ -428,21 +428,6 @@ pub fn start_update_event_listener(
                         );
                     }
                 }
-                SynthesizerUpdateEvents::PresetChanged(preset_index) => {
-                    let preset_list = patches.preset_list();
-                    let preset = match patches
-                        .get_module_parameters_from_patch_index(preset_index as usize, &preset_list)
-                    {
-                        Ok(preset) => preset,
-                        Err(e) => {
-                            log::error!(target: "synthesizer::event_listener", "Failed to get preset from index {preset_index}: {e}");
-                            return;
-                        }
-                    };
-
-                    set_module_parameters_from_preset(&module_parameters, &preset);
-                    log::info!(target: "synthesizer::event_listener", "Preset changed to index {preset_index}");
-                }
                 SynthesizerUpdateEvents::PatchChanged(preset_index) => {
                     let patch_list = patches.patch_list();
                     let patch = match patches

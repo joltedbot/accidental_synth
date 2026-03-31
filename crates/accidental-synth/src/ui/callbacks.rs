@@ -33,8 +33,11 @@ pub fn register_callbacks(
     );
     settings::callback_audio_sample_rate_changed(ui_weak, audio_output_device_sender.clone());
     settings::callback_audio_buffer_size_changed(ui_weak, audio_output_device_sender.clone());
-    settings::callback_preset_changed(ui_weak, synthesizer_update_sender.clone(), ui_update_sender.clone());
-    settings::callback_patch_changed(ui_weak, synthesizer_update_sender.clone(), ui_update_sender.clone());
+    settings::callback_patch_changed(
+        ui_weak,
+        synthesizer_update_sender.clone(),
+        ui_update_sender.clone(),
+    );
     settings::callback_patch_saved(ui_weak, synthesizer_update_sender.clone());
 
     oscillators::callback_osc_oscillator_shape_changed(ui_weak, synthesizer_update_sender.clone());

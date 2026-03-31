@@ -106,8 +106,7 @@ pub fn sample_generator(
             modules.effects.set_parameters(&module_parameters.effects);
 
             for (index, oscillator) in modules.oscillators.iter_mut().enumerate() {
-                oscillator.set_aftertouch(
-                    module_parameters.keyboard.aftertouch_amount.load());
+                oscillator.set_aftertouch(module_parameters.keyboard.aftertouch_amount.load());
                 oscillator.set_parameters(&module_parameters.oscillators[index]);
                 oscillator.tune(current_note.midi_note.load(Relaxed));
             }
@@ -116,8 +115,7 @@ pub fn sample_generator(
             let mut quad_mixer_inputs: [MixerInput; 4] =
                 synthesizer::create_quad_mixer_inputs(&module_parameters);
 
-            let vibrato_amount =
-                module_parameters.keyboard.mod_wheel_amount.load();
+            let vibrato_amount = module_parameters.keyboard.mod_wheel_amount.load();
             modules.mod_wheel_lfo.set_range(vibrato_amount / 4.0);
 
             let output_level = module_parameters.mixer.level.load();

@@ -1,16 +1,18 @@
-use accsyn_types::defaults::Defaults;
 use crate::modules::filter::NUMBER_OF_FILER_POLES;
 use crate::modules::oscillator::{
-    OscillatorParameters, FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX,
+    FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX, OscillatorParameters,
 };
 use crate::synthesizer::constants::{
-    CENTS_PER_SEMITONE,
-    MAX_MIDI_KEY_VELOCITY, MAX_VELOCITY_CURVE_EXPONENT, MIN_VELOCITY_CURVE_EXPONENT,
-    NORMAL_TO_BOOL_SWITCH_ON_VALUE, PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT,
+    CENTS_PER_SEMITONE, MAX_MIDI_KEY_VELOCITY, MAX_VELOCITY_CURVE_EXPONENT,
+    MIN_VELOCITY_CURVE_EXPONENT, NORMAL_TO_BOOL_SWITCH_ON_VALUE, PITCH_BEND_AMOUNT_MAX_VALUE,
+    PITCH_BEND_AMOUNT_ZERO_POINT,
 };
+use accsyn_types::defaults::Defaults;
 use accsyn_types::math;
-use accsyn_types::math::{f32s_are_equal, normalize_float_range, EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT, LEVEL_CURVE_LINEAR_RANGE};
-
+use accsyn_types::math::{
+    EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LEVEL_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT,
+    LEVEL_CURVE_LINEAR_RANGE, f32s_are_equal, normalize_float_range,
+};
 
 /// Maps a normalized 0.0-1.0 value to a target f32 range.
 pub fn normal_value_to_f32_range(normal_value: f32, mut minimum: f32, mut maximum: f32) -> f32 {
@@ -173,9 +175,9 @@ pub fn normal_value_from_velocity_curve(velocity_curve_value: f32) -> f32 {
             velocity_curve_value,
             Defaults::LINEAR_VELOCITY_CURVE_EXPONENT,
             MAX_VELOCITY_CURVE_EXPONENT,
-        ) * Defaults::VELOCITY_CURVE_NORMAL_VALUE + Defaults::VELOCITY_CURVE_NORMAL_VALUE
+        ) * Defaults::VELOCITY_CURVE_NORMAL_VALUE
+            + Defaults::VELOCITY_CURVE_NORMAL_VALUE
     }
-
 }
 
 pub(crate) fn scaled_velocity_from_normal_value(velocity_curve: f32, velocity: f32) -> f32 {
@@ -200,9 +202,7 @@ pub fn update_current_note_from_midi_pitch_bend(
         if pitch_bend_amount == PITCH_BEND_AMOUNT_ZERO_POINT {
             oscillator.pitch_bend.store(0);
         } else if pitch_bend_amount >= PITCH_BEND_AMOUNT_MAX_VALUE {
-            oscillator
-                .pitch_bend
-                .store(max_bend_in_cents as i16);
+            oscillator.pitch_bend.store(max_bend_in_cents as i16);
         } else {
             let pitch_bend_in_cents =
                 midi_value_to_pitch_bend_cents(pitch_bend_amount, max_bend_in_cents);
