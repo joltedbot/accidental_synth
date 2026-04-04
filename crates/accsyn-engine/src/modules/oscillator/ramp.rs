@@ -38,6 +38,14 @@ impl GenerateWave for Ramp {
             .atan();
 
         self.x_coordinate += DEFAULT_X_INCREMENT * modulation.unwrap_or(1.0);
+
+        if tone_frequency > 0.0 {
+            let period = self.sample_rate as f32 / tone_frequency;
+            if self.x_coordinate >= period {
+                self.x_coordinate -= period;
+            }
+        }
+
         y_coordinate
     }
 

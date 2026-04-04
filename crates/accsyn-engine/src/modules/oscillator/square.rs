@@ -49,6 +49,14 @@ impl GenerateWave for Square {
         }
 
         self.x_coordinate += DEFAULT_X_INCREMENT * modulation.unwrap_or(1.0);
+
+        if new_frequency > 0.0 {
+            let period = self.sample_rate as f32 / new_frequency;
+            if self.x_coordinate >= period {
+                self.x_coordinate -= period;
+            }
+        }
+
         y_coordinate
     }
 
