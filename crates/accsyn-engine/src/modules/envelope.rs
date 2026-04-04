@@ -291,6 +291,9 @@ impl Envelope {
     }
 
     fn set_amount(&mut self, amount: f32) {
+        if amount == 0.0 {
+            self.state_action(StageAction::Stop);
+        }
         self.amount = amount;
     }
 

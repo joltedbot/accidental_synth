@@ -129,6 +129,7 @@ impl Lfo {
     /// Sets the LFO output range (peak-to-peak), clamped to valid bounds or zero.
     pub fn set_range(&mut self, range: f32) {
         self.range = if range == 0.0 {
+            self.reset();
             0.0
         } else {
             range.clamp(MIN_LFO_RANGE, MAX_LFO_RANGE)
