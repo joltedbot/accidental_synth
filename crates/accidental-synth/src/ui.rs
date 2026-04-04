@@ -124,6 +124,14 @@ fn set_ui_default_values(
     push_values_to_ui(ui_weak, &values, Some(patch_list.names()))
 }
 
+pub fn update_patch_list(ui_weak: &Weak<AccidentalSynth>, patch_list: Vec<String>) -> Result<()> {
+    ui_weak.upgrade_in_event_loop(move |ui| {
+        ui.set_patch_list(slint_patches_list_from_ui_patches_list(&patch_list));
+    })?;
+
+    Ok(())
+}
+
 pub(super) fn push_values_to_ui(
     ui_weak: &Weak<AccidentalSynth>,
     values: &ParameterValues,
@@ -173,7 +181,9 @@ pub(super) fn push_values_to_ui(
         ));
         ui.set_filter_options_values(slint_filter_options_from_ui_filter_options(
             &ui_default_values.filter_options,
-        ))
+        ));
+
+        ui.set_patch_generation(ui.get_patch_generation().wrapping_add(1));
     })?;
 
     Ok(())

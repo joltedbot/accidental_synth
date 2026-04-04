@@ -1,5 +1,5 @@
 import { Theme } from "theme.slint";
-import { Constant } from "constants.slint";
+import { Constant, PatchState } from "constants.slint";
 import {
     Slider,
     SpinBox,
@@ -314,15 +314,23 @@ export component ToggleSwitch inherits VerticalLayout {
         text: label;
     }
 
+    property <int> gen: PatchState.generation;
+    changed gen => {
+        sw.checked = is_checked;
+    }
+
+    changed is_checked => {
+        sw.checked = is_checked;
+    }
+
     HorizontalLayout {
         alignment: center;
-        Switch {
+        sw := Switch {
             enabled: enabled;
             height: switch-height;
             checked: is_checked;
             toggled() => {
                 toggle_switch_updated(self.checked);
-                is_checked = self.checked;
             }
         }
     }
@@ -354,7 +362,7 @@ export component MomentaryButton inherits VerticalLayout {
 export component HorizontalParameterSlider inherits VerticalLayout {
     in property <string> label: Theme.control-label-default-string;
     in property <string> value-units;
-    in-out property <float> value;
+    in property <float> value;
     in property <string> display-value;
     in property <length> slider-width: 100px;
     in property <length> slider-height: 30px;
@@ -364,6 +372,15 @@ export component HorizontalParameterSlider inherits VerticalLayout {
     callback horizontal-parameter-slider-changed(float);
 
     spacing: 5px;
+
+    property <int> gen: PatchState.generation;
+    changed gen => {
+        hslider.value = value;
+    }
+
+    changed value => {
+        hslider.value = value;
+    }
 
     hslider-label := HorizontalControlLabel {
         label: label;
@@ -380,7 +397,6 @@ export component HorizontalParameterSlider inherits VerticalLayout {
         enabled: enabled;
 
         updated(new_value) => {
-            value = new_value;
             horizontal-parameter-slider-changed(new_value);
         }
     }
@@ -476,6 +492,15 @@ export component IntSpinBox inherits VerticalLayout {
         value-units: value-units;
     }
 
+    property <int> gen: PatchState.generation;
+    changed gen => {
+        hspinbox.value = value;
+    }
+
+    changed value => {
+        hspinbox.value = value;
+    }
+
     hspinbox := SpinBox {
         height: spinbox-height;
         width: spinbox-width;
@@ -508,6 +533,15 @@ export component DropDownMenu inherits VerticalLayout {
         enabled: enabled;
     }
 
+    property <int> gen: PatchState.generation;
+    changed gen => {
+        dropdown.current-index = value-index;
+    }
+
+    changed value-index => {
+        dropdown.current-index = value-index;
+    }
+
     dropdown := ComboBox {
         height: dropdown-height;
         width: dropdown-width;
@@ -533,9 +567,18 @@ export component MixerMute inherits VerticalLayout {
         text: "Mute";
     }
 
+    property <int> gen: PatchState.generation;
+    changed gen => {
+        sw.checked = is_muted;
+    }
+
+    changed is_muted => {
+        sw.checked = is_muted;
+    }
+
     HorizontalLayout {
         alignment: center;
-        Switch {
+        sw := Switch {
             height: switch-height;
             checked: is_muted;
             toggled() => {

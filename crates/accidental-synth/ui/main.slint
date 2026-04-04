@@ -1,7 +1,7 @@
 import "./fonts/HackNerdFontMono-Regular.ttf";
 import "./fonts/HackNerdFontMono-Bold.ttf";
 import { Theme } from "theme.slint";
-import { Constant } from "constants.slint";
+import { Constant, PatchState } from "constants.slint";
 import { TabWidget, Slider, VerticalBox, SpinBox } from "std-widgets.slint";
 import { Panel, EnvelopeValues, LFOValues } from "components.slint";
 import { GlobalPanel, GlobalOptions } from "global-panel.slint";
@@ -22,6 +22,9 @@ export component AccidentalSynth inherits Window {
     default-font-size: Theme.default-text-size;
     default-font-family: Theme.default-font-family;
     default-font-weight: Theme.default-font-weight;
+
+    // Patch generation counter — increment on patch load to force-refresh all components
+    in-out property <int> patch-generation <=> PatchState.generation;
 
     // Header/Settings Panel Properties and Callbacks
     in-out property <string> version;

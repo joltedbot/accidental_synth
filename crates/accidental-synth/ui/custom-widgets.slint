@@ -1,5 +1,5 @@
 import { Theme } from "theme.slint";
-import { Constant } from "constants.slint";
+import { Constant, PatchState } from "constants.slint";
 import { Palette, StyleMetrics } from "std-widgets.slint";
 
 export component SliderHandle inherits Rectangle {
@@ -45,6 +45,7 @@ export component VerticalSlider inherits Rectangle {
     width: 50px;
     height: 100px;
 
+    property <float> patch-value: value;
     property <length> indicator-default-position: track.y + track.height;
     property <length> indicator-current-position: track.y + track.height - (track.height * value.clamp(0.0, 1.0));
 
@@ -55,6 +56,22 @@ export component VerticalSlider inherits Rectangle {
 
     function get_handle_position() -> length {
         return clamp(track.position - (handle.height / 2), track.y, track.height - handle.height);
+    }
+
+    function sync_position() {
+        track.position = indicator-current-position;
+        handle.y = get_handle_position();
+    }
+
+    property <int> gen: PatchState.generation;
+    changed gen => {
+        patch-value = value;
+        sync_position();
+    }
+
+    changed value => {
+        patch-value = value;
+        sync_position();
     }
 
     touch := TouchArea {
@@ -68,10 +85,10 @@ export component VerticalSlider inherits Rectangle {
         }
 
         double-clicked => {
-            indicator-current-position = indicator-default-position;
-            track.position = indicator-default-position;
+            let reset_position = track.y + track.height - (track.height * patch-value.clamp(0.0, 1.0));
+            track.position = reset_position;
             handle.y = get_handle_position();
-            updated(get_output_value(indicator-default-position));
+            updated(patch-value);
         }
     }
 
@@ -94,6 +111,7 @@ export component HorzontalSlider inherits Rectangle {
     width: 100px;
     height: 50px;
 
+    property <float> patch-value: value;
     property <length> indicator-default-position: track.x - track.width;
     property <length> indicator-current-position: track.x - track.width + (track.width * value);
 
@@ -106,9 +124,20 @@ export component HorzontalSlider inherits Rectangle {
         return clamp(track.position + track.width - (handle.width / 2), track.x, track.x + track.width - handle.width);
     }
 
-    function update_position_from_external_move() {
+    function sync_position() {
         track.position = indicator-current-position;
         handle.x = get_handle_position();
+    }
+
+    property <int> gen: PatchState.generation;
+    changed gen => {
+        patch-value = value;
+        sync_position();
+    }
+
+    changed value => {
+        patch-value = value;
+        sync_position();
     }
 
     touch := TouchArea {
@@ -124,10 +153,10 @@ export component HorzontalSlider inherits Rectangle {
         }
 
         double-clicked => {
-            indicator-current-position = indicator-default-position;
-            track.position = indicator-default-position;
+            let reset_position = track.x - track.width + (track.width * patch-value);
+            track.position = reset_position;
             handle.x = get_handle_position();
-            updated(get_output_value(indicator-default-position));
+            updated(patch-value);
         }
     }
 
@@ -180,6 +209,7 @@ export component BalanceSlider inherits Rectangle {
     width: 100px;
     height: 50px;
 
+    property <float> patch-value: value;
     property <length> minimum-position: -self.width / 2;
     property <length> indicator-default-position: 0;
     property <length> indicator-current-position: minimum-position + (value * self.width);
@@ -190,6 +220,22 @@ export component BalanceSlider inherits Rectangle {
 
     function get_handle_position() -> length {
         return clamp(track.track-center + track.position - (handle.width / 2), track.x, track.x + track.width);
+    }
+
+    function sync_position() {
+        track.position = indicator-current-position;
+        handle.x = get_handle_position();
+    }
+
+    property <int> gen: PatchState.generation;
+    changed gen => {
+        patch-value = value;
+        sync_position();
+    }
+
+    changed value => {
+        patch-value = value;
+        sync_position();
     }
 
     touch := TouchArea {
@@ -205,10 +251,10 @@ export component BalanceSlider inherits Rectangle {
         }
 
         double-clicked => {
-            indicator-current-position = indicator-default-position;
-            track.position = indicator-default-position;
+            let reset_position = minimum-position + (patch-value * self.width);
+            track.position = reset_position;
             handle.x = get_handle_position();
-            updated(get_output_value(indicator-default-position));
+            updated(patch-value);
         }
     }
 
