@@ -10,7 +10,7 @@ import {
 } from "components.slint";
 import { Theme } from "theme.slint";
 import { Switch } from "std-widgets.slint";
-import { Constant } from "constants.slint";
+import { PatchState, Constant } from "constants.slint";
 
 export struct EffectsValues {
     is_enabled: bool,
@@ -22,15 +22,24 @@ export component EffectBox inherits VerticalLayout {
     in property <int> effect-index;
     in property <length> box-width: Theme.effect-box-width;
     in property <length> box-height: Theme.effect-box-height;
-
     callback effect_enabled(int, bool);
     in-out property <bool> is_enabled: false;
+    property <int> patch_gen: PatchState.generation;
 
     padding: Theme.effect-box-padding;
     spacing: Theme.effect-box-spacing;
     width: box-width;
     height: box-height;
     alignment: start;
+
+
+    changed patch_gen => {
+        effect-enable.checked = root.is_enabled;
+    }
+    changed is_enabled => {
+        effect-enable.checked = root.is_enabled;
+    }
+
 
     VerticalLayout {
         padding: Theme.effect-box-padding;
@@ -57,8 +66,15 @@ export component EffectBox inherits VerticalLayout {
 export component Wavefolder inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
     title: Theme.wavefolder-title;
     is_enabled: effect_values.is_enabled;
+
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
 
     changed is_enabled => {
         amount.enabled = self.is_enabled;
@@ -98,8 +114,7 @@ export component Wavefolder inherits EffectBox {
         value: effect_values.parameters[2];
         label: Theme.wavefolder-parameter2;
         horizontal-parameter-slider-changed(amount) => {
-            self.value = amount;
-            effect_parameter_changed(parent.effect-index, 1, amount);
+                        effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 }
@@ -107,8 +122,14 @@ export component Wavefolder inherits EffectBox {
 export component Clipper inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
     title: Theme.clipper-title;
     is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
 
     changed is_enabled => {
         threshold.enabled = self.is_enabled;
@@ -135,8 +156,7 @@ export component Clipper inherits EffectBox {
         value: effect_values.parameters[1];
         label: Theme.clipper-parameter2;
         horizontal-parameter-slider-changed(amount) => {
-            self.value = amount;
-            effect_parameter_changed(parent.effect-index, 1, amount);
+                        effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 
@@ -146,8 +166,7 @@ export component Clipper inherits EffectBox {
         value: effect_values.parameters[2];
         label: Theme.clipper-parameter3;
         horizontal-parameter-slider-changed(amount) => {
-            self.value = amount;
-            effect_parameter_changed(parent.effect-index, 2, amount);
+                        effect_parameter_changed(parent.effect-index, 2, amount);
         }
     }
 
@@ -168,8 +187,14 @@ export component Clipper inherits EffectBox {
 export component Gate inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
     title: Theme.gate-title;
     is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
 
     changed is_enabled => {
         threshold.enabled = self.is_enabled;
@@ -195,8 +220,7 @@ export component Gate inherits EffectBox {
         value: effect_values.parameters[1];
         label: Theme.gate-parameter2;
         horizontal-parameter-slider-changed(amount) => {
-            self.value = amount;
-            effect_parameter_changed(parent.effect-index, 1, amount);
+                        effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 
@@ -206,8 +230,7 @@ export component Gate inherits EffectBox {
         value: effect_values.parameters[2];
         label: Theme.gate-parameter3;
         horizontal-parameter-slider-changed(amount) => {
-            self.value = amount;
-            effect_parameter_changed(parent.effect-index, 2, amount);
+                        effect_parameter_changed(parent.effect-index, 2, amount);
         }
     }
 }
@@ -215,8 +238,14 @@ export component Gate inherits EffectBox {
 export component Rectifier inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
     title: Theme.rectifier-title;
     is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
 
     changed is_enabled => {
         full_wave.enabled = self.is_enabled;
@@ -241,8 +270,15 @@ export component Rectifier inherits EffectBox {
 export component Bitshifter inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
     title: Theme.bitshifter-title;
     is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
+
 
     changed is_enabled => {
         bits.enabled = self.is_enabled;
@@ -256,8 +292,7 @@ export component Bitshifter inherits EffectBox {
         value: effect_values.parameters[0];
         label: Theme.bitshifter-parameter1;
         horizontal-parameter-slider-changed(amount) => {
-            self.value = amount;
-            effect_parameter_changed(parent.effect-index, 0, amount);
+                        effect_parameter_changed(parent.effect-index, 0, amount);
         }
     }
 }
@@ -265,8 +300,14 @@ export component Bitshifter inherits EffectBox {
 export component Saturation inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
     title: Theme.saturation-title;
     is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
 
     changed is_enabled => {
         type.enabled = self.is_enabled;
@@ -296,8 +337,7 @@ export component Saturation inherits EffectBox {
             value: effect_values.parameters[1];
             label: Theme.saturation-parameter2;
             horizontal-parameter-slider-changed(amount) => {
-                self.value = amount;
-                effect_parameter_changed(root.effect-index, 1, amount);
+                                effect_parameter_changed(root.effect-index, 1, amount);
             }
         }
 
@@ -307,8 +347,7 @@ export component Saturation inherits EffectBox {
             label: Theme.saturation-parameter3;
             value: effect_values.parameters[2];
             horizontal-parameter-slider-changed(amount) => {
-                self.value = amount;
-                effect_parameter_changed(root.effect-index, 2, amount);
+                                effect_parameter_changed(root.effect-index, 2, amount);
             }
         }
     }
@@ -317,8 +356,14 @@ export component Saturation inherits EffectBox {
 export component Compressor inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
     title: Theme.compressor-title;
     is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
 
     changed is_enabled => {
         threshold.enabled = self.is_enabled;
@@ -344,8 +389,7 @@ export component Compressor inherits EffectBox {
         label: Theme.compressor-parameter2;
         value: effect_values.parameters[1];
         horizontal-parameter-slider-changed(amount) => {
-            self.value = amount;
-            effect_parameter_changed(parent.effect-index, 1, amount);
+                        effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 
@@ -355,8 +399,7 @@ export component Compressor inherits EffectBox {
         value: effect_values.parameters[2];
         label: Theme.compressor-parameter3;
         horizontal-parameter-slider-changed(amount) => {
-            self.value = amount;
-            effect_parameter_changed(parent.effect-index, 2, amount);
+                        effect_parameter_changed(parent.effect-index, 2, amount);
         }
     }
 }
@@ -364,8 +407,14 @@ export component Compressor inherits EffectBox {
 export component Delay inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
     title: Theme.delay-title;
     is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
 
     changed is_enabled => {
         amount.enabled = self.is_enabled;
@@ -391,8 +440,7 @@ export component Delay inherits EffectBox {
         label: Theme.delay-parameter2;
         value: effect_values.parameters[1];
         horizontal-parameter-slider-changed(amount) => {
-            self.value = amount;
-            effect_parameter_changed(parent.effect-index, 1, amount);
+                        effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 
@@ -402,8 +450,7 @@ export component Delay inherits EffectBox {
         label: Theme.delay-parameter3;
         value: effect_values.parameters[2];
         horizontal-parameter-slider-changed(amount) => {
-            self.value = amount;
-            effect_parameter_changed(parent.effect-index, 2, amount);
+                        effect_parameter_changed(parent.effect-index, 2, amount);
         }
     }
 }
@@ -411,8 +458,14 @@ export component Delay inherits EffectBox {
 export component AutoPan inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
     title: Theme.autopan-title;
     is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
 
     changed is_enabled => {
         rate.enabled = self.is_enabled;
@@ -438,8 +491,7 @@ export component AutoPan inherits EffectBox {
         value: effect_values.parameters[1];
         label: Theme.autopan-parameter2;
         horizontal-parameter-slider-changed(amount) => {
-            self.value = amount;
-            effect_parameter_changed(parent.effect-index, 1, amount);
+                        effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 
@@ -458,8 +510,15 @@ export component AutoPan inherits EffectBox {
 export component Tremolo inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
     title: Theme.tremolo-title;
     is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
+
     changed is_enabled => {
         rate.enabled = self.is_enabled;
         depth.enabled = self.is_enabled;
@@ -484,8 +543,7 @@ export component Tremolo inherits EffectBox {
         value: effect_values.parameters[1];
         label: Theme.tremolo-parameter2;
         horizontal-parameter-slider-changed(amount) => {
-            self.value = amount;
-            effect_parameter_changed(parent.effect-index, 1, amount);
+                        effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 
@@ -494,7 +552,7 @@ export component Tremolo inherits EffectBox {
         value-list: Constant.OSC_WAVE_SHAPES;
         dropdown-width: Theme.effect-dropdown-width;
         enabled: false;
-        value_index: effect_values.parameters[0];
+        value_index: effect_values.parameters[2];
         drop_down_changed(index, name) => {
             effect_parameter_changed(root.effect-index, 2, index);
         }

@@ -163,12 +163,14 @@ pub fn load_patches(patch_directory: &Path) -> PatchList {
 
     if let Ok(entries) = patch_directory.read_dir() {
         entries.filter_map(|entry| entry.ok()).for_each(|entry| {
-            if let Ok(content) = std::fs::read_to_string(entry.path()) {
-                patches.push(Patch {
-                    name: entry.file_name().to_string_lossy().to_string(),
-                    content,
-                })
-            }
+            if let Some(name) = entry.path().as_path().file_stem() {
+                if let Ok(content) = std::fs::read_to_string(entry.path()) {
+                    patches.push(Patch {
+                        name: name.to_string_lossy().to_string(),
+                        content,
+                    })
+                }
+          }
         });
     };
 
