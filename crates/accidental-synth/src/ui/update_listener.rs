@@ -36,10 +36,13 @@ pub fn start_ui_update_listener(
 
     thread::spawn(move || {
         log::debug!("start_ui_update_listener(): spawned thread to receive ui update events");
-        let mut values = thread_parameter_values
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
         while let Ok(update) = ui_update_receiver.recv() {
+            let mut values = thread_parameter_values
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+
+            log::debug!(target: "ui::update", "{:?}", update);
+
             match update {
                 UIUpdates::MidiScreen(message) => {
                     let midi_screen_values = &mut values.midi_screen;
@@ -404,6 +407,8 @@ pub fn start_ui_update_listener(
                     }
                 }
             }
+
+            drop(values);
         }
     });
 }

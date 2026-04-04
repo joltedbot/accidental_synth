@@ -210,7 +210,7 @@ impl Synthesizer {
             crossbeam_channel::bounded(SYNTHESIZER_MESSAGE_SENDER_CAPACITY);
 
         let module_parameters = patches::init_module_parameters()?;
-        let patches = patches::Patches::new()?;
+        let patches = Patches::new()?;
 
         Ok(Self {
             output_stream_parameters,
