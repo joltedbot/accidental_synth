@@ -61,7 +61,7 @@
   "envelopes": [
     {
       "attack_ms": 103,
-      "decay_ms": 0,
+      "decay_ms": 10,
       "release_ms": 285,
       "sustain_level": 1.0,
       "amount": 1.0,

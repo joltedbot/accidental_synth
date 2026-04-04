@@ -42,7 +42,7 @@
   },
   "lfos": [
     {
-      "frequency": 0.0,
+      "frequency": 0.01,
       "center_value": 1.0,
       "range": 0.05,
       "phase": 0.0,
@@ -60,9 +60,9 @@
   ],
   "envelopes": [
     {
-      "attack_ms": 0,
+      "attack_ms": 1,
       "decay_ms": 749,
-      "release_ms": 0,
+      "release_ms": 10,
       "sustain_level": 0.0,
       "amount": 1.0,
       "sustain_pedal": true,
@@ -70,9 +70,9 @@
       "gate_flag": 0
     },
     {
-      "attack_ms": 0,
+      "attack_ms": 1,
       "decay_ms": 162,
-      "release_ms": 0,
+      "release_ms": 10,
       "sustain_level": 0.0,
       "amount": 0.611899,
       "sustain_pedal": false,
@@ -187,7 +187,7 @@
     {
       "is_enabled": true,
       "parameters": [
-        4.0,
+        1.0,
         0.76936144,
         0.6193444,
         0.0

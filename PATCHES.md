@@ -132,7 +132,7 @@ Low-frequency oscillators provide modulation sources for other parameters.
 | `wave_shape` | integer | 0-9 | Waveform shape (see Waveforms table) |
 | `frequency` | number | 0.01-20000.0 | Oscillation frequency in Hz |
 | `center_value` | number | -1.0 to 1.0 | Center point of modulation range |
-| `range` | number | 0.01-2.0 | Modulation depth (0 effectively disables) |
+| `range` | number | 0.0-2.0 | Modulation depth (0 disables modulation) |
 | `phase` | number | 0.0-1.0 | Starting phase (0.0 to 1.0 wraps one cycle) |
 | `reset` | boolean | | Reset phase to 0 on note-on |
 

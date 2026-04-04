@@ -60,9 +60,9 @@
   ],
   "envelopes": [
     {
-      "attack_ms": 0,
+      "attack_ms": 1,
       "decay_ms": 388,
-      "release_ms": 0,
+      "release_ms": 10,
       "sustain_level": 0.0,
       "amount": 1.0,
       "sustain_pedal": false,
