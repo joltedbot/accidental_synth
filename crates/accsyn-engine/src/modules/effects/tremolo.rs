@@ -1,6 +1,4 @@
-use crate::modules::effects::constants::{
-    DEFAULT_LFO_WAVESHAPE_INDEX, EFFECTS_LFO_CENTER_VALUE, TREMOLO_MAX_DEPTH,
-};
+use crate::modules::effects::constants::{DEFAULT_LFO_WAVESHAPE_INDEX, TREMOLO_LFO_CENTER_VALUE, TREMOLO_LFO_RANGE, TREMOLO_MAX_DEPTH};
 use crate::modules::lfo::{DEFAULT_LFO_FREQUENCY, Lfo};
 use crate::synthesizer::midi_value_converters::exponential_curve_lfo_frequency_from_normal_value;
 use accsyn_types::effects::{AudioEffect, EffectParameters};
@@ -23,7 +21,8 @@ impl Tremolo {
         log::debug!("Constructing Tremolo Effect Module");
 
         let mut lfo = Lfo::new(sample_rate);
-        lfo.set_center_value(EFFECTS_LFO_CENTER_VALUE);
+        lfo.set_center_value(TREMOLO_LFO_CENTER_VALUE);
+        lfo.set_range(TREMOLO_LFO_RANGE);
 
         let lfo_parameters = LfoParameters {
             frequency: DEFAULT_LFO_FREQUENCY,
@@ -57,7 +56,6 @@ impl AudioEffect for Tremolo {
         }
         if !f32s_are_equal(new_depth, self.lfo_parameters.depth) {
             self.lfo_parameters.depth = new_depth;
-            self.lfo.set_range(new_depth);
         }
 
         if !f32s_are_equal(new_shape, self.lfo_parameters.waveshape_index) {
@@ -65,8 +63,20 @@ impl AudioEffect for Tremolo {
             self.lfo.set_wave_shape(new_shape as u8);
         }
 
+
+        /*
+            1. The LFO should be setup to be fixed to give a swing of 0 -> 1.0. So Center 0.5, range 1.0
+            2. The LFO value should be should be multipled by the depth to get a scaled depth.
+            3. Then the tremolo factor is 1.0 - the scaled depth
+            4. Then multiply by the input samples as it does now
+
+            The key is to give #1 first.
+        */
+
+
+
         let lfo_value = self.lfo.generate(None);
-        let tremolo = 1.0 - lfo_value;
+        let tremolo = TREMOLO_MAX_DEPTH - (lfo_value * self.lfo_parameters.depth);
         (samples.0 * tremolo, samples.1 * tremolo)
     }
 }
