@@ -1,0 +1,233 @@
+{
+  "filter": {
+    "cutoff_frequency": 19999.992,
+    "resonance": 0.0,
+    "filter_poles": 4,
+    "key_tracking_amount": 0.5,
+    "current_note_number": 48
+  },
+  "mixer": {
+    "level": 0.8,
+    "balance": 0.0,
+    "is_muted": false,
+    "quad_mixer_inputs": [
+      {
+        "level": 0.7869061,
+        "balance": 0.0,
+        "mute": false
+      },
+      {
+        "level": 1.0,
+        "balance": 0.0,
+        "mute": false
+      },
+      {
+        "level": 1.0,
+        "balance": 0.0,
+        "mute": false
+      },
+      {
+        "level": 1.0,
+        "balance": 0.0,
+        "mute": false
+      }
+    ]
+  },
+  "keyboard": {
+    "mod_wheel_amount": 0.0,
+    "aftertouch_amount": 0.0,
+    "velocity_curve": 0.5,
+    "polarity_flipped": false,
+    "pitch_bend_range": 12
+  },
+  "lfos": [
+    {
+      "frequency": 10.0,
+      "center_value": 1.0,
+      "range": 0.0,
+      "phase": 0.0,
+      "wave_shape": 0,
+      "reset": false
+    },
+    {
+      "frequency": 0.1,
+      "center_value": 0.0,
+      "range": 0.0,
+      "phase": 0.0,
+      "wave_shape": 0,
+      "reset": false
+    }
+  ],
+  "envelopes": [
+    {
+      "attack_ms": 90,
+      "decay_ms": 217,
+      "release_ms": 56,
+      "sustain_level": 0.72786456,
+      "amount": 1.0,
+      "sustain_pedal": false,
+      "is_inverted": false,
+      "gate_flag": 0
+    },
+    {
+      "attack_ms": 200,
+      "decay_ms": 200,
+      "release_ms": 200,
+      "sustain_level": 0.8,
+      "amount": 0.0,
+      "sustain_pedal": false,
+      "is_inverted": false,
+      "gate_flag": 0
+    }
+  ],
+  "oscillators": [
+    {
+      "fine_tune": 9,
+      "course_tune": 0,
+      "pitch_bend": 0,
+      "shape_parameter1": 0.0,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 0,
+      "gate_flag": false,
+      "key_sync_enabled": true,
+      "hard_sync_enabled": false,
+      "portamento_enabled": true,
+      "portamento_time": 11,
+      "clipper_boost": 0
+    },
+    {
+      "fine_tune": 0,
+      "course_tune": 0,
+      "pitch_bend": 0,
+      "shape_parameter1": 0.0,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 0,
+      "gate_flag": false,
+      "key_sync_enabled": true,
+      "hard_sync_enabled": false,
+      "portamento_enabled": true,
+      "portamento_time": 11,
+      "clipper_boost": 0
+    },
+    {
+      "fine_tune": -6,
+      "course_tune": 0,
+      "pitch_bend": 0,
+      "shape_parameter1": 0.0,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 0,
+      "gate_flag": false,
+      "key_sync_enabled": true,
+      "hard_sync_enabled": false,
+      "portamento_enabled": true,
+      "portamento_time": 11,
+      "clipper_boost": 0
+    },
+    {
+      "fine_tune": 7,
+      "course_tune": 0,
+      "pitch_bend": 0,
+      "shape_parameter1": 0.0,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 0,
+      "gate_flag": false,
+      "key_sync_enabled": true,
+      "hard_sync_enabled": false,
+      "portamento_enabled": true,
+      "portamento_time": 11,
+      "clipper_boost": 0
+    }
+  ],
+  "effects": [
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": true,
+      "parameters": [
+        0.0,
+        0.5046026,
+        0.1362602,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.5,
+        0.5,
+        0.5,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        2.0,
+        0.0
+      ]
+    }
+  ]
+}

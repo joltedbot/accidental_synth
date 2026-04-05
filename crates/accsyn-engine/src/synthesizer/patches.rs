@@ -11,28 +11,31 @@ const DATA_DIRECTORY: &str = "AccidentalSynthesizer";
 const USER_PATCH_DIRECTORY: &str = "patches";
 const PATCH_FILE_EXTENSION: &str = "json";
 const SYSTEM_PATCHES: &[(&str, &str)] = &[
-    ("Init", include_str!("patches/init.json")),
-    ("Acid Squelch", include_str!("patches/acid-squelch.json")),
-    ("Acid Time", include_str!("patches/acid-time.json")),
+    ("*Init", include_str!("patches/init.json")),
+    ("*Acid Squelch", include_str!("patches/acid-squelch.json")),
+    ("*Acid Time", include_str!("patches/acid-time.json")),
     (
-        "Alien Invasion",
+        "*Alien Invasion",
         include_str!("patches/alien-invasion.json"),
     ),
-    ("Ambient Drone", include_str!("patches/ambient-drone.json")),
-    ("Bright Lead", include_str!("patches/bright-lead.json")),
-    ("Deep Bass", include_str!("patches/deep-bass.json")),
+    ("*Ambient Drone", include_str!("patches/ambient-drone.json")),
+    ("*Bright Lead", include_str!("patches/bright-lead.json")),
+    ("*Deep Bass", include_str!("patches/deep-bass.json")),
     (
-        "Dirty Bass Echo",
+        "*Dirty Bass Echo",
         include_str!("patches/dirty-bass-echo.json"),
     ),
-    ("Drifting Pad", include_str!("patches/drifting-pad.json")),
-    ("FM Bells", include_str!("patches/fm-bells.json")),
-    ("Plucky Keys", include_str!("patches/plucky-keys.json")),
-    ("Sci-Fi", include_str!("patches/sci-fi.json")),
+    ("*Drifting Pad", include_str!("patches/drifting-pad.json")),
+    ("*FM Bells", include_str!("patches/fm-bells.json")),
+    ("*Plucky Keys", include_str!("patches/plucky-keys.json")),
+    ("*Sci-Fi", include_str!("patches/sci-fi.json")),
+    ("*Singing Bowls", include_str!("patches/singing-bowls.json")),
+    ("*Slide Bass", include_str!("patches/slide-bass.json")),
     (
-        "Supersaw Swirl",
+        "*Supersaw Swirl",
         include_str!("patches/supersaw-swirl.json"),
     ),
+    ("*Triangles and Claves", include_str!("patches/triangles-and-claves.json")),
 ];
 const INIT_PARAMETERS: &str = SYSTEM_PATCHES[0].1;
 

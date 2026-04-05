@@ -1,0 +1,233 @@
+{
+  "filter": {
+    "cutoff_frequency": 588.7534,
+    "resonance": 0.44650036,
+    "filter_poles": 4,
+    "key_tracking_amount": 0.5,
+    "current_note_number": 81
+  },
+  "mixer": {
+    "level": 0.14421873,
+    "balance": 0.0,
+    "is_muted": false,
+    "quad_mixer_inputs": [
+      {
+        "level": 0.0,
+        "balance": 0.0,
+        "mute": false
+      },
+      {
+        "level": 1.0,
+        "balance": 0.0,
+        "mute": false
+      },
+      {
+        "level": 1.0,
+        "balance": 0.0,
+        "mute": false
+      },
+      {
+        "level": 1.0,
+        "balance": 0.0,
+        "mute": false
+      }
+    ]
+  },
+  "keyboard": {
+    "mod_wheel_amount": 0.0,
+    "aftertouch_amount": 0.0,
+    "velocity_curve": 0.0,
+    "polarity_flipped": false,
+    "pitch_bend_range": 12
+  },
+  "lfos": [
+    {
+      "frequency": 10.0,
+      "center_value": 1.0,
+      "range": 0.0,
+      "phase": 0.0,
+      "wave_shape": 0,
+      "reset": false
+    },
+    {
+      "frequency": 0.1,
+      "center_value": 0.0,
+      "range": 0.0,
+      "phase": 0.0,
+      "wave_shape": 0,
+      "reset": false
+    }
+  ],
+  "envelopes": [
+    {
+      "attack_ms": 529,
+      "decay_ms": 1043,
+      "release_ms": 1706,
+      "sustain_level": 0.5193142,
+      "amount": 1.0,
+      "sustain_pedal": false,
+      "is_inverted": false,
+      "gate_flag": 0
+    },
+    {
+      "attack_ms": 10,
+      "decay_ms": 0,
+      "release_ms": 200,
+      "sustain_level": 0.78806424,
+      "amount": 0.0,
+      "sustain_pedal": false,
+      "is_inverted": false,
+      "gate_flag": 0
+    }
+  ],
+  "oscillators": [
+    {
+      "fine_tune": 0,
+      "course_tune": 0,
+      "pitch_bend": 0,
+      "shape_parameter1": 0.16878906,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 0,
+      "gate_flag": false,
+      "key_sync_enabled": false,
+      "hard_sync_enabled": false,
+      "portamento_enabled": true,
+      "portamento_time": 8,
+      "clipper_boost": 0
+    },
+    {
+      "fine_tune": 0,
+      "course_tune": 0,
+      "pitch_bend": 0,
+      "shape_parameter1": 0.4453711,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 7,
+      "gate_flag": false,
+      "key_sync_enabled": false,
+      "hard_sync_enabled": false,
+      "portamento_enabled": true,
+      "portamento_time": 8,
+      "clipper_boost": 0
+    },
+    {
+      "fine_tune": 0,
+      "course_tune": 0,
+      "pitch_bend": 0,
+      "shape_parameter1": 0.43476564,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 7,
+      "gate_flag": false,
+      "key_sync_enabled": false,
+      "hard_sync_enabled": false,
+      "portamento_enabled": true,
+      "portamento_time": 8,
+      "clipper_boost": 0
+    },
+    {
+      "fine_tune": 0,
+      "course_tune": 0,
+      "pitch_bend": 0,
+      "shape_parameter1": 0.42503905,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 7,
+      "gate_flag": false,
+      "key_sync_enabled": false,
+      "hard_sync_enabled": false,
+      "portamento_enabled": true,
+      "portamento_time": 8,
+      "clipper_boost": 0
+    }
+  ],
+  "effects": [
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": true,
+      "parameters": [
+        4.0,
+        0.8144701,
+        0.606199,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.6035666,
+        1.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": true,
+      "parameters": [
+        0.16559103,
+        0.40399116,
+        1.0,
+        0.0
+      ]
+    }
+  ]
+}
