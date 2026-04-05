@@ -68,20 +68,20 @@ pub struct Effects {
 impl Effects {
     /// Creates a new effects chain with all available effects initialized.
     pub fn new(sample_rate: u32) -> Self {
+        let saturation = Box::new(saturation::Saturation::new());
+        let compressor = Box::new(compressor::Compressor::new());
         let wavefolder = Box::new(WaveFolder::new());
         let clipper = Box::new(Clipper::new());
         let gate = Box::new(Gate::new());
         let rectifier = Box::new(Rectifier::new());
         let bitshifter = Box::new(BitShifter::new());
-        let saturation = Box::new(saturation::Saturation::new());
-        let compressor = Box::new(compressor::Compressor::new());
         let delay = Box::new(delay::Delay::new());
         let autopan = Box::new(autopan::AutoPan::new(sample_rate));
         let tremolo = Box::new(tremolo::Tremolo::new(sample_rate));
 
         Self {
             effects: vec![
-                wavefolder, clipper, gate, rectifier, bitshifter, saturation, compressor, delay,
+                saturation, compressor, wavefolder, clipper, gate, rectifier, bitshifter, delay,
                 autopan, tremolo,
             ],
             parameters: EffectParameters::default_all(),

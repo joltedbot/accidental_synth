@@ -122,7 +122,7 @@ fn set_ui_default_values(
     let values = parameter_values
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
-
+    
     push_values_to_ui(ui_weak, &values, Some(patch_list.names()))
 }
 

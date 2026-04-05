@@ -63,6 +63,8 @@ pub const DELAY_DEFAULT_PARAMETERS: [f32; 4] = [0.5, 0.5, 0.5, 0.0];
 pub const AUTOPAN_DEFAULT_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
 /// Default tremolo effect parameters: [rate, depth, unused, unused].
 pub const TREMOLO_DEFAULT_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
+/// Default Saturation effect parameters: [Amount, Cut, unused, unused].
+pub const SATURATION_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 0.0, 1.0, 0.0];
 /// Default compressor effect parameters: [threshold, ratio, unused, unused].
 pub const COMPRESSOR_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
 /// Default clipper effect parameters: [threshold, unused, unused, unused].

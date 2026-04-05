@@ -11,13 +11,13 @@ import { Switch } from "std-widgets.slint";
 import {
     EffectsValues,
     EffectBox,
+    Saturation,
+    Compressor,
     Wavefolder,
     Clipper,
     Gate,
     Rectifier,
     Bitshifter,
-    Saturation,
-    Compressor,
     Delay,
     AutoPan,
     Tremolo,
@@ -40,7 +40,7 @@ export component EffectsPanel inherits Panel {
                 padding: Theme.effect-box-padding;
                 spacing: Theme.effect-box-spacing;
 
-                Wavefolder {
+                Saturation {
                     effect-index: 0;
                     effect_values: effects_values[self.effect-index];
 
@@ -57,7 +57,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Clipper {
+                Compressor {
                     effect-index: 1;
                     effect_values: effects_values[self.effect-index];
 
@@ -69,12 +69,13 @@ export component EffectsPanel inherits Panel {
                     }
                 }
 
-                VerticalSpacer {
+                VerticalSpacer
+                {
                     left-padding: 0px;
                     right-padding: 0px;
                 }
 
-                Gate {
+                Wavefolder {
                     effect-index: 2;
                     effect_values: effects_values[self.effect-index];
 
@@ -91,7 +92,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Rectifier {
+                Clipper {
                     effect-index: 3;
                     effect_values: effects_values[self.effect-index];
 
@@ -108,7 +109,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Bitshifter {
+                Gate {
                     effect-index: 4;
                     effect_values: effects_values[self.effect-index];
 
@@ -119,6 +120,11 @@ export component EffectsPanel inherits Panel {
                         effect_parameter_changed(effect_index, parameter_index, value);
                     }
                 }
+
+                VerticalSpacer {
+                    left-padding: 0px;
+                    right-padding: 0px;
+                }
             }
 
             HorizontalSpacer { }
@@ -127,7 +133,7 @@ export component EffectsPanel inherits Panel {
                 padding: Theme.effect-box-padding;
                 spacing: Theme.effect-box-spacing;
 
-                Saturation {
+                Rectifier {
                     effect-index: 5;
                     effect_values: effects_values[self.effect-index];
 
@@ -144,7 +150,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Compressor {
+                Bitshifter {
                     effect-index: 6;
                     effect_values: effects_values[self.effect-index];
 

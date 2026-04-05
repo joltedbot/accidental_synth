@@ -61,6 +61,113 @@ export component EffectBox inherits VerticalLayout {
     }
 }
 
+export component Saturation inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
+    title: Theme.saturation-title;
+    is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
+
+    changed is_enabled => {
+        type.enabled = self.is_enabled;
+        amount.enabled = self.is_enabled;
+        gain.enabled = self.is_enabled;
+    }
+
+    HorizontalSpacer { }
+
+    VerticalLayout {
+        spacing: 20px;
+
+        type := DropDownMenu {
+            label: Theme.saturation-parameter1;
+            value-list: Constant.SATURATION_MODES;
+            dropdown-width: Theme.effect-dropdown-width;
+            value-index: effect_values.parameters[0];
+            enabled: false;
+            drop_down_changed(index, name) => {
+                effect_parameter_changed(root.effect-index, 0, index);
+            }
+        }
+
+        amount := HorizontalParameterSlider {
+            enabled: false;
+            slider-width: 230px;
+            value: effect_values.parameters[1];
+            label: Theme.saturation-parameter2;
+            horizontal-parameter-slider-changed(amount) => {
+                effect_parameter_changed(root.effect-index, 1, amount);
+            }
+        }
+
+        gain := HorizontalParameterSlider {
+            enabled: false;
+            slider-width: 230px;
+            label: Theme.saturation-parameter3;
+            value: effect_values.parameters[2];
+            horizontal-parameter-slider-changed(amount) => {
+                effect_parameter_changed(root.effect-index, 2, amount);
+            }
+        }
+    }
+}
+
+export component Compressor inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
+    title: Theme.compressor-title;
+    is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
+
+    changed is_enabled => {
+        threshold.enabled = self.is_enabled;
+        ratio.enabled = self.is_enabled;
+        postgain.enabled = self.is_enabled;
+    }
+
+    HorizontalSpacer { }
+
+    threshold := HorizontalParameterSlider {
+        slider-width: 230px;
+        label: Theme.compressor-parameter1;
+        value: effect_values.parameters[0];
+        enabled: false;
+        horizontal-parameter-slider-changed(theshold) => {
+            effect_parameter_changed(parent.effect-index, 0, theshold);
+        }
+    }
+
+    ratio := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.compressor-parameter2;
+        value: effect_values.parameters[1];
+        horizontal-parameter-slider-changed(amount) => {
+            effect_parameter_changed(parent.effect-index, 1, amount);
+        }
+    }
+
+    postgain := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        value: effect_values.parameters[2];
+        label: Theme.compressor-parameter3;
+        horizontal-parameter-slider-changed(amount) => {
+            effect_parameter_changed(parent.effect-index, 2, amount);
+        }
+    }
+}
+
 export component Wavefolder inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
@@ -111,7 +218,7 @@ export component Wavefolder inherits EffectBox {
         value: effect_values.parameters[2];
         label: Theme.wavefolder-parameter2;
         horizontal-parameter-slider-changed(amount) => {
-            effect_parameter_changed(parent.effect-index, 1, amount);
+            effect_parameter_changed(parent.effect-index, 2, amount);
         }
     }
 }
@@ -289,113 +396,6 @@ export component Bitshifter inherits EffectBox {
         label: Theme.bitshifter-parameter1;
         horizontal-parameter-slider-changed(amount) => {
             effect_parameter_changed(parent.effect-index, 0, amount);
-        }
-    }
-}
-
-export component Saturation inherits EffectBox {
-    callback effect_parameter_changed(int, int, float);
-    in property <EffectsValues> effect_values;
-    property <int> patch_generation: PatchState.generation;
-
-    title: Theme.saturation-title;
-    is_enabled: effect_values.is_enabled;
-
-    changed patch_generation => {
-        root.is_enabled = effect_values.is_enabled;
-    }
-
-    changed is_enabled => {
-        type.enabled = self.is_enabled;
-        amount.enabled = self.is_enabled;
-        gain.enabled = self.is_enabled;
-    }
-
-    HorizontalSpacer { }
-
-    VerticalLayout {
-        spacing: 20px;
-
-        type := DropDownMenu {
-            label: Theme.saturation-parameter1;
-            value-list: Constant.SATURATION_MODES;
-            dropdown-width: Theme.effect-dropdown-width;
-            value-index: effect_values.parameters[0];
-            enabled: false;
-            drop_down_changed(index, name) => {
-                effect_parameter_changed(root.effect-index, 0, index);
-            }
-        }
-
-        amount := HorizontalParameterSlider {
-            enabled: false;
-            slider-width: 230px;
-            value: effect_values.parameters[1];
-            label: Theme.saturation-parameter2;
-            horizontal-parameter-slider-changed(amount) => {
-                effect_parameter_changed(root.effect-index, 1, amount);
-            }
-        }
-
-        gain := HorizontalParameterSlider {
-            enabled: false;
-            slider-width: 230px;
-            label: Theme.saturation-parameter3;
-            value: effect_values.parameters[2];
-            horizontal-parameter-slider-changed(amount) => {
-                effect_parameter_changed(root.effect-index, 2, amount);
-            }
-        }
-    }
-}
-
-export component Compressor inherits EffectBox {
-    callback effect_parameter_changed(int, int, float);
-    in property <EffectsValues> effect_values;
-    property <int> patch_generation: PatchState.generation;
-
-    title: Theme.compressor-title;
-    is_enabled: effect_values.is_enabled;
-
-    changed patch_generation => {
-        root.is_enabled = effect_values.is_enabled;
-    }
-
-    changed is_enabled => {
-        threshold.enabled = self.is_enabled;
-        ratio.enabled = self.is_enabled;
-        postgain.enabled = self.is_enabled;
-    }
-
-    HorizontalSpacer { }
-
-    threshold := HorizontalParameterSlider {
-        slider-width: 230px;
-        label: Theme.compressor-parameter1;
-        value: effect_values.parameters[0];
-        enabled: false;
-        horizontal-parameter-slider-changed(theshold) => {
-            effect_parameter_changed(parent.effect-index, 0, theshold);
-        }
-    }
-
-    ratio := HorizontalParameterSlider {
-        enabled: false;
-        slider-width: 230px;
-        label: Theme.compressor-parameter2;
-        value: effect_values.parameters[1];
-        horizontal-parameter-slider-changed(amount) => {
-            effect_parameter_changed(parent.effect-index, 1, amount);
-        }
-    }
-
-    postgain := HorizontalParameterSlider {
-        enabled: false;
-        slider-width: 230px;
-        value: effect_values.parameters[2];
-        label: Theme.compressor-parameter3;
-        horizontal-parameter-slider-changed(amount) => {
-            effect_parameter_changed(parent.effect-index, 2, amount);
         }
     }
 }

@@ -12,6 +12,7 @@ const USER_PATCH_DIRECTORY: &str = "patches";
 const PATCH_FILE_EXTENSION: &str = "json";
 const SYSTEM_PATCHES: &[(&str, &str)] = &[
     ("*Init", include_str!("patches/init.json")),
+    ("*A Slightly Warmer FM", include_str!("patches/a-slightly-warmer-fm.json")),
     ("*Acid Squelch", include_str!("patches/acid-squelch.json")),
     ("*Acid Time", include_str!("patches/acid-time.json")),
     (
@@ -20,6 +21,7 @@ const SYSTEM_PATCHES: &[(&str, &str)] = &[
     ),
     ("*Ambient Drone", include_str!("patches/ambient-drone.json")),
     ("*Bright Lead", include_str!("patches/bright-lead.json")),
+    ("*Buzz Brass", include_str!("patches/buzz-brass.json")),
     ("*Deep Bass", include_str!("patches/deep-bass.json")),
     (
         "*Dirty Bass Echo",

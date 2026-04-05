@@ -63,18 +63,6 @@ impl AudioEffect for Tremolo {
             self.lfo.set_wave_shape(new_shape as u8);
         }
 
-
-        /*
-            1. The LFO should be setup to be fixed to give a swing of 0 -> 1.0. So Center 0.5, range 1.0
-            2. The LFO value should be should be multipled by the depth to get a scaled depth.
-            3. Then the tremolo factor is 1.0 - the scaled depth
-            4. Then multiply by the input samples as it does now
-
-            The key is to give #1 first.
-        */
-
-
-
         let lfo_value = self.lfo.generate(None);
         let tremolo = TREMOLO_MAX_DEPTH - (lfo_value * self.lfo_parameters.depth);
         (samples.0 * tremolo, samples.1 * tremolo)

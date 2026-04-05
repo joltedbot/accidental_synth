@@ -1,7 +1,4 @@
-use crate::defaults::{
-    AUTOPAN_DEFAULT_PARAMETERS, CLIPPER_DEFAULT_PARAMETERS, COMPRESSOR_DEFAULT_PARAMETERS,
-    DELAY_DEFAULT_PARAMETERS, GATE_DEFAULT_PARAMETERS, TREMOLO_DEFAULT_PARAMETERS,
-};
+use crate::defaults::{AUTOPAN_DEFAULT_PARAMETERS, CLIPPER_DEFAULT_PARAMETERS, COMPRESSOR_DEFAULT_PARAMETERS, DELAY_DEFAULT_PARAMETERS, GATE_DEFAULT_PARAMETERS, SATURATION_DEFAULT_PARAMETERS, TREMOLO_DEFAULT_PARAMETERS};
 use strum::IntoEnumIterator;
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
@@ -18,6 +15,10 @@ pub trait AudioEffect {
 #[derive(Debug, Clone, Copy, EnumCount, EnumIter, FromRepr)]
 #[repr(i32)]
 pub enum EffectIndex {
+    /// Soft saturation distortion effect.
+    Saturation,
+    /// Dynamic range compressor effect.
+    Compressor,
     /// Wavefolder distortion effect.
     WaveFolder,
     /// Hard clipper distortion effect.
@@ -28,10 +29,6 @@ pub enum EffectIndex {
     Rectifier,
     /// Bit-shifting digital distortion effect.
     BitShifter,
-    /// Soft saturation distortion effect.
-    Saturation,
-    /// Dynamic range compressor effect.
-    Compressor,
     /// Stereo delay effect with feedback.
     Delay,
     /// Automatic stereo panning effect.
@@ -65,9 +62,14 @@ impl EffectParameters {
             match effect {
                 EffectIndex::WaveFolder
                 | EffectIndex::Rectifier
-                | EffectIndex::BitShifter
-                | EffectIndex::Saturation => {
+                | EffectIndex::BitShifter => {
                     effect_parameters.push(EffectParameters::default());
+                }
+                EffectIndex::Saturation => {
+                    effect_parameters.push(EffectParameters {
+                        is_enabled: false,
+                        parameters: SATURATION_DEFAULT_PARAMETERS.to_vec(),
+                    });
                 }
                 EffectIndex::Clipper => {
                     effect_parameters.push(EffectParameters {
