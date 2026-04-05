@@ -37,9 +37,9 @@ use crossbeam_channel::{Receiver, Sender};
 use rtrb::Producer;
 use serde::{Deserialize, Serialize};
 use std::default::Default;
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
+use std::sync::{Arc, Mutex};
 use std::thread;
 use strum::EnumCount;
 

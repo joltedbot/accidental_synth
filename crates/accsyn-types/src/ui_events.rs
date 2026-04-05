@@ -99,7 +99,7 @@ pub enum UIUpdates {
     /// Patch changed — UI should reload all parameter values from the patch at this index.
     Patches(i32),
     /// Patch List Updated — UI should reload the patch list.
-    PatchList(Vec<String>)
+    PatchList(Vec<String>),
 }
 
 /// ADSR envelope stage identifier.

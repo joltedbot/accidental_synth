@@ -1,7 +1,7 @@
-use std::fs::read_to_string;
 use crate::synthesizer::ModuleParameters;
 use anyhow::{Result, anyhow};
 use serde_json::json;
+use std::fs::read_to_string;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
@@ -35,7 +35,10 @@ const SYSTEM_PATCHES: &[(&str, &str)] = &[
         "*Supersaw Swirl",
         include_str!("patches/supersaw-swirl.json"),
     ),
-    ("*Triangles and Claves", include_str!("patches/triangles-and-claves.json")),
+    (
+        "*Triangles and Claves",
+        include_str!("patches/triangles-and-claves.json"),
+    ),
 ];
 const INIT_PARAMETERS: &str = SYSTEM_PATCHES[0].1;
 
@@ -102,7 +105,6 @@ impl Patches {
         Ok(Self { paths, patches })
     }
 
-
     /// Serializes the current module parameters to a new named patch file.
     pub fn save_patch(&mut self, name: &str, parameters: &ModuleParameters) -> Result<()> {
         self.create_new_patch(name, parameters)?;
@@ -111,7 +113,7 @@ impl Patches {
         Ok(())
     }
 
-   fn create_new_patch(&self, name: &str, parameters: &ModuleParameters) -> Result<()> {
+    fn create_new_patch(&self, name: &str, parameters: &ModuleParameters) -> Result<()> {
         let content = create_patch_from_parameters(parameters);
         let file_name = format!("{name}.{PATCH_FILE_EXTENSION}");
         let patch_file_path = self.paths.user_patches.join(file_name);
@@ -174,11 +176,14 @@ pub fn load_patches(patch_directory: &Path) -> PatchList {
     let mut patches = load_presets();
 
     if let Ok(entries) = patch_directory.read_dir() {
-        entries.filter_map(|entry| entry.ok()).filter_map(|entry| {
-            let name = entry.path().file_stem()?.to_string_lossy().to_string();
-            let content = read_to_string(entry.path()).ok()?;
-            Some(Patch { name, content })
-        }).for_each(|patch| patches.push(patch));
+        entries
+            .filter_map(|entry| entry.ok())
+            .filter_map(|entry| {
+                let name = entry.path().file_stem()?.to_string_lossy().to_string();
+                let content = read_to_string(entry.path()).ok()?;
+                Some(Patch { name, content })
+            })
+            .for_each(|patch| patches.push(patch));
     };
 
     PatchList { list: patches }

@@ -22,8 +22,8 @@ use accsyn_types::synth_events::{
 };
 use accsyn_types::ui_events::UIUpdates;
 use crossbeam_channel::{Receiver, Sender};
-use std::sync::{Arc, Mutex, PoisonError};
 use std::sync::atomic::Ordering::Relaxed;
+use std::sync::{Arc, Mutex, PoisonError};
 use std::thread;
 
 #[allow(clippy::too_many_lines)]
@@ -446,17 +446,16 @@ pub fn start_update_event_listener(
                 }
                 SynthesizerUpdateEvents::PatchSaved(patch_name) => {
                     let mut thread_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
-                    
+
                     if let Err(err) = thread_patches.save_patch(&patch_name, &module_parameters) {
                         log::error!(target: "synthesizer::event_listener", "Could not save patch: {patch_name}: {err}");
                     };
 
                     let patch_list = thread_patches.patch_list().names();
-                    
-                    if let Err(e) = ui_update_sender.send(UIUpdates::PatchList(patch_list)){  
+
+                    if let Err(e) = ui_update_sender.send(UIUpdates::PatchList(patch_list)) {
                         log::error!(target: "synthesizer::event_listener", "Failed to send new patch list to the UI: {e}");
                     }
-                    
                 }
             }
         }

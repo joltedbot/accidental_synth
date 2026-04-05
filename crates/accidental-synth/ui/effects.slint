@@ -32,14 +32,12 @@ export component EffectBox inherits VerticalLayout {
     height: box-height;
     alignment: start;
 
-
     changed patch_gen => {
         effect-enable.checked = root.is_enabled;
     }
     changed is_enabled => {
         effect-enable.checked = root.is_enabled;
     }
-
 
     VerticalLayout {
         padding: Theme.effect-box-padding;
@@ -70,7 +68,6 @@ export component Wavefolder inherits EffectBox {
 
     title: Theme.wavefolder-title;
     is_enabled: effect_values.is_enabled;
-
 
     changed patch_generation => {
         root.is_enabled = effect_values.is_enabled;
@@ -114,7 +111,7 @@ export component Wavefolder inherits EffectBox {
         value: effect_values.parameters[2];
         label: Theme.wavefolder-parameter2;
         horizontal-parameter-slider-changed(amount) => {
-                        effect_parameter_changed(parent.effect-index, 1, amount);
+            effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 }
@@ -156,7 +153,7 @@ export component Clipper inherits EffectBox {
         value: effect_values.parameters[1];
         label: Theme.clipper-parameter2;
         horizontal-parameter-slider-changed(amount) => {
-                        effect_parameter_changed(parent.effect-index, 1, amount);
+            effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 
@@ -166,7 +163,7 @@ export component Clipper inherits EffectBox {
         value: effect_values.parameters[2];
         label: Theme.clipper-parameter3;
         horizontal-parameter-slider-changed(amount) => {
-                        effect_parameter_changed(parent.effect-index, 2, amount);
+            effect_parameter_changed(parent.effect-index, 2, amount);
         }
     }
 
@@ -220,7 +217,7 @@ export component Gate inherits EffectBox {
         value: effect_values.parameters[1];
         label: Theme.gate-parameter2;
         horizontal-parameter-slider-changed(amount) => {
-                        effect_parameter_changed(parent.effect-index, 1, amount);
+            effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 
@@ -230,7 +227,7 @@ export component Gate inherits EffectBox {
         value: effect_values.parameters[2];
         label: Theme.gate-parameter3;
         horizontal-parameter-slider-changed(amount) => {
-                        effect_parameter_changed(parent.effect-index, 2, amount);
+            effect_parameter_changed(parent.effect-index, 2, amount);
         }
     }
 }
@@ -279,7 +276,6 @@ export component Bitshifter inherits EffectBox {
         root.is_enabled = effect_values.is_enabled;
     }
 
-
     changed is_enabled => {
         bits.enabled = self.is_enabled;
     }
@@ -292,7 +288,7 @@ export component Bitshifter inherits EffectBox {
         value: effect_values.parameters[0];
         label: Theme.bitshifter-parameter1;
         horizontal-parameter-slider-changed(amount) => {
-                        effect_parameter_changed(parent.effect-index, 0, amount);
+            effect_parameter_changed(parent.effect-index, 0, amount);
         }
     }
 }
@@ -337,7 +333,7 @@ export component Saturation inherits EffectBox {
             value: effect_values.parameters[1];
             label: Theme.saturation-parameter2;
             horizontal-parameter-slider-changed(amount) => {
-                                effect_parameter_changed(root.effect-index, 1, amount);
+                effect_parameter_changed(root.effect-index, 1, amount);
             }
         }
 
@@ -347,7 +343,7 @@ export component Saturation inherits EffectBox {
             label: Theme.saturation-parameter3;
             value: effect_values.parameters[2];
             horizontal-parameter-slider-changed(amount) => {
-                                effect_parameter_changed(root.effect-index, 2, amount);
+                effect_parameter_changed(root.effect-index, 2, amount);
             }
         }
     }
@@ -389,7 +385,7 @@ export component Compressor inherits EffectBox {
         label: Theme.compressor-parameter2;
         value: effect_values.parameters[1];
         horizontal-parameter-slider-changed(amount) => {
-                        effect_parameter_changed(parent.effect-index, 1, amount);
+            effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 
@@ -399,7 +395,7 @@ export component Compressor inherits EffectBox {
         value: effect_values.parameters[2];
         label: Theme.compressor-parameter3;
         horizontal-parameter-slider-changed(amount) => {
-                        effect_parameter_changed(parent.effect-index, 2, amount);
+            effect_parameter_changed(parent.effect-index, 2, amount);
         }
     }
 }
@@ -440,7 +436,7 @@ export component Delay inherits EffectBox {
         label: Theme.delay-parameter2;
         value: effect_values.parameters[1];
         horizontal-parameter-slider-changed(amount) => {
-                        effect_parameter_changed(parent.effect-index, 1, amount);
+            effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 
@@ -450,7 +446,7 @@ export component Delay inherits EffectBox {
         label: Theme.delay-parameter3;
         value: effect_values.parameters[2];
         horizontal-parameter-slider-changed(amount) => {
-                        effect_parameter_changed(parent.effect-index, 2, amount);
+            effect_parameter_changed(parent.effect-index, 2, amount);
         }
     }
 }
@@ -491,7 +487,7 @@ export component AutoPan inherits EffectBox {
         value: effect_values.parameters[1];
         label: Theme.autopan-parameter2;
         horizontal-parameter-slider-changed(amount) => {
-                        effect_parameter_changed(parent.effect-index, 1, amount);
+            effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 
@@ -543,7 +539,7 @@ export component Tremolo inherits EffectBox {
         value: effect_values.parameters[1];
         label: Theme.tremolo-parameter2;
         horizontal-parameter-slider-changed(amount) => {
-                        effect_parameter_changed(parent.effect-index, 1, amount);
+            effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 
