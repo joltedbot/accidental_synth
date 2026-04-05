@@ -43,7 +43,7 @@ impl GenerateWave for AM {
     }
 
     fn set_shape_parameter2(&mut self, parameter: f32) {
-        self.am_tone_amount = parameter * 0.5;
+        self.am_tone_amount = parameter;
     }
 
     fn set_phase(&mut self, phase: f32) {
