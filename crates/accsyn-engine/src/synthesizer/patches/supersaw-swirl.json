@@ -1,6 +1,24 @@
 {
   "effects": [
     {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
       "is_enabled": true,
       "parameters": [
         0.3,
@@ -42,24 +60,6 @@
         0.5,
         0.5,
         0.3,
-        0.0
-      ]
-    },
-    {
-      "is_enabled": false,
-      "parameters": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ]
-    },
-    {
-      "is_enabled": false,
-      "parameters": [
-        0.0,
-        0.0,
-        0.0,
         0.0
       ]
     },
