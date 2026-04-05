@@ -13,6 +13,7 @@ use accsyn_types::synth_events::{EnvelopeIndex, LFOIndex};
 use accsyn_types::ui_events::EnvelopeStage;
 use slint::{ModelRc, VecModel, Weak};
 use std::rc::Rc;
+use crate::ui::slint_patches_list_from_ui_patches_list;
 
 pub fn set_midi_screen_values(
     ui_weak_thread: &Weak<AccidentalSynth>,
@@ -291,5 +292,14 @@ pub fn set_effect_display(
         ui.set_effects_values(ui::slint_effect_values_from_effect_parameters(
             &ui_effect_values,
         ));
+    });
+}
+
+pub fn set_patch_list(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    patch_list: Vec<String>
+) {
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_patch_list(slint_patches_list_from_ui_patches_list(&patch_list));
     });
 }

@@ -1,3 +1,4 @@
+use std::fs::read_to_string;
 use crate::synthesizer::ModuleParameters;
 use anyhow::{Result, anyhow};
 use serde_json::json;
@@ -98,8 +99,16 @@ impl Patches {
         Ok(Self { paths, patches })
     }
 
+
     /// Serializes the current module parameters to a new named patch file.
-    pub fn create_new_patch(&self, name: &str, parameters: &ModuleParameters) -> Result<()> {
+    pub fn save_patch(&mut self, name: &str, parameters: &ModuleParameters) -> Result<()> {
+        self.create_new_patch(name, parameters)?;
+        self.patches = load_patches(&self.paths.user_patches);
+        log::info!(target: "synthesizer::patches", "Patch saved: {name}");
+        Ok(())
+    }
+
+   fn create_new_patch(&self, name: &str, parameters: &ModuleParameters) -> Result<()> {
         let content = create_patch_from_parameters(parameters);
         let file_name = format!("{name}.{PATCH_FILE_EXTENSION}");
         let patch_file_path = self.paths.user_patches.join(file_name);
@@ -162,16 +171,11 @@ pub fn load_patches(patch_directory: &Path) -> PatchList {
     let mut patches = load_presets();
 
     if let Ok(entries) = patch_directory.read_dir() {
-        entries.filter_map(|entry| entry.ok()).for_each(|entry| {
-            if let Some(name) = entry.path().as_path().file_stem() {
-                if let Ok(content) = std::fs::read_to_string(entry.path()) {
-                    patches.push(Patch {
-                        name: name.to_string_lossy().to_string(),
-                        content,
-                    })
-                }
-          }
-        });
+        entries.filter_map(|entry| entry.ok()).filter_map(|entry| {
+            let name = entry.path().file_stem()?.to_string_lossy().to_string();
+            let content = read_to_string(entry.path()).ok()?;
+            Some(Patch { name, content })
+        }).for_each(|patch| patches.push(patch));
     };
 
     PatchList { list: patches }

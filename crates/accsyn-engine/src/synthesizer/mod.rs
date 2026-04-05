@@ -37,7 +37,7 @@ use crossbeam_channel::{Receiver, Sender};
 use rtrb::Producer;
 use serde::{Deserialize, Serialize};
 use std::default::Default;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::thread;
@@ -198,7 +198,7 @@ pub struct Synthesizer {
     module_parameters: Arc<ModuleParameters>,
     ui_update_sender: Sender<SynthesizerUpdateEvents>,
     ui_update_receiver: Receiver<SynthesizerUpdateEvents>,
-    patches: Arc<Patches>,
+    patches: Arc<Mutex<Patches>>,
 }
 
 impl Synthesizer {
@@ -218,7 +218,7 @@ impl Synthesizer {
             module_parameters: Arc::new(module_parameters),
             ui_update_sender,
             ui_update_receiver,
-            patches: Arc::new(patches),
+            patches: Arc::new(Mutex::new(patches)),
         })
     }
 
@@ -309,8 +309,8 @@ impl Synthesizer {
         });
     }
 
-    /// Returns a clone of the Arc<Patches> for this synthesizer.
-    pub fn patches(&self) -> Arc<Patches> {
+    /// Returns a clone of the Arc<Mutex<Patches>> for this synthesizer.
+    pub fn patches(&self) -> Arc<Mutex<Patches>> {
         self.patches.clone()
     }
 }

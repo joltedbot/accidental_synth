@@ -33,7 +33,7 @@ use crossbeam_channel::{Receiver, Sender, bounded};
 use slint::{ModelRc, SharedString, VecModel, Weak};
 use std::rc::Rc;
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, PoisonError};
 use structs::UIGlobalOptions;
 use strum::EnumCount;
 
@@ -93,7 +93,7 @@ impl UI {
         midi_update_sender: Sender<MidiDeviceUpdateEvents>,
         audio_output_device_sender: &Sender<AudioDeviceUpdateEvents>,
         synthesizer_update_sender: &Sender<SynthesizerUpdateEvents>,
-        patches: Arc<Patches>,
+        patches: Arc<Mutex<Patches>>,
     ) -> Result<()> {
         let ui_update_receiver = self.ui_update_receiver.clone();
         register_callbacks(
@@ -104,9 +104,11 @@ impl UI {
             self.ui_update_sender.clone(),
         );
 
-        let patch_list = patches.patch_list();
-        set_ui_default_values(ui_weak, &self.parameter_values, &patch_list)?;
+        let unlocked_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
+        let patch_list = unlocked_patches.patch_list();
+        drop(unlocked_patches);
 
+        set_ui_default_values(ui_weak, &self.parameter_values, &patch_list)?;
         start_ui_update_listener(ui_update_receiver, ui_weak, &self.parameter_values, patches);
 
         Ok(())
@@ -122,14 +124,6 @@ fn set_ui_default_values(
         .unwrap_or_else(std::sync::PoisonError::into_inner);
 
     push_values_to_ui(ui_weak, &values, Some(patch_list.names()))
-}
-
-pub fn update_patch_list(ui_weak: &Weak<AccidentalSynth>, patch_list: Vec<String>) -> Result<()> {
-    ui_weak.upgrade_in_event_loop(move |ui| {
-        ui.set_patch_list(slint_patches_list_from_ui_patches_list(&patch_list));
-    })?;
-
-    Ok(())
 }
 
 pub(super) fn push_values_to_ui(

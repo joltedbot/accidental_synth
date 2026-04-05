@@ -22,7 +22,7 @@ use accsyn_types::synth_events::{
 };
 use accsyn_types::ui_events::UIUpdates;
 use crossbeam_channel::{Receiver, Sender};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, PoisonError};
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
 
@@ -30,7 +30,7 @@ use std::thread;
 pub fn start_update_event_listener(
     ui_update_receiver: Receiver<SynthesizerUpdateEvents>,
     module_parameters: Arc<ModuleParameters>,
-    patches: Arc<Patches>,
+    patches: Arc<Mutex<Patches>>,
     ui_update_sender: Sender<UIUpdates>,
 ) {
     thread::spawn(move || {
@@ -429,8 +429,9 @@ pub fn start_update_event_listener(
                     }
                 }
                 SynthesizerUpdateEvents::PatchChanged(preset_index) => {
-                    let patch_list = patches.patch_list();
-                    let patch = match patches
+                    let thread_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
+                    let patch_list = thread_patches.patch_list();
+                    let patch = match thread_patches
                         .get_module_parameters_from_patch_index(preset_index as usize, &patch_list)
                     {
                         Ok(preset) => preset,
@@ -444,9 +445,18 @@ pub fn start_update_event_listener(
                     log::info!(target: "synthesizer::event_listener", "Preset changed to index {preset_index}");
                 }
                 SynthesizerUpdateEvents::PatchSaved(patch_name) => {
-                    if let Err(err) = patches.create_new_patch(&patch_name, &module_parameters) {
+                    let mut thread_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
+                    
+                    if let Err(err) = thread_patches.save_patch(&patch_name, &module_parameters) {
                         log::error!(target: "synthesizer::event_listener", "Could not save patch: {patch_name}: {err}");
                     };
+
+                    let patch_list = thread_patches.patch_list().names();
+                    
+                    if let Err(e) = ui_update_sender.send(UIUpdates::PatchList(patch_list)){  
+                        log::error!(target: "synthesizer::event_listener", "Failed to send new patch list to the UI: {e}");
+                    }
+                    
                 }
             }
         }
