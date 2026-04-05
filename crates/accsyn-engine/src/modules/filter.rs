@@ -163,9 +163,6 @@ impl Filter {
 
     /// Applies external modulation to the filter cutoff frequency.
     pub fn modulate_cutoff_frequency(&mut self, modulation: f32) {
-        if modulation == 0.0 {
-            return;
-        }
         self.cutoff_modulation_amount = modulation * self.max_frequency;
     }
 

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8};
+use crate::modules::oscillator::constants::DEFAULT_PHASE;
 
 /// Minimum LFO frequency in Hz.
 pub const MIN_LFO_FREQUENCY: f32 = 0.01;
@@ -154,6 +155,7 @@ impl Lfo {
     }
 
     fn reset(&mut self) {
+        self.phase = DEFAULT_PHASE;
         self.oscillator.reset();
     }
 }
