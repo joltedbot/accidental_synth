@@ -12,7 +12,10 @@ const USER_PATCH_DIRECTORY: &str = "patches";
 const PATCH_FILE_EXTENSION: &str = "json";
 const SYSTEM_PATCHES: &[(&str, &str)] = &[
     ("*Init", include_str!("patches/init.json")),
-    ("*A Slightly Warmer FM", include_str!("patches/a-slightly-warmer-fm.json")),
+    (
+        "*A Slightly Warmer FM",
+        include_str!("patches/a-slightly-warmer-fm.json"),
+    ),
     ("*Acid Squelch", include_str!("patches/acid-squelch.json")),
     ("*Acid Time", include_str!("patches/acid-time.json")),
     (
@@ -117,8 +120,47 @@ impl Patches {
 
     fn create_new_patch(&self, name: &str, parameters: &ModuleParameters) -> Result<()> {
         let content = create_patch_from_parameters(parameters);
-        let file_name = format!("{name}.{PATCH_FILE_EXTENSION}");
-        let patch_file_path = self.paths.user_patches.join(file_name);
+        let mut patch_file_path = self.paths.user_patches.clone();
+        patch_file_path.push(name);
+        patch_file_path.set_extension(PATCH_FILE_EXTENSION);
+
+        self.validate_patch_file_path(&mut patch_file_path, &self.paths.user_patches)?;
+
+        let mut handle = std::fs::File::create(&patch_file_path).map_err(|e| {
+            log::error!(target: "synthesizer::patches", "Failed to create patch file {}: {e}", patch_file_path.display());
+            e
+        })?;
+
+        handle.write_all(content.as_bytes()).map_err(|e| {
+            log::error!(target: "synthesizer::patches", "Failed to write patch file {}: {e}", patch_file_path.display());
+            e
+        })?;
+
+        log::info!(target: "synthesizer::patches", "Created new patch file: {}", patch_file_path.display());
+
+        Ok(())
+    }
+
+    fn validate_patch_file_path(
+        &self,
+        patch_file_path: &mut Path,
+        expected_patch_directory: &Path,
+    ) -> Result<()> {
+        if let Some(patch_path_parent) = patch_file_path.parent() {
+            if patch_path_parent != expected_patch_directory {
+                log::warn!(target: "synthesizer::patches", "Patch file path is outside of the user patches directory: {}", patch_file_path.display());
+                return Err(anyhow!(
+                    "Patch file path is outside of the user patches directory: {}",
+                    patch_file_path.display()
+                ));
+            }
+        } else {
+            log::warn!(target: "synthesizer::patches", "Patch file path has no parent directory: {}", patch_file_path.display());
+            return Err(anyhow!(
+                "Patch file can not be written outside of the user patches directory: {}",
+                patch_file_path.display()
+            ));
+        };
 
         if patch_file_path.exists() {
             log::warn!(target: "synthesizer::patches", "Patch file already exists: {}", patch_file_path.display());
@@ -127,17 +169,6 @@ impl Patches {
                 patch_file_path.display()
             ));
         }
-
-        let mut handle = std::fs::File::create(&patch_file_path).map_err(|e| {
-            log::error!(target: "synthesizer::patches", "Failed to create patch file {}: {e}", patch_file_path.display());
-            e
-        })?;
-        handle.write_all(content.as_bytes()).map_err(|e| {
-            log::error!(target: "synthesizer::patches", "Failed to write patch file {}: {e}", patch_file_path.display());
-            e
-        })?;
-
-        log::info!(target: "synthesizer::patches", "Created new patch file: {}", patch_file_path.display());
 
         Ok(())
     }
@@ -180,6 +211,15 @@ pub fn load_patches(patch_directory: &Path) -> PatchList {
     if let Ok(entries) = patch_directory.read_dir() {
         entries
             .filter_map(|entry| entry.ok())
+            .filter_map(|entry| entry.path().is_file().then_some(entry))
+            .filter_map(|entry| {
+                let extension = entry.path().extension()?.to_string_lossy().to_string();
+                if extension == PATCH_FILE_EXTENSION {
+                    Some(entry)
+                }  else {
+                    None
+                }
+            })
             .filter_map(|entry| {
                 let name = entry.path().file_stem()?.to_string_lossy().to_string();
                 let content = read_to_string(entry.path()).ok()?;

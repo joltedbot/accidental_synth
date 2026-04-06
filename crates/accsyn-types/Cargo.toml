@@ -10,7 +10,7 @@ publish.workspace = true
 [dependencies]
 strum = { workspace = true }
 strum_macros = { workspace = true }
-serde = { version = "1.0.228", features = ["derive"] }
+serde = { workspace = true }
 
 [package.metadata.cargo-machete]
 ignored = ["strum"]

@@ -125,10 +125,10 @@ mod tests {
     use accsyn_types::math::f32s_are_equal;
 
     #[test]
-    fn effect_index_from_i32_returns_wavefolder_for_0() {
+    fn effect_index_from_i32_returns_saturation_for_0() {
         let result = EffectIndex::from_i32(0);
 
-        assert!(matches!(result, Some(EffectIndex::WaveFolder)));
+        assert!(matches!(result, Some(EffectIndex::Saturation)));
     }
 
     #[test]
@@ -208,6 +208,8 @@ mod tests {
             AudioEffectParameters::default(),
             AudioEffectParameters::default(),
             AudioEffectParameters::default(),
+            AudioEffectParameters::default(),
+            AudioEffectParameters::default(),
         ];
         // Enable rectifier with half-wave mode
         params[EffectIndex::Rectifier as usize].is_enabled = AtomicBool::new(true);
@@ -226,6 +228,7 @@ mod tests {
     fn effects_process_chains_multiple_effects() {
         let mut effects = Effects::new(48000);
         let mut params = vec![
+            AudioEffectParameters::default(),
             AudioEffectParameters::default(),
             AudioEffectParameters::default(),
             AudioEffectParameters::default(),
