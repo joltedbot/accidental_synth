@@ -211,6 +211,7 @@ pub fn load_patches(patch_directory: &Path) -> PatchList {
     if let Ok(entries) = patch_directory.read_dir() {
         entries
             .filter_map(|entry| entry.ok())
+            .filter(|entry| !entry.path().is_symlink())
             .filter_map(|entry| entry.path().is_file().then_some(entry))
             .filter_map(|entry| {
                 let extension = entry.path().extension()?.to_string_lossy().to_string();
@@ -222,7 +223,13 @@ pub fn load_patches(patch_directory: &Path) -> PatchList {
             })
             .filter_map(|entry| {
                 let name = entry.path().file_stem()?.to_string_lossy().to_string();
-                let content = read_to_string(entry.path()).ok()?;
+                let content = match read_to_string(entry.path()) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        log::warn!(target: "synthesizer::patches", "Failed to read patch file {}: {e}", entry.path().display());
+                        return None;
+                    }
+                };
                 Some(Patch { name, content })
             })
             .for_each(|patch| patches.push(patch));
