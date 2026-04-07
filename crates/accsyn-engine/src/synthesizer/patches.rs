@@ -198,7 +198,7 @@ impl Patches {
 
 fn sanitize_name(name: &str) -> String {
     let sized_name = if name.len() > MAX_PATCH_NAME_LENGTH {
-        name.trim()[0..MAX_PATCH_NAME_LENGTH].to_string()
+        name.trim().chars().take(MAX_PATCH_NAME_LENGTH).collect::<String>()
     } else {
         name.trim().to_string()
     };
@@ -242,6 +242,7 @@ pub fn load_patches(patch_directory: &Path) -> PatchList {
             })
             .filter_map(|entry| {
                 let name = entry.path().file_stem()?.to_string_lossy().to_string();
+                let sanitized_name = sanitize_name(&name);
                 let content = match read_to_string(entry.path()) {
                     Ok(c) => c,
                     Err(e) => {
@@ -249,7 +250,7 @@ pub fn load_patches(patch_directory: &Path) -> PatchList {
                         return None;
                     }
                 };
-                Some(Patch { name, content })
+                Some(Patch { name: sanitized_name, content })
             })
             .for_each(|patch| patches.push(patch));
     };
