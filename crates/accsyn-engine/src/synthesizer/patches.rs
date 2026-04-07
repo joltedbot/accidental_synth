@@ -5,6 +5,7 @@ use std::fs::read_to_string;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
+use crate::synthesizer::constants::MAX_PATCH_NAME_LENGTH;
 
 const APP_SUPPORT_DIRECTORY: &str = "Library/Application Support";
 const DATA_DIRECTORY: &str = "AccidentalSynthesizer";
@@ -121,7 +122,8 @@ impl Patches {
     fn create_new_patch(&self, name: &str, parameters: &ModuleParameters) -> Result<()> {
         let content = create_patch_from_parameters(parameters);
         let mut patch_file_path = self.paths.user_patches.clone();
-        patch_file_path.push(name);
+        let sanitized_name = sanitize_name(name);
+        patch_file_path.push(sanitized_name);
         patch_file_path.set_extension(PATCH_FILE_EXTENSION);
 
         self.validate_patch_file_path(&mut patch_file_path, &self.paths.user_patches)?;
@@ -194,6 +196,17 @@ impl Patches {
     }
 }
 
+fn sanitize_name(name: &str) -> String {
+    let sized_name = if name.len() > MAX_PATCH_NAME_LENGTH {
+        name.trim()[0..MAX_PATCH_NAME_LENGTH].to_string()
+    } else {
+        name.trim().to_string()
+    };
+
+    let stripped_name = sized_name.replace(".", "").replace("*", "");
+    sanitize_filename::sanitize(stripped_name)
+}
+
 fn load_presets() -> Vec<Patch> {
     SYSTEM_PATCHES
         .iter()
@@ -248,7 +261,7 @@ pub(crate) fn init_module_parameters() -> Result<ModuleParameters> {
 }
 
 fn create_data_paths() -> Result<Paths> {
-    let mut base = std::env::home_dir().ok_or(PatchesError::NoHomeDirectory)?;
+    let mut base = dirs::home_dir().ok_or(PatchesError::NoHomeDirectory)?;
     base.push(APP_SUPPORT_DIRECTORY);
     let application_data = base.join(DATA_DIRECTORY);
     let user_patches = application_data.join(USER_PATCH_DIRECTORY);
