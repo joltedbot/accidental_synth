@@ -5,7 +5,7 @@ use std::fs::read_to_string;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
-use crate::synthesizer::constants::MAX_PATCH_NAME_LENGTH;
+use crate::synthesizer::constants::{MAX_PATCH_FILE_SIZE, MAX_PATCH_NAME_LENGTH};
 
 const APP_SUPPORT_DIRECTORY: &str = "Library/Application Support";
 const DATA_DIRECTORY: &str = "AccidentalSynthesizer";
@@ -224,6 +224,12 @@ pub fn load_patches(patch_directory: &Path) -> PatchList {
     if let Ok(entries) = patch_directory.read_dir() {
         entries
             .filter_map(|entry| entry.ok())
+            .filter(|entry| {
+                entry.metadata().map(|m| m.len() < MAX_PATCH_FILE_SIZE).unwrap_or_else(|error|{
+                    log::warn!(target: "synthesizer::patches", "Failed to read metadata for patch file {}: {error}", entry.path().display());
+                    false
+                })
+            })
             .filter(|entry| !entry.path().is_symlink())
             .filter_map(|entry| entry.path().is_file().then_some(entry))
             .filter_map(|entry| {
