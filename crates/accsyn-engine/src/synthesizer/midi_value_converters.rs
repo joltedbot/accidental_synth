@@ -63,6 +63,11 @@ pub fn normal_value_to_bool(normal_value: f32) -> bool {
     normal_value >= NORMAL_TO_BOOL_SWITCH_ON_VALUE
 }
 
+/// Converts a bool to a normal value (0.0 for False or 1.0 for true).
+pub fn bool_to_normal_value(value: bool) -> f32 {
+    if value { 1.0 } else { 0.0 }
+}
+
 /// Converts a normalized value to the number of filter poles (1 to 4).
 pub fn normal_value_to_number_of_filter_poles(normal_value: f32) -> u8 {
     (NUMBER_OF_FILER_POLES * normal_value)

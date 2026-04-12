@@ -58,6 +58,8 @@ pub enum SynthesizerUpdateEvents {
     KeySyncEnabled(bool),
     /// Toggle polarity flip on/off.
     PolarityFlipped(bool),
+    /// Sustain Pedal State on/off
+    SustainPedal(bool),
     /// Change output mixer stereo balance (normalized value).
     OutputBalance(f32),
     /// Change output mixer level (normalized value).

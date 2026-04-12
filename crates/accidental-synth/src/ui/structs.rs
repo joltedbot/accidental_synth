@@ -299,12 +299,14 @@ pub struct UIGlobalOptions {
     pub hard_sync_is_enabled: bool,
     pub key_sync_is_enabled: bool,
     pub polarity_is_flipped: bool,
+    pub sustain_is_enabled: bool,
 }
 
 impl UIGlobalOptions {
     pub fn from_synth_parameters(
         keyboard_parameters: &KeyboardParameters,
         oscillator_parameters: &OscillatorParameters,
+        envelope_parameters: &EnvelopeParameters,
     ) -> Self {
         Self {
             portamento_time: normal_value_from_exponential_curve_and_coefficient(
@@ -317,6 +319,7 @@ impl UIGlobalOptions {
             hard_sync_is_enabled: oscillator_parameters.hard_sync_enabled.load(Relaxed),
             key_sync_is_enabled: oscillator_parameters.key_sync_enabled.load(Relaxed),
             polarity_is_flipped: keyboard_parameters.polarity_flipped.load(Relaxed),
+            sustain_is_enabled: envelope_parameters.sustain_pedal.load(Relaxed),
         }
     }
 }
@@ -330,6 +333,7 @@ impl Default for UIGlobalOptions {
             hard_sync_is_enabled: DEFAULT_HARD_SYNC_ENABLED,
             key_sync_is_enabled: DEFAULT_KEY_SYNC_ENABLED,
             polarity_is_flipped: DEFAULT_POLARITY_FLIPPED,
+            sustain_is_enabled: false,
         }
     }
 }

@@ -12,7 +12,7 @@ pub fn callback_portamento_enabled(
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::PortamentoEnabled(is_enabled))
                 .expect(
-                    "callback_filter_lfo_amount_changed(): Could not send new \
+                    "callback_portamento_enabled(): Could not send new \
             portamento state to the synthesizer module.Exiting.",
                 );
         });
@@ -28,7 +28,7 @@ pub fn callback_portamento_time_changed(
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::PortamentoTime(milliseconds))
                 .expect(
-                    "callback_filter_lfo_amount_changed(): Could not send new \
+                    "callback_portamento_time_changed(): Could not send new \
             portamento time to the synthesizer module.Exiting.",
                 );
         });
@@ -44,7 +44,7 @@ pub fn callback_pitch_bend_range_changed(
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::PitchBendRange(range))
                 .expect(
-                    "callback_filter_lfo_amount_changed(): Could not send new \
+                    "callback_pitch_bend_range_changed(): Could not send new \
             pitch bend range to the synthesizer module.Exiting.",
                 );
         });
@@ -60,7 +60,7 @@ pub fn callback_velocity_curve_changed(
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::VelocityCurve(curve))
                 .expect(
-                    "callback_filter_lfo_amount_changed(): Could not send new \
+                    "callback_velocity_curve_changed(): Could not send new \
             velocity curve to the synthesizer module.Exiting.",
                 );
         });
@@ -75,7 +75,7 @@ pub fn callback_hard_sync_enabled(
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::HardSyncEnabled(is_enabled))
                 .expect(
-                    "callback_filter_lfo_amount_changed(): Could not send new \
+                    "callback_hard_sync_enabled(): Could not send new \
             hard sync state to the synthesizer module.Exiting.",
                 );
         });
@@ -90,7 +90,7 @@ pub fn callback_key_sync_enabled(
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::KeySyncEnabled(is_enabled))
                 .expect(
-                    "callback_filter_lfo_amount_changed(): Could not send new \
+                    "callback_key_sync_enabled(): Could not send new \
             key sync state to the synthesizer module.Exiting.",
                 );
         });
@@ -106,8 +106,24 @@ pub fn callback_polarity_flipped(
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::PolarityFlipped(is_flipped))
                 .expect(
-                    "callback_filter_lfo_amount_changed(): Could not send new \
+                    "callback_polarity_flipped(): Could not send new \
             polarity state to the synthesizer module.Exiting.",
+                );
+        });
+    }
+}
+
+pub fn callback_sustain_enabled(
+    ui_weak: &Weak<AccidentalSynth>,
+    synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_sustain_enabled(move |is_enabled| {
+            synthesizer_update_sender
+                .send(SynthesizerUpdateEvents::SustainPedal(is_enabled))
+                .expect(
+                    "callback_sustain_enabled(): Could not send new \
+            sustain state to the synthesizer module.Exiting.",
                 );
         });
     }
@@ -122,7 +138,7 @@ pub fn callback_output_balance_update(
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::OutputBalance(balance))
                 .expect(
-                    "callback_filter_lfo_amount_changed(): Could not send new \
+                    "callback_output_balance_update(): Could not send new \
             output balance to the synthesizer module.Exiting.",
                 );
         });
@@ -137,7 +153,7 @@ pub fn callback_output_level_update(
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::OutputLevel(level))
                 .expect(
-                    "callback_filter_lfo_amount_changed(): Could not send new \
+                    "callback_output_level_update(): Could not send new \
             output level to the synthesizer module.Exiting.",
                 );
         });
@@ -152,7 +168,7 @@ pub fn callback_output_mute_update(
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::OutputMute(is_muted))
                 .expect(
-                    "callback_filter_lfo_amount_changed(): Could not send new \
+                    "callback_output_mute_update(): Could not send new \
             output mute state to the synthesizer module.Exiting.",
                 );
         });
@@ -170,7 +186,7 @@ pub fn callback_osc_mixer_balance_update(
                     balance,
                 ))
                 .expect(
-                    "callback_filter_lfo_amount_changed(): Could not send new \
+                    "callback_osc_mixer_balance_update(): Could not send new \
                     oscillator {oscillator_index} balance to the synthesizer module.Exiting.",
                 );
         });
@@ -188,7 +204,7 @@ pub fn callback_osc_mixer_level_update(
                     balance,
                 ))
                 .expect(
-                    "callback_filter_lfo_amount_changed(): Could not send new \
+                    "callback_osc_mixer_level_update(): Could not send new \
             oscillator {oscillator_index} level to the synthesizer module.Exiting.",
                 );
         });
@@ -206,7 +222,7 @@ pub fn callback_osc_mixer_mute_update(
                     is_muted,
                 ))
                 .expect(
-                    "callback_filter_lfo_amount_changed(): Could not send new \
+                    "callback_osc_mixer_mute_update(): Could not send new \
             oscillator {oscillator_index} mute state to the synthesizer module.Exiting.",
                 );
         });

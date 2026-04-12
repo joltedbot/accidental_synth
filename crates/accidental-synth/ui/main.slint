@@ -102,6 +102,7 @@ export component AccidentalSynth inherits Window {
     callback hard-sync-enabled(bool);
     callback key-sync-enabled(bool);
     callback polarity-flipped(bool);
+    callback sustain-enabled(bool);
     callback output-balance-update(float);
     callback output-level-update(float);
     callback output-mute-update(bool);
@@ -253,6 +254,9 @@ export component AccidentalSynth inherits Window {
                                 }
                                 polarity-flipped(is_flipped) => {
                                     polarity-flipped(is_flipped);
+                                }
+                                sustain-enabled(is_enabled) => {
+                                    sustain-enabled(is_enabled);
                                 }
                                 output-balance-update(value) => {
                                     output-balance-update(value);

@@ -222,6 +222,7 @@ pub(super) fn update_ui_values_from_module_parameters(
         global_options: UIGlobalOptions::from_synth_parameters(
             &parameters.keyboard,
             &parameters.oscillators[0],
+            &parameters.envelopes[EnvelopeIndex::Amp as usize],
         ),
         midi_screen: Vec::new(),
         effects: synthesizer_effects_to_ui_effects(&parameters.effects),
@@ -396,6 +397,7 @@ fn slint_global_options_from_ui_global_options(
         hard_sync_is_enabled: global_option_values.hard_sync_is_enabled,
         key_sync_is_enabled: global_option_values.key_sync_is_enabled,
         polarity_is_flipped: global_option_values.polarity_is_flipped,
+        sustain_is_enabled: global_option_values.sustain_is_enabled,
     }
 }
 

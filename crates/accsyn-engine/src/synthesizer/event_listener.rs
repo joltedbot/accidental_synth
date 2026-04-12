@@ -4,18 +4,19 @@ use crate::synthesizer::ModuleParameters;
 use crate::synthesizer::constants::{
     ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, LFO_INDEX_FILTER, LFO_INDEX_MOD_WHEEL,
 };
+use crate::synthesizer::midi_value_converters::bool_to_normal_value;
 use crate::synthesizer::patches::Patches;
 use crate::synthesizer::set_parameters::{
     set_effect_is_enabled, set_effect_parameter, set_envelope_amount, set_envelope_attack_time,
     set_envelope_decay_time, set_envelope_inverted, set_envelope_release_time,
-    set_envelope_sustain_level, set_filter_cutoff, set_filter_poles, set_filter_resonance,
-    set_key_tracking_amount, set_lfo_frequency, set_lfo_phase, set_lfo_phase_reset, set_lfo_range,
-    set_module_parameters_from_preset, set_oscillator_balance, set_oscillator_clip_boost,
-    set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_hard_sync,
-    set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute, set_oscillator_polarity,
-    set_oscillator_shape_parameter1, set_oscillator_shape_parameter2, set_output_balance,
-    set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled,
-    set_portamento_time, set_velocity_curve,
+    set_envelope_sustain_level, set_envelope_sustain_pedal, set_filter_cutoff, set_filter_poles,
+    set_filter_resonance, set_key_tracking_amount, set_lfo_frequency, set_lfo_phase,
+    set_lfo_phase_reset, set_lfo_range, set_module_parameters_from_preset, set_oscillator_balance,
+    set_oscillator_clip_boost, set_oscillator_course_tune, set_oscillator_fine_tune,
+    set_oscillator_hard_sync, set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute,
+    set_oscillator_polarity, set_oscillator_shape_parameter1, set_oscillator_shape_parameter2,
+    set_output_balance, set_output_level, set_output_mute, set_pitch_bend_range,
+    set_portamento_enabled, set_portamento_time, set_velocity_curve,
 };
 use accsyn_types::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
@@ -350,6 +351,12 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::VelocityCurve(curve) => {
                     set_velocity_curve(&module_parameters.keyboard, curve);
                 }
+                SynthesizerUpdateEvents::SustainPedal(is_enabled) => {
+                    set_envelope_sustain_pedal(
+                        &module_parameters.envelopes,
+                        bool_to_normal_value(is_enabled),
+                    );
+                }
                 SynthesizerUpdateEvents::HardSyncEnabled(is_enabled) => {
                     set_oscillator_hard_sync(&module_parameters.oscillators, f32::from(is_enabled));
                 }
@@ -359,6 +366,7 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::PolarityFlipped(is_flipped) => {
                     set_oscillator_polarity(&module_parameters.keyboard, f32::from(is_flipped));
                 }
+
                 SynthesizerUpdateEvents::OutputBalance(balance) => {
                     set_output_balance(&module_parameters.mixer, balance);
                 }

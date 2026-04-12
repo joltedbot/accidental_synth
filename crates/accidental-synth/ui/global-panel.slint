@@ -40,7 +40,8 @@ export struct GlobalOptions {
     velocity-curve-slope: float,
     hard-sync-is-enabled: bool,
     key-sync-is-enabled: bool,
-    polarity-is-flipped: bool}
+    polarity-is-flipped: bool,
+    sustain-is-enabled: bool}
 
 
 export component MixerStrip inherits VerticalLayout {
@@ -256,7 +257,8 @@ export component OscillatorSection inherits VerticalLayout {
     callback velocity-curve-changed(float);
     callback hard-sync-enabled(bool);
     callback key-sync-enabled(bool);
-    callback polarity_flipped(bool);
+    callback polarity-flipped(bool);
+    callback sustain-enabled(bool);
 
     alignment: start;
 
@@ -291,14 +293,14 @@ export component OscillatorSection inherits VerticalLayout {
 
             VerticalSpacer {
                 height: 110px;
-                left-padding: 5px;
-                right-padding: 5px;
+                left-padding: 2px;
+                right-padding: 2px;
             }
 
             HorizontalLayout {
                 padding: Theme.global-panel-padding;
                 spacing: Theme.global-panel-spacing;
-                alignment: space-between;
+                alignment: center;
 
                 VerticalLayout {
                     alignment: space-between;
@@ -309,7 +311,7 @@ export component OscillatorSection inherits VerticalLayout {
                         step: 1;
                         minimum: Constant.PITCH_BEND_MINIMUM;
                         maximum: Constant.PITCH_BEND_MAXIMUM;
-                        width: 120px;
+                        width: 110px;
                         spinbox-changed(range) => {
                             pitch-bend-range-changed(range);
                         }
@@ -318,7 +320,7 @@ export component OscillatorSection inherits VerticalLayout {
                     CenteredParameterSlider {
                         label: Theme.osc-options-velocity-curve;
                         value: global-option-values.velocity-curve-slope;
-                        width: 120px;
+                        width: 110px;
                         centered-parameter-slider-changed(curve) => {
                             velocity-curve-changed(curve);
                         }
@@ -327,42 +329,55 @@ export component OscillatorSection inherits VerticalLayout {
 
                 VerticalSpacer {
                     height: 110px;
-                    left-padding: 5px;
-                    right-padding: 5px;
+                    left-padding: 2px;
+                    right-padding: 2px;
                 }
 
-                VerticalLayout {
-                    alignment: start;
+                GridLayout {
+                    padding: Theme.global-panel-padding;
+                    spacing: Theme.global-panel-spacing;
+                    Row {
+                        hard_sync := ToggleSwitch {
+                            label: Theme.osc-options-hard-sync;
+                            is_checked: global-option-values.hard-sync-is-enabled;
+                            toggle_switch_updated(is_enabled) => {
+                                hard-sync-enabled(is_enabled);
+                            }
+                        }
 
-                    hard_sync := ToggleSwitch {
-                        label: Theme.osc-options-hard-sync;
-                        is_checked: global-option-values.hard-sync-is-enabled;
-                        toggle_switch_updated(is_enabled) => {
-                            hard-sync-enabled(is_enabled);
+                        key_sync := ToggleSwitch {
+                            label: Theme.osc-options-key-sync;
+                            is_checked: global-option-values.key-sync-is-enabled;
+                            toggle_switch_updated(is_enabled) => {
+                                key-sync-enabled(is_enabled);
+                            }
                         }
                     }
 
-                    key_sync := ToggleSwitch {
-                        label: Theme.osc-options-key-sync;
-                        is_checked: global-option-values.key-sync-is-enabled;
-                        toggle_switch_updated(is_enabled) => {
-                            key-sync-enabled(is_enabled);
-                        }
-                    }
+                    Row {
 
-                    polarity := ToggleSwitch {
-                        label: Theme.osc-options-polarity;
-                        is_checked: global-option-values.polarity-is-flipped;
-                        toggle_switch_updated(is_flipped) => {
-                            polarity_flipped(is_flipped);
+                        polarity := ToggleSwitch {
+                            label: Theme.osc-options-polarity;
+                            is_checked: global-option-values.polarity-is-flipped;
+                            toggle_switch_updated(is_flipped) => {
+                                polarity-flipped(is_flipped);
+                            }
+                        }
+
+                        Sustain := ToggleSwitch {
+                            label: Theme.osc-options-sustain;
+                            is_checked: global-option-values.sustain-is-enabled;
+                            toggle_switch_updated(is_enabled) => {
+                                sustain-enabled(is_enabled);
+                            }
                         }
                     }
                 }
 
                 VerticalSpacer {
                     height: 110px;
-                    left-padding: 5px;
-                    right-padding: 5px;
+                    left-padding: 2px;
+                    right-padding: 2px;
                 }
 
                 GreenScreen {
@@ -478,6 +493,7 @@ export component GlobalPanel inherits Panel {
     callback hard-sync-enabled(bool);
     callback key-sync-enabled(bool);
     callback polarity-flipped(bool);
+    callback sustain-enabled(bool);
     callback output-balance-update(float);
     callback output-level-update(float);
     callback output-mute-update(bool);
@@ -580,8 +596,11 @@ export component GlobalPanel inherits Panel {
                 key-sync-enabled(is_enabled) => {
                     key-sync-enabled(is_enabled);
                 }
-                polarity_flipped(is_flipped) => {
+                polarity-flipped(is_flipped) => {
                     polarity-flipped(is_flipped);
+                }
+                sustain-enabled(is_enabled) => {
+                    sustain-enabled(is_enabled);
                 }
             }
         }

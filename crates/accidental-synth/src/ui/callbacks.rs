@@ -71,6 +71,7 @@ pub fn register_callbacks(
     global::callback_hard_sync_enabled(ui_weak, synthesizer_update_sender.clone());
     global::callback_key_sync_enabled(ui_weak, synthesizer_update_sender.clone());
     global::callback_polarity_flipped(ui_weak, synthesizer_update_sender.clone());
+    global::callback_sustain_enabled(ui_weak, synthesizer_update_sender.clone());
     global::callback_output_balance_update(ui_weak, synthesizer_update_sender.clone());
     global::callback_output_level_update(ui_weak, synthesizer_update_sender.clone());
     global::callback_output_mute_update(ui_weak, synthesizer_update_sender.clone());
