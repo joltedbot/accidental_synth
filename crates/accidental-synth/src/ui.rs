@@ -56,6 +56,7 @@ pub(super) struct ParameterValues {
     global_options: UIGlobalOptions,
     midi_screen: Vec<String>,
     effects: Vec<EffectParameters>,
+    selected_patch_index: Option<i32>,
 }
 
 pub struct UI {
@@ -74,6 +75,7 @@ impl UI {
             UIAudioDevice::default(),
             UIMidiPort::default(),
             parameters.clone(),
+            None,
         );
 
         Self {
@@ -135,7 +137,9 @@ pub(super) fn push_values_to_ui(
 
     ui_weak.upgrade_in_event_loop(move |ui| {
         ui.set_version(SharedString::from(env!("CARGO_PKG_VERSION")));
-
+        if let Some(patch_index) = ui_default_values.selected_patch_index {
+            ui.set_selected_patch_index(patch_index);
+        }
         ui.set_midi_port_values(slint_midi_port_from_ui_midi_port(
             &ui_default_values.midi_port,
         ));
@@ -187,10 +191,12 @@ pub(super) fn update_ui_values_from_module_parameters(
     audio_device: UIAudioDevice,
     midi_port: UIMidiPort,
     parameters: Arc<ModuleParameters>,
+    selected_patch_index: Option<i32>,
 ) -> ParameterValues {
     ParameterValues {
         audio_device,
         midi_port,
+        selected_patch_index,
         oscillators: oscillator_values_to_ui_oscillator_values(&parameters.oscillators),
         oscillator_fine_tune: oscillator_fine_tune_to_ui_oscillator_fine_tune(
             &parameters.oscillators,

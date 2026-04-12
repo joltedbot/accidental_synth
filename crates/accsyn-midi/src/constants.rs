@@ -8,6 +8,8 @@ pub const CC_MESSAGE_NUMBER_BYTE_INDEX: usize = 1;
 pub const CC_MESSAGE_VALUE_BYTE_INDEX: usize = 2;
 /// Byte index of the pressure value within a Channel Pressure message.
 pub const CHANNEL_PRESSURE_VALUE_BYTE_INDEX: usize = 1;
+/// Byte index of the program number within a Program Change message.
+pub const PROGRAM_CHANGE_VALUE_BYTE_INDEX: usize = 1;
 /// Polling interval in milliseconds for checking MIDI device list changes.
 pub const DEVICE_LIST_POLLING_INTERVAL: u64 = 2000;
 /// MIDI message types to ignore (SysEx and timing messages).

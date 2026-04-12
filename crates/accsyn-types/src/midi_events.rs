@@ -13,6 +13,8 @@ pub enum MidiEvent {
     PitchBend(u16),
     /// Channel pressure (aftertouch) event (pressure value).
     ChannelPressure(u8),
+    /// Program change event (program number).
+    ProgramChange(u8),
 }
 
 /// MIDI Control Change message types mapped to synthesizer parameters.

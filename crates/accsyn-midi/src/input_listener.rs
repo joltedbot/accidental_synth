@@ -1,11 +1,4 @@
-use crate::constants::{
-    CC_MESSAGE_NUMBER_BYTE_INDEX, CC_MESSAGE_VALUE_BYTE_INDEX, CHANNEL_PRESSURE_VALUE_BYTE_INDEX,
-    MESSAGE_STATUS_BYTE_CHANNEL_MASK, MESSAGE_STATUS_BYTE_INDEX, MESSAGE_STATUS_BYTE_TYPE_MASK,
-    MESSAGE_TYPE_IGNORE_LIST, MIDI_INPUT_CLIENT_NAME, MIDI_INPUT_CONNECTION_NAME,
-    NOTE_MESSAGE_NUMBER_BYTE_INDEX, NOTE_MESSAGE_VELOCITY_BYTE_INDEX,
-    PITCH_BEND_MESSAGE_LSB_BYTE_INDEX, PITCH_BEND_MESSAGE_MSB_BYTE_INDEX,
-    RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET,
-};
+use crate::constants::{CC_MESSAGE_NUMBER_BYTE_INDEX, CC_MESSAGE_VALUE_BYTE_INDEX, CHANNEL_PRESSURE_VALUE_BYTE_INDEX, MESSAGE_STATUS_BYTE_CHANNEL_MASK, MESSAGE_STATUS_BYTE_INDEX, MESSAGE_STATUS_BYTE_TYPE_MASK, MESSAGE_TYPE_IGNORE_LIST, MIDI_INPUT_CLIENT_NAME, MIDI_INPUT_CONNECTION_NAME, NOTE_MESSAGE_NUMBER_BYTE_INDEX, NOTE_MESSAGE_VELOCITY_BYTE_INDEX, PITCH_BEND_MESSAGE_LSB_BYTE_INDEX, PITCH_BEND_MESSAGE_MSB_BYTE_INDEX, PROGRAM_CHANGE_VALUE_BYTE_INDEX, RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET};
 use crate::{MidiError, Status, control_change};
 use accsyn_types::midi_events::MidiEvent;
 use anyhow::Result;
@@ -95,12 +88,19 @@ fn event_from_message_status(
         Status::NoteOff => process_note_off_message(message, current_note_arc),
         Status::ControlChange => process_cc_message(message),
         Status::PitchBend => Some(process_pitch_bend_message(message)),
+        Status::ProgramChange => Some(process_program_change_message(message)),
         Status::ChannelPressure => Some(process_channel_pressure_message(message)),
         _ => {
             log::debug!(target: "midi::input", "Unhandled MIDI status type: 0x{:02X}", message[MESSAGE_STATUS_BYTE_INDEX]);
             None
         }
+
     }
+}
+
+fn process_program_change_message(message: &[u8]) -> MidiEvent {
+    let program_number = message[PROGRAM_CHANGE_VALUE_BYTE_INDEX];
+    MidiEvent::ProgramChange(program_number)
 }
 
 fn process_channel_pressure_message(message: &[u8]) -> MidiEvent {

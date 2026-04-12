@@ -431,6 +431,12 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::PatchChanged(preset_index) => {
                     let thread_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
                     let patch_list = thread_patches.patch_list();
+
+                    if preset_index >= patch_list.names().len() as i32 {
+                        log::warn!(target: "synthesizer::event_listener", "Invalid preset index: {preset_index}");
+                        return;
+                    }
+
                     let patch = match thread_patches
                         .get_module_parameters_from_patch_index(preset_index as usize, &patch_list)
                     {

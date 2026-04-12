@@ -20,11 +20,13 @@ use crate::synthesizer::{
 use accsyn_types::defaults::Defaults;
 use accsyn_types::math::{normalize_midi_value, store_f32_as_atomic_u32};
 use accsyn_types::midi_events::CC;
-use accsyn_types::synth_events::{EnvelopeIndex, LFOIndex, OscillatorIndex};
+use accsyn_types::synth_events::{
+    EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
+};
 use accsyn_types::ui_events::UIUpdates;
 use crossbeam_channel::Sender;
-use std::sync::Arc;
 use std::sync::atomic::Ordering::{Relaxed, Release};
+use std::sync::Arc;
 
 fn send_ui_update(ui_update_sender: &Sender<UIUpdates>, update: UIUpdates) {
     if let Err(e) = ui_update_sender.send(update) {
@@ -57,6 +59,21 @@ pub fn action_midi_note_events(
                 .store(MidiGateEvent::GateOff as u8, Relaxed);
         }
     }
+}
+
+pub fn process_midi_program_change_message(
+    ui_update_sender: &Sender<UIUpdates>,
+    synthesizer_update_sender: &Sender<SynthesizerUpdateEvents>,
+    program_number: u8,
+) {
+    log::debug!(target: "synthesizer::midi", "Program change received: {program_number}");
+
+    synthesizer_update_sender.send(SynthesizerUpdateEvents::PatchChanged(program_number as i32)).expect(
+        "process_midi_program_change_message(): Could not send new program number to the synthesizer module. Exiting.",
+    );
+    ui_update_sender
+        .send(UIUpdates::Patches(program_number as i32))
+        .expect("process_midi_program_change_message(): Could not send new program number to the UI module. Exiting.");
 }
 
 pub fn process_midi_channel_pressure_message(parameters: &KeyboardParameters, pressure_value: u8) {

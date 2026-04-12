@@ -27,6 +27,7 @@ use crate::synthesizer::event_listener::start_update_event_listener;
 use crate::synthesizer::midi_messages::{
     process_midi_cc_values, process_midi_channel_pressure_message, process_midi_note_off_message,
     process_midi_note_on_message, process_midi_pitch_bend_message,
+    process_midi_program_change_message,
 };
 use crate::synthesizer::sample_generator::sample_generator;
 
@@ -240,7 +241,9 @@ impl Synthesizer {
         ui_update_sender: Sender<UIUpdates>,
     ) -> Result<()> {
         log::debug!(target: "synthesizer", "Start the midi event listener thread");
-        self.start_midi_event_listener(midi_message_receiver, ui_update_sender.clone());
+        
+        let synthesizer_update_sender = self.ui_update_sender.clone();
+        self.start_midi_event_listener(midi_message_receiver, ui_update_sender.clone(), synthesizer_update_sender);
 
         log::debug!(target: "synthesizer", "Start the update event listener thread");
         start_update_event_listener(
@@ -265,6 +268,7 @@ impl Synthesizer {
         &mut self,
         midi_message_receiver: Receiver<MidiEvent>,
         ui_update_sender: Sender<UIUpdates>,
+        ui_update_receiver: Sender<SynthesizerUpdateEvents>,
     ) {
         let mut current_note = self.current_note.clone();
         let mut module_parameters = self.module_parameters.clone();
@@ -297,6 +301,13 @@ impl Synthesizer {
                         process_midi_channel_pressure_message(
                             &module_parameters.keyboard,
                             pressure_value,
+                        );
+                    }
+                    MidiEvent::ProgramChange(program_number) => {
+                        process_midi_program_change_message(
+                            &ui_update_sender,
+                            &ui_update_receiver,
+                            program_number,
                         );
                     }
                     MidiEvent::ControlChange(cc_value) => {
