@@ -382,9 +382,7 @@ pub fn start_ui_update_listener(
                     let patch_list = unlocked_patches.patch_list();
 
                     if index >= patch_list.names().len() as i32 {
-                        log::error!(
-                            "start_ui_update_listener(): Invalid patch index: {index}"
-                        );
+                        log::error!("start_ui_update_listener(): Invalid patch index: {index}");
                         continue;
                     }
 
@@ -404,7 +402,7 @@ pub fn start_ui_update_listener(
                         values.audio_device.clone(),
                         values.midi_port.clone(),
                         Arc::new(patch),
-                        Some(index)
+                        Some(index),
                     );
 
                     *values = new_values;

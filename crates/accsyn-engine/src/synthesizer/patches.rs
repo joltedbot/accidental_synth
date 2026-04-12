@@ -1,11 +1,11 @@
 use crate::synthesizer::ModuleParameters;
+use crate::synthesizer::constants::{MAX_PATCH_FILE_SIZE, MAX_PATCH_NAME_LENGTH};
 use anyhow::{Result, anyhow};
 use serde_json::json;
 use std::fs::read_to_string;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
-use crate::synthesizer::constants::{MAX_PATCH_FILE_SIZE, MAX_PATCH_NAME_LENGTH};
 
 const APP_SUPPORT_DIRECTORY: &str = "Library/Application Support";
 const DATA_DIRECTORY: &str = "AccidentalSynthesizer";
@@ -198,7 +198,10 @@ impl Patches {
 
 fn sanitize_name(name: &str) -> String {
     let sized_name = if name.len() > MAX_PATCH_NAME_LENGTH {
-        name.trim().chars().take(MAX_PATCH_NAME_LENGTH).collect::<String>()
+        name.trim()
+            .chars()
+            .take(MAX_PATCH_NAME_LENGTH)
+            .collect::<String>()
     } else {
         name.trim().to_string()
     };

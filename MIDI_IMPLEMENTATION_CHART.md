@@ -9,71 +9,71 @@
 
 ### Basic Information, MIDI Timing & Synchronization, and Extensions Compatibility
 
-| Function | Transmitted/Export | Recognized/Import | Remarks |
-|----------|-------------------|-------------------|---------|
-| **1. Basic Information** | | | |
-| MIDI channels | No | 1-16 | Omni mode by default, configurable via UI |
-| Note numbers | No | 0-127 | Full MIDI range |
-| Program change | No | No | |
-| Bank Select response? | No | No | |
-| **Modes supported:** | | | |
-| Mode 1: Omni-On, Poly | No | No | Mono synth |
-| Mode 2: Omni-On, Mono | No | Yes | Default mode |
-| Mode 3: Omni-Off, Poly | No | No | Mono synth |
-| Mode 4: Omni-Off, Mono | No | Yes | User-selectable |
-| Multi Mode | No | No | |
-| Note-On Velocity | No | Yes | |
-| Note-Off Velocity | No | No | |
-| Channel Aftertouch | No | Yes | Controls oscillator clipper boost |
-| Poly (Key) Aftertouch | No | No | |
-| Pitch Bend | No | Yes | |
-| Active Sensing | No | No | |
-| System Reset | No | No | |
-| Tune Request | No | No | |
-| **Universal System Exclusive:** | | | |
-| Sample Dump Standard | No | No | |
-| Device Inquiry | No | No | |
-| File Dump | No | No | |
-| MIDI Tuning | No | No | |
-| Master Volume | No | No | |
-| Master Balance | No | No | |
-| Notation Information | No | No | |
-| Turn GM1 System On | No | No | |
-| Turn GM2 System On | No | No | |
-| Turn GM System Off | No | No | |
-| DLS-1 | No | No | |
-| File Reference | No | No | |
-| Controller Destination | No | No | |
-| Key-based Instrument Ctrl | No | No | |
-| Master Fine/Coarse Tune | No | No | |
-| Other Universal System Exclusive | No | No | |
-| **Manufacturer or Non-Commercial System Exclusive** | No | No | |
-| **NRPNs** | No | No | |
-| **RPNs:** | | | |
-| RPN 00 (Pitch Bend Sensitivity) | No | No | Use CC #5 instead |
-| RPN 01 (Channel Fine Tune) | No | No | |
-| RPN 02 (Channel Coarse Tune) | No | No | |
-| RPN 03 (Tuning Program Select) | No | No | |
-| RPN 04 (Tuning Bank Select) | No | No | |
-| RPN 05 (Modulation Depth Range) | No | No | |
-| **2. MIDI Timing and Synchronization** | | | |
-| MIDI Clock | No | No | |
-| Song Position Pointer | No | No | |
-| Song Select | No | No | |
-| Start | No | No | |
-| Continue | No | No | |
-| Stop | No | No | |
-| MIDI Time Code | No | No | |
-| MIDI Machine Control | No | No | |
-| MIDI Show Control | No | No | |
-| **3. Extensions Compatibility** | | | |
-| General MIDI compatible? | No | No | Dedicated synthesizer |
-| Is GM default power-up mode? | No | No | |
-| DLS compatible? | No | No | |
-| (DLS File Types) | No | No | |
-| Standard MIDI Files | No | No | |
-| XMF Files | No | No | |
-| SP-MIDI compatible? | No | No | |
+| Function | Transmitted/Export | Recognized/Import | Remarks                                                                                                                         |
+|----------|------------------|-------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| **1. Basic Information** | |                   |                                                                                                                                 |
+| MIDI channels | No | 1-16              | Omni mode by default, configurable via UI                                                                                       |
+| Note numbers | No | 0-127             | Full MIDI range                                                                                                                 |
+| Program change | No |  Yes                   | Program numbers corespond to the order patches appear in the Patches dropdown menu. Presets and then user patches all in 1 bank |
+| Bank Select response? | No | No                |                                                                                                                                 |
+| **Modes supported:** | |                   |                                                                                                                                 |
+| Mode 1: Omni-On, Poly | No | No                | Mono synth                                                                                                                      |
+| Mode 2: Omni-On, Mono | No | Yes               | Default mode                                                                                                                    |
+| Mode 3: Omni-Off, Poly | No | No                | Mono synth                                                                                                                      |
+| Mode 4: Omni-Off, Mono | No | Yes               | User-selectable                                                                                                                 |
+| Multi Mode | No | No                |                                                                                                                                 |
+| Note-On Velocity | No | Yes               |                                                                                                                                 |
+| Note-Off Velocity | No | No                |                                                                                                                                 |
+| Channel Aftertouch | No | Yes               | Controls oscillator clipper boost                                                                                               |
+| Poly (Key) Aftertouch | No | No                |                                                                                                                                 |
+| Pitch Bend | No | Yes               |                                                                                                                                 |
+| Active Sensing | No | No                |                                                                                                                                 |
+| System Reset | No | No                |                                                                                                                                 |
+| Tune Request | No | No                |                                                                                                                                 |
+| **Universal System Exclusive:** | |                   |                                                                                                                                 |
+| Sample Dump Standard | No | No                |                                                                                                                                 |
+| Device Inquiry | No | No                |                                                                                                                                 |
+| File Dump | No | No                |                                                                                                                                 |
+| MIDI Tuning | No | No                |                                                                                                                                 |
+| Master Volume | No | No                |                                                                                                                                 |
+| Master Balance | No | No                |                                                                                                                                 |
+| Notation Information | No | No                |                                                                                                                                 |
+| Turn GM1 System On | No | No                |                                                                                                                                 |
+| Turn GM2 System On | No | No                |                                                                                                                                 |
+| Turn GM System Off | No | No                |                                                                                                                                 |
+| DLS-1 | No | No                |                                                                                                                                 |
+| File Reference | No | No                |                                                                                                                                 |
+| Controller Destination | No | No                |                                                                                                                                 |
+| Key-based Instrument Ctrl | No | No                |                                                                                                                                 |
+| Master Fine/Coarse Tune | No | No                |                                                                                                                                 |
+| Other Universal System Exclusive | No | No                |                                                                                                                                 |
+| **Manufacturer or Non-Commercial System Exclusive** | No | No                |                                                                                                                                 |
+| **NRPNs** | No | No                |                                                                                                                                 |
+| **RPNs:** | |                   |                                                                                                                                 |
+| RPN 00 (Pitch Bend Sensitivity) | No | No                | Use CC #5 instead                                                                                                               |
+| RPN 01 (Channel Fine Tune) | No | No                |                                                                                                                                 |
+| RPN 02 (Channel Coarse Tune) | No | No                |                                                                                                                                 |
+| RPN 03 (Tuning Program Select) | No | No                |                                                                                                                                 |
+| RPN 04 (Tuning Bank Select) | No | No                |                                                                                                                                 |
+| RPN 05 (Modulation Depth Range) | No | No                |                                                                                                                                 |
+| **2. MIDI Timing and Synchronization** | |                   |                                                                                                                                 |
+| MIDI Clock | No | No                |                                                                                                                                 |
+| Song Position Pointer | No | No                |                                                                                                                                 |
+| Song Select | No | No                |                                                                                                                                 |
+| Start | No | No                |                                                                                                                                 |
+| Continue | No | No                |                                                                                                                                 |
+| Stop | No | No                |                                                                                                                                 |
+| MIDI Time Code | No | No                |                                                                                                                                 |
+| MIDI Machine Control | No | No                |                                                                                                                                 |
+| MIDI Show Control | No | No                |                                                                                                                                 |
+| **3. Extensions Compatibility** | |                   |                                                                                                                                 |
+| General MIDI compatible? | No | No                | Dedicated synthesizer                                                                                                           |
+| Is GM default power-up mode? | No | No                |                                                                                                                                 |
+| DLS compatible? | No | No                |                                                                                                                                 |
+| (DLS File Types) | No | No                |                                                                                                                                 |
+| Standard MIDI Files | No | No                |                                                                                                                                 |
+| XMF Files | No | No                |                                                                                                                                 |
+| SP-MIDI compatible? | No | No                |                                                                                                                                 |
 
 ---
 

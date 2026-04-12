@@ -1,4 +1,6 @@
-use crate::modules::effects::constants::{DEFAULT_LFO_WAVESHAPE_INDEX, TREMOLO_LFO_CENTER_VALUE, TREMOLO_LFO_RANGE, TREMOLO_MAX_DEPTH};
+use crate::modules::effects::constants::{
+    DEFAULT_LFO_WAVESHAPE_INDEX, TREMOLO_LFO_CENTER_VALUE, TREMOLO_LFO_RANGE, TREMOLO_MAX_DEPTH,
+};
 use crate::modules::lfo::{DEFAULT_LFO_FREQUENCY, Lfo};
 use crate::synthesizer::midi_value_converters::exponential_curve_lfo_frequency_from_normal_value;
 use accsyn_types::effects::{AudioEffect, EffectParameters};

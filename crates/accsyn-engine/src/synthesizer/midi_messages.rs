@@ -25,8 +25,8 @@ use accsyn_types::synth_events::{
 };
 use accsyn_types::ui_events::UIUpdates;
 use crossbeam_channel::Sender;
-use std::sync::atomic::Ordering::{Relaxed, Release};
 use std::sync::Arc;
+use std::sync::atomic::Ordering::{Relaxed, Release};
 
 fn send_ui_update(ui_update_sender: &Sender<UIUpdates>, update: UIUpdates) {
     if let Err(e) = ui_update_sender.send(update) {

@@ -1,4 +1,8 @@
-use crate::defaults::{AUTOPAN_DEFAULT_PARAMETERS, CLIPPER_DEFAULT_PARAMETERS, COMPRESSOR_DEFAULT_PARAMETERS, DELAY_DEFAULT_PARAMETERS, GATE_DEFAULT_PARAMETERS, SATURATION_DEFAULT_PARAMETERS, TREMOLO_DEFAULT_PARAMETERS};
+use crate::defaults::{
+    AUTOPAN_DEFAULT_PARAMETERS, CLIPPER_DEFAULT_PARAMETERS, COMPRESSOR_DEFAULT_PARAMETERS,
+    DELAY_DEFAULT_PARAMETERS, GATE_DEFAULT_PARAMETERS, SATURATION_DEFAULT_PARAMETERS,
+    TREMOLO_DEFAULT_PARAMETERS,
+};
 use strum::IntoEnumIterator;
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
@@ -60,9 +64,7 @@ impl EffectParameters {
 
         for effect in EffectIndex::iter() {
             match effect {
-                EffectIndex::WaveFolder
-                | EffectIndex::Rectifier
-                | EffectIndex::BitShifter => {
+                EffectIndex::WaveFolder | EffectIndex::Rectifier | EffectIndex::BitShifter => {
                     effect_parameters.push(EffectParameters::default());
                 }
                 EffectIndex::Saturation => {

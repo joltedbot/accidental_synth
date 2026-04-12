@@ -6,6 +6,7 @@ import {
 } from "components.slint";
 import { Theme } from "theme.slint";
 import { Button, ComboBox, HorizontalBox } from "std-widgets.slint";
+import { PatchState } from "constants.slint";
 import {
     SettingsIcon,
     SettingsWindow,
@@ -44,11 +45,15 @@ export component Patches inherits HorizontalLayout {
         height: 25px;
         width: Theme.patch-list-width;
         model: patch-list;
-        current-index: selected-index;
 
         selected(value) => {
             patch-changed(self.current-index);
         }
+    }
+
+    property <int> gen: PatchState.generation;
+    changed gen => {
+        preset.current-index = selected-index;
     }
 }
 

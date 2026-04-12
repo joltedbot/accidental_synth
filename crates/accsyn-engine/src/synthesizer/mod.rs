@@ -241,9 +241,13 @@ impl Synthesizer {
         ui_update_sender: Sender<UIUpdates>,
     ) -> Result<()> {
         log::debug!(target: "synthesizer", "Start the midi event listener thread");
-        
+
         let synthesizer_update_sender = self.ui_update_sender.clone();
-        self.start_midi_event_listener(midi_message_receiver, ui_update_sender.clone(), synthesizer_update_sender);
+        self.start_midi_event_listener(
+            midi_message_receiver,
+            ui_update_sender.clone(),
+            synthesizer_update_sender,
+        );
 
         log::debug!(target: "synthesizer", "Start the update event listener thread");
         start_update_event_listener(
