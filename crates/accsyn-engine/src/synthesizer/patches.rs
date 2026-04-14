@@ -2,7 +2,7 @@ use crate::synthesizer::ModuleParameters;
 use crate::synthesizer::constants::{MAX_PATCH_FILE_SIZE, MAX_PATCH_NAME_LENGTH};
 use anyhow::{Result, anyhow};
 use serde_json::json;
-use std::fs::read_to_string;
+use std::fs::{DirEntry, read_to_string};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
@@ -11,42 +11,57 @@ const APP_SUPPORT_DIRECTORY: &str = "Library/Application Support";
 const DATA_DIRECTORY: &str = "AccidentalSynthesizer";
 const USER_PATCH_DIRECTORY: &str = "patches";
 const PATCH_FILE_EXTENSION: &str = "json";
+const INIT_PARAMETERS: &str = SYSTEM_PATCHES[0].1;
 const SYSTEM_PATCHES: &[(&str, &str)] = &[
-    ("*Init", include_str!("patches/init.json")),
+    ("*1 - Init", include_str!("patches/init.json")),
     (
-        "*A Slightly Warmer FM",
+        "*2 - A Slightly Warmer FM",
         include_str!("patches/a-slightly-warmer-fm.json"),
     ),
-    ("*Acid Squelch", include_str!("patches/acid-squelch.json")),
-    ("*Acid Time", include_str!("patches/acid-time.json")),
     (
-        "*Alien Invasion",
+        "*3 - Acid Squelch",
+        include_str!("patches/acid-squelch.json"),
+    ),
+    ("*4 - Acid Time", include_str!("patches/acid-time.json")),
+    (
+        "*5 - Alien Invasion",
         include_str!("patches/alien-invasion.json"),
     ),
-    ("*Ambient Drone", include_str!("patches/ambient-drone.json")),
-    ("*Bright Lead", include_str!("patches/bright-lead.json")),
-    ("*Buzz Brass", include_str!("patches/buzz-brass.json")),
-    ("*Deep Bass", include_str!("patches/deep-bass.json")),
     (
-        "*Dirty Bass Echo",
+        "*6 - Ambient Drone",
+        include_str!("patches/ambient-drone.json"),
+    ),
+    ("*7 - Bright Lead", include_str!("patches/bright-lead.json")),
+    ("*8 - Buzz Brass", include_str!("patches/buzz-brass.json")),
+    ("*9 - Deep Bass", include_str!("patches/deep-bass.json")),
+    (
+        "*10 - Dirty Bass Echo",
         include_str!("patches/dirty-bass-echo.json"),
     ),
-    ("*Drifting Pad", include_str!("patches/drifting-pad.json")),
-    ("*FM Bells", include_str!("patches/fm-bells.json")),
-    ("*Plucky Keys", include_str!("patches/plucky-keys.json")),
-    ("*Sci-Fi", include_str!("patches/sci-fi.json")),
-    ("*Singing Bowls", include_str!("patches/singing-bowls.json")),
-    ("*Slide Bass", include_str!("patches/slide-bass.json")),
     (
-        "*Supersaw Swirl",
+        "*11 - Drifting Pad",
+        include_str!("patches/drifting-pad.json"),
+    ),
+    ("*12 - FM Bells", include_str!("patches/fm-bells.json")),
+    (
+        "*13 - Plucky Keys",
+        include_str!("patches/plucky-keys.json"),
+    ),
+    ("*14 - Sci-Fi", include_str!("patches/sci-fi.json")),
+    (
+        "*15 - Singing Bowls",
+        include_str!("patches/singing-bowls.json"),
+    ),
+    ("*16 - Slide Bass", include_str!("patches/slide-bass.json")),
+    (
+        "*17 - Supersaw Swirl",
         include_str!("patches/supersaw-swirl.json"),
     ),
     (
-        "*Triangles and Claves",
+        "*18 - Triangles and Claves",
         include_str!("patches/triangles-and-claves.json"),
     ),
 ];
-const INIT_PARAMETERS: &str = SYSTEM_PATCHES[0].1;
 
 /// Errors that can occur during patch file operations.
 #[derive(Debug, Clone, Error)]
@@ -162,7 +177,7 @@ impl Patches {
                 "Patch file can not be written outside of the user patches directory: {}",
                 patch_file_path.display()
             ));
-        };
+        }
 
         if patch_file_path.exists() {
             log::warn!(target: "synthesizer::patches", "Patch file already exists: {}", patch_file_path.display());
@@ -222,12 +237,22 @@ fn load_presets() -> Vec<Patch> {
 
 /// Create patch collection from user patches directory.
 pub fn load_patches(patch_directory: &Path) -> PatchList {
+    log::debug!(target: "synthesizer::patches", "Loading presets");
     let mut patches = load_presets();
+    let mut patch_counter = patches.len();
+
+    log::debug!(target: "synthesizer::patches", "Loading patches from directory: {}", patch_directory.display());
+
+    // Sort by modification time (newest first)
+    //
 
     if let Ok(entries) = patch_directory.read_dir() {
-        entries
+        let mut files = entries
             .filter_map(|entry| entry.ok())
-            .filter(|entry| {
+            .collect::<Vec<DirEntry>>();
+        files.sort_by_key(|e| e.metadata().ok()?.modified().ok());
+
+        files.iter().filter(|entry| {
                 entry.metadata().map(|m| m.len() < MAX_PATCH_FILE_SIZE).unwrap_or_else(|error|{
                     log::warn!(target: "synthesizer::patches", "Failed to read metadata for patch file {}: {error}", entry.path().display());
                     false
@@ -253,10 +278,12 @@ pub fn load_patches(patch_directory: &Path) -> PatchList {
                         return None;
                     }
                 };
-                Some(Patch { name: sanitized_name, content })
+                patch_counter += 1;
+                let display_name = format!("{} - {}", patch_counter, sanitized_name);
+                Some(Patch { name: display_name, content })
             })
             .for_each(|patch| patches.push(patch));
-    };
+    }
 
     PatchList { list: patches }
 }

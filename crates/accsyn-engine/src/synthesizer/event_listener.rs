@@ -463,7 +463,7 @@ pub fn start_update_event_listener(
 
                     if let Err(err) = thread_patches.save_patch(&patch_name, &module_parameters) {
                         log::error!(target: "synthesizer::event_listener", "Could not save patch: {patch_name}: {err}");
-                    };
+                    }
 
                     let patch_list = thread_patches.patch_list().names();
 
