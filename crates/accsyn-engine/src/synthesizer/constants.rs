@@ -24,3 +24,8 @@ pub const SAMPLE_PRODUCER_LOOP_SLEEP_DURATION_MICROSECONDS: u64 = 100;
 pub const SYNTHESIZER_MESSAGE_SENDER_CAPACITY: usize = 10;
 pub const MAX_PATCH_NAME_LENGTH: usize = 24;
 pub const MAX_PATCH_FILE_SIZE: u64 = 5120;
+
+// Patch Save Status Messages
+pub const PATCH_SAVE_SUCCESS: &str = "Patch saved successfully!";
+pub const PATCH_SAVE_ALREADY_EXISTS: &str = "Patch name already exists!";
+pub const PATCH_SAVE_FAILURE: &str = "Failed to save patch!";

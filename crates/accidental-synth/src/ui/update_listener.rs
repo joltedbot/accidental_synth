@@ -7,7 +7,7 @@ use crate::ui::set_slint_values::{
     set_filter_options_values, set_global_options_values, set_lfo_frequency_display,
     set_lfo_phase_display, set_lfo_values, set_midi_port_values, set_midi_screen_values,
     set_oscillator_fine_tune_display, set_oscillator_mixer_values, set_oscillator_values,
-    set_output_mixer_values, set_patch_list,
+    set_output_mixer_values, set_patch_list, set_patch_save_status,
 };
 use crate::ui::{push_values_to_ui, update_ui_values_from_module_parameters};
 use accsyn_engine::synthesizer::midi_value_converters::{
@@ -415,6 +415,9 @@ pub fn start_ui_update_listener(
                 }
                 UIUpdates::PatchList(patch_list) => {
                     set_patch_list(&ui_weak_thread, patch_list);
+                }
+                UIUpdates::PatchSaveStatus(save_status) => {
+                    set_patch_save_status(&ui_weak_thread, save_status);
                 }
             }
 

@@ -340,6 +340,7 @@ export component MomentaryButton inherits VerticalLayout {
     in property <string> label;
     in property <length> button-width: 100px;
     in property <length> button-height: 30px;
+    in property <bool> enabled: true;
     callback momentary-button-pressed();
     alignment: center;
     spacing: 5px;
@@ -348,6 +349,7 @@ export component MomentaryButton inherits VerticalLayout {
         width: button-width;
         height: button-height;
         text: label;
+        enabled: enabled;
 
         changed pressed => {
             self.primary = self.pressed;

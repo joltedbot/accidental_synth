@@ -31,40 +31,44 @@ const SYSTEM_PATCHES: &[(&str, &str)] = &[
         "*6 - Ambient Drone",
         include_str!("patches/ambient-drone.json"),
     ),
-    ("*7 - Bright Lead", include_str!("patches/bright-lead.json")),
-    ("*8 - Buzz Brass", include_str!("patches/buzz-brass.json")),
-    ("*9 - Deep Bass", include_str!("patches/deep-bass.json")),
     (
-        "*10 - Dirty Bass Echo",
+        "*7 - Arpable Dirty FM",
+        include_str!("patches/arpable-dirty-fm.json"),
+    ),
+    ("*8 - Bright Lead", include_str!("patches/bright-lead.json")),
+    ("*9 - Buzz Brass", include_str!("patches/buzz-brass.json")),
+    ("*10 - Deep Bass", include_str!("patches/deep-bass.json")),
+    (
+        "*11 - Dirty Bass Echo",
         include_str!("patches/dirty-bass-echo.json"),
     ),
     (
-        "*11 - Drifting Pad",
+        "*12 - Drifting Pad",
         include_str!("patches/drifting-pad.json"),
     ),
-    ("*12 - FM Bells", include_str!("patches/fm-bells.json")),
+    ("*13 - FM Bells", include_str!("patches/fm-bells.json")),
     (
-        "*13 - Plucky Keys",
+        "*14 - Plucky Keys",
         include_str!("patches/plucky-keys.json"),
     ),
-    ("*14 - Sci-Fi", include_str!("patches/sci-fi.json")),
+    ("*15 - Sci-Fi", include_str!("patches/sci-fi.json")),
     (
-        "*15 - Singing Bowls",
+        "*16 - Singing Bowls",
         include_str!("patches/singing-bowls.json"),
     ),
-    ("*16 - Slide Bass", include_str!("patches/slide-bass.json")),
+    ("*17 - Slide Bass", include_str!("patches/slide-bass.json")),
     (
-        "*17 - Supersaw Swirl",
+        "*18 - Supersaw Swirl",
         include_str!("patches/supersaw-swirl.json"),
     ),
     (
-        "*18 - Triangles and Claves",
+        "*19 - Triangles and Claves",
         include_str!("patches/triangles-and-claves.json"),
     ),
 ];
 
 /// Errors that can occur during patch file operations.
-#[derive(Debug, Clone, Error)]
+#[derive(Debug, Clone, Error, PartialEq)]
 pub enum PatchesError {
     /// The macOS Application Support directory was not found.
     #[error("Application support directory does not exist")]
@@ -77,6 +81,18 @@ pub enum PatchesError {
     /// A patch file with the given name already exists on disk.
     #[error("Patch file already exists")]
     FileAlreadyExists,
+
+    /// The patch file path is outside of the user patches directory.
+    #[error("Patch file path is outside of the user patches directory")]
+    PatchFileOutsideOfUserPatchesDirectory,
+
+    /// The patch file could not be created.
+    #[error("Failed to create patch file")]
+    FailedToCreatePatchFile,
+
+    /// The patch file could not be written to.
+    #[error("Failed to write patch file")]
+    FailedToWritePatchFile,
 }
 
 /// File system paths used for application data, patches, and presets storage.
@@ -127,14 +143,22 @@ impl Patches {
     }
 
     /// Serializes the current module parameters to a new named patch file.
-    pub fn save_patch(&mut self, name: &str, parameters: &ModuleParameters) -> Result<()> {
+    pub fn save_patch(
+        &mut self,
+        name: &str,
+        parameters: &ModuleParameters,
+    ) -> Result<(), PatchesError> {
         self.create_new_patch(name, parameters)?;
         self.patches = load_patches(&self.paths.user_patches);
         log::info!(target: "synthesizer::patches", "Patch saved: {name}");
         Ok(())
     }
 
-    fn create_new_patch(&self, name: &str, parameters: &ModuleParameters) -> Result<()> {
+    fn create_new_patch(
+        &self,
+        name: &str,
+        parameters: &ModuleParameters,
+    ) -> Result<(), PatchesError> {
         let content = create_patch_from_parameters(parameters);
         let mut patch_file_path = self.paths.user_patches.clone();
         let sanitized_name = sanitize_name(name);
@@ -143,14 +167,16 @@ impl Patches {
 
         self.validate_patch_file_path(&mut patch_file_path, &self.paths.user_patches)?;
 
-        let mut handle = std::fs::File::create(&patch_file_path).map_err(|e| {
-            log::error!(target: "synthesizer::patches", "Failed to create patch file {}: {e}", patch_file_path.display());
-            e
+        let mut handle = std::fs::File::create(&patch_file_path).map_err(|err| {
+            log::error!(target: "synthesizer::patches", "Failed to create patch file {}: {err}", patch_file_path
+                .display());
+            PatchesError::FailedToCreatePatchFile
         })?;
 
-        handle.write_all(content.as_bytes()).map_err(|e| {
-            log::error!(target: "synthesizer::patches", "Failed to write patch file {}: {e}", patch_file_path.display());
-            e
+        handle.write_all(content.as_bytes()).map_err(|err| {
+            log::error!(target: "synthesizer::patches", "Failed to write patch file {}: {err}", patch_file_path
+                .display());
+            PatchesError::FailedToWritePatchFile
         })?;
 
         log::info!(target: "synthesizer::patches", "Created new patch file: {}", patch_file_path.display());
@@ -162,29 +188,20 @@ impl Patches {
         &self,
         patch_file_path: &mut Path,
         expected_patch_directory: &Path,
-    ) -> Result<()> {
+    ) -> Result<(), PatchesError> {
         if let Some(patch_path_parent) = patch_file_path.parent() {
             if patch_path_parent != expected_patch_directory {
                 log::warn!(target: "synthesizer::patches", "Patch file path is outside of the user patches directory: {}", patch_file_path.display());
-                return Err(anyhow!(
-                    "Patch file path is outside of the user patches directory: {}",
-                    patch_file_path.display()
-                ));
+                return Err(PatchesError::PatchFileOutsideOfUserPatchesDirectory);
             }
         } else {
             log::warn!(target: "synthesizer::patches", "Patch file path has no parent directory: {}", patch_file_path.display());
-            return Err(anyhow!(
-                "Patch file can not be written outside of the user patches directory: {}",
-                patch_file_path.display()
-            ));
+            return Err(PatchesError::PatchFileOutsideOfUserPatchesDirectory);
         }
 
         if patch_file_path.exists() {
             log::warn!(target: "synthesizer::patches", "Patch file already exists: {}", patch_file_path.display());
-            return Err(anyhow!(
-                "Patch file already exists: {}",
-                patch_file_path.display()
-            ));
+            return Err(PatchesError::FileAlreadyExists);
         }
 
         Ok(())
@@ -243,10 +260,8 @@ pub fn load_patches(patch_directory: &Path) -> PatchList {
 
     log::debug!(target: "synthesizer::patches", "Loading patches from directory: {}", patch_directory.display());
 
-    // Sort by modification time (newest first)
-    //
-
     if let Ok(entries) = patch_directory.read_dir() {
+        // Sort by modification time (newest first)
         let mut files = entries
             .filter_map(|entry| entry.ok())
             .collect::<Vec<DirEntry>>();

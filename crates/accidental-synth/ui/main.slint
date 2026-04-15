@@ -6,7 +6,7 @@ import { TabWidget, Slider, VerticalBox, SpinBox } from "std-widgets.slint";
 import { Panel, EnvelopeValues, LFOValues } from "components.slint";
 import { GlobalPanel, GlobalOptions } from "global-panel.slint";
 import { HeaderPanel } from "header-panel.slint";
-import { AudioDevice, MidiPort } from "settings-panel.slint";
+import { AudioDevice, MidiPort, PatchSaveStatus } from "settings-panel.slint";
 import { FilterPanel, FilterCutoff, FilterOptions } from "filter-panel.slint";
 import { OscillatorsPanel, Oscillator } from "oscillator-panel.slint";
 import { Mixer } from "global-panel.slint";
@@ -36,6 +36,7 @@ export component AccidentalSynth inherits Window {
     in property <MidiPort> midi-port-values;
     in property <[string]> patch-list;
     in-out property <int> selected-patch-index;
+    in property <PatchSaveStatus> patch_save_status;
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
     callback audio-output-right-channel-changed(string);
@@ -136,6 +137,7 @@ export component AccidentalSynth inherits Window {
                 midi-port-values: midi-port-values;
                 patch-list: patch-list;
                 selected-patch-index: selected-patch-index;
+                patch_save_status: patch_save_status;
 
                 audio-output-device-changed(device) => {
                     audio-output-device-changed(device);

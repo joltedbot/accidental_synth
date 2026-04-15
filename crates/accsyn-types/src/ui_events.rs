@@ -100,6 +100,8 @@ pub enum UIUpdates {
     Patches(i32),
     /// Patch List Updated — UI should reload the patch list.
     PatchList(Vec<String>),
+    /// Patch Save Status UI Update
+    PatchSaveStatus((bool, String)),
 }
 
 /// ADSR envelope stage identifier.

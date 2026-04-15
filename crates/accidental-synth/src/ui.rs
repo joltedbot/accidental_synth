@@ -6,7 +6,7 @@ mod update_listener;
 
 use super::{
     AccidentalSynth, AudioDevice, EffectsValues, EnvelopeValues, FilterCutoff, FilterOptions,
-    GlobalOptions, LFOValues, MidiPort, Mixer, Oscillator,
+    GlobalOptions, LFOValues, MidiPort, Mixer, Oscillator, PatchSaveStatus,
 };
 use crate::ui::callbacks::register_callbacks;
 use crate::ui::structs::{
@@ -312,6 +312,14 @@ fn slint_audio_device_from_ui_audio_device(audio_device_values: &UIAudioDevice) 
     }
 }
 
+fn slint_patches_save_status_from_ui_patch_save_status(
+    save_status: &(bool, String),
+) -> PatchSaveStatus {
+    PatchSaveStatus {
+        status: save_status.0,
+        message: SharedString::from(save_status.1.clone()),
+    }
+}
 fn slint_patches_list_from_ui_patches_list(patches_list: &[String]) -> ModelRc<SharedString> {
     let slint_presets = patches_list
         .iter()

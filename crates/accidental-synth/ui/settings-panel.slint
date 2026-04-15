@@ -32,6 +32,10 @@ export struct MidiPort {
     channel-index: int,
 }
 
+export struct PatchSaveStatus {
+    status: bool,
+    message: string}
+
 export component AudioSettings inherits VerticalLayout {
 
     in property <AudioDevice> audio-device-values;
@@ -162,6 +166,7 @@ export component SettingsWindow inherits PopupWindow {
     in property <MidiPort> midi-port-values;
     in-out property <int> selected-preset-index;
     in-out property <int> selected-patch-index;
+    in property <PatchSaveStatus> patch_save_status;
 
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
@@ -262,8 +267,10 @@ export component SettingsWindow inherits PopupWindow {
 
                 HorizontalLayout {
                     alignment: center;
+
                     VerticalLayout {
                         alignment: start;
+
                         patch-name := TextInput {
                             label: Theme.settings-patch-name;
                         }
@@ -285,9 +292,11 @@ export component SettingsWindow inherits PopupWindow {
                         }
 
                         HorizontalLayout {
+                            padding: Theme.header-panel-padding;
                             alignment: space-evenly;
                             result-status := Text {
-                                text: Theme.settings-saved-status;
+                                text: patch_save_status.message;
+                                color: patch_save_status.status ? green : red;
                                 visible: false;
                             }
                         }

@@ -124,6 +124,7 @@ pub fn callback_patch_saved(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_patch_saved(move |patch_name| {
+            log::trace!("callback_patch_saved(): Sending SynthesizerUpdateEvents::PatchSaved : {}", patch_name);
             synthesizer_update_sender.send(SynthesizerUpdateEvents::PatchSaved(patch_name.trim().to_string())).expect(
                 "callback_preset_changed(): Could not send new preset update to the audio module. Exiting.",
             );

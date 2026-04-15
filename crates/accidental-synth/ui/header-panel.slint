@@ -12,6 +12,7 @@ import {
     SettingsWindow,
     AudioDevice,
     MidiPort,
+    PatchSaveStatus,
 } from "settings-panel.slint";
 
 export component Version inherits Text {
@@ -62,6 +63,7 @@ export component HeaderPanel inherits Panel {
     in property <AudioDevice> audio-device-values;
     in property <MidiPort> midi-port-values;
     in property <[string]> patch-list;
+    in property <PatchSaveStatus> patch_save_status;
     in-out property <int> selected-patch-index;
 
     callback audio-output-device-changed(string);
@@ -80,6 +82,7 @@ export component HeaderPanel inherits Panel {
     settings := SettingsWindow {
         audio-device-values: audio-device-values;
         midi-port-values: midi-port-values;
+        patch_save_status: patch_save_status;
 
         audio-output-device-changed(device) => {
             audio-output-device-changed(device);

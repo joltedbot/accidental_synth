@@ -3,9 +3,10 @@ use crate::modules::lfo::DEFAULT_LFO_PHASE;
 use crate::synthesizer::ModuleParameters;
 use crate::synthesizer::constants::{
     ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, LFO_INDEX_FILTER, LFO_INDEX_MOD_WHEEL,
+    PATCH_SAVE_ALREADY_EXISTS, PATCH_SAVE_FAILURE, PATCH_SAVE_SUCCESS,
 };
 use crate::synthesizer::midi_value_converters::bool_to_normal_value;
-use crate::synthesizer::patches::Patches;
+use crate::synthesizer::patches::{Patches, PatchesError};
 use crate::synthesizer::set_parameters::{
     set_effect_is_enabled, set_effect_parameter, set_envelope_amount, set_envelope_attack_time,
     set_envelope_decay_time, set_envelope_inverted, set_envelope_release_time,
@@ -461,14 +462,37 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::PatchSaved(patch_name) => {
                     let mut thread_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
 
-                    if let Err(err) = thread_patches.save_patch(&patch_name, &module_parameters) {
-                        log::error!(target: "synthesizer::event_listener", "Could not save patch: {patch_name}: {err}");
+                    let save_status = match thread_patches
+                        .save_patch(&patch_name, &module_parameters)
+                    {
+                        Ok(()) => {
+                            log::info!(target: "synthesizer::event_listener", "Saved patch: {patch_name}");
+                            (true, PATCH_SAVE_SUCCESS.to_string())
+                        }
+                        Err(err) => {
+                            if err == PatchesError::FileAlreadyExists {
+                                log::error!(target: "synthesizer::event_listener", "Patch name already exists: {patch_name}: {err}");
+                                (false, PATCH_SAVE_ALREADY_EXISTS.to_string())
+                            } else {
+                                log::error!(target: "synthesizer::event_listener", "Could not save patch: {patch_name}: {err}");
+                                (false, PATCH_SAVE_FAILURE.to_string())
+                            }
+                        }
+                    };
+
+                    if let Err(e) =
+                        ui_update_sender.send(UIUpdates::PatchSaveStatus(save_status.clone()))
+                    {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send patch save status to the UI: {e}");
+                        return;
                     }
 
-                    let patch_list = thread_patches.patch_list().names();
+                    if save_status.0 {
+                        let patch_list = thread_patches.patch_list().names();
 
-                    if let Err(e) = ui_update_sender.send(UIUpdates::PatchList(patch_list)) {
-                        log::error!(target: "synthesizer::event_listener", "Failed to send new patch list to the UI: {e}");
+                        if let Err(e) = ui_update_sender.send(UIUpdates::PatchList(patch_list)) {
+                            log::error!(target: "synthesizer::event_listener", "Failed to send new patch list to the UI: {e}");
+                        }
                     }
                 }
             }

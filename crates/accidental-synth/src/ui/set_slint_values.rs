@@ -2,10 +2,12 @@ use crate::ui::constants::{
     AUDIO_DEVICE_CHANNEL_INDEX_TO_NAME_OFFSET, AUDIO_DEVICE_CHANNEL_NULL_VALUE,
     MIDI_SCREEN_TOTAL_SLOTS, MONO_CHANNEL_COUNT,
 };
-use crate::ui::slint_patches_list_from_ui_patches_list;
 use crate::ui::structs::{
     UIAudioDevice, UIEnvelope, UIFilterCutoff, UIFilterOptions, UIGlobalOptions, UILfo, UIMidiPort,
     UIMixer, UIOscillator,
+};
+use crate::ui::{
+    slint_patches_list_from_ui_patches_list, slint_patches_save_status_from_ui_patch_save_status,
 };
 use crate::{AccidentalSynth, Mixer, ui};
 use accsyn_engine::synthesizer::midi_value_converters::normal_value_to_bool;
@@ -298,5 +300,13 @@ pub fn set_effect_display(
 pub fn set_patch_list(ui_weak_thread: &Weak<AccidentalSynth>, patch_list: Vec<String>) {
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
         ui.set_patch_list(slint_patches_list_from_ui_patches_list(&patch_list));
+    });
+}
+
+pub fn set_patch_save_status(ui_weak_thread: &Weak<AccidentalSynth>, save_status: (bool, String)) {
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_patch_save_status(slint_patches_save_status_from_ui_patch_save_status(
+            &save_status,
+        ));
     });
 }
