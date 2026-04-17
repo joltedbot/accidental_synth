@@ -36,12 +36,12 @@ export global Theme {
     out property <[string]> empty-dropdown-value: ["---"];
 
     // Panel Defaults
-    out property <length> panel-border-width: 1px;
-    out property <color> panel-background: Palette.background;
+    out property <length> panel-border-width: 2px;
+    out property <color> panel-background: Palette.background.brighter(0.2);
     out property <color> panel-background-lifted: Palette.background.brighter(0.35);
     out property <color> panel-background-recessed: Palette.background.darker(0.25);
-    out property <color> panel-border-colour: Palette.border;
-    out property <length> panel-border-radius: 5px;
+    out property <color> panel-border-colour: Palette.background.darker(0.3);
+    out property <length> panel-border-radius: 8px;
     out property <length> panel-label-font-size: 15px;
     out property <int> panel-label-font-weight: 700;
     out property <color> spacer-color: Palette.border;
@@ -112,7 +112,7 @@ export global Theme {
 
     // Global Panel
     out property <length> global-panel-height: 330px;
-    out property <length> global-panel-width: 1140px;
+    out property <length> global-panel-width: 1000px;
     out property <length> global-panel-padding: 3px;
     out property <length> global-panel-spacing: 3px;
     out property <length> global-panel-widget-width: 120px;
