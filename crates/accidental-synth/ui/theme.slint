@@ -19,7 +19,7 @@ export global Theme {
     out property <string> window-title: "Accidental Synthesizer";
     in property <image> icon: @image-url("images/icon.png");
     in property <image> settings-image: @image-url("images/gear.png");
-    out property <length> window-width: 1300px;
+    out property <length> window-width: 1440px;
     out property <length> window-height: 800px;
     out property <length> window-border-width: 2px;
     out property <color> window-background: Palette.background;
@@ -29,21 +29,24 @@ export global Theme {
     // Text Defaults
     out property <length> default-text-size: 14px;
     out property <string> default-font-family: "HackNerdFontMono";
+    out property <string> label-font-family: "OpenSans";
     out property <int> default-font-weight: 400;
     out property <color> default-font-color: Palette.foreground;
     out property <color> default-font-disabled-color: Palette.control-background;
     out property <[string]> empty-dropdown-value: ["---"];
 
     // Panel Defaults
-    out property <length> panel-border-width: 2px;
+    out property <length> panel-border-width: 1px;
     out property <color> panel-background: Palette.background;
+    out property <color> panel-background-lifted: Palette.background.brighter(0.35);
+    out property <color> panel-background-recessed: Palette.background.darker(0.25);
     out property <color> panel-border-colour: Palette.border;
-    out property <length> panel-border-radius: 0px;
-    out property <length> panel-label-font-size: 14px;
-    out property <int> panel-label-font-weight: 600;
+    out property <length> panel-border-radius: 5px;
+    out property <length> panel-label-font-size: 15px;
+    out property <int> panel-label-font-weight: 700;
     out property <color> spacer-color: Palette.border;
     out property <length> section-label-font-size: 13px;
-    out property <int> section-label-font-weight: 500;
+    out property <int> section-label-font-weight: 600;
     out property <length> component-label-font-size: 13px;
     out property <int> component-label-font-weight: 400;
     out property <length> toggle-switch-font-size: 12px;
@@ -80,8 +83,8 @@ export global Theme {
     out property <length> oscillator-panel-width: 600px;
     out property <length> oscillator-panel-padding: 0px;
     out property <length> oscillator-panel-spacing: 0px;
-    out property <length> oscillator-panel-section-width: 250px;
-    out property <length> oscillator-panel-widget-width: 200px;
+    out property <length> oscillator-panel-section-width: 285px;
+    out property <length> oscillator-panel-widget-width: 230px;
 
     // Filter Panel
     out property <length> filter-panel-widget-width: 130px;
@@ -109,7 +112,7 @@ export global Theme {
 
     // Global Panel
     out property <length> global-panel-height: 330px;
-    out property <length> global-panel-width: 999px;
+    out property <length> global-panel-width: 1140px;
     out property <length> global-panel-padding: 3px;
     out property <length> global-panel-spacing: 3px;
     out property <length> global-panel-widget-width: 120px;

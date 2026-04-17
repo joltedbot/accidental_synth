@@ -35,6 +35,8 @@ export component Panel inherits Rectangle {
     border-width: Theme.panel-border-width;
     background: Theme.panel-background;
     border-color: Theme.panel-border-colour;
+    border-top-left-radius: Theme.panel-border-radius;
+    border-top-right-radius: Theme.panel-border-radius;
     border-bottom-left-radius: Theme.panel-border-radius;
     border-bottom-right-radius: Theme.panel-border-radius;
 }
@@ -74,6 +76,7 @@ export component PanelLabel inherits VerticalLayout {
         horizontal-alignment: center;
         font-size: Theme.panel-label-font-size;
         font-weight: Theme.panel-label-font-weight;
+        font-family: Theme.label-font-family;
         text: label;
     }
 
@@ -89,6 +92,7 @@ export component SectionLabel inherits VerticalLayout {
         horizontal-alignment: center;
         font-size: Theme.section-label-font-size;
         font-weight: Theme.section-label-font-weight;
+        font-family: Theme.label-font-family;
         text: label;
     }
 }
@@ -102,6 +106,7 @@ export component EffectLabel inherits VerticalLayout {
         horizontal-alignment: center;
         font-size: Theme.effect-label-font-size;
         font-weight: Theme.effect-label-font-weight;
+        font-family: Theme.label-font-family;
         text: label;
     }
 }
@@ -113,6 +118,7 @@ export component ComponentLabel inherits VerticalLayout {
         horizontal-alignment: center;
         font-size: Theme.component-label-font-size;
         font-weight: Theme.component-label-font-weight;
+        font-family: Theme.label-font-family;
         text: label;
     }
 }
