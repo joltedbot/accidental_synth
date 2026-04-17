@@ -16,7 +16,6 @@ import {
     FixedCenterLFOSection,
     EnvelopeValues,
     LFOValues,
-    GreenScreen,
 } from "components.slint";
 import { Theme } from "theme.slint";
 import { Constant } from "constants.slint";
@@ -41,7 +40,8 @@ export struct GlobalOptions {
     hard-sync-is-enabled: bool,
     key-sync-is-enabled: bool,
     polarity-is-flipped: bool,
-    sustain-is-enabled: bool}
+    sustain-is-enabled: bool
+}
 
 
 export component MixerStrip inherits VerticalLayout {
@@ -249,7 +249,6 @@ export component MixerSection inherits VerticalLayout {
 
 export component OscillatorSection inherits VerticalLayout {
     in property <GlobalOptions> global-option-values;
-    in property <[string]> midi-display-values;
 
     callback portamento-enabled(bool);
     callback portamento-time-changed(float);
@@ -291,11 +290,11 @@ export component OscillatorSection inherits VerticalLayout {
                 }
             }
 
-                VerticalSpacer {
-                    height: 110px;
-                    left-padding: 5px;
-                    right-padding: 5px;
-                }
+            VerticalSpacer {
+                height: 110px;
+                left-padding: 5px;
+                right-padding: 5px;
+            }
 
             HorizontalLayout {
                 padding: Theme.global-panel-padding;
@@ -379,13 +378,6 @@ export component OscillatorSection inherits VerticalLayout {
                     left-padding: 5px;
                     right-padding: 5px;
                 }
-
-                GreenScreen {
-                    title: Theme.midi-screen-title;
-                    output: midi-display-values;
-                    screen-height: Theme.midi-screen-height;
-                    screen-width: Theme.midi-screen-width;
-                }
             }
         }
     }
@@ -444,7 +436,6 @@ export component ModWheelSection inherits VerticalLayout {
 
     HorizontalLayout {
         alignment: start;
-        VerticalSpacer { }
 
         FixedCenterLFOSection {
             lfo-values: mod-wheel-lfo-values;
@@ -475,7 +466,6 @@ export component GlobalPanel inherits Panel {
 
     in property <Mixer> output-mixer-values;
     in property <[Mixer]> oscillator-mixer-values;
-    in property <[string]> midi-display-values;
 
     callback envelope-attack-changed(int, float);
     callback envelope-decay-changed(int, float);
@@ -531,6 +521,8 @@ export component GlobalPanel inherits Panel {
             }
         }
 
+        VerticalSpacer { }
+
         VerticalLayout {
             alignment: start;
             HorizontalLayout {
@@ -554,6 +546,8 @@ export component GlobalPanel inherits Panel {
                     }
                 }
 
+                VerticalSpacer { }
+
                 mod-wheel-section := ModWheelSection {
                     mod-wheel-lfo-values: mod-wheel-lfo-values;
                     mod-wheel-lfo-frequency-display: mod-wheel-lfo-frequency-display;
@@ -571,13 +565,14 @@ export component GlobalPanel inherits Panel {
                         lfo-phase-reset(lfo_index);
                     }
                 }
+
+                VerticalSpacer { }
             }
 
             HorizontalSpacer { }
 
             osc-section := OscillatorSection {
                 global-option-values: global-options-values;
-                midi-display-values: midi-display-values;
 
                 portamento-enabled(is_enabled) => {
                     portamento-enabled(is_enabled);

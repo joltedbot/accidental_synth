@@ -59,11 +59,16 @@ export global Theme {
     out property <ImageHorizontalAlignment> header-logo-alignment: left;
     out property <length> header-panel-padding: 10px;
     out property <length> header-panel-spacing: 0px;
-    out property <length> header-panel-height: 40px;
+    out property <length> header-panel-height: 48px;
     out property <length> header-version-font-size: 10px;
     out property <string> header-version-prefix: "v";
     out property <brush> header-panel-background: @radial-gradient(circle, #000000 0%, #101035 100%);
     out property <length> patch-list-width: 350px;
+    out property <length> midi-scroller-width: 275px;
+    out property <length> midi-scroller-height: 30px;
+    out property <color> midi-scroller-background: #111111;
+    out property <string> midi-scroller-title: "MIDI:";
+    out property <length> midi-scroller-font-size: 14px;
 
     // Custom Widgets
     out property <color> handle-border-colour: Palette.background;
@@ -79,7 +84,7 @@ export global Theme {
     out property <string> tab-title-effects: "Effects";
 
     // Oscillators Panel
-    out property <length> oscillator-panel-height: 425px;
+    out property <length> oscillator-panel-height: 420px;
     out property <length> oscillator-panel-width: 600px;
     out property <length> oscillator-panel-padding: 0px;
     out property <length> oscillator-panel-spacing: 0px;
@@ -111,9 +116,9 @@ export global Theme {
     out property <string> display-units-degrees: "Deg";
 
     // Global Panel
-    out property <length> global-panel-height: 330px;
-    out property <length> global-panel-width: 1075px;
-    out property <length> global-panel-padding: 5px;
+    out property <length> global-panel-height: 340px;
+    out property <length> global-panel-width: 1140px;
+    out property <length> global-panel-padding: 4px;
     out property <length> global-panel-spacing: 5px;
     out property <length> global-panel-widget-width: 120px;
     out property <string> output-mixer-label: "Output";
@@ -134,9 +139,6 @@ export global Theme {
     out property <string> osc-options-sustain: "Sustain";
     out property <string> amp-envelope-section-label: "Amp Envelope";
     out property <string> mod-wheel-section-label: "Mod Wheel";
-    out property <string> midi-screen-title: "Midi Input";
-    out property <length> midi-screen-width: 145px;
-    out property <length> midi-screen-height: 110px;
 
     // Osciallator Controls Panel
     out property <length> osc-controls-panel-padding: 8px;

@@ -141,6 +141,7 @@ export component AccidentalSynth inherits Window {
                 patch-list: patch-list;
                 selected-patch-index: selected-patch-index;
                 patch_save_status: patch_save_status;
+                midi-display-values: midi-display-values;
 
                 audio-output-device-changed(device) => {
                     audio-output-device-changed(device);
@@ -210,7 +211,6 @@ export component AccidentalSynth inherits Window {
                                 mod-wheel-lfo-frequency-display: mod-wheel-lfo-frequency-display;
                                 mod-wheel-lfo-phase-display: mod-wheel-lfo-phase-display;
                                 global-options-values: global-options-values;
-                                midi-display-values: midi-display-values;
 
                                 envelope-attack-changed(envelope_index, milliseconds) => {
                                     envelope-attack-changed(envelope_index, milliseconds);
