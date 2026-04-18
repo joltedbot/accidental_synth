@@ -133,6 +133,7 @@ export component HeaderPanel inherits Panel {
     in property <PatchSaveStatus> patch_save_status;
     in-out property <int> selected-patch-index;
     in property <[string]> midi-display-values;
+    in property <bool> polarity-is-flipped;
 
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
@@ -143,6 +144,7 @@ export component HeaderPanel inherits Panel {
     callback midi-input-channel-changed(string);
     callback patch-changed(int);
     callback patch-saved(string);
+    callback polarity-flipped(bool);
 
     height: Theme.header-panel-height;
     background: Theme.header-panel-background;
@@ -151,6 +153,7 @@ export component HeaderPanel inherits Panel {
         audio-device-values: audio-device-values;
         midi-port-values: midi-port-values;
         patch_save_status: patch_save_status;
+        polarity-is-flipped: polarity-is-flipped;
 
         audio-output-device-changed(device) => {
             audio-output-device-changed(device);
@@ -175,6 +178,9 @@ export component HeaderPanel inherits Panel {
         }
         patch-saved(name) => {
             patch-saved(name);
+        }
+        polarity-flipped(is_flipped) => {
+            polarity-flipped(is_flipped);
         }
     }
 

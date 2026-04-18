@@ -9,6 +9,7 @@ import {
     HorizontalSpacer,
     VerticalControlLabel,
     TextInput,
+    ToggleSwitch,
 } from "components.slint";
 import { Button, StandardButton } from "std-widgets.slint";
 
@@ -165,6 +166,7 @@ export component SettingsWindow inherits PopupWindow {
     in-out property <int> selected-preset-index;
     in-out property <int> selected-patch-index;
     in property <PatchSaveStatus> patch_save_status;
+    in property <bool> polarity-is-flipped;
 
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
@@ -174,11 +176,12 @@ export component SettingsWindow inherits PopupWindow {
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
     callback patch-saved(string);
+    callback polarity-flipped(bool);
 
     width: Theme.settings-panel-width;
     height: Theme.settings-panel-height;
     x: Theme.window-width / 2 - Theme.settings-panel-width / 2;
-    y: Theme.window-height / 2 - Theme.settings-panel-height / 2;
+    y: Theme.settings-panel-y-position;
     close-policy: no-auto-close;
 
     Rectangle {
@@ -201,8 +204,6 @@ export component SettingsWindow inherits PopupWindow {
                 alignment: start;
 
                 VerticalLayout {
-                    padding: Theme.osc-controls-panel-padding;
-                    spacing: Theme.osc-controls-panel-spacing;
                     alignment: start;
 
                     PanelLabel {
@@ -235,8 +236,6 @@ export component SettingsWindow inherits PopupWindow {
                 }
 
                 VerticalLayout {
-                    padding: Theme.osc-controls-panel-padding;
-                    spacing: Theme.osc-controls-panel-spacing;
                     alignment: start;
 
                     PanelLabel {
@@ -258,51 +257,69 @@ export component SettingsWindow inherits PopupWindow {
                         }
                     }
                 }
+
             }
 
-            PanelLabel {
-                label: Theme.settings-patches-presets-title;
+            HorizontalLayout {
+                padding: Theme.osc-controls-panel-padding;
+                spacing: Theme.osc-controls-panel-spacing;
+                alignment: start;
 
-                HorizontalLayout {
-                    alignment: center;
+                VerticalLayout {
+                    spacing: Theme.osc-controls-panel-spacing;
+                    alignment: start;
 
-                    VerticalLayout {
-                        alignment: start;
+                    PanelLabel {
+                        label: Theme.settings-patches-presets-title;
+                    }
 
-                        patch-name := TextInput {
-                            label: Theme.settings-patch-name;
-                        }
+                    patch-name := TextInput {
+                        label: Theme.settings-patch-name;
+                    }
 
-                        HorizontalLayout {
-                            alignment: center;
-                            save := MomentaryButton {
-                                label: Theme.settings-patch-save;
-                                button-width: 100px;
-                                button-height: 27px;
-                                momentary-button-pressed => {
-                                    if (patch-name.text != "") {
-                                        patch-saved(patch-name.text);
-                                        patch-name.text = "";
-                                        result-status.visible = true;
-                                    }
+                    HorizontalLayout {
+                        alignment: center;
+                        save := MomentaryButton {
+                            label: Theme.settings-patch-save;
+                            button-width: 100px;
+                            button-height: 27px;
+                            momentary-button-pressed => {
+                                if (patch-name.text != "") {
+                                    patch-saved(patch-name.text);
+                                    patch-name.text = "";
+                                    result-status.visible = true;
                                 }
                             }
                         }
+                    }
 
-                        HorizontalLayout {
-                            padding: Theme.header-panel-padding;
-                            alignment: space-evenly;
-                            result-status := Text {
-                                text: patch_save_status.message;
-                                color: patch_save_status.status ? green : red;
-                                visible: false;
-                            }
+                    HorizontalLayout {
+                        alignment: space-evenly;
+                        result-status := Text {
+                            text: patch_save_status.message;
+                            color: patch_save_status.status ? green : red;
+                            visible: false;
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    spacing: Theme.osc-controls-panel-spacing;
+                    alignment: start;
+
+                    PanelLabel {
+                        label: "Synth Options";
+                    }
+
+                    ToggleSwitch {
+                        label: Theme.osc-options-polarity;
+                        is_checked: polarity-is-flipped;
+                        toggle_switch_updated(is_flipped) => {
+                            polarity-flipped(is_flipped);
                         }
                     }
                 }
             }
-
-            HorizontalSpacer { }
 
             StandardButton {
                 kind: close;

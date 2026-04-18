@@ -142,6 +142,7 @@ export component AccidentalSynth inherits Window {
                 selected-patch-index: selected-patch-index;
                 patch_save_status: patch_save_status;
                 midi-display-values: midi-display-values;
+                polarity-is-flipped: global-options-values.polarity-is-flipped;
 
                 audio-output-device-changed(device) => {
                     audio-output-device-changed(device);
@@ -169,6 +170,9 @@ export component AccidentalSynth inherits Window {
                 }
                 patch-saved(name) => {
                     patch-saved(name);
+                }
+                polarity-flipped(is_flipped) => {
+                    polarity-flipped(is_flipped);
                 }
             }
 
@@ -256,9 +260,6 @@ export component AccidentalSynth inherits Window {
                                 }
                                 key-sync-enabled(is_enabled) => {
                                     key-sync-enabled(is_enabled);
-                                }
-                                polarity-flipped(is_flipped) => {
-                                    polarity-flipped(is_flipped);
                                 }
                                 sustain-enabled(is_enabled) => {
                                     sustain-enabled(is_enabled);

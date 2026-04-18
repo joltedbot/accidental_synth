@@ -256,7 +256,6 @@ export component OscillatorSection inherits VerticalLayout {
     callback velocity-curve-changed(float);
     callback hard-sync-enabled(bool);
     callback key-sync-enabled(bool);
-    callback polarity-flipped(bool);
     callback sustain-enabled(bool);
 
     alignment: start;
@@ -354,14 +353,6 @@ export component OscillatorSection inherits VerticalLayout {
                     }
 
                     Row {
-
-                        polarity := ToggleSwitch {
-                            label: Theme.osc-options-polarity;
-                            is_checked: global-option-values.polarity-is-flipped;
-                            toggle_switch_updated(is_flipped) => {
-                                polarity-flipped(is_flipped);
-                            }
-                        }
 
                         Sustain := ToggleSwitch {
                             label: Theme.osc-options-sustain;
@@ -482,7 +473,6 @@ export component GlobalPanel inherits Panel {
     callback velocity-curve-changed(float);
     callback hard-sync-enabled(bool);
     callback key-sync-enabled(bool);
-    callback polarity-flipped(bool);
     callback sustain-enabled(bool);
     callback output-balance-update(float);
     callback output-level-update(float);
@@ -591,9 +581,6 @@ export component GlobalPanel inherits Panel {
                 }
                 key-sync-enabled(is_enabled) => {
                     key-sync-enabled(is_enabled);
-                }
-                polarity-flipped(is_flipped) => {
-                    polarity-flipped(is_flipped);
                 }
                 sustain-enabled(is_enabled) => {
                     sustain-enabled(is_enabled);
