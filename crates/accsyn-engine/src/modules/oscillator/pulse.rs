@@ -31,10 +31,6 @@ impl Pulse {
 
 impl GenerateWave for Pulse {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
-        if tone_frequency == 0.0 {
-            return 0.0;
-        }
-
         let duty_cycle = match modulation {
             Some(modulation) => modulation - OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR,
             None => self.width,
@@ -56,6 +52,14 @@ impl GenerateWave for Pulse {
         }
 
         self.x_coordinate += DEFAULT_X_INCREMENT;
+
+        if tone_frequency > 0.0 {
+            let period = self.sample_rate as f32 / tone_frequency;
+            if self.x_coordinate >= period {
+                self.x_coordinate -= period;
+            }
+        }
+
         y_coordinate
     }
 

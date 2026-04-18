@@ -31,16 +31,14 @@ impl Square {
 
 impl GenerateWave for Square {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
-        let new_frequency = tone_frequency;
-
         if let Some(phase) = self.phase {
             self.x_coordinate =
-                (phase / RADS_PER_CYCLE) * (self.sample_rate as f32 / new_frequency);
+                (phase / RADS_PER_CYCLE) * (self.sample_rate as f32 / tone_frequency);
             self.phase = None;
         }
 
         let mut y_coordinate: f32 =
-            (new_frequency * RADS_PER_CYCLE * (self.x_coordinate / self.sample_rate as f32)).sin();
+            (tone_frequency * RADS_PER_CYCLE * (self.x_coordinate / self.sample_rate as f32)).sin();
 
         if y_coordinate >= 0.0 {
             y_coordinate = 1.0;
@@ -50,8 +48,8 @@ impl GenerateWave for Square {
 
         self.x_coordinate += DEFAULT_X_INCREMENT * modulation.unwrap_or(1.0);
 
-        if new_frequency > 0.0 {
-            let period = self.sample_rate as f32 / new_frequency;
+        if tone_frequency > 0.0 {
+            let period = self.sample_rate as f32 / tone_frequency;
             if self.x_coordinate >= period {
                 self.x_coordinate -= period;
             }
