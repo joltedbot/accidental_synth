@@ -265,7 +265,7 @@ pub fn start_update_event_listener(
                             log::warn!(
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoFrequency: Invalid LFO index: {lfo_index}"
                             );
-                            return;
+                            continue;
                         }
                     };
                     if let Err(e) =
@@ -443,7 +443,7 @@ pub fn start_update_event_listener(
 
                     if preset_index >= patch_list.names().len() as i32 {
                         log::warn!(target: "synthesizer::event_listener", "Invalid preset index: {preset_index}");
-                        return;
+                        continue;
                     }
 
                     let patch = match thread_patches
@@ -452,7 +452,7 @@ pub fn start_update_event_listener(
                         Ok(preset) => preset,
                         Err(e) => {
                             log::error!(target: "synthesizer::event_listener", "Failed to get preset from index {preset_index}: {e}");
-                            return;
+                            continue;
                         }
                     };
 
@@ -484,7 +484,7 @@ pub fn start_update_event_listener(
                         ui_update_sender.send(UIUpdates::PatchSaveStatus(save_status.clone()))
                     {
                         log::error!(target: "synthesizer::event_listener", "Failed to send patch save status to the UI: {e}");
-                        return;
+                        continue;
                     }
 
                     if save_status.0 {
