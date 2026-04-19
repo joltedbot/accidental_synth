@@ -183,8 +183,8 @@
       "pitch_bend": 0,
       "portamento_enabled": true,
       "portamento_time": 15,
-      "shape_parameter1": 0.5,
-      "shape_parameter2": 0.3,
+      "shape_parameter1": 0.0,
+      "shape_parameter2": 0.0,
       "wave_shape_index": 3
     },
     {
@@ -197,7 +197,7 @@
       "pitch_bend": 0,
       "portamento_enabled": false,
       "portamento_time": 7,
-      "shape_parameter1": 0.7,
+      "shape_parameter1": 0.0,
       "shape_parameter2": 0.0,
       "wave_shape_index": 6
     },

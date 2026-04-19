@@ -99,7 +99,7 @@
       "fine_tune": 7,
       "course_tune": 0,
       "pitch_bend": 0,
-      "shape_parameter1": 0.3,
+      "shape_parameter1": 0.0,
       "shape_parameter2": 0.0,
       "wave_shape_index": 2,
       "gate_flag": false,

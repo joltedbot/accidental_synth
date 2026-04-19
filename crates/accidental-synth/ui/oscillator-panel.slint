@@ -1,4 +1,4 @@
-import { Constant } from "constants.slint";
+import { Constant, PatchState } from "constants.slint";
 import {
     Panel,
     PanelLabel,
@@ -32,6 +32,7 @@ export component OscControlsPanel inherits Panel {
     in property <Oscillator> oscillator;
     in property <string> title;
     in property <int> fine-tune-cents: 0;
+    property <int> patch_generation: PatchState.generation;
 
     callback wave-shape-changed(int);
     callback course-tune-changed(float);
@@ -68,9 +69,14 @@ export component OscControlsPanel inherits Panel {
         set_parameters_from_wave_shape(wave-shape.current-value);
     }
 
-    changed oscillator => {
-        set_parameters_from_wave_shape(wave-shape.current-value);
-    }
+      changed oscillator => {
+          set_parameters_from_wave_shape(Constant.OSC_WAVE_SHAPES[oscillator.wave-shape-index]);
+      }
+
+      changed patch_generation => {
+          set_parameters_from_wave_shape(Constant.OSC_WAVE_SHAPES[oscillator.wave-shape-index]);
+      }
+
 
     HorizontalLayout {
         alignment: center;
