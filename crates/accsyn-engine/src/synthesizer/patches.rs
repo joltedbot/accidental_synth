@@ -410,3 +410,162 @@ fn initialize_application_storage(paths: &mut Paths) -> Result<()> {
 fn create_patch_from_parameters(parameters: &ModuleParameters) -> String {
     serde_json::to_string_pretty(&parameters).unwrap_or(json!(parameters).to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::io::Write;
+
+    struct TempDir(PathBuf);
+
+    impl TempDir {
+        fn new(label: &str) -> Self {
+            let path = std::env::temp_dir()
+                .join(format!("accsyn_patches_test_{}_{label}", std::process::id()));
+            fs::create_dir_all(&path).unwrap();
+            Self(path)
+        }
+
+        fn path(&self) -> &Path {
+            &self.0
+        }
+
+        fn write_file(&self, filename: &str, content: &str) -> PathBuf {
+            let path = self.0.join(filename);
+            let mut f = fs::File::create(&path).unwrap();
+            f.write_all(content.as_bytes()).unwrap();
+            path
+        }
+    }
+
+    impl Drop for TempDir {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    // --- sanitize_name ---
+
+    #[test]
+    fn sanitize_name_plain_name_is_unchanged() {
+        assert_eq!(sanitize_name("My Patch"), "My Patch");
+    }
+
+    #[test]
+    fn sanitize_name_trims_surrounding_whitespace() {
+        assert_eq!(sanitize_name("  My Patch  "), "My Patch");
+    }
+
+    #[test]
+    fn sanitize_name_removes_dots() {
+        assert_eq!(sanitize_name("My.Patch"), "MyPatch");
+    }
+
+    #[test]
+    fn sanitize_name_removes_asterisks() {
+        // asterisk is the system-patch marker; user names must not contain it
+        assert_eq!(sanitize_name("Init*"), "Init");
+    }
+
+    #[test]
+    fn sanitize_name_removes_dots_and_asterisks_together() {
+        assert_eq!(sanitize_name("Patch.*Name"), "PatchName");
+    }
+
+    #[test]
+    fn sanitize_name_at_exact_max_length_is_not_truncated() {
+        let name = "A".repeat(MAX_PATCH_NAME_LENGTH);
+        assert_eq!(sanitize_name(&name).len(), MAX_PATCH_NAME_LENGTH);
+    }
+
+    #[test]
+    fn sanitize_name_over_max_length_is_truncated() {
+        let name = "B".repeat(MAX_PATCH_NAME_LENGTH + 10);
+        let result = sanitize_name(&name);
+        assert!(
+            result.len() <= MAX_PATCH_NAME_LENGTH,
+            "expected at most {MAX_PATCH_NAME_LENGTH} chars, got {}",
+            result.len()
+        );
+    }
+
+    #[test]
+    fn sanitize_name_path_traversal_has_no_separators_or_dots() {
+        let result = sanitize_name("../evil");
+        assert!(
+            !result.contains('/'),
+            "sanitized name must not contain path separator"
+        );
+        assert!(
+            !result.contains(".."),
+            "sanitized name must not contain relative path sequence"
+        );
+    }
+
+    #[test]
+    fn sanitize_name_all_special_chars_produces_empty_string() {
+        assert_eq!(sanitize_name("...**"), "");
+    }
+
+    // --- load_patches ---
+
+    #[test]
+    fn load_patches_nonexistent_directory_returns_empty() {
+        let path = Path::new("/tmp/accsyn_does_not_exist_12345");
+        assert!(load_patches(path).is_empty());
+    }
+
+    #[test]
+    fn load_patches_empty_directory_returns_empty() {
+        let dir = TempDir::new("empty");
+        assert!(load_patches(dir.path()).is_empty());
+    }
+
+    #[test]
+    fn load_patches_loads_valid_json_file() {
+        let dir = TempDir::new("valid");
+        let expected_path = dir.write_file("My Patch.json", r#"{"test":true}"#);
+        let result = load_patches(dir.path());
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name, "My Patch");
+        assert_eq!(result[0].content, r#"{"test":true}"#);
+        assert_eq!(result[0].path, Some(expected_path));
+    }
+
+    #[test]
+    fn load_patches_skips_non_json_extension() {
+        let dir = TempDir::new("non_json");
+        dir.write_file("My Patch.txt", "content");
+        assert!(load_patches(dir.path()).is_empty());
+    }
+
+    #[test]
+    fn load_patches_sanitizes_dots_in_filename() {
+        let dir = TempDir::new("dots_in_name");
+        dir.write_file("My.Patch.json", r#"{}"#);
+        let result = load_patches(dir.path());
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name, "MyPatch");
+    }
+
+    #[test]
+    fn load_patches_skips_file_exceeding_size_limit() {
+        let dir = TempDir::new("oversized");
+        let content = "x".repeat(MAX_PATCH_FILE_SIZE as usize + 1);
+        dir.write_file("Big Patch.json", &content);
+        assert!(load_patches(dir.path()).is_empty());
+    }
+
+    #[test]
+    fn load_patches_skips_symlinks() {
+        use std::os::unix::fs::symlink;
+        let dir = TempDir::new("symlinks");
+        let real_path = dir.write_file("real.json", r#"{}"#);
+        let link_path = dir.path().join("link.json");
+        symlink(&real_path, &link_path).unwrap();
+        let result = load_patches(dir.path());
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name, "real");
+    }
+}
