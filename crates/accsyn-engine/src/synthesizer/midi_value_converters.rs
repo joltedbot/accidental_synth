@@ -38,7 +38,11 @@ pub fn normal_value_to_unsigned_integer_range(
     let clamped_value = normal_value.clamp(0.0, 1.0);
     let scaled_value = (f64::from(clamped_value) * f64::from(range)).round();
 
-    (f64::from(minimum) + scaled_value).clamp(f64::from(minimum), f64::from(maximum)) as u32
+    // Post-clamp to [f64::from(minimum), f64::from(maximum)], both derived from u32, so truncation and sign loss cannot occur
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let result =
+        (f64::from(minimum) + scaled_value).clamp(f64::from(minimum), f64::from(maximum)) as u32;
+    result
 }
 
 /// Maps a normalized 0.0-1.0 value to a target signed integer range with rounding.
@@ -55,7 +59,11 @@ pub fn normal_value_to_signed_integer_range(
     let clamped_value = normal_value.clamp(0.0, 1.0);
     let scaled_value = (f64::from(clamped_value) * f64::from(range)).round();
 
-    (f64::from(minimum) + scaled_value).clamp(f64::from(minimum), f64::from(maximum)) as i32
+    // Post-clamp to [f64::from(minimum), f64::from(maximum)], both derived from i32, so truncation cannot occur
+    #[allow(clippy::cast_possible_truncation)]
+    let result =
+        (f64::from(minimum) + scaled_value).clamp(f64::from(minimum), f64::from(maximum)) as i32;
+    result
 }
 
 /// Converts a normalized value to a boolean, treating values at or above 0.5 as true.
@@ -70,9 +78,12 @@ pub fn bool_to_normal_value(value: bool) -> f32 {
 
 /// Converts a normalized value to the number of filter poles (1 to 4).
 pub fn normal_value_to_number_of_filter_poles(normal_value: f32) -> u8 {
-    (NUMBER_OF_FILER_POLES * normal_value)
+    // Post-clamp to [1.0, NUMBER_OF_FILER_POLES] (max 4.0), safely within u8 range
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let poles = (NUMBER_OF_FILER_POLES * normal_value)
         .ceil()
-        .clamp(1.0, NUMBER_OF_FILER_POLES) as u8
+        .clamp(1.0, NUMBER_OF_FILER_POLES) as u8;
+    poles
 }
 
 /// Converts a normalized value to an oscillator wave shape index.
@@ -116,15 +127,28 @@ pub(crate) fn exponential_curve_envelope_time_from_normal_value(
         return 0;
     }
 
+    // Envelope times in ms are ≤ 10_000, within f32 precision (2²³ = 8_388_608)
+    #[allow(clippy::cast_precision_loss)]
+    let minimum_f32 = minimum as f32;
+    #[allow(clippy::cast_precision_loss)]
+    let maximum_f32 = maximum as f32;
+
     if normal_value < crossover_values.0 {
         let renormailzed_value = normal_value / crossover_values.0;
         let quadratic_curve = renormailzed_value.powi(2);
-        minimum + ((crossover_values.1 - minimum as f32) * quadratic_curve) as u32
+        // Bounded to [0, crossover_values.1] (envelope times ≤ 10_000 ms), non-negative; safe to cast to u32
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        let segment = ((crossover_values.1 - minimum_f32) * quadratic_curve) as u32;
+        minimum + segment
     } else {
         let renormailzed_value = (normal_value - crossover_values.0) / crossover_values.0;
         let quadratic_curve = renormailzed_value.powi(2);
-        (crossover_values.1 + ((maximum as f32 - crossover_values.1) * quadratic_curve).round())
-            as u32
+        // Bounded to [crossover_values.1, maximum] (envelope times ≤ 10_000 ms), non-negative; safe to cast to u32
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        let result = (crossover_values.1
+            + ((maximum_f32 - crossover_values.1) * quadratic_curve).round())
+            as u32;
+        result
     }
 }
 
@@ -207,7 +231,7 @@ pub fn update_current_note_from_midi_pitch_bend(
         if pitch_bend_amount == PITCH_BEND_AMOUNT_ZERO_POINT {
             oscillator.pitch_bend.store(0);
         } else if pitch_bend_amount >= PITCH_BEND_AMOUNT_MAX_VALUE {
-            oscillator.pitch_bend.store(max_bend_in_cents as i16);
+            oscillator.pitch_bend.store(max_bend_in_cents.cast_signed());
         } else {
             let pitch_bend_in_cents =
                 midi_value_to_pitch_bend_cents(pitch_bend_amount, max_bend_in_cents);
@@ -217,9 +241,12 @@ pub fn update_current_note_from_midi_pitch_bend(
 }
 
 fn midi_value_to_pitch_bend_cents(pitch_bend_amount: u16, max_bend_in_cents: u16) -> i16 {
-    ((f32::from(pitch_bend_amount) - f32::from(PITCH_BEND_AMOUNT_ZERO_POINT))
+    // Result is bounded to [-max_bend_in_cents, max_bend_in_cents] (at most ±1200 cents), within i16 range
+    #[allow(clippy::cast_possible_truncation)]
+    let cents = ((f32::from(pitch_bend_amount) - f32::from(PITCH_BEND_AMOUNT_ZERO_POINT))
         / f32::from(PITCH_BEND_AMOUNT_ZERO_POINT)
-        * f32::from(max_bend_in_cents)) as i16
+        * f32::from(max_bend_in_cents)) as i16;
+    cents
 }
 
 #[cfg(test)]

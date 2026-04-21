@@ -31,20 +31,22 @@ impl Saw {
 
 impl GenerateWave for Saw {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
+        // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
+        let sample_rate_f32 = self.sample_rate as f32;
+
         if let Some(phase) = self.phase {
-            self.x_coordinate = (phase / PI) * (self.sample_rate as f32 / tone_frequency);
+            self.x_coordinate = (phase / PI) * (sample_rate_f32 / tone_frequency);
             self.phase = None;
         }
 
         let y_coordinate: f32 = (-2.0 / PI)
-            * (1.0f32
-                / (tone_frequency * PI * (self.x_coordinate / self.sample_rate as f32)).tan())
-            .atan();
+            * (1.0f32 / (tone_frequency * PI * (self.x_coordinate / sample_rate_f32)).tan()).atan();
 
         self.x_coordinate += DEFAULT_X_INCREMENT * modulation.unwrap_or(1.0);
 
         if tone_frequency > 0.0 {
-            let period = self.sample_rate as f32 / tone_frequency;
+            let period = sample_rate_f32 / tone_frequency;
             if self.x_coordinate >= period {
                 self.x_coordinate -= period;
             }

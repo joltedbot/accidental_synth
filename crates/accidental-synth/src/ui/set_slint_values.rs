@@ -116,7 +116,10 @@ pub fn set_oscillator_fine_tune_display(
     oscillator_index: i32,
     cents: i32,
 ) {
-    oscillator_fine_tune_values[oscillator_index as usize] = cents;
+    // oscillator_index is a Slint UI-sourced index, always non-negative and bounded by array size
+    #[allow(clippy::cast_sign_loss)]
+    let idx = oscillator_index as usize;
+    oscillator_fine_tune_values[idx] = cents;
     let ui_oscillator_fine_tune_values = oscillator_fine_tune_values.to_vec();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
         ui.set_osc_fine_tune_cents(ui::vec_to_model_rc_int(&ui_oscillator_fine_tune_values));
@@ -285,7 +288,10 @@ pub fn set_effect_display(
     is_enabled: bool,
     parameters: Vec<f32>,
 ) {
-    effect_values[effect_index as usize] = EffectParameters {
+    // effect_index is a Slint UI-sourced index, always non-negative and bounded by array size
+    #[allow(clippy::cast_sign_loss)]
+    let idx = effect_index as usize;
+    effect_values[idx] = EffectParameters {
         is_enabled,
         parameters,
     };

@@ -97,12 +97,18 @@ pub fn start_ui_update_listener(
                 }
                 UIUpdates::OscillatorWaveShape(oscillator_index, shape_index) => {
                     let oscillator_values = &mut values.oscillators;
-                    oscillator_values[oscillator_index as usize].wave_shape_index = shape_index;
+                    #[allow(clippy::cast_sign_loss)]
+                    // Slint oscillator_index is always non-negative
+                    let idx = oscillator_index as usize;
+                    oscillator_values[idx].wave_shape_index = shape_index;
                     set_oscillator_values(&ui_weak_thread, &mut values.oscillators);
                 }
                 UIUpdates::OscillatorFineTune(oscillator_index, normal_value, cents) => {
                     let oscillator_values = &mut values.oscillators;
-                    oscillator_values[oscillator_index as usize].fine_tune = normal_value;
+                    #[allow(clippy::cast_sign_loss)]
+                    // Slint oscillator_index is always non-negative
+                    let idx = oscillator_index as usize;
+                    oscillator_values[idx].fine_tune = normal_value;
                     set_oscillator_values(&ui_weak_thread, &mut values.oscillators);
 
                     set_oscillator_fine_tune_display(
@@ -122,25 +128,37 @@ pub fn start_ui_update_listener(
                 }
                 UIUpdates::OscillatorCourseTune(oscillator_index, intervals) => {
                     let oscillator_values = &mut values.oscillators;
-                    oscillator_values[oscillator_index as usize].course_tune = intervals;
+                    #[allow(clippy::cast_sign_loss)]
+                    // Slint oscillator_index is always non-negative
+                    let idx = oscillator_index as usize;
+                    oscillator_values[idx].course_tune = intervals;
 
                     set_oscillator_values(&ui_weak_thread, &mut values.oscillators);
                 }
                 UIUpdates::OscillatorClipperBoost(oscillator_index, level) => {
                     let oscillator_values = &mut values.oscillators;
-                    oscillator_values[oscillator_index as usize].clipper_boost = level;
+                    #[allow(clippy::cast_sign_loss)]
+                    // Slint oscillator_index is always non-negative
+                    let idx = oscillator_index as usize;
+                    oscillator_values[idx].clipper_boost = level;
 
                     set_oscillator_values(&ui_weak_thread, &mut values.oscillators);
                 }
                 UIUpdates::OscillatorParameter1(oscillator_index, value) => {
                     let oscillator_values = &mut values.oscillators;
-                    oscillator_values[oscillator_index as usize].parameter1 = value;
+                    #[allow(clippy::cast_sign_loss)]
+                    // Slint oscillator_index is always non-negative
+                    let idx = oscillator_index as usize;
+                    oscillator_values[idx].parameter1 = value;
 
                     set_oscillator_values(&ui_weak_thread, &mut values.oscillators);
                 }
                 UIUpdates::OscillatorParameter2(oscillator_index, value) => {
                     let oscillator_values = &mut values.oscillators;
-                    oscillator_values[oscillator_index as usize].parameter2 = value;
+                    #[allow(clippy::cast_sign_loss)]
+                    // Slint oscillator_index is always non-negative
+                    let idx = oscillator_index as usize;
+                    oscillator_values[idx].parameter2 = value;
 
                     set_oscillator_values(&ui_weak_thread, &mut values.oscillators);
                 }
@@ -182,6 +200,8 @@ pub fn start_ui_update_listener(
                         lfo_values.phase = value;
                         set_lfo_values(&ui_weak_thread, lfo_index, lfo_values);
 
+                        // Bounded to [0, MAX_PHASE_VALUE] (0–360 degrees), safely within i32 range
+                        #[allow(clippy::cast_possible_truncation)]
                         let lfo_display_value = (value * MAX_PHASE_VALUE).ceil() as i32;
                         set_lfo_phase_display(&ui_weak_thread, lfo_index, lfo_display_value);
                     }
@@ -312,20 +332,28 @@ pub fn start_ui_update_listener(
 
                 UIUpdates::OscillatorMixerBalance(oscillator_index, value) => {
                     let output_mixer_values = &mut values.oscillator_mixer;
-                    output_mixer_values[oscillator_index as usize].balance = value;
+                    #[allow(clippy::cast_sign_loss)]
+                    // Slint oscillator_index is always non-negative
+                    let idx = oscillator_index as usize;
+                    output_mixer_values[idx].balance = value;
                     set_oscillator_mixer_values(&ui_weak_thread, output_mixer_values);
                 }
 
                 UIUpdates::OscillatorMixerLevel(oscillator_index, value) => {
                     let output_mixer_values = &mut values.oscillator_mixer;
-                    output_mixer_values[oscillator_index as usize].level = value;
+                    #[allow(clippy::cast_sign_loss)]
+                    // Slint oscillator_index is always non-negative
+                    let idx = oscillator_index as usize;
+                    output_mixer_values[idx].level = value;
                     set_oscillator_mixer_values(&ui_weak_thread, output_mixer_values);
                 }
 
                 UIUpdates::OscillatorMixerIsMuted(oscillator_index, value) => {
                     let output_mixer_values = &mut values.oscillator_mixer;
-                    output_mixer_values[oscillator_index as usize].is_muted =
-                        normal_value_to_bool(value);
+                    #[allow(clippy::cast_sign_loss)]
+                    // Slint oscillator_index is always non-negative
+                    let idx = oscillator_index as usize;
+                    output_mixer_values[idx].is_muted = normal_value_to_bool(value);
                     set_oscillator_mixer_values(&ui_weak_thread, output_mixer_values);
                 }
                 UIUpdates::PortamentoTime(time) => {
@@ -340,11 +368,14 @@ pub fn start_ui_update_listener(
                 }
                 UIUpdates::PitchBendRange(range) => {
                     let global_options_values = &mut values.global_options;
-                    global_options_values.pitch_bend_range = normal_value_to_unsigned_integer_range(
+                    // Pitch bend range is bounded to a small value (MINIMUM..MAXIMUM, e.g. 1–12), well within i32
+                    #[allow(clippy::cast_possible_wrap)]
+                    let pitch_bend = normal_value_to_unsigned_integer_range(
                         range,
                         Defaults::MINIMUM_PITCH_BEND_RANGE,
                         Defaults::MAXIMUM_PITCH_BEND_RANGE,
                     ) as i32;
+                    global_options_values.pitch_bend_range = pitch_bend;
                     set_global_options_values(&ui_weak_thread, global_options_values);
                 }
                 UIUpdates::VelocityCurve(slope) => {
@@ -382,11 +413,15 @@ pub fn start_ui_update_listener(
                     let unlocked_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
                     let patch_list = unlocked_patches.patch_list();
 
-                    if index >= patch_list.all_names().len() as i32 {
+                    let patch_count =
+                        i32::try_from(patch_list.all_names().len()).unwrap_or(i32::MAX);
+                    if index >= patch_count {
                         log::error!("start_ui_update_listener(): Invalid patch index: {index}");
                         continue;
                     }
 
+                    // index has been validated non-negative and < patch_count above
+                    #[allow(clippy::cast_sign_loss)]
                     let patch = match get_module_parameters_from_patch_index(
                         index as usize,
                         &patch_list,

@@ -2,6 +2,7 @@ use crate::modules::effects::constants::{
     DELAY_SMOOTHING_FACTOR, MAX_DELAY_SAMPLES, MIN_DELAY_SAMPLES,
 };
 use crate::synthesizer::midi_value_converters::normal_value_to_unsigned_integer_range;
+use accsyn_types::casting::f32_to_usize_clamped;
 use accsyn_types::effects::{AudioEffect, EffectParameters};
 
 // Ensure MAX_DELAY_SAMPLES is a power of 2 to guarantee the bitwise wrapping logic is safe
@@ -20,18 +21,25 @@ impl Delay {
 
         let buffer = vec![(0.0, 0.0); MAX_DELAY_SAMPLES as usize];
 
+        // MIN_DELAY_SAMPLES is a small constant (delay samples count), within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
+        let current_delay_samples = MIN_DELAY_SAMPLES as f32;
+
         Self {
             buffer,
             write_index: 0,
             is_enabled: false,
-            current_delay_samples: MIN_DELAY_SAMPLES as f32,
+            current_delay_samples,
         }
     }
 
     fn reset(&mut self) {
         self.buffer.fill((0.0, 0.0));
         self.write_index = 0;
-        self.current_delay_samples = MIN_DELAY_SAMPLES as f32;
+        // MIN_DELAY_SAMPLES is a small constant (delay samples count), within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
+        let current_delay_samples = MIN_DELAY_SAMPLES as f32;
+        self.current_delay_samples = current_delay_samples;
     }
 }
 
@@ -49,6 +57,8 @@ impl AudioEffect for Delay {
 
         let amount = effect.parameters[0];
         let feedback = effect.parameters[2];
+        // Delay sample count is bounded by MAX_DELAY_SAMPLES, within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
         let target_delay = normal_value_to_unsigned_integer_range(
             effect.parameters[1],
             MIN_DELAY_SAMPLES,
@@ -57,7 +67,9 @@ impl AudioEffect for Delay {
 
         self.current_delay_samples +=
             (target_delay - self.current_delay_samples) * DELAY_SMOOTHING_FACTOR;
-        let delay_samples = self.current_delay_samples.floor() as usize;
+        let delay_samples = f32_to_usize_clamped(self.current_delay_samples.floor());
+        // delay_samples is bounded by MAX_DELAY_SAMPLES (a small constant), within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
         let fractional_index = self.current_delay_samples - delay_samples as f32;
 
         let buffer_len = self.buffer.len();

@@ -7,6 +7,8 @@
 
 /// Audio device events and stream configuration types.
 pub mod audio_events;
+/// Safe casting helpers for bounded type conversions.
+pub mod casting;
 /// Default values and constants for synthesizer parameters.
 pub mod defaults;
 /// Audio effect trait, effect index enum, and effect parameter types.

@@ -1,3 +1,4 @@
+use accsyn_types::casting::f32_to_u32_clamped;
 use accsyn_types::effects::{AudioEffect, EffectParameters};
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
@@ -82,7 +83,7 @@ pub enum SaturationMode {
 
 impl SaturationMode {
     pub fn from_f32(index: f32) -> Self {
-        Self::from_repr(index.trunc() as u32).unwrap_or_default()
+        Self::from_repr(f32_to_u32_clamped(index.trunc())).unwrap_or_default()
     }
 }
 

@@ -101,14 +101,20 @@ pub fn normalize_midi_value(midi_value: u8) -> f32 {
 #[inline]
 pub fn normalize_unsigned_integer_range(input_value: u32, range_min: u32, range_max: u32) -> f32 {
     let range = range_max - range_min;
-    (input_value.saturating_sub(range_min) as f32 / range as f32).clamp(0.0, 1.0)
+    // Audio values (sample rates, MIDI ranges) are always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
+    #[allow(clippy::cast_precision_loss)]
+    let result = (input_value.saturating_sub(range_min) as f32 / range as f32).clamp(0.0, 1.0);
+    result
 }
 
 /// Normalizes a signed integer to 0.0–1.0 within the given range.
 #[inline]
 pub fn normalize_signed_integer_range(input_value: i32, range_min: i32, range_max: i32) -> f32 {
     let range = range_max - range_min;
-    (input_value - range_min) as f32 / range as f32
+    // Values represent audio ranges bounded by domain constraints; precision loss is acceptable in f32 DSP
+    #[allow(clippy::cast_precision_loss)]
+    let result = (input_value - range_min) as f32 / range as f32;
+    result
 }
 
 /// Normalizes a float to 0.0–1.0 within the given range.

@@ -29,6 +29,9 @@ impl AudioEffect for BitShifter {
 }
 
 fn shift_sample(sample: f32, new_bit_depth: u32) -> f32 {
+    // Bit depth is at most 32, so 2^32/2 = 2^31 ≤ 2_147_483_648, within f32 precision (2²³ = 8_388_608)
+    // for typical audio use (1–24 bits), values are well within safe range
+    #[allow(clippy::cast_precision_loss)]
     let bits = (2_u32.pow(new_bit_depth) / 2) as f32;
 
     let quantized_sample = (sample.abs() * bits).ceil();

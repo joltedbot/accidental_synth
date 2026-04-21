@@ -104,6 +104,8 @@ impl Filter {
     pub(crate) fn new(sample_rate: u32) -> Self {
         log::debug!("Constructing Filter Module");
 
+        // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
         let max_frequency =
             (sample_rate as f32 * MAX_FILTER_PERCENT_OF_NYQUIST).min(MAX_FILTER_CUTOFF);
 
@@ -301,7 +303,10 @@ fn calculate_non_linear_saturation(stage4_output: f32) -> f32 {
 }
 
 fn calculate_cutoff_coefficient(frequency: f32, sample_rate: u32) -> f32 {
-    (frequency + frequency) / sample_rate as f32
+    // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
+    #[allow(clippy::cast_precision_loss)]
+    let sample_rate_f32 = sample_rate as f32;
+    (frequency + frequency) / sample_rate_f32
 }
 
 fn calculate_pole_coefficient(gain_coefficient: f32) -> f32 {

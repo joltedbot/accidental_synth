@@ -3,6 +3,7 @@ use crate::modules::effects::constants::{
 };
 use crate::modules::lfo::{DEFAULT_LFO_FREQUENCY, Lfo};
 use crate::synthesizer::midi_value_converters::exponential_curve_lfo_frequency_from_normal_value;
+use accsyn_types::casting::f32_to_u8_clamped;
 use accsyn_types::effects::{AudioEffect, EffectParameters};
 use accsyn_types::math::f32s_are_equal;
 use std::f32::consts::PI;
@@ -63,7 +64,7 @@ impl AudioEffect for AutoPan {
 
         if !f32s_are_equal(new_shape, self.lfo_parameters.waveshape_index) {
             self.lfo_parameters.waveshape_index = new_shape;
-            self.lfo.set_wave_shape(new_shape as u8);
+            self.lfo.set_wave_shape(f32_to_u8_clamped(new_shape));
         }
 
         let lfo_value = self.lfo.generate(None);

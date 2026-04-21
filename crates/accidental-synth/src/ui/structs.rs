@@ -56,8 +56,8 @@ impl Default for UIAudioDevice {
             output_device_index: Defaults::AUDIO_DEVICE_INDEX,
             left_channel_index: Defaults::LEFT_CHANNEL_INDEX,
             right_channel_index: Defaults::LEFT_CHANNEL_INDEX,
-            sample_rate_index: Defaults::SAMPLE_RATE_INDEX as i32,
-            buffer_size_index: Defaults::BUFFER_SIZE_INDEX as i32,
+            sample_rate_index: i32::try_from(Defaults::SAMPLE_RATE_INDEX).unwrap_or(0),
+            buffer_size_index: i32::try_from(Defaults::BUFFER_SIZE_INDEX).unwrap_or(0),
             output_devices: Vec::new(),
             left_channels: Vec::new(),
             right_channels: Vec::new(),
@@ -112,17 +112,17 @@ impl Default for UIOscillator {
 impl UIOscillator {
     pub fn from_synth_parameters(parameters: &OscillatorParameters) -> Self {
         Self {
-            wave_shape_index: parameters.wave_shape_index.load(Relaxed) as i32,
+            wave_shape_index: i32::from(parameters.wave_shape_index.load(Relaxed)),
             fine_tune: normalize_signed_integer_range(
-                parameters.fine_tune.load() as i32,
-                OSCILLATOR_FINE_TUNE_MIN_CENTS as i32,
-                OSCILLATOR_FINE_TUNE_MAX_CENTS as i32,
+                i32::from(parameters.fine_tune.load()),
+                i32::from(OSCILLATOR_FINE_TUNE_MIN_CENTS),
+                i32::from(OSCILLATOR_FINE_TUNE_MAX_CENTS),
             ),
-            course_tune: parameters.course_tune.load() as i32,
+            course_tune: i32::from(parameters.course_tune.load()),
             clipper_boost: normalize_unsigned_integer_range(
-                parameters.clipper_boost.load(Relaxed) as u32,
-                MIN_CLIP_BOOST as u32,
-                MAX_CLIP_BOOST as u32,
+                u32::from(parameters.clipper_boost.load(Relaxed)),
+                u32::from(MIN_CLIP_BOOST),
+                u32::from(MAX_CLIP_BOOST),
             ),
             parameter1: parameters.shape_parameter1.load(),
             parameter2: parameters.shape_parameter2.load(),
@@ -168,7 +168,7 @@ impl UIFilterOptions {
         lfo: &LfoParameters,
     ) -> Self {
         Self {
-            poles: parameters.filter_poles.load() as i32,
+            poles: i32::from(parameters.filter_poles.load()),
             key_track: parameters.key_tracking_amount.load(),
             envelope_amount: envelope.amount.load(),
             lfo_amount: lfo.range.load(),
@@ -201,7 +201,7 @@ impl UILfo {
                 EXPONENTIAL_LFO_COEFFICIENT,
             ),
             phase: parameters.phase.load(),
-            wave_shape_index: parameters.wave_shape.load(Relaxed) as i32,
+            wave_shape_index: i32::from(parameters.wave_shape.load(Relaxed)),
         }
     }
 }
@@ -217,14 +217,22 @@ pub struct UIEnvelope {
 
 impl Default for UIEnvelope {
     fn default() -> Self {
+        // Envelope times in ms are ≤ 10_000, within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
+        let attack = DEFAULT_ENVELOPE_MILLISECONDS as f32
+            / (MAX_ATTACK_MILLISECONDS - MIN_ATTACK_MILLISECONDS) as f32;
+        #[allow(clippy::cast_precision_loss)]
+        let decay = DEFAULT_ENVELOPE_MILLISECONDS as f32
+            / (MAX_DECAY_MILLISECONDS - MIN_DECAY_MILLISECONDS) as f32;
+        #[allow(clippy::cast_precision_loss)]
+        let release = DEFAULT_ENVELOPE_MILLISECONDS as f32
+            / (MAX_RELEASE_MILLISECONDS - MIN_RELEASE_MILLISECONDS) as f32;
+
         Self {
-            attack: DEFAULT_ENVELOPE_MILLISECONDS as f32
-                / (MAX_ATTACK_MILLISECONDS - MIN_ATTACK_MILLISECONDS) as f32,
-            decay: DEFAULT_ENVELOPE_MILLISECONDS as f32
-                / (MAX_DECAY_MILLISECONDS - MIN_DECAY_MILLISECONDS) as f32,
+            attack,
+            decay,
             sustain: DEFAULT_ENVELOPE_SUSTAIN_LEVEL,
-            release: DEFAULT_ENVELOPE_MILLISECONDS as f32
-                / (MAX_RELEASE_MILLISECONDS - MIN_RELEASE_MILLISECONDS) as f32,
+            release,
             inverted: false,
         }
     }
@@ -310,11 +318,11 @@ impl UIGlobalOptions {
     ) -> Self {
         Self {
             portamento_time: normal_value_from_exponential_curve_and_coefficient(
-                oscillator_parameters.portamento_time.load() as f32,
+                f32::from(oscillator_parameters.portamento_time.load()),
                 EXPONENTIAL_PORTAMENTO_COEFFICIENT,
             ),
             portamento_is_enabled: oscillator_parameters.portamento_enabled.load(Relaxed),
-            pitch_bend_range: keyboard_parameters.pitch_bend_range.load(Relaxed) as i32,
+            pitch_bend_range: i32::from(keyboard_parameters.pitch_bend_range.load(Relaxed)),
             velocity_curve_slope: keyboard_parameters.velocity_curve.load(),
             hard_sync_is_enabled: oscillator_parameters.hard_sync_enabled.load(Relaxed),
             key_sync_is_enabled: oscillator_parameters.key_sync_enabled.load(Relaxed),
