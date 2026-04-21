@@ -80,6 +80,8 @@ pub enum SynthesizerUpdateEvents {
     PatchChanged(i32),
     /// Save the current module parameters to a patch file
     PatchSaved(String),
+    /// Delete the patch at the given index
+    PatchDeleted(i32),
 }
 
 /// Index identifying each oscillator in the synthesizer.

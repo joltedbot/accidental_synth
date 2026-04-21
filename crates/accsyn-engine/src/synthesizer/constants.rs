@@ -29,3 +29,6 @@ pub const MAX_PATCH_FILE_SIZE: u64 = 5120;
 pub const PATCH_SAVE_SUCCESS: &str = "Patch saved successfully!";
 pub const PATCH_SAVE_ALREADY_EXISTS: &str = "Patch name already exists!";
 pub const PATCH_SAVE_FAILURE: &str = "Failed to save patch!";
+pub const PATCH_DELETE_SUCCESS: &str = "Patch deleted successfully!";
+pub const PATCH_DELETE_FILE_DOES_NOT_EXIST: &str = "Invalid patch, file does not exist!";
+pub const PATCH_DELETE_FAILURE: &str = "Failed to delete patch!";

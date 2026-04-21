@@ -102,6 +102,10 @@ pub enum UIUpdates {
     PatchList(Vec<String>),
     /// Patch Save Status UI Update
     PatchSaveStatus((bool, String)),
+    /// Patch Delete Status UI Update
+    PatchDeleteStatus((bool, String)),
+    /// User Patch List Update - UI should reload the delete patches list
+    UserPatchList(Vec<String>),
 }
 
 /// ADSR envelope stage identifier.

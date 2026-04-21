@@ -13,7 +13,7 @@ import {
     SettingsWindow,
     AudioDevice,
     MidiPort,
-    PatchSaveStatus,
+    PatchStatus,
 } from "settings-panel.slint";
 
 component MidiScroller inherits Rectangle {
@@ -130,7 +130,9 @@ export component HeaderPanel inherits Panel {
     in property <AudioDevice> audio-device-values;
     in property <MidiPort> midi-port-values;
     in property <[string]> patch-list;
-    in property <PatchSaveStatus> patch_save_status;
+    in property <[string]> user-patch-list;
+    in property <PatchStatus> patch-save-status;
+    in property <PatchStatus> patch-delete-status;
     in-out property <int> selected-patch-index;
     in property <[string]> midi-display-values;
     in property <bool> polarity-is-flipped;
@@ -144,6 +146,7 @@ export component HeaderPanel inherits Panel {
     callback midi-input-channel-changed(string);
     callback patch-changed(int);
     callback patch-saved(string);
+    callback patch-deleted(int);
     callback polarity-flipped(bool);
 
     height: Theme.header-panel-height;
@@ -152,7 +155,9 @@ export component HeaderPanel inherits Panel {
     settings := SettingsWindow {
         audio-device-values: audio-device-values;
         midi-port-values: midi-port-values;
-        patch_save_status: patch_save_status;
+        patch-save-status: patch-save-status;
+        patch-delete-status: patch-delete-status;
+        user-patch-list: user-patch-list;
         polarity-is-flipped: polarity-is-flipped;
 
         audio-output-device-changed(device) => {
@@ -178,6 +183,9 @@ export component HeaderPanel inherits Panel {
         }
         patch-saved(name) => {
             patch-saved(name);
+        }
+        patch-deleted(index) => {
+            patch-deleted(index);
         }
         polarity-flipped(is_flipped) => {
             polarity-flipped(is_flipped);

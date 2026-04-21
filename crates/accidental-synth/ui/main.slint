@@ -9,7 +9,7 @@ import { TabWidget, Slider, VerticalBox, SpinBox } from "std-widgets.slint";
 import { Panel, EnvelopeValues, LFOValues } from "components.slint";
 import { GlobalPanel, GlobalOptions } from "global-panel.slint";
 import { HeaderPanel } from "header-panel.slint";
-import { AudioDevice, MidiPort, PatchSaveStatus } from "settings-panel.slint";
+import { AudioDevice, MidiPort, PatchStatus } from "settings-panel.slint";
 import { FilterPanel, FilterCutoff, FilterOptions } from "filter-panel.slint";
 import { OscillatorsPanel, Oscillator } from "oscillator-panel.slint";
 import { Mixer } from "global-panel.slint";
@@ -38,8 +38,10 @@ export component AccidentalSynth inherits Window {
     };
     in property <MidiPort> midi-port-values;
     in property <[string]> patch-list;
+    in property <[string]> user-patch-list;
     in-out property <int> selected-patch-index;
-    in property <PatchSaveStatus> patch_save_status;
+    in property <PatchStatus> patch-save-status;
+    in property <PatchStatus> patch-delete-status;
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
     callback audio-output-right-channel-changed(string);
@@ -49,6 +51,7 @@ export component AccidentalSynth inherits Window {
     callback midi-input-channel-changed(string);
     callback patch-changed(int);
     callback patch-saved(string);
+    callback patch-deleted(int);
 
     // Oscillator Panel Properties & Callbacks
     in property <[Oscillator]> oscillator_values;
@@ -139,8 +142,10 @@ export component AccidentalSynth inherits Window {
                 audio-device-values: audio-device-values;
                 midi-port-values: midi-port-values;
                 patch-list: patch-list;
+                user-patch-list: user-patch-list;
                 selected-patch-index: selected-patch-index;
-                patch_save_status: patch_save_status;
+                patch-save-status: patch-save-status;
+                patch-delete-status: patch-delete-status;
                 midi-display-values: midi-display-values;
                 polarity-is-flipped: global-options-values.polarity-is-flipped;
 
@@ -170,6 +175,9 @@ export component AccidentalSynth inherits Window {
                 }
                 patch-saved(name) => {
                     patch-saved(name);
+                }
+                patch-deleted(index) => {
+                    patch-deleted(index);
                 }
                 polarity-flipped(is_flipped) => {
                     polarity-flipped(is_flipped);

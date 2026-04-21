@@ -69,14 +69,13 @@ export component OscControlsPanel inherits Panel {
         set_parameters_from_wave_shape(wave-shape.current-value);
     }
 
-      changed oscillator => {
-          set_parameters_from_wave_shape(Constant.OSC_WAVE_SHAPES[oscillator.wave-shape-index]);
-      }
+    changed oscillator => {
+        set_parameters_from_wave_shape(Constant.OSC_WAVE_SHAPES[oscillator.wave-shape-index]);
+    }
 
-      changed patch_generation => {
-          set_parameters_from_wave_shape(Constant.OSC_WAVE_SHAPES[oscillator.wave-shape-index]);
-      }
-
+    changed patch_generation => {
+        set_parameters_from_wave_shape(Constant.OSC_WAVE_SHAPES[oscillator.wave-shape-index]);
+    }
 
     HorizontalLayout {
         alignment: center;

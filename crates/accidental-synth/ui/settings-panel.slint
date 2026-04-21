@@ -33,7 +33,8 @@ export struct MidiPort {
     channel-index: int,
 }
 
-export struct PatchSaveStatus { status: bool, message: string}
+export struct PatchStatus { status: bool, message: string}
+
 
 export component AudioSettings inherits VerticalLayout {
 
@@ -46,11 +47,15 @@ export component AudioSettings inherits VerticalLayout {
     callback audio-buffer-size-changed(string);
     callback reload-popupwindow();
 
-    padding: Theme.osc-controls-panel-padding;
-    spacing: Theme.osc-controls-panel-spacing;
+    padding: Theme.settings-panel-padding;
+    spacing: Theme.settings-panel-spacing;
 
     changed audio-device-values => {
         reload-popupwindow();
+    }
+
+    PanelLabel {
+        label: Theme.settings-audio-settings-title;
     }
 
     device := DropDownMenu {
@@ -64,8 +69,8 @@ export component AudioSettings inherits VerticalLayout {
     }
 
     HorizontalLayout {
-        padding: Theme.osc-controls-panel-padding;
-        spacing: Theme.osc-controls-panel-spacing;
+        padding: Theme.settings-panel-padding;
+        spacing: Theme.settings-panel-spacing;
 
         left := DropDownMenu {
             label: "Left Channel";
@@ -120,8 +125,12 @@ export component MidiSettings inherits VerticalLayout {
         reload-popupwindow();
     }
 
-    padding: Theme.osc-controls-panel-padding;
-    spacing: Theme.osc-controls-panel-spacing;
+    padding: Theme.settings-panel-padding;
+    spacing: Theme.settings-panel-spacing;
+
+    PanelLabel {
+        label: Theme.settings-midi-settings-title;
+    }
 
     port := DropDownMenu {
         label: "Input Port";
@@ -140,6 +149,113 @@ export component MidiSettings inherits VerticalLayout {
         dropdown-width: Theme.oscillator-panel-widget-width;
         drop_down_changed(index, left) => {
             midi-input-channel-changed(left);
+        }
+    }
+}
+
+export component SynthSettings inherits VerticalLayout {
+    in-out property <bool> polarity-is-flipped: false;
+    callback polarity-flipped(bool);
+
+    padding: Theme.settings-panel-padding;
+    spacing: Theme.settings-panel-spacing;
+
+    PanelLabel {
+        label: Theme.settings-synth-options-title;
+    }
+
+    ToggleSwitch {
+        label: Theme.osc-options-polarity;
+        is_checked: polarity-is-flipped;
+        toggle_switch_updated(is_flipped) => {
+            polarity-flipped(is_flipped);
+        }
+    }
+}
+
+export component PatchSaveSettings inherits VerticalLayout {
+    in property <PatchStatus> patch-save-status;
+    callback patch-saved(string);
+
+    PanelLabel {
+        label: Theme.settings-patches-presets-title;
+    }
+
+    patch-name := TextInput {
+        label: Theme.settings-patch-name;
+    }
+
+    HorizontalLayout {
+        alignment: center;
+        save := MomentaryButton {
+            label: Theme.settings-patch-save;
+            button-width: 100px;
+            button-height: 27px;
+            momentary-button-pressed => {
+                if (patch-name.text != "") {
+                    patch-saved(patch-name.text);
+                    patch-name.text = "";
+                    save-status.visible = true;
+                }
+            }
+        }
+    }
+
+    HorizontalLayout {
+        alignment: space-evenly;
+        save-status := Text {
+            text: patch-save-status.message;
+            color: patch-save-status.status ? green : red;
+            visible: false;
+        }
+    }
+}
+
+export component PatchDeleteSettings inherits VerticalLayout {
+    in property <PatchStatus> patch-delete-status;
+    in property <[string]> user-patch-list;
+
+    callback patch-deleted(int);
+
+    property <int> new-patch-index;
+
+    padding: Theme.settings-panel-padding;
+    spacing: Theme.settings-panel-spacing;
+
+    PanelLabel {
+        label: Theme.settings-delete-patches-title;
+    }
+
+    HorizontalLayout {
+        alignment: center;
+        patch-to-delete := DropDownMenu {
+            dropdown-width: Theme.oscillator-panel-widget-width;
+            value-list: user-patch-list;
+            drop_down_changed(index, name) => {
+                new-patch-index = index;
+            }
+        }
+    }
+
+    HorizontalLayout {
+        alignment: center;
+        delete := MomentaryButton {
+            label: Theme.settings-patch-delete;
+            button-width: 100px;
+            button-height: 27px;
+            momentary-button-pressed => {
+                patch-deleted(new-patch-index);
+                delete-status.visible = true;
+            }
+        }
+    }
+
+    HorizontalLayout {
+        alignment: space-evenly;
+        delete-status := Text {
+            text: patch-delete-status.message;
+            color: patch-delete-status.status ? green : red;
+            visible: false;
         }
     }
 }
@@ -165,8 +281,10 @@ export component SettingsWindow inherits PopupWindow {
     in property <MidiPort> midi-port-values;
     in-out property <int> selected-preset-index;
     in-out property <int> selected-patch-index;
-    in property <PatchSaveStatus> patch_save_status;
+    in property <PatchStatus> patch-save-status;
+    in property <PatchStatus> patch-delete-status;
     in property <bool> polarity-is-flipped;
+    in property <[string]> user-patch-list;
 
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
@@ -176,6 +294,7 @@ export component SettingsWindow inherits PopupWindow {
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
     callback patch-saved(string);
+    callback patch-deleted(int);
     callback polarity-flipped(bool);
 
     width: Theme.settings-panel-width;
@@ -194,21 +313,19 @@ export component SettingsWindow inherits PopupWindow {
         border-top-right-radius: Theme.settings-window-border-radius;
 
         VerticalLayout {
-            padding: Theme.osc-controls-panel-padding;
-            spacing: Theme.osc-controls-panel-spacing;
+            padding: Theme.settings-panel-padding;
+            spacing: Theme.settings-panel-spacing;
             alignment: start;
 
             HorizontalLayout {
-                padding: Theme.osc-controls-panel-padding;
-                spacing: Theme.osc-controls-panel-spacing;
+                padding: Theme.settings-panel-padding;
+                spacing: Theme.settings-panel-spacing;
                 alignment: start;
 
                 VerticalLayout {
                     alignment: start;
-
-                    PanelLabel {
-                        label: Theme.settings-audio-settings-title;
-                    }
+                    padding: Theme.settings-panel-padding;
+                    spacing: Theme.settings-panel-spacing;
 
                     AudioSettings {
                         audio-device-values: audio-device-values;
@@ -233,13 +350,9 @@ export component SettingsWindow inherits PopupWindow {
                             audio-buffer-size-changed(size);
                         }
                     }
-                }
 
-                VerticalLayout {
-                    alignment: start;
-
-                    PanelLabel {
-                        label: Theme.settings-midi-settings-title;
+                    HorizontalSpacer {
+                        top-padding: Theme.settings-panel-padding;
                     }
 
                     MidiSettings {
@@ -257,64 +370,41 @@ export component SettingsWindow inherits PopupWindow {
                         }
                     }
                 }
-            }
-
-            HorizontalLayout {
-                padding: Theme.osc-controls-panel-padding;
-                spacing: Theme.osc-controls-panel-spacing;
-                alignment: start;
 
                 VerticalLayout {
-                    spacing: Theme.osc-controls-panel-spacing;
                     alignment: start;
+                    padding: Theme.settings-panel-padding;
+                    spacing: Theme.settings-panel-spacing;
 
-                    PanelLabel {
-                        label: Theme.settings-patches-presets-title;
-                    }
+                    SynthSettings {
+                        polarity-is-flipped: polarity-is-flipped;
 
-                    patch-name := TextInput {
-                        label: Theme.settings-patch-name;
-                    }
-
-                    HorizontalLayout {
-                        alignment: center;
-                        save := MomentaryButton {
-                            label: Theme.settings-patch-save;
-                            button-width: 100px;
-                            button-height: 27px;
-                            momentary-button-pressed => {
-                                if (patch-name.text != "") {
-                                    patch-saved(patch-name.text);
-                                    patch-name.text = "";
-                                    result-status.visible = true;
-                                }
-                            }
-                        }
-                    }
-
-                    HorizontalLayout {
-                        alignment: space-evenly;
-                        result-status := Text {
-                            text: patch_save_status.message;
-                            color: patch_save_status.status ? green : red;
-                            visible: false;
-                        }
-                    }
-                }
-
-                VerticalLayout {
-                    spacing: Theme.osc-controls-panel-spacing;
-                    alignment: start;
-
-                    PanelLabel {
-                        label: "Synth Options";
-                    }
-
-                    ToggleSwitch {
-                        label: Theme.osc-options-polarity;
-                        is_checked: polarity-is-flipped;
-                        toggle_switch_updated(is_flipped) => {
+                        polarity-flipped(is_flipped) => {
                             polarity-flipped(is_flipped);
+                        }
+                    }
+
+                    HorizontalSpacer {
+                        top-padding: Theme.settings-panel-padding;
+                    }
+
+                    PatchSaveSettings {
+                        patch-save-status: patch-save-status;
+                        patch-saved(patch-name) => {
+                            patch-saved(patch-name);
+                        }
+                    }
+
+                    HorizontalSpacer {
+                        top-padding: Theme.settings-panel-padding;
+                    }
+
+                    PatchDeleteSettings {
+                        patch-delete-status: patch-delete-status;
+                        user-patch-list: user-patch-list;
+
+                        patch-deleted(index) => {
+                            patch-deleted(index);
                         }
                     }
                 }

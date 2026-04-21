@@ -210,8 +210,10 @@ export global Theme {
 
     // Settings Window
     out property <length> settings-panel-width: 500px;
-    out property <length> settings-panel-height: 300px;
-    out property <length> settings-panel-y-position: 120px;
+    out property <length> settings-panel-height: 500px;
+    out property <length> settings-panel-spacing: 7px;
+    out property <length> settings-panel-padding: 7px;
+    out property <length> settings-panel-y-position: 100px;
     out property <length> settings-window-border-width: 2px;
     out property <color> settings-window-background: Palette.background;
     out property <color> settings-window-border-colour: Palette.background.brighter(3);
@@ -221,9 +223,13 @@ export global Theme {
     out property <string> settings-patches-presets-title: "Save a Patch";
     out property <string> settings-midi-settings-title: "Midi Settings";
     out property <string> settings-audio-settings-title: "Audio Settings";
+    out property <string> settings-synth-options-title: "Synth Options";
+    out property <string> settings-delete-patches-title: "Delete a Patch";
     out property <string> settings-patch-name: "Patch Name";
     out property <length> settings-patch-name-box-height: 30px;
     out property <length> settings-patch-name-box-width: 250px;
     out property <string> settings-patch-save: "Save";
+    out property <string> settings-patch-delete: "Delete";
     out property <string> settings-saved-status: "Saved!";
+    out property <string> settings-deleted-status: "Deleted!";
 }

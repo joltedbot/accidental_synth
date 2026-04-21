@@ -3,6 +3,7 @@ use crate::modules::lfo::DEFAULT_LFO_PHASE;
 use crate::synthesizer::ModuleParameters;
 use crate::synthesizer::constants::{
     ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, LFO_INDEX_FILTER, LFO_INDEX_MOD_WHEEL,
+    PATCH_DELETE_FAILURE, PATCH_DELETE_FILE_DOES_NOT_EXIST, PATCH_DELETE_SUCCESS,
     PATCH_SAVE_ALREADY_EXISTS, PATCH_SAVE_FAILURE, PATCH_SAVE_SUCCESS,
 };
 use crate::synthesizer::midi_value_converters::bool_to_normal_value;
@@ -441,7 +442,7 @@ pub fn start_update_event_listener(
                     let thread_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
                     let patch_list = thread_patches.patch_list();
 
-                    if preset_index >= patch_list.names().len() as i32 {
+                    if preset_index >= patch_list.all_names().len() as i32 {
                         log::warn!(target: "synthesizer::event_listener", "Invalid preset index: {preset_index}");
                         continue;
                     }
@@ -488,11 +489,50 @@ pub fn start_update_event_listener(
                     }
 
                     if save_status.0 {
-                        let patch_list = thread_patches.patch_list().names();
+                        let patch_list = thread_patches.patch_list().all_names();
 
                         if let Err(e) = ui_update_sender.send(UIUpdates::PatchList(patch_list)) {
                             log::error!(target: "synthesizer::event_listener", "Failed to send new patch list to the UI: {e}");
                         }
+                    }
+                }
+                SynthesizerUpdateEvents::PatchDeleted(patch_index) => {
+                    let mut thread_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
+
+                    let delete_status = match thread_patches
+                        .delete_patch_by_index(patch_index as usize)
+                    {
+                        Ok(()) => {
+                            log::info!(target: "synthesizer::event_listener", "Deleted patch: {patch_index}");
+                            (true, PATCH_DELETE_SUCCESS.to_string())
+                        }
+                        Err(err) if err == PatchesError::PatchIndexOutOfRange(patch_index) => {
+                            log::warn!(target: "synthesizer::event_listener", "Patch file at {patch_index} does not exist");
+                            (false, PATCH_DELETE_FILE_DOES_NOT_EXIST.to_string())
+                        }
+                        Err(err) => {
+                            log::warn!(target: "synthesizer::event_listener", "Could not delete patch: {patch_index} -\
+                            {err}");
+                            (false, PATCH_DELETE_FAILURE.to_string())
+                        }
+                    };
+
+                    if let Err(e) =
+                        ui_update_sender.send(UIUpdates::PatchDeleteStatus(delete_status.clone()))
+                    {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send patch save status to the UI: {e}");
+                        continue;
+                    }
+
+                    let patch_list = thread_patches.patch_list().all_names();
+                    if let Err(e) = ui_update_sender.send(UIUpdates::PatchList(patch_list)) {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send new patch list to the UI: {e}");
+                    }
+
+                    let user_patch_list = thread_patches.user_patch_names();
+                    if let Err(e) = ui_update_sender.send(UIUpdates::UserPatchList(user_patch_list))
+                    {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send new patch list to the UI: {e}");
                     }
                 }
             }

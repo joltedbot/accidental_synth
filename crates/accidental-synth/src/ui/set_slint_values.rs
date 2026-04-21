@@ -302,10 +302,26 @@ pub fn set_patch_list(ui_weak_thread: &Weak<AccidentalSynth>, patch_list: Vec<St
         ui.set_patch_list(slint_patches_list_from_ui_patches_list(&patch_list));
     });
 }
+pub fn set_user_patch_list(ui_weak_thread: &Weak<AccidentalSynth>, user_patch_list: Vec<String>) {
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_user_patch_list(slint_patches_list_from_ui_patches_list(&user_patch_list));
+    });
+}
 
 pub fn set_patch_save_status(ui_weak_thread: &Weak<AccidentalSynth>, save_status: (bool, String)) {
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
         ui.set_patch_save_status(slint_patches_save_status_from_ui_patch_save_status(
+            &save_status,
+        ));
+    });
+}
+
+pub fn set_patch_delete_status(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    save_status: (bool, String),
+) {
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_patch_delete_status(slint_patches_save_status_from_ui_patch_save_status(
             &save_status,
         ));
     });

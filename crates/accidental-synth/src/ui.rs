@@ -6,7 +6,7 @@ mod update_listener;
 
 use super::{
     AccidentalSynth, AudioDevice, EffectsValues, EnvelopeValues, FilterCutoff, FilterOptions,
-    GlobalOptions, LFOValues, MidiPort, Mixer, Oscillator, PatchSaveStatus,
+    GlobalOptions, LFOValues, MidiPort, Mixer, Oscillator, PatchStatus,
 };
 use crate::ui::callbacks::register_callbacks;
 use crate::ui::structs::{
@@ -108,9 +108,15 @@ impl UI {
 
         let unlocked_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
         let patch_list = unlocked_patches.patch_list();
+        let user_patch_list = unlocked_patches.user_patch_names();
         drop(unlocked_patches);
 
-        set_ui_default_values(ui_weak, &self.parameter_values, &patch_list)?;
+        set_ui_default_values(
+            ui_weak,
+            &self.parameter_values,
+            &patch_list,
+            user_patch_list,
+        )?;
         start_ui_update_listener(ui_update_receiver, ui_weak, &self.parameter_values, patches);
 
         Ok(())
@@ -120,18 +126,25 @@ fn set_ui_default_values(
     ui_weak: &Weak<AccidentalSynth>,
     parameter_values: &Arc<Mutex<ParameterValues>>,
     patch_list: &PatchList,
+    user_patch_list: Vec<String>,
 ) -> Result<()> {
     let values = parameter_values
         .lock()
         .unwrap_or_else(PoisonError::into_inner);
 
-    push_values_to_ui(ui_weak, &values, Some(patch_list.names()))
+    push_values_to_ui(
+        ui_weak,
+        &values,
+        Some(patch_list.all_names()),
+        user_patch_list,
+    )
 }
 
 pub(super) fn push_values_to_ui(
     ui_weak: &Weak<AccidentalSynth>,
     values: &ParameterValues,
     patch_list: Option<Vec<String>>,
+    user_patch_list: Vec<String>,
 ) -> Result<()> {
     let ui_default_values = values.clone();
 
@@ -149,6 +162,8 @@ pub(super) fn push_values_to_ui(
         if let Some(ref patch_list) = patch_list {
             ui.set_patch_list(slint_patches_list_from_ui_patches_list(patch_list));
         }
+
+        ui.set_user_patch_list(slint_patches_list_from_ui_patches_list(&user_patch_list));
         ui.set_amp_envelope_values(slint_envelope_from_ui_envelope(
             &ui_default_values.amp_envelope,
         ));
@@ -314,8 +329,8 @@ fn slint_audio_device_from_ui_audio_device(audio_device_values: &UIAudioDevice) 
 
 fn slint_patches_save_status_from_ui_patch_save_status(
     save_status: &(bool, String),
-) -> PatchSaveStatus {
-    PatchSaveStatus {
+) -> PatchStatus {
+    PatchStatus {
         status: save_status.0,
         message: SharedString::from(save_status.1.clone()),
     }

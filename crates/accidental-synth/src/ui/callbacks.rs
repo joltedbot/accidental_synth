@@ -39,6 +39,7 @@ pub fn register_callbacks(
         ui_update_sender.clone(),
     );
     settings::callback_patch_saved(ui_weak, synthesizer_update_sender.clone());
+    settings::callback_patch_deleted(ui_weak, synthesizer_update_sender.clone());
 
     oscillators::callback_osc_oscillator_shape_changed(ui_weak, synthesizer_update_sender.clone());
     oscillators::callback_osc_course_tune_changed(ui_weak, synthesizer_update_sender.clone());

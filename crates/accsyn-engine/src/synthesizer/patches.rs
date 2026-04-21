@@ -13,56 +13,42 @@ const USER_PATCH_DIRECTORY: &str = "patches";
 const PATCH_FILE_EXTENSION: &str = "json";
 const INIT_PARAMETERS: &str = SYSTEM_PATCHES[0].1;
 const SYSTEM_PATCHES: &[(&str, &str)] = &[
-    ("*1 - Init", include_str!("patches/init.json")),
+    ("Init*", include_str!("patches/init.json")),
     (
-        "*2 - A Slightly Warmer FM",
+        "A Slightly Warmer FM*",
         include_str!("patches/a-slightly-warmer-fm.json"),
     ),
+    ("Acid Squelch*", include_str!("patches/acid-squelch.json")),
+    ("Acid Time*", include_str!("patches/acid-time.json")),
     (
-        "*3 - Acid Squelch",
-        include_str!("patches/acid-squelch.json"),
-    ),
-    ("*4 - Acid Time", include_str!("patches/acid-time.json")),
-    (
-        "*5 - Alien Invasion",
+        "Alien Invasion*",
         include_str!("patches/alien-invasion.json"),
     ),
+    ("Ambient Drone*", include_str!("patches/ambient-drone.json")),
     (
-        "*6 - Ambient Drone",
-        include_str!("patches/ambient-drone.json"),
-    ),
-    (
-        "*7 - Arpable Dirty FM",
+        "Arpable Dirty FM*",
         include_str!("patches/arpable-dirty-fm.json"),
     ),
-    ("*8 - Bright Lead", include_str!("patches/bright-lead.json")),
-    ("*9 - Buzz Brass", include_str!("patches/buzz-brass.json")),
-    ("*10 - Deep Bass", include_str!("patches/deep-bass.json")),
+    ("Bright Lead*", include_str!("patches/bright-lead.json")),
+    ("Buzz Brass*", include_str!("patches/buzz-brass.json")),
+    ("Deep Bass*", include_str!("patches/deep-bass.json")),
     (
-        "*11 - Dirty Bass Echo",
+        "Dirty Bass Echo*",
         include_str!("patches/dirty-bass-echo.json"),
     ),
+    ("Drifting Pad*", include_str!("patches/drifting-pad.json")),
+    ("FM Bells*", include_str!("patches/fm-bells.json")),
+    ("Plucky Bass*", include_str!("patches/plucky-bass.json")),
+    ("Plucky Keys*", include_str!("patches/plucky-keys.json")),
+    ("Sci-Fi*", include_str!("patches/sci-fi.json")),
+    ("Singing Bowls*", include_str!("patches/singing-bowls.json")),
+    ("Slide Bass*", include_str!("patches/slide-bass.json")),
     (
-        "*12 - Drifting Pad",
-        include_str!("patches/drifting-pad.json"),
-    ),
-    ("*13 - FM Bells", include_str!("patches/fm-bells.json")),
-    (
-        "*14 - Plucky Keys",
-        include_str!("patches/plucky-keys.json"),
-    ),
-    ("*15 - Sci-Fi", include_str!("patches/sci-fi.json")),
-    (
-        "*16 - Singing Bowls",
-        include_str!("patches/singing-bowls.json"),
-    ),
-    ("*17 - Slide Bass", include_str!("patches/slide-bass.json")),
-    (
-        "*18 - Supersaw Swirl",
+        "Supersaw Swirl*",
         include_str!("patches/supersaw-swirl.json"),
     ),
     (
-        "*19 - Triangles and Claves",
+        "Triangles and Claves*",
         include_str!("patches/triangles-and-claves.json"),
     ),
 ];
@@ -93,6 +79,10 @@ pub enum PatchesError {
     /// The patch file could not be written to.
     #[error("Failed to write patch file")]
     FailedToWritePatchFile,
+
+    /// Patch Index out of range.
+    #[error("Patch index out of range {0}")]
+    PatchIndexOutOfRange(i32),
 }
 
 /// File system paths used for application data, patches, and presets storage.
@@ -107,23 +97,58 @@ pub struct Paths {
 pub struct Patch {
     name: String,
     content: String,
+    path: Option<PathBuf>,
 }
 
 /// Stores a list of patch names and values
 #[derive(Debug, Clone)]
 pub struct PatchList {
-    list: Vec<Patch>,
+    presets: Vec<Patch>,
+    patches: Vec<Patch>,
 }
 
 impl PatchList {
-    /// Returns the names of the patches in the list.
-    pub fn names(&self) -> Vec<String> {
-        self.list.iter().map(|p| p.name.clone()).collect()
+    /// Returns the names of the presets and user patches in the list.
+    pub fn all_names(&self) -> Vec<String> {
+        let mut names = self.preset_names();
+        names.append(&mut self.patch_names());
+        let zero_index_to_one_index_offset: usize = 1;
+        names
+            .iter()
+            .enumerate()
+            .map(|(index, name)| format!("{} - {}", index + zero_index_to_one_index_offset, name))
+            .collect()
     }
 
-    /// Returns the list of patches as a vector
-    pub fn list(&self) -> Vec<Patch> {
-        self.list.clone()
+    /// Returns the list of presets and user patches as a vector
+    pub fn all(&self) -> Vec<Patch> {
+        let mut full_list = self.presets.clone();
+        full_list.append(&mut self.patches.clone());
+        full_list
+    }
+
+    fn preset_names(&self) -> Vec<String> {
+        self.presets.iter().map(|p| p.name.clone()).collect()
+    }
+    fn patch_names(&self) -> Vec<String> {
+        self.patches.iter().map(|p| p.name.clone()).collect()
+    }
+
+    pub(crate) fn delete_user_patch(&mut self, index: usize) -> Result<(), PatchesError> {
+        if index >= self.patches.len() {
+            return Err(PatchesError::PatchIndexOutOfRange(index as i32));
+        }
+
+        let patch = self.patches.remove(index);
+
+        if let Some(patch_file_path) = patch.path.clone() {
+            std::fs::remove_file(&patch_file_path).map_err(|err| {
+                log::error!(target: "synthesizer::patches", "Failed to delete patch file {}: {err}", patch_file_path.display());
+                PatchesError::FailedToWritePatchFile
+            })?;
+        }
+
+        Ok(())
     }
 }
 
@@ -138,8 +163,12 @@ impl Patches {
     pub fn new() -> Result<Self> {
         let mut paths = create_data_paths()?;
         initialize_application_storage(&mut paths)?;
+        let presets = load_presets();
         let patches = load_patches(&paths.user_patches);
-        Ok(Self { paths, patches })
+        Ok(Self {
+            paths,
+            patches: PatchList { presets, patches },
+        })
     }
 
     /// Serializes the current module parameters to a new named patch file.
@@ -149,7 +178,7 @@ impl Patches {
         parameters: &ModuleParameters,
     ) -> Result<(), PatchesError> {
         self.create_new_patch(name, parameters)?;
-        self.patches = load_patches(&self.paths.user_patches);
+        self.patches = self.patch_list();
         log::info!(target: "synthesizer::patches", "Patch saved: {name}");
         Ok(())
     }
@@ -207,24 +236,37 @@ impl Patches {
         Ok(())
     }
 
-    /// Get the list of user-created patch names from the files in the patch directory.
-    pub fn patch_list(&self) -> PatchList {
-        self.patches.clone()
-    }
-
     /// Loads a preset from the system preset patches by preset index. See `SYSTEM_PATCHES` for the index values.
     pub fn get_module_parameters_from_patch_index(
         &self,
         index: usize,
         patch_list: &PatchList,
     ) -> Result<ModuleParameters> {
-        let patch = &patch_list.list[index];
+        let patch = &patch_list.all()[index];
         let preset = serde_json::from_str(&patch.content).map_err(|err| {
             log::error!(target: "synthesizer::patches", "Failed to parse preset '{}' (index {index}): {err}", patch.name);
             err
         })?;
         log::info!(target: "synthesizer::patches", "Loaded preset '{}' (index {index})", patch.name);
         Ok(preset)
+    }
+
+    /// Generates and returns a `PatchList` containing presets and user-defined patches.
+    pub fn patch_list(&self) -> PatchList {
+        let presets = load_presets();
+        let patches = load_patches(&self.paths.user_patches);
+        PatchList { presets, patches }
+    }
+
+    /// Returns the names of only the user patches
+    pub fn user_patch_names(&self) -> Vec<String> {
+        self.patches.patch_names()
+    }
+
+    /// Delete a patch file from the user patches directory by patch index from all patches list
+    pub fn delete_patch_by_index(&mut self, index: usize) -> Result<(), PatchesError> {
+        self.patches.delete_user_patch(index)?;
+        Ok(())
     }
 }
 
@@ -248,15 +290,15 @@ fn load_presets() -> Vec<Patch> {
         .map(|(name, content)| Patch {
             name: name.to_string(),
             content: content.to_string(),
+            path: None,
         })
         .collect()
 }
 
 /// Create patch collection from user patches directory.
-pub fn load_patches(patch_directory: &Path) -> PatchList {
+fn load_patches(patch_directory: &Path) -> Vec<Patch> {
     log::debug!(target: "synthesizer::patches", "Loading presets");
-    let mut patches = load_presets();
-    let mut patch_counter = patches.len();
+    let mut patches = vec![];
 
     log::debug!(target: "synthesizer::patches", "Loading patches from directory: {}", patch_directory.display());
 
@@ -284,23 +326,25 @@ pub fn load_patches(patch_directory: &Path) -> PatchList {
                 }
             })
             .filter_map(|entry| {
-                let name = entry.path().file_stem()?.to_string_lossy().to_string();
+                let path = entry.path();
+                let name = path.file_stem()?.to_string_lossy().to_string();
                 let sanitized_name = sanitize_name(&name);
-                let content = match read_to_string(entry.path()) {
+                let content = match read_to_string(path.clone()) {
                     Ok(c) => c,
                     Err(e) => {
-                        log::warn!(target: "synthesizer::patches", "Failed to read patch file {}: {e}", entry.path().display());
+                        log::warn!(target: "synthesizer::patches", "Failed to read patch file {}: {e}", path.display());
                         return None;
                     }
                 };
-                patch_counter += 1;
-                let display_name = format!("{} - {}", patch_counter, sanitized_name);
-                Some(Patch { name: display_name, content })
+                Some(Patch {
+                    name: sanitized_name,
+                    content,
+                    path: Some(path)
+                })
             })
             .for_each(|patch| patches.push(patch));
     }
-
-    PatchList { list: patches }
+    patches
 }
 
 pub(crate) fn init_module_parameters() -> Result<ModuleParameters> {
