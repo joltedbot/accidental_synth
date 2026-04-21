@@ -62,7 +62,10 @@ fn compress_sample(
         u32::from(MAX_RATIO),
     );
 
-    (threshold + (delta / ratio as f32)) * gain_factor * sample.signum()
+    // Ratio is bounded by MIN_RATIO..MAX_RATIO (small integer range), within f32 precision (2²³ = 8_388_608)
+    #[allow(clippy::cast_precision_loss)]
+    let ratio_f32 = ratio as f32;
+    (threshold + (delta / ratio_f32)) * gain_factor * sample.signum()
 }
 
 #[cfg(test)]

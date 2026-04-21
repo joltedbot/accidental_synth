@@ -116,14 +116,20 @@ pub(crate) fn exponential_curve_envelope_time_from_normal_value(
         return 0;
     }
 
+    // Envelope times in ms are ≤ 10_000, within f32 precision (2²³ = 8_388_608)
+    #[allow(clippy::cast_precision_loss)]
+    let minimum_f32 = minimum as f32;
+    #[allow(clippy::cast_precision_loss)]
+    let maximum_f32 = maximum as f32;
+
     if normal_value < crossover_values.0 {
         let renormailzed_value = normal_value / crossover_values.0;
         let quadratic_curve = renormailzed_value.powi(2);
-        minimum + ((crossover_values.1 - minimum as f32) * quadratic_curve) as u32
+        minimum + ((crossover_values.1 - minimum_f32) * quadratic_curve) as u32
     } else {
         let renormailzed_value = (normal_value - crossover_values.0) / crossover_values.0;
         let quadratic_curve = renormailzed_value.powi(2);
-        (crossover_values.1 + ((maximum as f32 - crossover_values.1) * quadratic_curve).round())
+        (crossover_values.1 + ((maximum_f32 - crossover_values.1) * quadratic_curve).round())
             as u32
     }
 }

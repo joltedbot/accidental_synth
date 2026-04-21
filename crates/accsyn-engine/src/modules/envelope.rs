@@ -128,7 +128,10 @@ impl Envelope {
     pub(crate) fn new(sample_rate: u32) -> Self {
         log::debug!("Constructing Envelope Module");
 
-        let milliseconds_per_sample = 1000.0 / sample_rate as f32;
+        // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
+        let sample_rate_f32 = sample_rate as f32;
+        let milliseconds_per_sample = 1000.0 / sample_rate_f32;
 
         Self {
             level: ENVELOPE_MIN_LEVEL,
@@ -199,7 +202,10 @@ impl Envelope {
     }
 
     fn set_attack_milliseconds(&mut self, milliseconds: u32) {
-        let clamped_milliseconds = (milliseconds as f32).max(self.milliseconds_per_sample);
+        // Envelope attack time in ms is ≤ 10_000, within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
+        let milliseconds_f32 = milliseconds as f32;
+        let clamped_milliseconds = milliseconds_f32.max(self.milliseconds_per_sample);
         self.attack_level_increment = if self.is_inverted {
             self.level_increments_from_milliseconds(
                 ENVELOPE_MAX_LEVEL,
@@ -216,7 +222,11 @@ impl Envelope {
     }
 
     fn set_decay_milliseconds(&mut self, milliseconds: u32) {
-        self.decay_milliseconds = (milliseconds as f32).max(self.milliseconds_per_sample);
+        // Envelope decay time in ms is ≤ 10_000, within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
+        let milliseconds_f32 = milliseconds as f32;
+        let decay_ms_f32 = milliseconds_f32.max(self.milliseconds_per_sample);
+        self.decay_milliseconds = decay_ms_f32;
 
         self.decay_level_increment = if self.is_inverted {
             self.level_increments_from_milliseconds(
@@ -273,7 +283,10 @@ impl Envelope {
     }
 
     fn set_release_milliseconds(&mut self, milliseconds: u32) {
-        let clamped_milliseconds = (milliseconds as f32).max(self.milliseconds_per_sample);
+        // Envelope release time in ms is ≤ 10_000, within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
+        let milliseconds_f32 = milliseconds as f32;
+        let clamped_milliseconds = milliseconds_f32.max(self.milliseconds_per_sample);
 
         self.release_level_increment = if self.is_inverted {
             self.level_increments_from_milliseconds(

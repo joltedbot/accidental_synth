@@ -68,11 +68,11 @@ pub fn process_midi_program_change_message(
 ) {
     log::debug!(target: "synthesizer::midi", "Program change received: {program_number}");
 
-    synthesizer_update_sender.send(SynthesizerUpdateEvents::PatchChanged(program_number as i32)).expect(
+    synthesizer_update_sender.send(SynthesizerUpdateEvents::PatchChanged(i32::from(program_number))).expect(
         "process_midi_program_change_message(): Could not send new program number to the synthesizer module. Exiting.",
     );
     ui_update_sender
-        .send(UIUpdates::Patches(program_number as i32))
+        .send(UIUpdates::Patches(i32::from(program_number)))
         .expect("process_midi_program_change_message(): Could not send new program number to the UI module. Exiting.");
 }
 

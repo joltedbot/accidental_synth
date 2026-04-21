@@ -34,8 +34,11 @@ impl Supersaw {
     }
 
     fn single_saw_sample(&mut self, tone_frequency: f32, x_coordinate: f32) -> f32 {
+        // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
+        let sample_rate_f32 = self.sample_rate as f32;
         let y_coordinate: f32 = (-2.0 / PI)
-            * (1.0f32 / (tone_frequency * PI * (x_coordinate / self.sample_rate as f32)).tan())
+            * (1.0f32 / (tone_frequency * PI * (x_coordinate / sample_rate_f32)).tan())
                 .atan();
         y_coordinate
     }
@@ -43,10 +46,14 @@ impl Supersaw {
 
 impl GenerateWave for Supersaw {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
+        // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
+        let sample_rate_f32 = self.sample_rate as f32;
+
         let mut voice_samples: Vec<f32> = vec![];
 
         if let Some(phase) = self.phase {
-            self.x_coordinate = (phase / PI) * (self.sample_rate as f32 / tone_frequency);
+            self.x_coordinate = (phase / PI) * (sample_rate_f32 / tone_frequency);
             self.phase = None;
         }
 
@@ -60,7 +67,7 @@ impl GenerateWave for Supersaw {
         self.x_coordinate += self.x_increment * modulation.unwrap_or(1.0);
 
         if tone_frequency > 0.0 {
-            let period = self.sample_rate as f32 / tone_frequency;
+            let period = sample_rate_f32 / tone_frequency;
             if self.x_coordinate >= period {
                 self.x_coordinate -= period;
             }

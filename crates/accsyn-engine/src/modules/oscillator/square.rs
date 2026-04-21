@@ -31,14 +31,18 @@ impl Square {
 
 impl GenerateWave for Square {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
+        // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
+        let sample_rate_f32 = self.sample_rate as f32;
+
         if let Some(phase) = self.phase {
             self.x_coordinate =
-                (phase / RADS_PER_CYCLE) * (self.sample_rate as f32 / tone_frequency);
+                (phase / RADS_PER_CYCLE) * (sample_rate_f32 / tone_frequency);
             self.phase = None;
         }
 
         let mut y_coordinate: f32 =
-            (tone_frequency * RADS_PER_CYCLE * (self.x_coordinate / self.sample_rate as f32)).sin();
+            (tone_frequency * RADS_PER_CYCLE * (self.x_coordinate / sample_rate_f32)).sin();
 
         if y_coordinate >= 0.0 {
             y_coordinate = 1.0;
@@ -49,7 +53,7 @@ impl GenerateWave for Square {
         self.x_coordinate += DEFAULT_X_INCREMENT * modulation.unwrap_or(1.0);
 
         if tone_frequency > 0.0 {
-            let period = self.sample_rate as f32 / tone_frequency;
+            let period = sample_rate_f32 / tone_frequency;
             if self.x_coordinate >= period {
                 self.x_coordinate -= period;
             }

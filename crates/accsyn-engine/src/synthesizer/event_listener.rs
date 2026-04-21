@@ -20,6 +20,7 @@ use crate::synthesizer::set_parameters::{
     set_output_balance, set_output_level, set_output_mute, set_pitch_bend_range,
     set_portamento_enabled, set_portamento_time, set_velocity_curve,
 };
+use accsyn_types::casting::i32_to_u8_clamped;
 use accsyn_types::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
 };
@@ -42,93 +43,101 @@ pub fn start_update_event_listener(
         while let Ok(event) = ui_update_receiver.recv() {
             match event {
                 SynthesizerUpdateEvents::WaveShapeIndex(oscillator_index, wave_shape_index) => {
-                    if oscillator_index >= 0
-                        && oscillator_index < module_parameters.oscillators.len() as i32
-                    {
-                        module_parameters.oscillators[oscillator_index as usize]
-                            .wave_shape_index
-                            .store(wave_shape_index as u8, Relaxed);
-                    } else {
-                        log::warn!(
-                            "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
-                        );
+                    match usize::try_from(oscillator_index) {
+                        Ok(idx) if idx < module_parameters.oscillators.len() => {
+                            module_parameters.oscillators[idx]
+                                .wave_shape_index
+                                .store(i32_to_u8_clamped(wave_shape_index), Relaxed);
+                        }
+                        _ => {
+                            log::warn!(
+                                "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
+                            );
+                        }
                     }
                 }
                 SynthesizerUpdateEvents::CourseTune(oscillator_index, course_tune) => {
-                    if oscillator_index >= 0
-                        && oscillator_index < module_parameters.oscillators.len() as i32
-                    {
-                        set_oscillator_course_tune(
-                            &module_parameters.oscillators[oscillator_index as usize],
-                            course_tune,
-                        );
-                    } else {
-                        log::warn!(
-                            "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
-                        );
+                    match usize::try_from(oscillator_index) {
+                        Ok(idx) if idx < module_parameters.oscillators.len() => {
+                            set_oscillator_course_tune(
+                                &module_parameters.oscillators[idx],
+                                course_tune,
+                            );
+                        }
+                        _ => {
+                            log::warn!(
+                                "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
+                            );
+                        }
                     }
                 }
                 SynthesizerUpdateEvents::FineTune(oscillator_index, fine_tune) => {
-                    if oscillator_index >= 0
-                        && oscillator_index < module_parameters.oscillators.len() as i32
-                    {
-                        let cents = set_oscillator_fine_tune(
-                            &module_parameters.oscillators[oscillator_index as usize],
-                            fine_tune,
-                        );
+                    match usize::try_from(oscillator_index) {
+                        Ok(idx) if idx < module_parameters.oscillators.len() => {
+                            let cents = set_oscillator_fine_tune(
+                                &module_parameters.oscillators[idx],
+                                fine_tune,
+                            );
 
-                        if let Err(e) = ui_update_sender.send(UIUpdates::OscillatorFineTuneCents(
-                            oscillator_index,
-                            i32::from(cents),
-                        )) {
-                            log::error!(target: "synthesizer::event_listener", "Failed to send oscillator fine-tune display value to the UI: {e}");
+                            if let Err(e) =
+                                ui_update_sender.send(UIUpdates::OscillatorFineTuneCents(
+                                    oscillator_index,
+                                    i32::from(cents),
+                                ))
+                            {
+                                log::error!(target: "synthesizer::event_listener", "Failed to send oscillator fine-tune display value to the UI: {e}");
+                            }
                         }
-                    } else {
-                        log::warn!(
-                            "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
-                        );
+                        _ => {
+                            log::warn!(
+                                "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
+                            );
+                        }
                     }
                 }
                 SynthesizerUpdateEvents::ClipperBoost(oscillator_index, boost) => {
-                    if oscillator_index >= 0
-                        && oscillator_index < module_parameters.oscillators.len() as i32
-                    {
-                        set_oscillator_clip_boost(
-                            &module_parameters.oscillators[oscillator_index as usize],
-                            boost,
-                        );
-                    } else {
-                        log::warn!(
-                            "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
-                        );
+                    match usize::try_from(oscillator_index) {
+                        Ok(idx) if idx < module_parameters.oscillators.len() => {
+                            set_oscillator_clip_boost(
+                                &module_parameters.oscillators[idx],
+                                boost,
+                            );
+                        }
+                        _ => {
+                            log::warn!(
+                                "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
+                            );
+                        }
                     }
                 }
                 SynthesizerUpdateEvents::Parameter1(oscillator_index, boost) => {
-                    if oscillator_index >= 0
-                        && oscillator_index < module_parameters.oscillators.len() as i32
-                    {
-                        set_oscillator_shape_parameter1(
-                            &module_parameters.oscillators[oscillator_index as usize],
-                            boost,
-                        );
-                    } else {
-                        log::warn!(
-                            "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
-                        );
+                    match usize::try_from(oscillator_index) {
+                        Ok(idx) if idx < module_parameters.oscillators.len() => {
+                            set_oscillator_shape_parameter1(
+                                &module_parameters.oscillators[idx],
+                                boost,
+                            );
+                        }
+                        _ => {
+                            log::warn!(
+                                "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
+                            );
+                        }
                     }
                 }
                 SynthesizerUpdateEvents::Parameter2(oscillator_index, boost) => {
-                    if oscillator_index >= 0
-                        && oscillator_index < module_parameters.oscillators.len() as i32
-                    {
-                        set_oscillator_shape_parameter2(
-                            &module_parameters.oscillators[oscillator_index as usize],
-                            boost,
-                        );
-                    } else {
-                        log::warn!(
-                            "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
-                        );
+                    match usize::try_from(oscillator_index) {
+                        Ok(idx) if idx < module_parameters.oscillators.len() => {
+                            set_oscillator_shape_parameter2(
+                                &module_parameters.oscillators[idx],
+                                boost,
+                            );
+                        }
+                        _ => {
+                            log::warn!(
+                                "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
+                            );
+                        }
                     }
                 }
                 SynthesizerUpdateEvents::FilterCutoffFrequency(frequency) => {
@@ -280,12 +289,12 @@ pub fn start_update_event_listener(
                         LFO_INDEX_MOD_WHEEL => {
                             module_parameters.lfos[LFOIndex::ModWheel as usize]
                                 .wave_shape
-                                .store(wave_shape_index as u8, Relaxed);
+                                .store(i32_to_u8_clamped(wave_shape_index), Relaxed);
                         }
                         LFO_INDEX_FILTER => {
                             module_parameters.lfos[LFOIndex::Filter as usize]
                                 .wave_shape
-                                .store(wave_shape_index as u8, Relaxed);
+                                .store(i32_to_u8_clamped(wave_shape_index), Relaxed);
                         }
                         _ => {
                             log::warn!(
@@ -442,13 +451,16 @@ pub fn start_update_event_listener(
                     let thread_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
                     let patch_list = thread_patches.patch_list();
 
-                    if preset_index >= patch_list.all_names().len() as i32 {
+                    let Some(preset_idx) = usize::try_from(preset_index)
+                        .ok()
+                        .filter(|&idx| idx < patch_list.all_names().len())
+                    else {
                         log::warn!(target: "synthesizer::event_listener", "Invalid preset index: {preset_index}");
                         continue;
-                    }
+                    };
 
                     let patch = match get_module_parameters_from_patch_index(
-                        preset_index as usize,
+                        preset_idx,
                         &patch_list,
                     ) {
                         Ok(preset) => preset,

@@ -14,6 +14,8 @@ impl Sine {
     pub(crate) fn new(sample_rate: u32) -> Self {
         log::debug!(target: "synth::oscillator", shape = "Sine"; "Constructing wave generator");
         let phase: f32 = DEFAULT_PHASE;
+        // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
         let seconds_per_sample = 1.0 / sample_rate as f32;
         let phase_increment = RADS_PER_CYCLE * seconds_per_sample;
 

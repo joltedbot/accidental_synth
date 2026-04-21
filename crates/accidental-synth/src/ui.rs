@@ -260,7 +260,7 @@ fn oscillator_fine_tune_to_ui_oscillator_fine_tune(
 ) -> Vec<i32> {
     oscillators
         .iter()
-        .map(|osc| osc.fine_tune.load() as i32)
+        .map(|osc| i32::from(osc.fine_tune.load()))
         .collect()
 }
 
