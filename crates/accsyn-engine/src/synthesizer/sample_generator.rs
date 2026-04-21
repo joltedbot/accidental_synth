@@ -186,8 +186,8 @@ pub fn sample_generator(
             {
                 modules.profile_counter += 1;
                 if modules.profile_counter.is_multiple_of(500) {
-                    let budget_us =
-                        f64::from(current_buffer_size) / f64::from(current_sample_rate) * 1_000_000.0;
+                    let budget_us = f64::from(current_buffer_size) / f64::from(current_sample_rate)
+                        * 1_000_000.0;
                     let elapsed_us = profile_start.elapsed().as_micros();
                     // elapsed_us is a profiling microsecond count; u128→f64 precision loss is acceptable for a percentage log
                     #[allow(clippy::cast_precision_loss)]

@@ -172,6 +172,8 @@ unsafe fn is_output_device(device_id: AudioDeviceID) -> bool {
             &raw mut property_size,
         );
 
+        // size_of::<T>() is always a small compile-time constant, well within u32 range
+        #[allow(clippy::cast_possible_truncation)]
         if status != OSSSTATUS_NO_ERROR || property_size < size_of::<UInt32>() as UInt32 {
             log::trace!(
                 target: "audio::device",
@@ -225,6 +227,8 @@ unsafe fn get_device_name(device_id: AudioDeviceID) -> Result<String, String> {
         mElement: kAudioObjectPropertyElementMain,
     };
 
+    // size_of::<T>() is always a small compile-time constant, well within u32 range
+    #[allow(clippy::cast_possible_truncation)]
     let mut property_size = size_of::<CFStringRef>() as u32;
     let mut cf_string: CFStringRef = ptr::null();
 

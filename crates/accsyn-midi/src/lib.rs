@@ -204,7 +204,9 @@ impl Midi {
                             );
 
                             ui_update_sender
-                                .send(UIUpdates::MidiPortIndex(port.0 as i32))
+                                .send(UIUpdates::MidiPortIndex(
+                                    i32::try_from(port.0).unwrap_or(i32::MAX),
+                                ))
                                 .expect(
                                     "run(): Could not send midi port list update to the UI. Exiting.");
                         } else {
@@ -227,7 +229,9 @@ impl Midi {
                             );
 
                             ui_update_sender
-                                .send(UIUpdates::MidiPortIndex(port.0 as i32))
+                                .send(UIUpdates::MidiPortIndex(
+                                    i32::try_from(port.0).unwrap_or(i32::MAX),
+                                ))
                                 .expect(
                                     "run(): Could not send midi port index update to the UI. Exiting.");
                         } else {

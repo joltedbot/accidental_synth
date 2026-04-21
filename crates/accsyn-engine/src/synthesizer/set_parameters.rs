@@ -157,6 +157,8 @@ pub fn set_velocity_curve(parameters: &KeyboardParameters, normal_value: f32) {
 }
 
 pub fn set_pitch_bend_range(parameters: &KeyboardParameters, normal_value: f32) {
+    // Bounded to [MIN_PITCH_BEND_RANGE, MAX_PITCH_BEND_RANGE] (2–12), safely within u8 range
+    #[allow(clippy::cast_possible_truncation)]
     let range = normal_value_to_unsigned_integer_range(
         normal_value,
         u32::from(MIN_PITCH_BEND_RANGE),
@@ -200,6 +202,8 @@ pub fn set_oscillator_hard_sync(parameters: &[OscillatorParameters; 4], normal_v
 }
 
 pub fn set_portamento_time(parameters: &[OscillatorParameters; 4], normal_value: f32) {
+    // Exponential curve with coefficient 6.214_608 maps [0.0, 1.0] → [1, ~499] ms; safely within u16 range
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     let speed = exponential_curve_from_normal_value_and_coefficient(
         normal_value,
         EXPONENTIAL_PORTAMENTO_COEFFICIENT,
@@ -264,6 +268,8 @@ pub fn set_oscillator_level(
 }
 
 pub fn set_oscillator_fine_tune(parameters: &OscillatorParameters, normal_value: f32) -> i8 {
+    // Bounded to [OSCILLATOR_FINE_TUNE_MIN_CENTS, OSCILLATOR_FINE_TUNE_MAX_CENTS] (-63..=63), within i8 range
+    #[allow(clippy::cast_possible_truncation)]
     let cents = normal_value_to_signed_integer_range(
         normal_value,
         i32::from(OSCILLATOR_FINE_TUNE_MIN_CENTS),
@@ -275,6 +281,8 @@ pub fn set_oscillator_fine_tune(parameters: &OscillatorParameters, normal_value:
 }
 
 pub fn set_oscillator_course_tune(parameters: &OscillatorParameters, normal_value: f32) -> i8 {
+    // Bounded to [OSCILLATOR_COURSE_TUNE_MIN_INTERVAL, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL] (-12..=12), within i8 range
+    #[allow(clippy::cast_possible_truncation)]
     let interval = normal_value_to_signed_integer_range(
         normal_value,
         i32::from(OSCILLATOR_COURSE_TUNE_MIN_INTERVAL),
@@ -307,6 +315,8 @@ pub fn set_effect_parameter(
     parameter_index: i32,
     value: f32,
 ) {
+    // parameter_index is a Slint UI-sourced effect parameter slot, always non-negative and bounded by array size
+    #[allow(clippy::cast_sign_loss)]
     parameters[effect as usize].parameters[parameter_index as usize].store(value);
 }
 

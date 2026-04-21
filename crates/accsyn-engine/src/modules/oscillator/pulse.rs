@@ -41,8 +41,7 @@ impl GenerateWave for Pulse {
         };
 
         if let Some(phase) = self.phase {
-            self.x_coordinate =
-                (phase / RADS_PER_CYCLE) * (sample_rate_f32 / tone_frequency);
+            self.x_coordinate = (phase / RADS_PER_CYCLE) * (sample_rate_f32 / tone_frequency);
             self.phase = None;
         }
 

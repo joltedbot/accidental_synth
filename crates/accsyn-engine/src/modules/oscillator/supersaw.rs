@@ -38,8 +38,7 @@ impl Supersaw {
         #[allow(clippy::cast_precision_loss)]
         let sample_rate_f32 = self.sample_rate as f32;
         let y_coordinate: f32 = (-2.0 / PI)
-            * (1.0f32 / (tone_frequency * PI * (x_coordinate / sample_rate_f32)).tan())
-                .atan();
+            * (1.0f32 / (tone_frequency * PI * (x_coordinate / sample_rate_f32)).tan()).atan();
         y_coordinate
     }
 }

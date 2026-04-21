@@ -98,10 +98,7 @@ pub fn start_update_event_listener(
                 SynthesizerUpdateEvents::ClipperBoost(oscillator_index, boost) => {
                     match usize::try_from(oscillator_index) {
                         Ok(idx) if idx < module_parameters.oscillators.len() => {
-                            set_oscillator_clip_boost(
-                                &module_parameters.oscillators[idx],
-                                boost,
-                            );
+                            set_oscillator_clip_boost(&module_parameters.oscillators[idx], boost);
                         }
                         _ => {
                             log::warn!(

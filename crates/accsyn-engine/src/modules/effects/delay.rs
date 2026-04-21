@@ -2,6 +2,7 @@ use crate::modules::effects::constants::{
     DELAY_SMOOTHING_FACTOR, MAX_DELAY_SAMPLES, MIN_DELAY_SAMPLES,
 };
 use crate::synthesizer::midi_value_converters::normal_value_to_unsigned_integer_range;
+use accsyn_types::casting::f32_to_usize_clamped;
 use accsyn_types::effects::{AudioEffect, EffectParameters};
 
 // Ensure MAX_DELAY_SAMPLES is a power of 2 to guarantee the bitwise wrapping logic is safe
@@ -66,7 +67,7 @@ impl AudioEffect for Delay {
 
         self.current_delay_samples +=
             (target_delay - self.current_delay_samples) * DELAY_SMOOTHING_FACTOR;
-        let delay_samples = self.current_delay_samples.floor() as usize;
+        let delay_samples = f32_to_usize_clamped(self.current_delay_samples.floor());
         // delay_samples is bounded by MAX_DELAY_SAMPLES (a small constant), within f32 precision (2²³ = 8_388_608)
         #[allow(clippy::cast_precision_loss)]
         let fractional_index = self.current_delay_samples - delay_samples as f32;

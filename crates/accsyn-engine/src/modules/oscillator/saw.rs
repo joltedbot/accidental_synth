@@ -41,9 +41,7 @@ impl GenerateWave for Saw {
         }
 
         let y_coordinate: f32 = (-2.0 / PI)
-            * (1.0f32
-                / (tone_frequency * PI * (self.x_coordinate / sample_rate_f32)).tan())
-            .atan();
+            * (1.0f32 / (tone_frequency * PI * (self.x_coordinate / sample_rate_f32)).tan()).atan();
 
         self.x_coordinate += DEFAULT_X_INCREMENT * modulation.unwrap_or(1.0);
 
