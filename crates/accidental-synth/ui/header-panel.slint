@@ -146,7 +146,7 @@ export component HeaderPanel inherits Panel {
     callback midi-input-channel-changed(string);
     callback patch-changed(int);
     callback patch-saved(string);
-    callback patch-deleted(int);
+    callback patch-deleted(string);
     callback polarity-flipped(bool);
 
     height: Theme.header-panel-height;
@@ -184,8 +184,8 @@ export component HeaderPanel inherits Panel {
         patch-saved(name) => {
             patch-saved(name);
         }
-        patch-deleted(index) => {
-            patch-deleted(index);
+        patch-deleted(name) => {
+            patch-deleted(name);
         }
         polarity-flipped(is_flipped) => {
             polarity-flipped(is_flipped);

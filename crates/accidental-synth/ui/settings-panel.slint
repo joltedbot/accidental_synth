@@ -215,9 +215,9 @@ export component PatchDeleteSettings inherits VerticalLayout {
     in property <PatchStatus> patch-delete-status;
     in property <[string]> user-patch-list;
 
-    callback patch-deleted(int);
+    callback patch-deleted(string);
 
-    property <int> new-patch-index;
+    property <string> new-patch-name;
 
     padding: Theme.settings-panel-padding;
     spacing: Theme.settings-panel-spacing;
@@ -232,7 +232,7 @@ export component PatchDeleteSettings inherits VerticalLayout {
             dropdown-width: Theme.oscillator-panel-widget-width;
             value-list: user-patch-list;
             drop_down_changed(index, name) => {
-                new-patch-index = index;
+                new-patch-name = name;
             }
         }
     }
@@ -244,7 +244,7 @@ export component PatchDeleteSettings inherits VerticalLayout {
             button-width: 100px;
             button-height: 27px;
             momentary-button-pressed => {
-                patch-deleted(new-patch-index);
+                patch-deleted(new-patch-name);
                 delete-status.visible = true;
             }
         }
@@ -294,7 +294,7 @@ export component SettingsWindow inherits PopupWindow {
     callback midi-input-port-changed(string);
     callback midi-input-channel-changed(string);
     callback patch-saved(string);
-    callback patch-deleted(int);
+    callback patch-deleted(string);
     callback polarity-flipped(bool);
 
     width: Theme.settings-panel-width;
@@ -403,8 +403,8 @@ export component SettingsWindow inherits PopupWindow {
                         patch-delete-status: patch-delete-status;
                         user-patch-list: user-patch-list;
 
-                        patch-deleted(index) => {
-                            patch-deleted(index);
+                        patch-deleted(name) => {
+                            patch-deleted(name);
                         }
                     }
                 }

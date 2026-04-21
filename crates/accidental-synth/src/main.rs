@@ -40,7 +40,7 @@ fn main() {
 
     let default_ui_parameters = synthesizer.get_module_parameters();
     log::debug!(target: "main", "Initialize the user interface module");
-    let mut ui = UI::new(default_ui_parameters);
+    let mut ui = UI::new(&default_ui_parameters);
 
     log::debug!(target: "main", "Initialize the midi module");
     let mut midi = Midi::new();

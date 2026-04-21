@@ -16,7 +16,7 @@ use accsyn_engine::synthesizer::midi_value_converters::{
     normal_value_to_number_of_filter_poles, normal_value_to_unsigned_integer_range,
     normal_value_to_wave_shape_index,
 };
-use accsyn_engine::synthesizer::patches::Patches;
+use accsyn_engine::synthesizer::patches::{Patches, get_module_parameters_from_patch_index};
 use accsyn_types::defaults::Defaults;
 use accsyn_types::synth_events::{EnvelopeIndex, LFOIndex};
 use accsyn_types::ui_events::{EnvelopeStage, UIUpdates};
@@ -42,7 +42,7 @@ pub fn start_ui_update_listener(
                 .lock()
                 .unwrap_or_else(PoisonError::into_inner);
 
-            log::debug!(target: "ui::update", "{:?}", update);
+            log::debug!(target: "ui::update", "{update:?}");
 
             match update {
                 UIUpdates::MidiScreen(message) => {
@@ -387,9 +387,10 @@ pub fn start_ui_update_listener(
                         continue;
                     }
 
-                    let patch = match unlocked_patches
-                        .get_module_parameters_from_patch_index(index as usize, &patch_list)
-                    {
+                    let patch = match get_module_parameters_from_patch_index(
+                        index as usize,
+                        &patch_list,
+                    ) {
                         Ok(patch) => patch,
                         Err(e) => {
                             log::error!(

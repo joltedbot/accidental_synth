@@ -81,8 +81,8 @@ pub enum PatchesError {
     FailedToWritePatchFile,
 
     /// Patch Index out of range.
-    #[error("Patch index out of range {0}")]
-    PatchIndexOutOfRange(i32),
+    #[error("Patch name does not exit {0}")]
+    PatchNameDoesNotExist(String),
 }
 
 /// File system paths used for application data, patches, and presets storage.
@@ -134,12 +134,13 @@ impl PatchList {
         self.patches.iter().map(|p| p.name.clone()).collect()
     }
 
-    pub(crate) fn delete_user_patch(&mut self, index: usize) -> Result<(), PatchesError> {
-        if index >= self.patches.len() {
-            return Err(PatchesError::PatchIndexOutOfRange(index as i32));
-        }
-
-        let patch = self.patches.remove(index);
+    pub(crate) fn delete_user_patch(&mut self, patch_name: String) -> Result<(), PatchesError> {
+        let patch = if let Some(index) = self.patches.iter().position(|p| p.name == patch_name) {
+            self.patches.remove(index)
+        } else {
+            log::warn!(target: "synthesizer::patches", "Patch name does not exist: {}", patch_name);
+            return Err(PatchesError::PatchNameDoesNotExist(patch_name));
+        };
 
         if let Some(patch_file_path) = patch.path.clone() {
             std::fs::remove_file(&patch_file_path).map_err(|err| {
@@ -194,7 +195,7 @@ impl Patches {
         patch_file_path.push(sanitized_name);
         patch_file_path.set_extension(PATCH_FILE_EXTENSION);
 
-        self.validate_patch_file_path(&mut patch_file_path, &self.paths.user_patches)?;
+        validate_patch_file_path(&mut patch_file_path, &self.paths.user_patches)?;
 
         let mut handle = std::fs::File::create(&patch_file_path).map_err(|err| {
             log::error!(target: "synthesizer::patches", "Failed to create patch file {}: {err}", patch_file_path
@@ -213,44 +214,6 @@ impl Patches {
         Ok(())
     }
 
-    fn validate_patch_file_path(
-        &self,
-        patch_file_path: &mut Path,
-        expected_patch_directory: &Path,
-    ) -> Result<(), PatchesError> {
-        if let Some(patch_path_parent) = patch_file_path.parent() {
-            if patch_path_parent != expected_patch_directory {
-                log::warn!(target: "synthesizer::patches", "Patch file path is outside of the user patches directory: {}", patch_file_path.display());
-                return Err(PatchesError::PatchFileOutsideOfUserPatchesDirectory);
-            }
-        } else {
-            log::warn!(target: "synthesizer::patches", "Patch file path has no parent directory: {}", patch_file_path.display());
-            return Err(PatchesError::PatchFileOutsideOfUserPatchesDirectory);
-        }
-
-        if patch_file_path.exists() {
-            log::warn!(target: "synthesizer::patches", "Patch file already exists: {}", patch_file_path.display());
-            return Err(PatchesError::FileAlreadyExists);
-        }
-
-        Ok(())
-    }
-
-    /// Loads a preset from the system preset patches by preset index. See `SYSTEM_PATCHES` for the index values.
-    pub fn get_module_parameters_from_patch_index(
-        &self,
-        index: usize,
-        patch_list: &PatchList,
-    ) -> Result<ModuleParameters> {
-        let patch = &patch_list.all()[index];
-        let preset = serde_json::from_str(&patch.content).map_err(|err| {
-            log::error!(target: "synthesizer::patches", "Failed to parse preset '{}' (index {index}): {err}", patch.name);
-            err
-        })?;
-        log::info!(target: "synthesizer::patches", "Loaded preset '{}' (index {index})", patch.name);
-        Ok(preset)
-    }
-
     /// Generates and returns a `PatchList` containing presets and user-defined patches.
     pub fn patch_list(&self) -> PatchList {
         let presets = load_presets();
@@ -264,10 +227,47 @@ impl Patches {
     }
 
     /// Delete a patch file from the user patches directory by patch index from all patches list
-    pub fn delete_patch_by_index(&mut self, index: usize) -> Result<(), PatchesError> {
-        self.patches.delete_user_patch(index)?;
+    pub fn delete_patch_by_name(&mut self, patch_name: String) -> Result<(), PatchesError> {
+        self.patches.patches = load_patches(&self.paths.user_patches);
+        self.patches.delete_user_patch(patch_name)?;
         Ok(())
     }
+}
+
+/// Loads a preset from the system preset patches by preset index. See `SYSTEM_PATCHES` for the index values.
+pub fn get_module_parameters_from_patch_index(
+    index: usize,
+    patch_list: &PatchList,
+) -> Result<ModuleParameters> {
+    let patch = &patch_list.all()[index];
+    let preset = serde_json::from_str(&patch.content).map_err(|err| {
+        log::error!(target: "synthesizer::patches", "Failed to parse preset '{}' (index {index}): {err}", patch.name);
+        err
+    })?;
+    log::info!(target: "synthesizer::patches", "Loaded preset '{}' (index {index})", patch.name);
+    Ok(preset)
+}
+
+fn validate_patch_file_path(
+    patch_file_path: &mut Path,
+    expected_patch_directory: &Path,
+) -> Result<(), PatchesError> {
+    if let Some(patch_path_parent) = patch_file_path.parent() {
+        if patch_path_parent != expected_patch_directory {
+            log::warn!(target: "synthesizer::patches", "Patch file path is outside of the user patches directory: {}", patch_file_path.display());
+            return Err(PatchesError::PatchFileOutsideOfUserPatchesDirectory);
+        }
+    } else {
+        log::warn!(target: "synthesizer::patches", "Patch file path has no parent directory: {}", patch_file_path.display());
+        return Err(PatchesError::PatchFileOutsideOfUserPatchesDirectory);
+    }
+
+    if patch_file_path.exists() {
+        log::warn!(target: "synthesizer::patches", "Patch file already exists: {}", patch_file_path.display());
+        return Err(PatchesError::FileAlreadyExists);
+    }
+
+    Ok(())
 }
 
 fn sanitize_name(name: &str) -> String {
@@ -280,7 +280,7 @@ fn sanitize_name(name: &str) -> String {
         name.trim().to_string()
     };
 
-    let stripped_name = sized_name.replace(".", "").replace("*", "");
+    let stripped_name = sized_name.replace(['.', '*'], "");
     sanitize_filename::sanitize(stripped_name)
 }
 
@@ -305,18 +305,18 @@ fn load_patches(patch_directory: &Path) -> Vec<Patch> {
     if let Ok(entries) = patch_directory.read_dir() {
         // Sort by modification time (newest first)
         let mut files = entries
-            .filter_map(|entry| entry.ok())
+            .filter_map(std::result::Result::ok)
             .collect::<Vec<DirEntry>>();
         files.sort_by_key(|e| e.metadata().ok()?.modified().ok());
 
         files.iter().filter(|entry| {
-                entry.metadata().map(|m| m.len() < MAX_PATCH_FILE_SIZE).unwrap_or_else(|error|{
+                entry.metadata().map_or_else(|error|{
                     log::warn!(target: "synthesizer::patches", "Failed to read metadata for patch file {}: {error}", entry.path().display());
                     false
-                })
+                }, |m| m.len() < MAX_PATCH_FILE_SIZE)
             })
             .filter(|entry| !entry.path().is_symlink())
-            .filter_map(|entry| entry.path().is_file().then_some(entry))
+            .filter(|entry| entry.path().is_file())
             .filter_map(|entry| {
                 let extension = entry.path().extension()?.to_string_lossy().to_string();
                 if extension == PATCH_FILE_EXTENSION {

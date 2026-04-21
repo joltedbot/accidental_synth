@@ -101,7 +101,7 @@ pub struct Filter {
 
 impl Filter {
     /// Creates a new filter initialized with the maximum cutoff for the given sample rate.
-    pub fn new(sample_rate: u32) -> Self {
+    pub(crate) fn new(sample_rate: u32) -> Self {
         log::debug!("Constructing Filter Module");
 
         let max_frequency =
@@ -326,11 +326,6 @@ fn calculate_feedback_gain(
 ) -> f32 {
     resonance * (adjusted_resonance_factor + 6.0 * resonance_factor)
         / (adjusted_resonance_factor - 6.0 * resonance_factor)
-}
-
-/// Returns the maximum filter cutoff frequency for the given sample rate.
-pub fn max_frequency_from_sample_rate(sample_rate: u32) -> f32 {
-    (sample_rate as f32 * MAX_FILTER_PERCENT_OF_NYQUIST).min(MAX_FILTER_CUTOFF)
 }
 
 #[cfg(test)]

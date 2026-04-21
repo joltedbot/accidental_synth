@@ -12,7 +12,7 @@ pub const CHANNEL_PRESSURE_VALUE_BYTE_INDEX: usize = 1;
 pub const PROGRAM_CHANGE_VALUE_BYTE_INDEX: usize = 1;
 /// Polling interval in milliseconds for checking MIDI device list changes.
 pub const DEVICE_LIST_POLLING_INTERVAL: u64 = 2000;
-/// MIDI message types to ignore (SysEx and timing messages).
+/// MIDI message types to ignore (`SysEx` and timing messages).
 pub const MESSAGE_TYPE_IGNORE_LIST: Ignore = Ignore::SysexAndTime;
 /// Bitmask to extract the MIDI channel from a status byte.
 pub const MESSAGE_STATUS_BYTE_CHANNEL_MASK: u8 = 0x0F;

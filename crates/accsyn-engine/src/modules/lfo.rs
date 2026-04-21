@@ -52,7 +52,7 @@ impl LfoParameters {
         self.phase.store(parameters.phase.load());
         self.wave_shape
             .store(parameters.wave_shape.load(Relaxed), Relaxed);
-        self.reset.store(parameters.reset.load(Relaxed), Relaxed)
+        self.reset.store(parameters.reset.load(Relaxed), Relaxed);
     }
 }
 
@@ -81,7 +81,7 @@ pub struct Lfo {
 
 impl Lfo {
     /// Creates a new LFO with default frequency, range, and sine wave shape.
-    pub fn new(sample_rate: u32) -> Self {
+    pub(crate) fn new(sample_rate: u32) -> Self {
         log::debug!("Constructing LFO Module");
         let oscillator = Oscillator::new(sample_rate, WaveShape::Sine);
         Self {

@@ -15,7 +15,7 @@ pub struct AM {
 
 impl AM {
     /// Creates a new AM oscillator with default modulation depth and tone amount.
-    pub fn new(sample_rate: u32) -> Self {
+    pub(crate) fn new(sample_rate: u32) -> Self {
         log::debug!(target: "synth::oscillator", shape = "AM"; "Constructing wave generator");
         Self {
             shape: WaveShape::AM,

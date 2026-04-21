@@ -1,4 +1,4 @@
-//! DSP synthesis engine for the AccSyn synthesizer.
+//! DSP synthesis engine for the `AccSyn` synthesizer.
 //!
 //! Contains oscillators, filters, envelopes, LFOs, effects, and the main
 //! synthesizer that ties them together for real-time audio generation.

@@ -113,7 +113,7 @@ pub struct QuadMixerInput {
 }
 
 impl QuadMixerInput {
-    /// Replace all the values in this QuadMixerInput with the values from the provided QuadMixerInput.
+    /// Replace all the values in this `QuadMixerInput` with the values from the provided `QuadMixerInput`.
     pub fn assign_from(&self, parameters: &QuadMixerInput) {
         self.level.store(parameters.level.load());
         self.balance.store(parameters.balance.load());

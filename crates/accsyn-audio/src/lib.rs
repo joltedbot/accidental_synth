@@ -1,6 +1,6 @@
-//! CPAL-based audio output with hot-swappable device support for the AccSyn synthesizer.
+//! CPAL-based audio output with hot-swappable device support for the `AccSyn` synthesizer.
 //!
-//! Manages audio output streams, device monitoring via CoreAudio, and
+//! Manages audio output streams, device monitoring via `CoreAudio`, and
 //! sample delivery from the synthesis engine to the audio hardware.
 
 #![warn(missing_docs)]
@@ -49,7 +49,7 @@ pub struct OutputChannels {
 }
 
 /// Creates a CPAL `StreamConfig` from the current output stream parameters.
-pub fn stream_config_from_parameters(params: &OutputStreamParameters) -> StreamConfig {
+pub(crate) fn stream_config_from_parameters(params: &OutputStreamParameters) -> StreamConfig {
     let buffer_size_samples = params.buffer_size.load(Relaxed);
     let buffer_size = BufferSize::Fixed(buffer_size_samples);
 

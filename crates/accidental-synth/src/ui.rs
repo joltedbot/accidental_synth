@@ -66,7 +66,7 @@ pub struct UI {
 }
 
 impl UI {
-    pub fn new(parameters: Arc<ModuleParameters>) -> Self {
+    pub fn new(parameters: &Arc<ModuleParameters>) -> Self {
         log::info!("Constructing UI Module");
 
         let (ui_update_sender, ui_update_receiver) = bounded(UI_UPDATE_CHANNEL_CAPACITY);
@@ -103,7 +103,7 @@ impl UI {
             midi_update_sender,
             audio_output_device_sender,
             synthesizer_update_sender,
-            self.ui_update_sender.clone(),
+            &self.ui_update_sender.clone(),
         );
 
         let unlocked_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
@@ -248,9 +248,9 @@ fn oscillator_values_to_ui_oscillator_values(
     oscillators: &[OscillatorParameters],
 ) -> Vec<UIOscillator> {
     let mut ui_oscillators: Vec<UIOscillator> = Vec::with_capacity(OscillatorIndex::COUNT);
-    oscillators
-        .iter()
-        .for_each(|osc| ui_oscillators.push(UIOscillator::from_synth_parameters(osc)));
+    for oscillator in oscillators.iter() {
+        ui_oscillators.push(UIOscillator::from_synth_parameters(oscillator));
+    }
 
     ui_oscillators
 }
@@ -266,7 +266,7 @@ fn oscillator_fine_tune_to_ui_oscillator_fine_tune(
 
 fn synthesizer_effects_to_ui_effects(effects: &[AudioEffectParameters]) -> Vec<EffectParameters> {
     let mut ui_effects: Vec<EffectParameters> = Vec::new();
-    effects.iter().for_each(|effect| {
+    for effect in effects.iter() {
         ui_effects.push(EffectParameters {
             is_enabled: effect.is_enabled.load(Relaxed),
             parameters: effect
@@ -275,14 +275,14 @@ fn synthesizer_effects_to_ui_effects(effects: &[AudioEffectParameters]) -> Vec<E
                 .map(|parameter| parameter.load())
                 .collect::<Vec<f32>>(),
         });
-    });
+    }
 
     ui_effects
 }
 
 fn oscillator_mixer_to_ui_oscillator_mixer(quad_mixer: &[QuadMixerInput]) -> Vec<UIMixer> {
     let mut ui_quad_mixer_values: Vec<UIMixer> = Vec::new();
-    quad_mixer.iter().for_each(|strip| {
+    for strip in quad_mixer.iter() {
         ui_quad_mixer_values.push(UIMixer {
             level: normal_value_from_exponential_level_curve(strip.level.load()),
             balance: normalize_float_range(
@@ -291,8 +291,8 @@ fn oscillator_mixer_to_ui_oscillator_mixer(quad_mixer: &[QuadMixerInput]) -> Vec
                 Defaults::MAXIMUM_BALANCE_RANGE,
             ),
             is_muted: strip.mute.load(Relaxed),
-        })
-    });
+        });
+    }
     ui_quad_mixer_values
 }
 
@@ -459,7 +459,7 @@ mod tests {
     #[test]
     fn new_returns_correct_object_contents() {
         let synth_parameters = Arc::new(ModuleParameters::default());
-        let ui = UI::new(synth_parameters);
+        let ui = UI::new(&synth_parameters);
         let ui_update_sender = ui.get_ui_update_sender();
         assert!(ui_update_sender.is_ready());
     }

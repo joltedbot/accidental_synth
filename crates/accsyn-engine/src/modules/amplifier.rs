@@ -5,7 +5,11 @@ const MIN_AMPLIFIER_VALUE: f32 = 0.0;
 const DEFAULT_AMPLIFIER_VALUE: f32 = 1.0;
 
 /// Applies manual and control voltage gain to a mono audio sample.
-pub fn amplify_mono(sample: f32, manual_value: Option<f32>, control_value: Option<f32>) -> f32 {
+pub(crate) fn amplify_mono(
+    sample: f32,
+    manual_value: Option<f32>,
+    control_value: Option<f32>,
+) -> f32 {
     let manual = manual_value.unwrap_or(DEFAULT_AMPLIFIER_VALUE);
     let control = control_value.unwrap_or(DEFAULT_AMPLIFIER_VALUE);
     sample.clamp(MIN_SAMPLE_VALUE, MAX_SAMPLE_VALUE)
@@ -14,7 +18,7 @@ pub fn amplify_mono(sample: f32, manual_value: Option<f32>, control_value: Optio
 }
 
 /// Applies manual and control voltage gain to a stereo pair of audio samples.
-pub fn amplify_stereo(
+pub(crate) fn amplify_stereo(
     left_sample: f32,
     right_sample: f32,
     manual_value: Option<f32>,

@@ -67,7 +67,7 @@ pub struct Effects {
 
 impl Effects {
     /// Creates a new effects chain with all available effects initialized.
-    pub fn new(sample_rate: u32) -> Self {
+    pub(crate) fn new(sample_rate: u32) -> Self {
         let saturation = Box::new(saturation::Saturation::new());
         let compressor = Box::new(compressor::Compressor::new());
         let wavefolder = Box::new(WaveFolder::new());

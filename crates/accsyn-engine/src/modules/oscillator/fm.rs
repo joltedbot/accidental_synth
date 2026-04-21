@@ -22,7 +22,7 @@ pub struct FM {
 
 impl FM {
     /// Creates a new FM oscillator with default modulation amount and ratio.
-    pub fn new(sample_rate: u32) -> Self {
+    pub(crate) fn new(sample_rate: u32) -> Self {
         log::debug!(target: "synth::oscillator", shape = "FM"; "Constructing wave generator");
         Self {
             shape: SHAPE,

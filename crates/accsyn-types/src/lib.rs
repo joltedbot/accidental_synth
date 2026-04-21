@@ -1,6 +1,6 @@
-//! Shared types, constants, and utilities for the AccSyn synthesizer.
+//! Shared types, constants, and utilities for the `AccSyn` synthesizer.
 //!
-//! This crate provides the common vocabulary used across all AccSyn crates,
+//! This crate provides the common vocabulary used across all `AccSyn` crates,
 //! including event enums, parameter types, default values, and math helpers.
 
 #![warn(missing_docs)]

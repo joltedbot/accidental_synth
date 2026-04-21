@@ -17,7 +17,7 @@ pub struct DeviceMonitor {
 
 impl DeviceMonitor {
     /// Creates a new device monitor with the given update sender.
-    pub fn new(device_update_sender: Sender<MidiDeviceUpdateEvents>) -> Self {
+    pub(crate) fn new(device_update_sender: Sender<MidiDeviceUpdateEvents>) -> Self {
         Self {
             device_update_sender,
         }

@@ -18,7 +18,7 @@ pub fn register_callbacks(
     midi_update_sender: Sender<MidiDeviceUpdateEvents>,
     audio_output_device_sender: &Sender<AudioDeviceUpdateEvents>,
     synthesizer_update_sender: &Sender<SynthesizerUpdateEvents>,
-    ui_update_sender: Sender<UIUpdates>,
+    ui_update_sender: &Sender<UIUpdates>,
 ) {
     settings::callback_midi_input_channel_changed(ui_weak, midi_update_sender.clone());
     settings::callback_midi_input_port_changed(ui_weak, midi_update_sender);

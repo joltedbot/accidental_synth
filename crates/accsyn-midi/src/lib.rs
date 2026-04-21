@@ -1,4 +1,4 @@
-//! MIDI input handling for the AccSyn synthesizer.
+//! MIDI input handling for the `AccSyn` synthesizer.
 //!
 //! Provides MIDI device monitoring, message parsing, virtual input port creation,
 //! and channel filtering using midir.

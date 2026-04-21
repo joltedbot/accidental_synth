@@ -51,7 +51,7 @@ export component AccidentalSynth inherits Window {
     callback midi-input-channel-changed(string);
     callback patch-changed(int);
     callback patch-saved(string);
-    callback patch-deleted(int);
+    callback patch-deleted(string);
 
     // Oscillator Panel Properties & Callbacks
     in property <[Oscillator]> oscillator_values;
@@ -176,8 +176,8 @@ export component AccidentalSynth inherits Window {
                 patch-saved(name) => {
                     patch-saved(name);
                 }
-                patch-deleted(index) => {
-                    patch-deleted(index);
+                patch-deleted(name) => {
+                    patch-deleted(name);
                 }
                 polarity-flipped(is_flipped) => {
                     polarity-flipped(is_flipped);

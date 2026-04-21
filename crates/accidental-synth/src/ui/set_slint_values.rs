@@ -141,7 +141,7 @@ pub fn set_lfo_values(
     let ui_lfo_values = lfo_values.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match lfo_index {
         LFOIndex::ModWheel => {
-            ui.set_mod_wheel_lfo_values(ui::slint_lfo_from_ui_lfo(&ui_lfo_values))
+            ui.set_mod_wheel_lfo_values(ui::slint_lfo_from_ui_lfo(&ui_lfo_values));
         }
         LFOIndex::Filter => ui.set_filter_lfo_values(ui::slint_lfo_from_ui_lfo(&ui_lfo_values)),
     });

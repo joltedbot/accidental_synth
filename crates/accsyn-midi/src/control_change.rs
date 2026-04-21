@@ -1,7 +1,7 @@
 use accsyn_types::midi_events::CC;
 
 /// Maps a MIDI CC number and value to the corresponding synthesizer [`CC`] variant.
-pub fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {
+pub(crate) fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {
     match cc_number {
         1 => Some(CC::ModWheel(cc_value)),
         3 => Some(CC::VelocityCurve(cc_value)),

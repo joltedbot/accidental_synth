@@ -124,7 +124,7 @@ pub fn callback_patch_saved(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_patch_saved(move |patch_name| {
-            log::trace!("callback_patch_saved(): Sending SynthesizerUpdateEvents::PatchSaved : {}", patch_name);
+            log::trace!("callback_patch_saved(): Sending SynthesizerUpdateEvents::PatchSaved : {patch_name}");
             synthesizer_update_sender.send(SynthesizerUpdateEvents::PatchSaved(patch_name.trim().to_string())).expect(
                 "callback_preset_changed(): Could not send saved preset update to the synthesizer module. Exiting.",
             );
@@ -136,9 +136,9 @@ pub fn callback_patch_deleted(
     synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
 ) {
     if let Some(ui) = ui_weak.upgrade() {
-        ui.on_patch_deleted(move |patch_index| {
-            log::trace!("callback_patch_deleted(): Sending SynthesizerUpdateEvents::PatchDeleted : {}", patch_index);
-            synthesizer_update_sender.send(SynthesizerUpdateEvents::PatchDeleted(patch_index)).expect(
+        ui.on_patch_deleted(move |patch_name| {
+            log::trace!("callback_patch_deleted(): Sending SynthesizerUpdateEvents::PatchDeleted : {patch_name}");
+            synthesizer_update_sender.send(SynthesizerUpdateEvents::PatchDeleted(patch_name.to_string())).expect(
                 "callback_preset_changed(): Could not send deleted preset update to the synthesizer module. Exiting.",
             );
         });

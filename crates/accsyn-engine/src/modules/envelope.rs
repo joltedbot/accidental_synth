@@ -125,7 +125,7 @@ pub struct Envelope {
 
 impl Envelope {
     /// Creates a new envelope generator initialized to the Off stage.
-    pub fn new(sample_rate: u32) -> Self {
+    pub(crate) fn new(sample_rate: u32) -> Self {
         log::debug!("Constructing Envelope Module");
 
         let milliseconds_per_sample = 1000.0 / sample_rate as f32;
@@ -768,8 +768,7 @@ mod tests {
         let pre_invert_result = envelope.generate();
         assert!(
             f32s_are_equal(pre_invert_result, pre_invert_expected_result),
-            "pre invert result: {}",
-            pre_invert_result
+            "pre invert result: {pre_invert_result}"
         );
 
         envelope.set_is_inverted(false);

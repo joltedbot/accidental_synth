@@ -7,7 +7,7 @@ use crate::synthesizer::constants::{
     PATCH_SAVE_ALREADY_EXISTS, PATCH_SAVE_FAILURE, PATCH_SAVE_SUCCESS,
 };
 use crate::synthesizer::midi_value_converters::bool_to_normal_value;
-use crate::synthesizer::patches::{Patches, PatchesError};
+use crate::synthesizer::patches::{Patches, PatchesError, get_module_parameters_from_patch_index};
 use crate::synthesizer::set_parameters::{
     set_effect_is_enabled, set_effect_parameter, set_envelope_amount, set_envelope_attack_time,
     set_envelope_decay_time, set_envelope_inverted, set_envelope_release_time,
@@ -447,9 +447,10 @@ pub fn start_update_event_listener(
                         continue;
                     }
 
-                    let patch = match thread_patches
-                        .get_module_parameters_from_patch_index(preset_index as usize, &patch_list)
-                    {
+                    let patch = match get_module_parameters_from_patch_index(
+                        preset_index as usize,
+                        &patch_list,
+                    ) {
                         Ok(preset) => preset,
                         Err(e) => {
                             log::error!(target: "synthesizer::event_listener", "Failed to get preset from index {preset_index}: {e}");
@@ -496,22 +497,24 @@ pub fn start_update_event_listener(
                         }
                     }
                 }
-                SynthesizerUpdateEvents::PatchDeleted(patch_index) => {
+                SynthesizerUpdateEvents::PatchDeleted(patch_name) => {
                     let mut thread_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
 
                     let delete_status = match thread_patches
-                        .delete_patch_by_index(patch_index as usize)
+                        .delete_patch_by_name(patch_name.clone())
                     {
                         Ok(()) => {
-                            log::info!(target: "synthesizer::event_listener", "Deleted patch: {patch_index}");
+                            log::info!(target: "synthesizer::event_listener", "Deleted patch: {patch_name}");
                             (true, PATCH_DELETE_SUCCESS.to_string())
                         }
-                        Err(err) if err == PatchesError::PatchIndexOutOfRange(patch_index) => {
-                            log::warn!(target: "synthesizer::event_listener", "Patch file at {patch_index} does not exist");
+                        Err(err)
+                            if err == PatchesError::PatchNameDoesNotExist(patch_name.clone()) =>
+                        {
+                            log::warn!(target: "synthesizer::event_listener", "Patch file at {patch_name} does not exist");
                             (false, PATCH_DELETE_FILE_DOES_NOT_EXIST.to_string())
                         }
                         Err(err) => {
-                            log::warn!(target: "synthesizer::event_listener", "Could not delete patch: {patch_index} -\
+                            log::warn!(target: "synthesizer::event_listener", "Could not delete patch: {patch_name} -\
                             {err}");
                             (false, PATCH_DELETE_FAILURE.to_string())
                         }
