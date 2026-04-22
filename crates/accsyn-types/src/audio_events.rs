@@ -16,6 +16,7 @@ pub struct OutputStreamParameters {
 
 impl OutputStreamParameters {
     /// Returns the index of the current sample rate in [`Defaults::SUPPORTED_SAMPLE_RATES`].
+    #[must_use]
     pub fn sample_rate_index(&self) -> usize {
         Defaults::SUPPORTED_SAMPLE_RATES
             .iter()
@@ -24,6 +25,7 @@ impl OutputStreamParameters {
     }
 
     /// Returns the index of the current buffer size in [`Defaults::SUPPORTED_BUFFER_SIZES`].
+    #[must_use]
     pub fn buffer_size_index(&self) -> usize {
         Defaults::SUPPORTED_BUFFER_SIZES
             .iter()

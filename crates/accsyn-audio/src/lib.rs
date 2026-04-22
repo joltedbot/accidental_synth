@@ -86,6 +86,10 @@ pub struct Audio {
 
 impl Audio {
     /// Creates a new `Audio` instance with the default output device and configuration.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if it cannot find or get the configuration for the default audio output device
     pub fn new() -> Result<Self> {
         log::debug!(target: "audio", "Constructing Audio Module");
         let (output_device_sender, output_device_receiver) = bounded(SAMPLE_BUFFER_SENDER_CAPACITY);
@@ -128,21 +132,28 @@ impl Audio {
     }
 
     /// Returns a clone of the shared output stream parameters.
+    #[must_use]
     pub fn get_output_stream_parameters(&self) -> OutputStreamParameters {
         self.output_stream_parameters.clone()
     }
 
     /// Returns a clone of the sample buffer receiver for the synthesis engine.
+    #[must_use]
     pub fn get_sample_buffer_receiver(&self) -> Receiver<Producer<f32>> {
         self.sample_buffer_receiver.clone()
     }
 
     /// Returns a clone of the device update sender for sending device change events.
+    #[must_use]
     pub fn get_device_update_sender(&self) -> Sender<AudioDeviceUpdateEvents> {
         self.device_update_sender.clone()
     }
 
     /// Starts the audio subsystem: device monitor, dropout logger, and control listener.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if it cannot start the `CoreAudio` device monitor process
     pub fn run(&mut self, ui_update_sender: Sender<UIUpdates>) -> Result<()> {
         log::debug!(target: "audio", "Starting Audio Module");
 

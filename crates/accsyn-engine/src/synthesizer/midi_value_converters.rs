@@ -15,6 +15,7 @@ use accsyn_types::math::{
 };
 
 /// Maps a normalized 0.0-1.0 value to a target f32 range.
+#[must_use]
 pub fn normal_value_to_f32_range(normal_value: f32, mut minimum: f32, mut maximum: f32) -> f32 {
     if maximum < minimum {
         core::mem::swap(&mut minimum, &mut maximum);
@@ -25,6 +26,7 @@ pub fn normal_value_to_f32_range(normal_value: f32, mut minimum: f32, mut maximu
 }
 
 /// Maps a normalized 0.0-1.0 value to a target unsigned integer range with rounding.
+#[must_use]
 pub fn normal_value_to_unsigned_integer_range(
     normal_value: f32,
     mut minimum: u32,
@@ -46,6 +48,7 @@ pub fn normal_value_to_unsigned_integer_range(
 }
 
 /// Maps a normalized 0.0-1.0 value to a target signed integer range with rounding.
+#[must_use]
 pub fn normal_value_to_signed_integer_range(
     normal_value: f32,
     mut minimum: i32,
@@ -67,16 +70,19 @@ pub fn normal_value_to_signed_integer_range(
 }
 
 /// Converts a normalized value to a boolean, treating values at or above 0.5 as true.
+#[must_use]
 pub fn normal_value_to_bool(normal_value: f32) -> bool {
     normal_value >= NORMAL_TO_BOOL_SWITCH_ON_VALUE
 }
 
 /// Converts a bool to a normal value (0.0 for False or 1.0 for true).
+#[must_use]
 pub fn bool_to_normal_value(value: bool) -> f32 {
     if value { 1.0 } else { 0.0 }
 }
 
 /// Converts a normalized value to the number of filter poles (1 to 4).
+#[must_use]
 pub fn normal_value_to_number_of_filter_poles(normal_value: f32) -> u8 {
     // Post-clamp to [1.0, NUMBER_OF_FILER_POLES] (max 4.0), safely within u8 range
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
@@ -87,6 +93,7 @@ pub fn normal_value_to_number_of_filter_poles(normal_value: f32) -> u8 {
 }
 
 /// Converts a normalized value to an oscillator wave shape index.
+#[must_use]
 pub fn normal_value_to_wave_shape_index(normal_value: f32) -> u8 {
     normal_value_to_unsigned_integer_range(
         normal_value,
@@ -107,6 +114,7 @@ pub(crate) fn exponential_curve_filter_cutoff_from_normal_value(normal_value: f3
 }
 
 /// Converts a normalized value to an LFO frequency using an exponential curve.
+#[must_use]
 pub fn exponential_curve_lfo_frequency_from_normal_value(normal_value: f32) -> f32 {
     if normal_value == 0.0 {
         return 0.0;
@@ -163,6 +171,7 @@ pub(crate) fn exponential_curve_level_adjustment_from_normal_value(normal_value:
 }
 
 /// Converts a normalized value to a velocity curve exponent for dynamic response shaping.
+#[must_use]
 pub fn velocity_curve_from_normal_value(normal_value: f32) -> f32 {
     if normal_value == 0.0 {
         return 0.0;
@@ -188,6 +197,7 @@ pub fn velocity_curve_from_normal_value(normal_value: f32) -> f32 {
 }
 
 /// Converts a velocity curve exponent to normal value
+#[must_use]
 pub fn normal_value_from_velocity_curve(velocity_curve_value: f32) -> f32 {
     if velocity_curve_value == 0.0 {
         return 0.0;

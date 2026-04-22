@@ -89,6 +89,7 @@ impl Default for Midi {
 
 impl Midi {
     /// Creates a new `Midi` instance with message channels and default state.
+    #[must_use]
     pub fn new() -> Self {
         log::debug!(target: "midi", "Constructing Midi module");
 
@@ -111,16 +112,22 @@ impl Midi {
     }
 
     /// Returns a clone of the MIDI message receiver for the synthesizer.
+    #[must_use]
     pub fn get_midi_message_receiver(&self) -> Receiver<MidiEvent> {
         self.message_receiver.clone()
     }
 
     /// Returns a clone of the device update sender for sending port change events.
+    #[must_use]
     pub fn get_device_update_sender(&self) -> Sender<MidiDeviceUpdateEvents> {
         self.device_update_sender.clone()
     }
 
     /// Starts the MIDI subsystem: device monitor, virtual input port, and control listener.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if it cannot create a virtual midi input port or if the midi device monitor fails to run
     pub fn run(&mut self, ui_update_sender: Sender<UIUpdates>) -> Result<()> {
         log::debug!(target: "midi", "Starting MIDI module");
 

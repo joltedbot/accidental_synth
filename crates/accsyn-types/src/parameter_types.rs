@@ -10,6 +10,7 @@ pub struct NormalizedValue {
 impl NormalizedValue {
     /// Creates a new normalized value from an f32.
     #[inline]
+    #[must_use]
     pub fn new(normalized: f32) -> Self {
         Self {
             value: AtomicU32::new(normalized.to_bits()),
@@ -59,6 +60,7 @@ pub struct Hertz {
 impl Hertz {
     /// Creates a new frequency value from Hz.
     #[inline]
+    #[must_use]
     pub fn new(hz: f32) -> Self {
         Self {
             value: AtomicU32::new(hz.to_bits()),
@@ -108,6 +110,7 @@ pub struct LfoRange {
 impl LfoRange {
     /// Creates a new LFO range value.
     #[inline]
+    #[must_use]
     pub fn new(range: f32) -> Self {
         Self {
             value: AtomicU32::new(range.to_bits()),
@@ -157,6 +160,7 @@ pub struct Milliseconds {
 impl Milliseconds {
     /// Creates a new milliseconds value.
     #[inline]
+    #[must_use]
     pub fn new(ms: u32) -> Self {
         Self {
             value: AtomicU32::new(ms),
@@ -206,6 +210,7 @@ pub struct Cents {
 impl Cents {
     /// Creates a new cents value.
     #[inline]
+    #[must_use]
     pub fn new(cents: i8) -> Self {
         Self {
             value: AtomicI8::new(cents),
@@ -255,6 +260,7 @@ pub struct Semitones {
 impl Semitones {
     /// Creates a new semitones value.
     #[inline]
+    #[must_use]
     pub fn new(semitones: i8) -> Self {
         Self {
             value: AtomicI8::new(semitones),
@@ -304,6 +310,7 @@ pub struct PitchBend {
 impl PitchBend {
     /// Creates a new pitch bend value.
     #[inline]
+    #[must_use]
     pub fn new(bend: i16) -> Self {
         Self {
             value: AtomicI16::new(bend),
@@ -353,6 +360,7 @@ pub struct FilterPoles {
 impl FilterPoles {
     /// Creates a new filter poles value.
     #[inline]
+    #[must_use]
     pub fn new(poles: u8) -> Self {
         Self {
             value: AtomicU8::new(poles),
@@ -402,6 +410,7 @@ pub struct Balance {
 impl Balance {
     /// Creates a new balance value.
     #[inline]
+    #[must_use]
     pub fn new(balance: f32) -> Self {
         Self {
             value: AtomicU32::new(balance.to_bits()),
@@ -451,6 +460,7 @@ pub struct PortamentoBuffers {
 impl PortamentoBuffers {
     /// Creates a new portamento buffers value.
     #[inline]
+    #[must_use]
     pub fn new(buffers: u16) -> Self {
         Self {
             value: AtomicU16::new(buffers),

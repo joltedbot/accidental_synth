@@ -31,6 +31,7 @@ pub const EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES: (f32, f32) = (0.6, 2000.0);
 
 /// Converts a dBFS value to a linear f32 sample amplitude.
 #[inline]
+#[must_use]
 pub fn dbfs_to_f32_sample(dbfs: f32) -> f32 {
     if !dbfs.is_finite() || dbfs <= DBFS_SILENCE_LEVEL {
         return 0.0;
@@ -41,6 +42,7 @@ pub fn dbfs_to_f32_sample(dbfs: f32) -> f32 {
 
 /// Converts a linear f32 sample amplitude to dBFS.
 #[inline]
+#[must_use]
 pub fn f32_sample_to_dbfs(sample: f32) -> f32 {
     if sample.is_nan() || sample == f32::NEG_INFINITY {
         return f32::NEG_INFINITY;
@@ -55,6 +57,7 @@ pub fn f32_sample_to_dbfs(sample: f32) -> f32 {
 
 /// Compares two f32 values for approximate equality within epsilon tolerance.
 #[inline]
+#[must_use]
 pub fn f32s_are_equal(value_1: f32, value_2: f32) -> bool {
     if value_1.is_nan() && value_2.is_nan() {
         return true;
@@ -80,6 +83,7 @@ pub fn load_f32_from_atomic_u32(atomic: &AtomicU32) -> f32 {
 
 /// Calculates a new frequency offset by the given number of cents.
 #[inline]
+#[must_use]
 pub fn frequency_from_cents(frequency: f32, cents: i16) -> f32 {
     if !frequency.is_finite() || frequency.is_nan() {
         return 0.0;
@@ -90,6 +94,7 @@ pub fn frequency_from_cents(frequency: f32, cents: i16) -> f32 {
 
 /// Normalizes a MIDI value (0–127) to a 0.0–1.0 range.
 #[inline]
+#[must_use]
 pub fn normalize_midi_value(midi_value: u8) -> f32 {
     if midi_value == CENTER_MIDI_VALUE {
         return 0.5;
@@ -99,6 +104,7 @@ pub fn normalize_midi_value(midi_value: u8) -> f32 {
 
 /// Normalizes an unsigned integer to 0.0–1.0 within the given range.
 #[inline]
+#[must_use]
 pub fn normalize_unsigned_integer_range(input_value: u32, range_min: u32, range_max: u32) -> f32 {
     let range = range_max - range_min;
     // Audio values (sample rates, MIDI ranges) are always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
@@ -109,6 +115,7 @@ pub fn normalize_unsigned_integer_range(input_value: u32, range_min: u32, range_
 
 /// Normalizes a signed integer to 0.0–1.0 within the given range.
 #[inline]
+#[must_use]
 pub fn normalize_signed_integer_range(input_value: i32, range_min: i32, range_max: i32) -> f32 {
     let range = range_max - range_min;
     // Values represent audio ranges bounded by domain constraints; precision loss is acceptable in f32 DSP
@@ -119,6 +126,7 @@ pub fn normalize_signed_integer_range(input_value: i32, range_min: i32, range_ma
 
 /// Normalizes a float to 0.0–1.0 within the given range.
 #[inline]
+#[must_use]
 pub fn normalize_float_range(input_value: f32, range_min: f32, range_max: f32) -> f32 {
     let range = range_max - range_min;
     (input_value - range_min) / range
@@ -126,6 +134,7 @@ pub fn normalize_float_range(input_value: f32, range_min: f32, range_max: f32) -
 
 /// Maps a linear input value to an exponential output scale, returning a 0.0–1.0 normalized result.
 #[inline]
+#[must_use]
 pub fn map_value_from_linear_to_exponential_scale(
     mut input_value: f32,
     mut input_range: (f32, f32),
@@ -179,6 +188,7 @@ fn swap_tuple_order(tuple: &mut (f32, f32)) {
 
 /// Converts a normalized value (0.0–1.0) to an exponential curve using the given coefficient.
 #[inline]
+#[must_use]
 pub fn exponential_curve_from_normal_value_and_coefficient(
     normal_value: f32,
     exponential_coefficient: f32,
@@ -190,6 +200,7 @@ pub fn exponential_curve_from_normal_value_and_coefficient(
 
 /// Converts an exponential curve value back to a normalized value (0.0–1.0) using the given coefficient.
 #[inline]
+#[must_use]
 pub fn normal_value_from_exponential_curve_and_coefficient(
     curve_value: f32,
     exponential_coefficient: f32,
@@ -202,6 +213,7 @@ pub fn normal_value_from_exponential_curve_and_coefficient(
 /// Inverse of `exponential_curve_level_adjustment_from_normal_value`.
 /// Converts an engine-side level value back to a normalized UI value (0.0–1.0).
 #[inline]
+#[must_use]
 pub fn normal_value_from_exponential_level_curve(level_value: f32) -> f32 {
     if level_value == 0.0 {
         return 0.0;

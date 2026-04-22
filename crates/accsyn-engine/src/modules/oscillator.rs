@@ -86,6 +86,7 @@ pub enum WaveShape {
 
 impl WaveShape {
     /// Converts a numeric index to the corresponding wave shape, defaulting on invalid values.
+    #[must_use]
     pub fn from_index(index: u8) -> Self {
         Self::from_repr(index).unwrap_or_default()
     }
@@ -254,6 +255,7 @@ pub struct Oscillator {
 
 impl Oscillator {
     /// Creates a new oscillator with the given sample rate and initial wave shape.
+    #[must_use]
     pub fn new(sample_rate: u32, wave_shape: WaveShape) -> Self {
         log::debug!(target: "synthesizer::modules::oscillator", "Constructing Oscillator Module: {wave_shape:?}");
         let wave_generator = get_wave_generator_from_wave_shape(sample_rate, wave_shape);

@@ -32,6 +32,12 @@ struct Modules {
     profile_counter: u64,
 }
 
+/// Creates the synthesizer audio sample generation process thread
+///
+/// # Errors
+///
+/// Returns an error if the new sample ring buffer channel receiver is not connected before it tries to start the
+/// thread or if the thread cannot be spawned
 pub fn sample_generator(
     sample_buffer_receiver: Receiver<Producer<f32>>,
     output_stream_parameters: OutputStreamParameters,

@@ -100,6 +100,7 @@ pub enum OscillatorIndex {
 
 impl OscillatorIndex {
     /// Converts an i32 index to the corresponding oscillator variant.
+    #[must_use]
     pub fn from_i32(index: i32) -> Option<Self> {
         Self::from_repr(index)
     }
@@ -117,6 +118,7 @@ pub enum LFOIndex {
 
 impl LFOIndex {
     /// Converts an i32 index to the corresponding LFO variant.
+    #[must_use]
     pub fn from_i32(index: i32) -> Option<Self> {
         Self::from_repr(index)
     }
@@ -134,6 +136,7 @@ pub enum EnvelopeIndex {
 
 impl EnvelopeIndex {
     /// Converts an i32 index to the corresponding envelope variant.
+    #[must_use]
     pub fn from_i32(index: i32) -> Option<Self> {
         Self::from_repr(index)
     }

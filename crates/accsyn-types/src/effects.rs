@@ -43,6 +43,7 @@ pub enum EffectIndex {
 
 impl EffectIndex {
     /// Converts an i32 index to the corresponding effect variant.
+    #[must_use]
     pub fn from_i32(index: i32) -> Option<Self> {
         Self::from_repr(index)
     }
@@ -59,6 +60,7 @@ pub struct EffectParameters {
 
 impl EffectParameters {
     /// Creates default parameters for all effect types.
+    #[must_use]
     pub fn default_all() -> Vec<Self> {
         let mut effect_parameters = Vec::new();
 

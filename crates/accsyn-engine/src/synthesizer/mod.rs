@@ -204,6 +204,10 @@ pub struct Synthesizer {
 
 impl Synthesizer {
     /// Creates a new synthesizer with the given audio output stream parameters.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if it cannot create the initial synthesizer parameters from the `init` preset
     pub fn new(output_stream_parameters: OutputStreamParameters) -> Result<Self> {
         log::info!(target: "synthesizer", "Constructing Synthesizer Module");
 
@@ -224,16 +228,22 @@ impl Synthesizer {
     }
 
     /// Returns a clone of the channel sender for dispatching synthesizer update events.
+    #[must_use]
     pub fn get_ui_update_sender(&self) -> Sender<SynthesizerUpdateEvents> {
         self.ui_update_sender.clone()
     }
 
     /// Returns a shared reference to the synthesizer module parameters.
+    #[must_use]
     pub fn get_module_parameters(&self) -> Arc<ModuleParameters> {
         self.module_parameters.clone()
     }
 
     /// Starts the synthesizer's MIDI listener, event handler, and sample generation threads.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if it cannot start the main synthesizer sample generation engine process
     pub fn run(
         &mut self,
         midi_message_receiver: Receiver<MidiEvent>,
@@ -325,6 +335,7 @@ impl Synthesizer {
     }
 
     /// Returns a clone of the Arc<Mutex<Patches>> for this synthesizer.
+    #[must_use]
     pub fn patches(&self) -> Arc<Mutex<Patches>> {
         self.patches.clone()
     }

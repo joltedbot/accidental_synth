@@ -109,6 +109,7 @@ pub struct PatchList {
 
 impl PatchList {
     /// Returns the names of the presets and user patches in the list.
+    #[must_use]
     pub fn all_names(&self) -> Vec<String> {
         let mut names = self.preset_names();
         names.append(&mut self.patch_names());
@@ -121,6 +122,7 @@ impl PatchList {
     }
 
     /// Returns the list of presets and user patches as a vector
+    #[must_use]
     pub fn all(&self) -> Vec<Patch> {
         let mut full_list = self.presets.clone();
         full_list.append(&mut self.patches.clone());
@@ -161,6 +163,11 @@ pub struct Patches {
 
 impl Patches {
     /// Creates a new Patches instance, initializing application storage directories if needed.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the application data directories cannot be created or if
+    /// storage initialization fails.
     pub fn new() -> Result<Self> {
         let mut paths = create_data_paths()?;
         initialize_application_storage(&mut paths)?;
@@ -172,7 +179,11 @@ impl Patches {
         })
     }
 
-    /// Serializes the current module parameters to a new named patch file.
+    /// Serializes the current module parameters to a new, named patch file.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if it cannot create the patch from the supplied name in the patch directory
     pub fn save_patch(
         &mut self,
         name: &str,
@@ -215,6 +226,7 @@ impl Patches {
     }
 
     /// Generates and returns a `PatchList` containing presets and user-defined patches.
+    #[must_use]
     pub fn patch_list(&self) -> PatchList {
         let presets = load_presets();
         let patches = load_patches(&self.paths.user_patches);
@@ -222,11 +234,16 @@ impl Patches {
     }
 
     /// Returns the names of only the user patches
+    #[must_use]
     pub fn user_patch_names(&self) -> Vec<String> {
         self.patches.patch_names()
     }
 
     /// Delete a patch file from the user patches directory by patch index from all patches list
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the new the provided patch name cannot be deleted or does not exist
     pub fn delete_patch_by_name(&mut self, patch_name: String) -> Result<(), PatchesError> {
         self.patches.patches = load_patches(&self.paths.user_patches);
         self.patches.delete_user_patch(patch_name)?;
@@ -234,7 +251,12 @@ impl Patches {
     }
 }
 
-/// Loads a preset from the system preset patches by preset index. See `SYSTEM_PATCHES` for the index values.
+/// Loads a preset from the system preset patches by preset index. See `SYSTEM_PATCHES` for the index values
+///
+/// # Errors
+///
+/// Returns an error if patch's index is incorrect or if the json is incorrect and cannot be serialized back into
+/// module parameters
 pub fn get_module_parameters_from_patch_index(
     index: usize,
     patch_list: &PatchList,
@@ -545,7 +567,7 @@ mod tests {
     #[test]
     fn load_patches_sanitizes_dots_in_filename() {
         let dir = TempDir::new("dots_in_name");
-        dir.write_file("My.Patch.json", r#"{}"#);
+        dir.write_file("My.Patch.json", r"{}");
         let result = load_patches(dir.path());
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].name, "MyPatch");
