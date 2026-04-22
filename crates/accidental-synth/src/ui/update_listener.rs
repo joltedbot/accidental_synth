@@ -36,7 +36,7 @@ pub fn start_ui_update_listener(
     let ui_weak_thread = ui_weak.clone();
 
     thread::spawn(move || {
-        log::debug!("start_ui_update_listener(): spawned thread to receive ui update events");
+        log::debug!(target: "ui::update_listener", "start_ui_update_listener(): spawned thread to receive ui update events");
         while let Ok(update) = ui_update_receiver.recv() {
             let mut values = thread_parameter_values
                 .lock()
@@ -416,7 +416,7 @@ pub fn start_ui_update_listener(
                     let patch_count =
                         i32::try_from(patch_list.all_names().len()).unwrap_or(i32::MAX);
                     if index >= patch_count {
-                        log::error!("start_ui_update_listener(): Invalid patch index: {index}");
+                        log::error!(target: "ui::update_listener", "start_ui_update_listener(): Invalid patch index: {index}");
                         continue;
                     }
 
@@ -429,6 +429,7 @@ pub fn start_ui_update_listener(
                         Ok(patch) => patch,
                         Err(e) => {
                             log::error!(
+                                target: "ui::update_listener",
                                 "start_ui_update_listener(): Failed to get preset from index: {e}"
                             );
                             continue;
@@ -438,7 +439,7 @@ pub fn start_ui_update_listener(
                     let new_values = update_ui_values_from_module_parameters(
                         values.audio_device.clone(),
                         values.midi_port.clone(),
-                        Arc::new(patch),
+                        &Arc::new(patch),
                         Some(index),
                     );
 
@@ -449,6 +450,7 @@ pub fn start_ui_update_listener(
                         push_values_to_ui(&ui_weak_thread, &values, None, user_patch_list)
                     {
                         log::error!(
+                            target: "ui::update_listener",
                             "start_ui_update_listener(): Failed to push preset values to UI: {e}"
                         );
                     }

@@ -22,7 +22,7 @@ pub struct AutoPan {
 
 impl AutoPan {
     pub fn new(sample_rate: u32) -> Self {
-        log::debug!("Constructing AutoPan Effect Module");
+        log::debug!(target: "synthesizer::effects::autopan", "Constructing AutoPan Effect Module");
 
         let mut lfo = Lfo::new(sample_rate);
         lfo.set_center_value(EFFECTS_LFO_CENTER_VALUE);

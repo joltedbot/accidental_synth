@@ -102,7 +102,7 @@ pub struct Filter {
 impl Filter {
     /// Creates a new filter initialized with the maximum cutoff for the given sample rate.
     pub(crate) fn new(sample_rate: u32) -> Self {
-        log::debug!("Constructing Filter Module");
+        log::debug!(target: "synthesizer::modules::filter", "Constructing Filter Module");
 
         // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
         #[allow(clippy::cast_precision_loss)]
@@ -341,6 +341,8 @@ mod tests {
     #[test]
     fn new_returns_filter_with_correct_default_values() {
         let sample_rate = 48000;
+        // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
         let max_frequency = sample_rate as f32 * 0.35;
         let filter = Filter::new(sample_rate);
 

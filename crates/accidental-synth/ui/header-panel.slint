@@ -36,47 +36,52 @@ component MidiScroller inherits Rectangle {
 
             GreenScreenText {
                 text: Theme.midi-scroller-title;
+                width: Theme.midi-scroller-title-width;
                 font-size: Theme.midi-scroller-font-size;
-                font-family: "HackNerdFontMono";
-                letter-spacing: 0px;
+                font-family: Theme.midi-scroller-font;
+                letter-spacing: Theme.midi-scoller-letter-spacing;
                 horizontal-alignment: left;
-                opacity: 0.6;
+                opacity: 0.65;
             }
 
             // Newest first (output[3]), fades right as notes age
                 GreenScreenText {
                 text: output[3];
-                font-size: 12px;
-                font-family: "HackNerdFontMono";
-                letter-spacing: 0px;
+                width: Theme.midi-scroller-note-width;
+                font-size: Theme.midi-scoller-note-font-size;
+                font-family: Theme.midi-scroller-font;
+                letter-spacing: Theme.midi-scoller-letter-spacing;
                 horizontal-alignment: left;
             }
 
             GreenScreenText {
                 text: output[2];
-                font-size: 12px;
-                font-family: "HackNerdFontMono";
-                letter-spacing: 0px;
+                width: Theme.midi-scroller-note-width;
+                font-size: Theme.midi-scoller-note-font-size;
+                font-family: Theme.midi-scroller-font;
+                letter-spacing: Theme.midi-scoller-letter-spacing;
                 horizontal-alignment: left;
                 opacity: 0.65;
             }
 
             GreenScreenText {
                 text: output[1];
-                font-size: 12px;
-                font-family: "HackNerdFontMono";
-                letter-spacing: 0px;
+                width: Theme.midi-scroller-note-width;
+                font-size: Theme.midi-scoller-note-font-size;
+                font-family: Theme.midi-scroller-font;
+                letter-spacing: Theme.midi-scoller-letter-spacing;
                 horizontal-alignment: left;
-                opacity: 0.4;
+                opacity: 0.5;
             }
 
             GreenScreenText {
                 text: output[0];
-                font-size: 12px;
-                font-family: "HackNerdFontMono";
-                letter-spacing: 0px;
+                width: Theme.midi-scroller-note-width;
+                font-size: Theme.midi-scoller-note-font-size;
+                font-family: Theme.midi-scroller-font;
+                letter-spacing: Theme.midi-scoller-letter-spacing;
                 horizontal-alignment: left;
-                opacity: 0.2;
+                opacity: 0.3;
             }
         }
     }

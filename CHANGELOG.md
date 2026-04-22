@@ -7,9 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-21
+
+### Added
+- Complete user patch system: save, load, delete, and list patches; user patches persist to `~/Library/Application Support/AccidentalSynthesizer/patches/`
+- Factory/system patches embedded at compile time and prefixed with `*` (e.g. `*1 - Init`) to distinguish them from user patches
+- Patch numbers for stable ordering via MIDI program change (sorted by modification date)
+- Type wrappers for module parameters enabling human-readable values in patch JSON files
+- File size validation for patch loading (patches limited to 5 KB)
+- Program change support for patch selection via MIDI
+- Sustain pedal CC handling and sustain pedal button in the main UI for visual feedback and manual toggle
+- Save feedback in the UI: success, failure, and file-already-exists messages shown after a patch save operation
+- Patches and presets unified into a single patch list in the main window header
+- Structured logging throughout `accsyn-engine` and `accsyn-midi` (all log macros include `target:` for log filtering)
+
+### Fixed
+- Security: path traversal vulnerability in patch saving
+- Security: filename sanitization for patch save and load operations
+- Security: replaced deprecated `std::env::home_dir()` with `dirs` crate
+- Security: malformed or truncated MIDI messages no longer panic the MIDI input thread (added length guards)
+- Security: MIDI note number out of valid range no longer panics the engine (index masked to 0–127)
+- Security: removed `panic!` from CoreAudio `extern "C"` device callback — panicking across FFI boundary is undefined behaviour
+- Security: MIDI connection reload failure no longer kills the device-management thread
+- Pulse waveform x-coordinate rollover crash (unbounded growth exceeding type max)
+- Oscillator x-position rollover with bounds check and rollover mechanism
+- AM waveform regression where ring-mod parameter was not applied
+- Filter state not resetting between patches when filter envelope or LFO was engaged
+- Effects UI binding bug causing stale control states (declarative vs. imperative conflict)
+- Wave shape parameter labels not updating correctly when switching patches
+- Program change out-of-range event crashing the update event listener thread (`return` → `continue`)
+- TOCTOU race in patch deletion — deletion is now by name, not index
+- Filter modulation early-return bug preventing internal state reset on patch change
+- Patch balance default corrected (0.0 → 0.5; center = normalized 0.5)
+- Velocity curve using normalized instead of raw value during save/load
+
 ### Changed
-- Replaced `.expect()` panics on UI channel sends in the engine and MIDI crates with graceful error logging, preventing engine thread crashes on channel failure
-- Added structured `info!`/`debug!`/`warn!`/`error!` logging throughout `accsyn-engine` and `accsyn-midi` for preset loading, MIDI event processing, file I/O, and unmapped CC/status handling
+- Polarity toggle relocated from oscillator section to Settings panel
+- MIDI node display relocated to application header bar
+- Visual improvements: window width, font selection, panel separation, colour scheme
+- Replaced `.expect()` / `.unwrap()` panics on channel sends in engine, audio, and MIDI threads with graceful error logging
+- Clippy pedantic cast warnings resolved across all crates
+- CPAL pinned to v0.17.1 (v0.17.2+ broken on macOS)
 
 ## [0.1.4] - 2026-02-07
 
@@ -86,3 +124,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CoreAudio integration for macOS
 - Settings panel for device selection and configuration
 
+[Unreleased]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.2.0...HEAD
+[0.2.0]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.1.4...v0.2.0
+[0.1.4]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.1.3...v0.1.4
+[0.1.3]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.1.2...v0.1.3
+[0.1.2]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.1.1...v0.1.2
+[0.1.1]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.1.0...v0.1.1
+[0.1.0]: https://gitlab.com/joltedbot-public/accidental-synth/-/tags/v0.1.0

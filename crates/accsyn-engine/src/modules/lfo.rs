@@ -82,7 +82,7 @@ pub struct Lfo {
 impl Lfo {
     /// Creates a new LFO with default frequency, range, and sine wave shape.
     pub(crate) fn new(sample_rate: u32) -> Self {
-        log::debug!("Constructing LFO Module");
+        log::debug!(target: "synthesizer::modules::lfo", "Constructing LFO Module");
         let oscillator = Oscillator::new(sample_rate, WaveShape::Sine);
         Self {
             oscillator,

@@ -24,6 +24,7 @@ use accsyn_types::audio_events::AudioDeviceUpdateEvents;
 use accsyn_types::defaults::Defaults;
 use accsyn_types::effects::EffectParameters;
 use accsyn_types::math::{normal_value_from_exponential_level_curve, normalize_float_range};
+use accsyn_types::parameter_types::NormalizedValue;
 use accsyn_types::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
 };
@@ -67,14 +68,14 @@ pub struct UI {
 
 impl UI {
     pub fn new(parameters: &Arc<ModuleParameters>) -> Self {
-        log::info!("Constructing UI Module");
+        log::info!(target: "ui", "Constructing UI Module");
 
         let (ui_update_sender, ui_update_receiver) = bounded(UI_UPDATE_CHANNEL_CAPACITY);
 
         let parameter_values = update_ui_values_from_module_parameters(
             UIAudioDevice::default(),
             UIMidiPort::default(),
-            parameters.clone(),
+            parameters,
             None,
         );
 
@@ -205,7 +206,7 @@ pub(super) fn push_values_to_ui(
 pub(super) fn update_ui_values_from_module_parameters(
     audio_device: UIAudioDevice,
     midi_port: UIMidiPort,
-    parameters: Arc<ModuleParameters>,
+    parameters: &Arc<ModuleParameters>,
     selected_patch_index: Option<i32>,
 ) -> ParameterValues {
     ParameterValues {
@@ -248,7 +249,7 @@ fn oscillator_values_to_ui_oscillator_values(
     oscillators: &[OscillatorParameters],
 ) -> Vec<UIOscillator> {
     let mut ui_oscillators: Vec<UIOscillator> = Vec::with_capacity(OscillatorIndex::COUNT);
-    for oscillator in oscillators.iter() {
+    for oscillator in oscillators {
         ui_oscillators.push(UIOscillator::from_synth_parameters(oscillator));
     }
 
@@ -266,13 +267,13 @@ fn oscillator_fine_tune_to_ui_oscillator_fine_tune(
 
 fn synthesizer_effects_to_ui_effects(effects: &[AudioEffectParameters]) -> Vec<EffectParameters> {
     let mut ui_effects: Vec<EffectParameters> = Vec::new();
-    for effect in effects.iter() {
+    for effect in effects {
         ui_effects.push(EffectParameters {
             is_enabled: effect.is_enabled.load(Relaxed),
             parameters: effect
                 .parameters
                 .iter()
-                .map(|parameter| parameter.load())
+                .map(NormalizedValue::load)
                 .collect::<Vec<f32>>(),
         });
     }
@@ -282,7 +283,7 @@ fn synthesizer_effects_to_ui_effects(effects: &[AudioEffectParameters]) -> Vec<E
 
 fn oscillator_mixer_to_ui_oscillator_mixer(quad_mixer: &[QuadMixerInput]) -> Vec<UIMixer> {
     let mut ui_quad_mixer_values: Vec<UIMixer> = Vec::new();
-    for strip in quad_mixer.iter() {
+    for strip in quad_mixer {
         ui_quad_mixer_values.push(UIMixer {
             level: normal_value_from_exponential_level_curve(strip.level.load()),
             balance: normalize_float_range(

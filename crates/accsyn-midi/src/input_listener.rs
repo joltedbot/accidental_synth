@@ -6,7 +6,7 @@ use crate::constants::{
     PITCH_BEND_MESSAGE_LSB_BYTE_INDEX, PITCH_BEND_MESSAGE_MSB_BYTE_INDEX,
     PROGRAM_CHANGE_VALUE_BYTE_INDEX, RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET,
 };
-use crate::{MidiError, Status, control_change};
+use crate::{Status, control_change};
 use accsyn_types::midi_events::MidiEvent;
 use anyhow::Result;
 use crossbeam_channel::Sender;
@@ -45,22 +45,22 @@ pub(crate) fn process_midi_message(
     midi_message_sender: &Sender<MidiEvent>,
     current_note_arc: &Arc<Mutex<Option<u8>>>,
 ) {
+    if message.is_empty() {
+        return;
+    }
+
     if !message_channel_matches_current_channel(message, current_channel_arc) {
         log::trace!(target: "midi::input", "Dropping message for non-matching channel");
         return;
     }
 
-    if let Some(event) = event_from_message_status(message, current_note_arc) {
-        midi_message_sender.send(event).unwrap_or_else(|err| {
-            let midi_err = MidiError::MessageSendFailed;
-            log::error!(
-                target: "midi::message",
-                error:% = midi_err,
-                details:% = err;
-                "Could not send MIDI message to the synthesizer module."
-            );
-            panic!("{midi_err}");
-        });
+    if let Some(event) = event_from_message_status(message, current_note_arc)
+        && let Err(err) = midi_message_sender.send(event)
+    {
+        log::error!(
+            target: "midi::input",
+            "Could not send MIDI message to the synthesizer module: {err}"
+        );
     }
 }
 
@@ -94,9 +94,9 @@ fn event_from_message_status(
         Status::NoteOn => process_note_on_message(message, current_note_arc),
         Status::NoteOff => process_note_off_message(message, current_note_arc),
         Status::ControlChange => process_cc_message(message),
-        Status::PitchBend => Some(process_pitch_bend_message(message)),
-        Status::ProgramChange => Some(process_program_change_message(message)),
-        Status::ChannelPressure => Some(process_channel_pressure_message(message)),
+        Status::PitchBend => process_pitch_bend_message(message),
+        Status::ProgramChange => process_program_change_message(message),
+        Status::ChannelPressure => process_channel_pressure_message(message),
         _ => {
             log::debug!(target: "midi::input", "Unhandled MIDI status type: 0x{:02X}", message[MESSAGE_STATUS_BYTE_INDEX]);
             None
@@ -104,27 +104,27 @@ fn event_from_message_status(
     }
 }
 
-fn process_program_change_message(message: &[u8]) -> MidiEvent {
-    let program_number = message[PROGRAM_CHANGE_VALUE_BYTE_INDEX];
-    MidiEvent::ProgramChange(program_number)
+fn process_program_change_message(message: &[u8]) -> Option<MidiEvent> {
+    let program_number = *message.get(PROGRAM_CHANGE_VALUE_BYTE_INDEX)?;
+    Some(MidiEvent::ProgramChange(program_number))
 }
 
-fn process_channel_pressure_message(message: &[u8]) -> MidiEvent {
-    let pressure_amount = message[CHANNEL_PRESSURE_VALUE_BYTE_INDEX];
-    MidiEvent::ChannelPressure(pressure_amount)
+fn process_channel_pressure_message(message: &[u8]) -> Option<MidiEvent> {
+    let pressure_amount = *message.get(CHANNEL_PRESSURE_VALUE_BYTE_INDEX)?;
+    Some(MidiEvent::ChannelPressure(pressure_amount))
 }
 
-fn process_pitch_bend_message(message: &[u8]) -> MidiEvent {
-    let amount_most_significant_byte = message[PITCH_BEND_MESSAGE_MSB_BYTE_INDEX];
-    let amount_least_significant_byte = message[PITCH_BEND_MESSAGE_LSB_BYTE_INDEX];
+fn process_pitch_bend_message(message: &[u8]) -> Option<MidiEvent> {
+    let amount_most_significant_byte = *message.get(PITCH_BEND_MESSAGE_MSB_BYTE_INDEX)?;
+    let amount_least_significant_byte = *message.get(PITCH_BEND_MESSAGE_LSB_BYTE_INDEX)?;
     let pitch_bend_amount =
         u16::from(amount_most_significant_byte) << 7 | u16::from(amount_least_significant_byte);
-    MidiEvent::PitchBend(pitch_bend_amount)
+    Some(MidiEvent::PitchBend(pitch_bend_amount))
 }
 
 fn process_cc_message(message: &[u8]) -> Option<MidiEvent> {
-    let cc_number = message[CC_MESSAGE_NUMBER_BYTE_INDEX];
-    let cc_value = message[CC_MESSAGE_VALUE_BYTE_INDEX];
+    let cc_number = *message.get(CC_MESSAGE_NUMBER_BYTE_INDEX)?;
+    let cc_value = *message.get(CC_MESSAGE_VALUE_BYTE_INDEX)?;
     control_change::get_supported_cc_from_cc_number(cc_number, cc_value)
         .map(MidiEvent::ControlChange)
 }
@@ -133,7 +133,7 @@ fn process_note_off_message(
     message: &[u8],
     current_note_arc: &Arc<Mutex<Option<u8>>>,
 ) -> Option<MidiEvent> {
-    let midi_note = message[NOTE_MESSAGE_NUMBER_BYTE_INDEX];
+    let midi_note = *message.get(NOTE_MESSAGE_NUMBER_BYTE_INDEX)?;
     let mut current_note = current_note_arc
         .lock()
         .unwrap_or_else(PoisonError::into_inner);
@@ -150,8 +150,8 @@ fn process_note_on_message(
     message: &[u8],
     current_note_arc: &Arc<Mutex<Option<u8>>>,
 ) -> Option<MidiEvent> {
-    let midi_note = message[NOTE_MESSAGE_NUMBER_BYTE_INDEX];
-    let midi_velocity = message[NOTE_MESSAGE_VELOCITY_BYTE_INDEX];
+    let midi_note = *message.get(NOTE_MESSAGE_NUMBER_BYTE_INDEX)?;
+    let midi_velocity = *message.get(NOTE_MESSAGE_VELOCITY_BYTE_INDEX)?;
 
     let mut current_note = current_note_arc
         .lock()
@@ -192,6 +192,37 @@ fn message_status_from_status_byte(status: u8) -> Status {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::{Arc, Mutex};
+
+    #[test]
+    fn process_midi_message_does_not_panic_on_empty_message() {
+        use crossbeam_channel::unbounded;
+        let (tx, _rx) = unbounded::<MidiEvent>();
+        let channel = Arc::new(Mutex::new(None::<u8>));
+        let note = Arc::new(Mutex::new(None::<u8>));
+        // must not panic
+        process_midi_message(&[], &channel, &tx, &note);
+    }
+
+    #[test]
+    fn process_midi_message_does_not_panic_on_single_byte_note_on_status() {
+        use crossbeam_channel::unbounded;
+        let (tx, _rx) = unbounded::<MidiEvent>();
+        let channel = Arc::new(Mutex::new(None::<u8>));
+        let note = Arc::new(Mutex::new(None::<u8>));
+        // 0x90 = Note On ch 1, but no subsequent bytes
+        process_midi_message(&[0x90], &channel, &tx, &note);
+    }
+
+    #[test]
+    fn process_midi_message_does_not_panic_on_two_byte_note_on_message() {
+        use crossbeam_channel::unbounded;
+        let (tx, _rx) = unbounded::<MidiEvent>();
+        let channel = Arc::new(Mutex::new(None::<u8>));
+        let note = Arc::new(Mutex::new(None::<u8>));
+        // 0x90 = Note On, note=60, missing velocity byte
+        process_midi_message(&[0x90, 60], &channel, &tx, &note);
+    }
 
     #[test]
     fn message_type_from_status_byte_returns_correct_status_for_note_on_0_channel() {

@@ -269,7 +269,7 @@ extern "C" fn device_listener_callback(
 
         let device_update_sender = &*(in_client_data as *const Sender<AudioDeviceUpdateEvents>);
 
-        device_update_sender.send(AudioDeviceUpdateEvents::OutputDeviceListChanged).expect("device_listener_callback(): Failed to send audio device update to the UI. Exiting.");
+        let _ = device_update_sender.send(AudioDeviceUpdateEvents::OutputDeviceListChanged);
     }
 
     OSSSTATUS_NO_ERROR

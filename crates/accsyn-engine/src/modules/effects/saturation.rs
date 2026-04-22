@@ -8,7 +8,7 @@ pub struct Saturation {}
 
 impl Saturation {
     pub fn new() -> Self {
-        log::debug!("Constructing Saturation Effect Module");
+        log::debug!(target: "synthesizer::effects::saturation", "Constructing Saturation Effect Module");
 
         Self {}
     }

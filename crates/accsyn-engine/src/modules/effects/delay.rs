@@ -17,7 +17,7 @@ pub struct Delay {
 
 impl Delay {
     pub fn new() -> Self {
-        log::debug!("Constructing Delay Effect Module");
+        log::debug!(target: "synthesizer::effects::delay", "Constructing Delay Effect Module");
 
         let buffer = vec![(0.0, 0.0); MAX_DELAY_SAMPLES as usize];
 

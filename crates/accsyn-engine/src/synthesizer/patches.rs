@@ -138,7 +138,7 @@ impl PatchList {
         let patch = if let Some(index) = self.patches.iter().position(|p| p.name == patch_name) {
             self.patches.remove(index)
         } else {
-            log::warn!(target: "synthesizer::patches", "Patch name does not exist: {}", patch_name);
+            log::warn!(target: "synthesizer::patches", "Patch name does not exist: {patch_name}");
             return Err(PatchesError::PatchNameDoesNotExist(patch_name));
         };
 
@@ -421,8 +421,10 @@ mod tests {
 
     impl TempDir {
         fn new(label: &str) -> Self {
-            let path = std::env::temp_dir()
-                .join(format!("accsyn_patches_test_{}_{label}", std::process::id()));
+            let path = std::env::temp_dir().join(format!(
+                "accsyn_patches_test_{}_{label}",
+                std::process::id()
+            ));
             fs::create_dir_all(&path).unwrap();
             Self(path)
         }
@@ -552,6 +554,9 @@ mod tests {
     #[test]
     fn load_patches_skips_file_exceeding_size_limit() {
         let dir = TempDir::new("oversized");
+
+        // Constant value MAX_PATCH_FILE_SIZE is manually set and will always be well below the 32 bit usize limit
+        #[allow(clippy::cast_possible_truncation)]
         let content = "x".repeat(MAX_PATCH_FILE_SIZE as usize + 1);
         dir.write_file("Big Patch.json", &content);
         assert!(load_patches(dir.path()).is_empty());
@@ -561,7 +566,7 @@ mod tests {
     fn load_patches_skips_symlinks() {
         use std::os::unix::fs::symlink;
         let dir = TempDir::new("symlinks");
-        let real_path = dir.write_file("real.json", r#"{}"#);
+        let real_path = dir.write_file("real.json", r"{}");
         let link_path = dir.path().join("link.json");
         symlink(&real_path, &link_path).unwrap();
         let result = load_patches(dir.path());

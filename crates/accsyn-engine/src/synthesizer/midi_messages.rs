@@ -68,12 +68,15 @@ pub fn process_midi_program_change_message(
 ) {
     log::debug!(target: "synthesizer::midi", "Program change received: {program_number}");
 
-    synthesizer_update_sender.send(SynthesizerUpdateEvents::PatchChanged(i32::from(program_number))).expect(
-        "process_midi_program_change_message(): Could not send new program number to the synthesizer module. Exiting.",
+    if let Err(e) = synthesizer_update_sender.send(SynthesizerUpdateEvents::PatchChanged(
+        i32::from(program_number),
+    )) {
+        log::error!(target: "synthesizer::midi", "Failed to send program change to synthesizer: {e}");
+    }
+    send_ui_update(
+        ui_update_sender,
+        UIUpdates::Patches(i32::from(program_number)),
     );
-    ui_update_sender
-        .send(UIUpdates::Patches(i32::from(program_number)))
-        .expect("process_midi_program_change_message(): Could not send new program number to the UI module. Exiting.");
 }
 
 pub fn process_midi_channel_pressure_message(parameters: &KeyboardParameters, pressure_value: u8) {
@@ -124,7 +127,7 @@ pub fn process_midi_note_on_message(
 
     action_midi_note_events(MidiNoteEvent::NoteOn, module_parameters);
 
-    let note_name = Defaults::MIDI_NOTE_FREQUENCIES[midi_note as usize]
+    let note_name = Defaults::MIDI_NOTE_FREQUENCIES[midi_note as usize & 0x7F]
         .1
         .to_string();
     send_ui_update(ui_update_sender, UIUpdates::MidiScreen(note_name));
@@ -137,7 +140,7 @@ pub fn process_midi_cc_values(
     module_parameters: &mut Arc<ModuleParameters>,
     ui_update_sender: &Sender<UIUpdates>,
 ) {
-    log::trace!("CC received: {cc_value:?}");
+    log::trace!(target: "synthesizer::midi", "CC received: {cc_value:?}");
     match cc_value {
         CC::ModWheel(value) => {
             set_mod_wheel(&module_parameters.keyboard, normalize_midi_value(value));
@@ -869,6 +872,26 @@ pub fn process_midi_cc_values(
         }
         CC::AllNotesOff => {
             process_midi_note_off_message(module_parameters);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use accsyn_types::defaults::Defaults;
+
+    #[test]
+    fn midi_note_frequencies_covers_all_valid_notes() {
+        for note in 0u8..=127 {
+            let _ = Defaults::MIDI_NOTE_FREQUENCIES[note as usize];
+        }
+    }
+
+    #[test]
+    fn midi_note_frequency_index_mask_keeps_index_in_range() {
+        for note in 128u8..=255 {
+            let index = note as usize & 0x7F;
+            assert!(index < Defaults::MIDI_NOTE_FREQUENCIES.len());
         }
     }
 }

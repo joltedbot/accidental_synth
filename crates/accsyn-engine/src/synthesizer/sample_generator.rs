@@ -13,7 +13,6 @@ use accsyn_types::math::load_f32_from_atomic_u32;
 use accsyn_types::synth_events::{EnvelopeIndex, LFOIndex, OscillatorIndex};
 use anyhow::Result;
 use crossbeam_channel::Receiver;
-use log::info;
 use rtrb::Producer;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
@@ -42,13 +41,13 @@ pub fn sample_generator(
     let current_note = current_note.clone();
     let module_parameters = module_parameters.clone();
 
-    log::debug!("Blocking till we receive a sample buffer producer from the audio module");
+    log::debug!(target: "synthesizer::sample_generator", "Blocking till we receive a sample buffer producer from the audio module");
     let mut sample_buffer = sample_buffer_receiver.recv()?;
-    log::debug!("Sample buffer producer received from the audio module");
+    log::debug!(target: "synthesizer::sample_generator", "Sample buffer producer received from the audio module");
 
     thread::spawn(move || {
         let sample_rate = output_stream_parameters.sample_rate.load(Relaxed);
-        info!("Creating the synthesizer audio loop at sample rate: {sample_rate}");
+        log::info!(target: "synthesizer::sample_generator", "Creating the synthesizer audio loop at sample rate: {sample_rate}");
 
         let mut previous_sample_rate = 0;
         let mut previous_buffer_size = 0;
@@ -68,7 +67,8 @@ pub fn sample_generator(
 
             let current_sample_rate = output_stream_parameters.sample_rate.load(Relaxed);
             if current_sample_rate != previous_sample_rate {
-                info!(
+                log::info!(
+                    target: "synthesizer::sample_generator",
                     "Sample rate changed from {previous_sample_rate} Hz to {current_sample_rate} Hz. Reinitializing modules."
                 );
 
@@ -77,7 +77,8 @@ pub fn sample_generator(
             }
 
             if current_buffer_size != previous_buffer_size {
-                info!(
+                log::info!(
+                    target: "synthesizer::sample_generator",
                     "Buffer size changed from {previous_buffer_size} samples to {current_buffer_size} samples."
                 );
 
@@ -207,6 +208,7 @@ pub fn sample_generator(
                 if let Ok(new_sample_buffer) = sample_buffer_receiver.try_recv() {
                     sample_buffer = new_sample_buffer;
                     log::debug!(
+                        target: "synthesizer::sample_generator",
                         "create_synthesizer(): Receive a new sample buffer. Replacing the old one"
                     );
                 }
@@ -223,7 +225,7 @@ pub fn sample_generator(
         }
     });
 
-    info!("Synthesizer audio loop was successfully created.");
+    log::info!(target: "synthesizer::sample_generator", "Synthesizer audio loop was successfully created.");
 
     Ok(())
 }

@@ -278,7 +278,7 @@ impl Synthesizer {
         let mut module_parameters = self.module_parameters.clone();
 
         thread::spawn(move || {
-            log::debug!("start_midi_event_listener(): spawned thread to receive MIDI events");
+            log::debug!(target: "synthesizer", "start_midi_event_listener(): spawned thread to receive MIDI events");
 
             while let Ok(event) = midi_message_receiver.recv() {
                 match event {
@@ -320,7 +320,7 @@ impl Synthesizer {
                 }
             }
 
-            log::debug!("run(): MIDI event receiver thread has exited");
+            log::debug!(target: "synthesizer", "run(): MIDI event receiver thread has exited");
         });
     }
 

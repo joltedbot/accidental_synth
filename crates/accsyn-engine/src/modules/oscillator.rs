@@ -255,7 +255,7 @@ pub struct Oscillator {
 impl Oscillator {
     /// Creates a new oscillator with the given sample rate and initial wave shape.
     pub fn new(sample_rate: u32, wave_shape: WaveShape) -> Self {
-        log::debug!("Constructing Oscillator Module: {wave_shape:?}");
+        log::debug!(target: "synthesizer::modules::oscillator", "Constructing Oscillator Module: {wave_shape:?}");
         let wave_generator = get_wave_generator_from_wave_shape(sample_rate, wave_shape);
 
         Self {
@@ -335,7 +335,7 @@ impl Oscillator {
             return;
         }
 
-        log::info!("Setting Oscillator Shape to {wave_shape:#?}");
+        log::info!(target: "synthesizer::modules::oscillator", "Setting Oscillator Shape to {wave_shape:#?}");
         self.wave_generator = get_wave_generator_from_wave_shape(self.sample_rate, wave_shape);
     }
 

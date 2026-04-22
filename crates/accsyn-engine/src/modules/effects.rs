@@ -114,7 +114,7 @@ fn extract_parameters(source: &AudioEffectParameters) -> EffectParameters {
         parameters: source
             .parameters
             .iter()
-            .map(|parameter| parameter.load())
+            .map(NormalizedValue::load)
             .collect(),
     }
 }

@@ -16,23 +16,26 @@ I am, perhaps foolishly, writing it in Rust, largely for my own education and am
 It is a work in progress.
 
 ## Project Status
-In early development. I am actively working towards and MVP that includes the basic functional synth voice and a working UI for the current state
-of the synth.
+Accidental Synthesizer is a working, playable synthesizer. The synth voice, MIDI integration, audio output, and UI are all fully connected and functional.
 
-The synth voice works and is controllable via MIDI though control over the devices and channels is lacking without the UI.
-
-The UI is more or less functional and usable. There are some tweaks and fixes as well as parameter range changes to be made but all parameters are
-currently working. Preset loading is functional and updates all UI controls to reflect the loaded preset.
+Version 0.2.0 introduces a complete user patch system — save, load, delete, and list patches with MIDI program change support. Factory patches are bundled with the app.
 
 ## Features
 Current:
-- Minimal end‑to‑end audio path on macOS using CoreAudio.
-- MIDI input handling (omni mode for now): Note On/Off, Velocity, Pitch Bend, and Control Change (per implementation chart in the Wiki).
-- A functional native UI with all synth parameters connected and controllable.
-- Preset system: load and apply presets that update all UI controls to match the loaded preset configuration.
+- Four-oscillator mono synth voice with multiple waveforms (sine, saw, square, triangle, noise, pulse, supersaw, FM, AM)
+- Resonant lowpass filter with key tracking, envelope, and LFO modulation
+- Two ADSR envelopes (amplitude and filter) and two LFOs for modulation
+- Audio effects: wave folder, clipper, rectifier, bit shifter, saturation, compressor, tremolo, auto pan, delay, gate
+- Full patch system: save, load, delete, and list user patches; factory patches bundled with the app
+- MIDI program change for patch selection; sustain pedal support
+- MIDI input: Note On/Off, Velocity, Pitch Bend, Control Change, Channel Pressure (see implementation chart in the Wiki)
+- Virtual MIDI input device for DAW integration; omni mode or per-channel filtering
+- Native macOS UI built with Slint; hot-swappable MIDI and audio devices
 
-Planned for MVP:
-- Preset saving and management.
+Planned:
+- Compact effects panel layout (R8)
+- Slider usability improvements (R7)
+- Per-oscillator tabs and oscillator panel space optimization (R1/R9)
 
 
 ## Quick Start
@@ -50,7 +53,6 @@ cargo build --release
 
 
 ### Run
-Default (The UI will load, but it is not fully connected yet):
 ```bash
 ./accidental-synth
 ```
@@ -82,12 +84,12 @@ Options:
   -V, --version   Print version
 ```
 
-## MVP UI
+## UI
 
 
-Screenshot (initial MVP UI):
+Screenshot:
 
-![AccSyn UI](ui/images/screenshot.png)
+![AccSyn UI](crates/accidental-synth/ui/images/screenshot.png)
 
 
 ## License

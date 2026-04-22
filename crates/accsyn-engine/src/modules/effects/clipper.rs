@@ -6,7 +6,7 @@ pub struct Clipper {}
 
 impl Clipper {
     pub fn new() -> Self {
-        log::debug!("Constructing Clipper Effect Module");
+        log::debug!(target: "synthesizer::effects::clipper", "Constructing Clipper Effect Module");
 
         Self {}
     }

@@ -182,11 +182,10 @@ impl Midi {
                             port_count = input_ports.len();
                             "Received input port list"
                         );
-                        ui_update_sender
-                            .send(UIUpdates::MidiPortList(input_ports))
-                            .expect(
-                                "run(): Could not send midi port list update to the UI. Exiting.",
-                            );
+                        if let Err(e) = ui_update_sender.send(UIUpdates::MidiPortList(input_ports))
+                        {
+                            log::error!(target: "midi::control", "Failed to send MIDI port list to UI: {e}");
+                        }
                     }
                     MidiDeviceUpdateEvents::InputPort(input_port) => {
                         log::debug!(
@@ -203,12 +202,11 @@ impl Midi {
                                 &port.1,
                             );
 
-                            ui_update_sender
-                                .send(UIUpdates::MidiPortIndex(
-                                    i32::try_from(port.0).unwrap_or(i32::MAX),
-                                ))
-                                .expect(
-                                    "run(): Could not send midi port list update to the UI. Exiting.");
+                            if let Err(e) = ui_update_sender.send(UIUpdates::MidiPortIndex(
+                                i32::try_from(port.0).unwrap_or(i32::MAX),
+                            )) {
+                                log::error!(target: "midi::control", "Failed to send MIDI port index to UI: {e}");
+                            }
                         } else {
                             close_midi_input_connection(&mut input_listener_arc);
                         }
@@ -228,12 +226,11 @@ impl Midi {
                                 &port.1,
                             );
 
-                            ui_update_sender
-                                .send(UIUpdates::MidiPortIndex(
-                                    i32::try_from(port.0).unwrap_or(i32::MAX),
-                                ))
-                                .expect(
-                                    "run(): Could not send midi port index update to the UI. Exiting.");
+                            if let Err(e) = ui_update_sender.send(UIUpdates::MidiPortIndex(
+                                i32::try_from(port.0).unwrap_or(i32::MAX),
+                            )) {
+                                log::error!(target: "midi::control", "Failed to send MIDI port index to UI: {e}");
+                            }
                         } else {
                             log::warn!(
                                 target: "midi::control",
@@ -255,11 +252,11 @@ impl Midi {
                         *current_channel = channel_index.parse().ok();
 
                         let channel_index_number = i32::from(current_channel.unwrap_or(0));
-                        ui_update_sender
-                            .send(UIUpdates::MidiChannelIndex(channel_index_number))
-                            .expect(
-                                "run(): Could not send midi channel update to the UI. Exiting.",
-                            );
+                        if let Err(e) =
+                            ui_update_sender.send(UIUpdates::MidiChannelIndex(channel_index_number))
+                        {
+                            log::error!(target: "midi::control", "Failed to send MIDI channel index to UI: {e}");
+                        }
                     }
                 }
             }
@@ -289,9 +286,9 @@ fn reload_midi_input_listener(
                 target: "midi::input",
                 error:% = midi_err,
                 details:% = err;
-                "Failed to create the input listener"
+                "Failed to create the input listener — skipping this port change"
             );
-            panic!("{midi_err}");
+            return;
         }
     };
 

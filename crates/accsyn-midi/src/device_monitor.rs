@@ -40,15 +40,19 @@ impl DeviceMonitor {
                         .filter_map(|port| midi_input.port_name(port).ok())
                         .collect::<Vec<String>>();
 
-                    input_port_sender.send(MidiDeviceUpdateEvents::InputPortList(midi_port_names)).expect(
-                        "run(): Could not send midi port list update to the input port sender. Exiting. ",
-                    );
+                    if let Err(e) = input_port_sender
+                        .send(MidiDeviceUpdateEvents::InputPortList(midi_port_names))
+                    {
+                        log::error!(target: "midi::device", "Failed to send port list update: {e}");
+                    }
 
                     update_current_port(&current_port_list, &mut current_port);
 
-                    input_port_sender.send(MidiDeviceUpdateEvents::InputPort(current_port.clone())).expect(
-                        "run(): Could not send midi port update to the input port sender. Exiting. ",
-                    );
+                    if let Err(e) = input_port_sender
+                        .send(MidiDeviceUpdateEvents::InputPort(current_port.clone()))
+                    {
+                        log::error!(target: "midi::device", "Failed to send port update: {e}");
+                    }
                 }
 
                 sleep(Duration::from_millis(DEVICE_LIST_POLLING_INTERVAL));

@@ -38,7 +38,7 @@ pub fn start_update_event_listener(
     ui_update_sender: Sender<UIUpdates>,
 ) {
     thread::spawn(move || {
-        log::debug!("start_update_event_listener(): spawned thread to receive UI events");
+        log::debug!(target: "synthesizer::events", "start_update_event_listener(): spawned thread to receive UI events");
 
         while let Ok(event) = ui_update_receiver.recv() {
             match event {
@@ -51,6 +51,7 @@ pub fn start_update_event_listener(
                         }
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
                             );
                         }
@@ -66,6 +67,7 @@ pub fn start_update_event_listener(
                         }
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
                             );
                         }
@@ -90,6 +92,7 @@ pub fn start_update_event_listener(
                         }
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
                             );
                         }
@@ -102,6 +105,7 @@ pub fn start_update_event_listener(
                         }
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
                             );
                         }
@@ -117,6 +121,7 @@ pub fn start_update_event_listener(
                         }
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
                             );
                         }
@@ -132,6 +137,7 @@ pub fn start_update_event_listener(
                         }
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
                             );
                         }
@@ -172,6 +178,7 @@ pub fn start_update_event_listener(
                         ),
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeAttack: Invalid \
                                 Envelope index: {envelope_index}"
                             );
@@ -192,6 +199,7 @@ pub fn start_update_event_listener(
                         ),
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeDecay: Invalid \
                                 Envelope index: {envelope_index}"
                             );
@@ -214,6 +222,7 @@ pub fn start_update_event_listener(
                         }
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeSustain: Invalid \
                                 Envelope index: {envelope_index}"
                             );
@@ -234,6 +243,7 @@ pub fn start_update_event_listener(
                         ),
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeRelease: Invalid \
                                 Envelope index: {envelope_index}"
                             );
@@ -252,6 +262,7 @@ pub fn start_update_event_listener(
                         ),
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_ui_event_listener():SynthesizerUpdateEvents::FilterEnvelopeInvert: Invalid \
                                 Envelope index: {envelope_index}"
                             );
@@ -270,6 +281,7 @@ pub fn start_update_event_listener(
                         ),
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoFrequency: Invalid LFO index: {lfo_index}"
                             );
                             continue;
@@ -295,6 +307,7 @@ pub fn start_update_event_listener(
                         }
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoShapeIndex: Invalid\
                                  LFO index: {lfo_index}"
                             );
@@ -317,6 +330,7 @@ pub fn start_update_event_listener(
                         }
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhase: Invalid LFO index: {lfo_index}"
                             );
                         }
@@ -337,6 +351,7 @@ pub fn start_update_event_listener(
                         }
                         _ => {
                             log::warn!(
+                                target: "synthesizer::events",
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoPhaseReset: Invalid LFO index: {lfo_index}"
                             );
                         }
@@ -389,6 +404,7 @@ pub fn start_update_event_listener(
                         set_oscillator_balance(&module_parameters.mixer, oscillator, balance);
                     } else {
                         log::warn!(
+                            target: "synthesizer::events",
                             "start_ui_event_listener():SynthesizerUpdateEvents::OscillatorMixerBalance: Invalid oscillator index: {oscillator_index}"
                         );
                     }
@@ -398,6 +414,7 @@ pub fn start_update_event_listener(
                         set_oscillator_level(&module_parameters.mixer, oscillator, level);
                     } else {
                         log::warn!(
+                            target: "synthesizer::events",
                             "start_ui_event_listener():SynthesizerUpdateEvents::OscillatorMixerLevel: Invalid oscillator index: {oscillator_index}"
                         );
                     }
@@ -411,6 +428,7 @@ pub fn start_update_event_listener(
                         );
                     } else {
                         log::warn!(
+                            target: "synthesizer::events",
                             "start_ui_event_listener():SynthesizerUpdateEvents::OscillatorMixerMute: Invalid oscillator index: {oscillator_index}"
                         );
                     }
@@ -420,6 +438,7 @@ pub fn start_update_event_listener(
                         set_effect_is_enabled(&module_parameters.effects, effect, is_enabled);
                     } else {
                         log::warn!(
+                            target: "synthesizer::events",
                             "start_ui_event_listener():SynthesizerUpdateEvents::EffectEnabled: Invalid effect index: \
                             {effect_index}"
                         );
@@ -439,6 +458,7 @@ pub fn start_update_event_listener(
                         );
                     } else {
                         log::warn!(
+                            target: "synthesizer::events",
                             "start_ui_event_listener():SynthesizerUpdateEvents::EffectEnabled: Invalid effect index: \
                             {effect_index}"
                         );
@@ -502,6 +522,13 @@ pub fn start_update_event_listener(
                         let patch_list = thread_patches.patch_list().all_names();
 
                         if let Err(e) = ui_update_sender.send(UIUpdates::PatchList(patch_list)) {
+                            log::error!(target: "synthesizer::event_listener", "Failed to send new patch list to the UI: {e}");
+                        }
+
+                        let user_patch_list = thread_patches.user_patch_names();
+                        if let Err(e) =
+                            ui_update_sender.send(UIUpdates::UserPatchList(user_patch_list))
+                        {
                             log::error!(target: "synthesizer::event_listener", "Failed to send new patch list to the UI: {e}");
                         }
                     }

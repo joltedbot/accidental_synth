@@ -5,7 +5,7 @@ pub struct Rectifier {}
 
 impl Rectifier {
     pub fn new() -> Self {
-        log::debug!("Constructing Rectifier Effect Module");
+        log::debug!(target: "synthesizer::effects::rectifier", "Constructing Rectifier Effect Module");
 
         Self {}
     }

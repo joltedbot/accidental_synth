@@ -126,7 +126,7 @@ pub struct Envelope {
 impl Envelope {
     /// Creates a new envelope generator initialized to the Off stage.
     pub(crate) fn new(sample_rate: u32) -> Self {
-        log::debug!("Constructing Envelope Module");
+        log::debug!(target: "synthesizer::modules::envelope", "Constructing Envelope Module");
 
         // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
         #[allow(clippy::cast_precision_loss)]
@@ -246,6 +246,7 @@ impl Envelope {
     fn set_sustain_level(&mut self, level: f32) {
         if !(MIN_SUSTAIN_LEVEL..=MAX_SUSTAIN_LEVEL).contains(&level) {
             log::debug!(
+                target: "synthesizer::modules::envelope",
                 "set_sustain_level: level exceeded range (0.0-1.0) but was clamped: level: {level}"
             );
         }
@@ -342,6 +343,7 @@ impl Envelope {
             }
             (StageAction::NextStage, _) => {
                 log::debug!(
+                    target: "synthesizer::modules::envelope",
                     "state_action(): invalid state transition: state: {:?}, action: {:?}",
                     self.stage,
                     action
@@ -500,7 +502,10 @@ mod tests {
         envelope.set_sustain_level(sustain_level);
         envelope.set_decay_milliseconds(decay_ms);
 
-        assert!(f32s_are_equal(envelope.decay_milliseconds, decay_ms as f32));
+        // This is just a test and this value will be kept in the f32 mantis size
+        #[allow(clippy::cast_precision_loss)]
+        let f32_decay_ms = decay_ms as f32;
+        assert!(f32s_are_equal(envelope.decay_milliseconds, f32_decay_ms));
         assert!(f32s_are_equal(
             envelope.decay_level_increment,
             expected_increment

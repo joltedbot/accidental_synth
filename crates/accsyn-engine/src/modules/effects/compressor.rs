@@ -11,7 +11,7 @@ pub struct Compressor {}
 
 impl Compressor {
     pub fn new() -> Self {
-        log::debug!("Constructing Compressor Effect Module");
+        log::debug!(target: "synthesizer::effects::compressor", "Constructing Compressor Effect Module");
 
         Self {}
     }

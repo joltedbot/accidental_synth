@@ -4,7 +4,7 @@ use accsyn_types::effects::{AudioEffect, EffectParameters};
 pub struct WaveFolder {}
 impl WaveFolder {
     pub fn new() -> Self {
-        log::debug!("Constructing WaveFolder Effect Module");
+        log::debug!(target: "synthesizer::effects::wavefolder", "Constructing WaveFolder Effect Module");
 
         Self {}
     }

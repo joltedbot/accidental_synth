@@ -21,7 +21,7 @@ pub struct Tremolo {
 
 impl Tremolo {
     pub fn new(sample_rate: u32) -> Self {
-        log::debug!("Constructing Tremolo Effect Module");
+        log::debug!(target: "synthesizer::effects::tremolo", "Constructing Tremolo Effect Module");
 
         let mut lfo = Lfo::new(sample_rate);
         lfo.set_center_value(TREMOLO_LFO_CENTER_VALUE);
