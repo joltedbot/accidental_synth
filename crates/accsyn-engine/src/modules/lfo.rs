@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8};
+use accsyn_types::defaults::Defaults;
 
 /// Minimum LFO frequency in Hz.
 pub const MIN_LFO_FREQUENCY: f32 = 0.01;
@@ -20,7 +21,6 @@ pub const MAX_LFO_CENTER_VALUE: f32 = 1.0;
 /// Minimum LFO center value (bipolar offset).
 pub const MIN_LFO_CENTER_VALUE: f32 = -1.0;
 const DEFAULT_CENTER_VALUE: f32 = 0.0;
-const DEFAULT_RANGE: f32 = 2.0;
 /// Default LFO starting phase.
 pub const DEFAULT_LFO_PHASE: f32 = 0.0;
 /// Default LFO frequency in Hz.
@@ -61,7 +61,7 @@ impl Default for LfoParameters {
         Self {
             frequency: Hertz::new(DEFAULT_LFO_FREQUENCY),
             center_value: Balance::new(DEFAULT_CENTER_VALUE),
-            range: LfoRange::new(DEFAULT_RANGE),
+            range: LfoRange::new(Defaults::DEFAULT_RANGE),
             phase: NormalizedValue::new(DEFAULT_LFO_PHASE),
             wave_shape: AtomicU8::new(WaveShape::default() as u8),
             reset: AtomicBool::new(false),
@@ -88,7 +88,7 @@ impl Lfo {
             oscillator,
             frequency: DEFAULT_LFO_FREQUENCY,
             center_value: DEFAULT_CENTER_VALUE,
-            range: DEFAULT_RANGE,
+            range: Defaults::DEFAULT_RANGE,
             phase: DEFAULT_LFO_PHASE,
             wave_shape_index: WaveShape::Sine as u8,
         }

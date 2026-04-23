@@ -1,5 +1,6 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::sync::atomic::{AtomicI8, AtomicI16, AtomicU8, AtomicU16, AtomicU32, Ordering};
+use crate::defaults::Defaults;
 
 /// Thread-safe normalized float parameter (0.0–1.0) stored as atomic bits.
 #[derive(Debug)]
@@ -133,7 +134,7 @@ impl LfoRange {
 impl Default for LfoRange {
     fn default() -> Self {
         Self {
-            value: AtomicU32::new(0.0_f32.to_bits()),
+            value: AtomicU32::new(Defaults::DEFAULT_RANGE.to_bits()),
         }
     }
 }

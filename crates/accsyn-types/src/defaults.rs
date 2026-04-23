@@ -55,6 +55,9 @@ impl Defaults {
     pub const MINIMUM_PITCH_BEND_RANGE: u32 = 2;
     /// Maximum allowed pitch bend range in semitones.
     pub const MAXIMUM_PITCH_BEND_RANGE: u32 = 12;
+
+    /// The default range for LFOs
+    pub const DEFAULT_RANGE: f32 = 2.0;
 }
 
 /// Default delay effect parameters: [time, feedback, mix, unused].
