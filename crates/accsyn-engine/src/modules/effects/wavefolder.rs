@@ -15,14 +15,10 @@ impl AudioEffect for WaveFolder {
         if !effect.is_enabled {
             return samples;
         }
-
-        if effect.parameters[0].is_sign_negative() {
-            return samples;
-        }
-
+        
         let positive_amount = MAX_THRESHOLD - effect.parameters[0];
         let negative_amount = if effect.parameters[1].is_sign_positive() {
-            MAX_THRESHOLD - effect.parameters[1]
+            MAX_THRESHOLD - effect.parameters[2]
         } else {
             positive_amount
         };
