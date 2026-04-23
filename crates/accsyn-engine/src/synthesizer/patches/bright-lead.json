@@ -44,7 +44,7 @@
     {
       "frequency": 6.0,
       "center_value": 1.0,
-      "range": 0.15,
+      "range": 2.0,
       "phase": 0.0,
       "wave_shape": 0,
       "reset": false

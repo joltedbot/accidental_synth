@@ -132,7 +132,7 @@
       "center_value": 1,
       "frequency": 0.2,
       "phase": 0,
-      "range": 0.3,
+      "range": 2.0,
       "reset": false,
       "wave_shape": 0
     },

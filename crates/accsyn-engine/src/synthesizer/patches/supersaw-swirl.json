@@ -129,15 +129,15 @@
   },
   "lfos": [
     {
-      "center_value": 0.8,
+      "center_value": 1.0,
       "frequency": 1.5,
       "phase": 0,
-      "range": 0.6,
+      "range": 2.0,
       "reset": false,
       "wave_shape": 0
     },
     {
-      "center_value": -0.2,
+      "center_value": 0,
       "frequency": 0.4,
       "phase": 0.75,
       "range": 0.7,
