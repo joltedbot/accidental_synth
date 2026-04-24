@@ -301,7 +301,7 @@ export component FilterControlLabel inherits Rectangle {
 }
 
 export component ToggleSwitch inherits VerticalLayout {
-    in-out property <bool> is_checked: false;
+    in-out property <bool> is_checked <=> switch.checked;
     in property <length> switch-height: 27px;
     in property <string> label;
     in property <bool> enabled: true;
@@ -319,21 +319,11 @@ export component ToggleSwitch inherits VerticalLayout {
         text: label;
     }
 
-    property <int> gen: PatchState.generation;
-    changed gen => {
-        sw.checked = is_checked;
-    }
-
-    changed is_checked => {
-        sw.checked = is_checked;
-    }
-
     HorizontalLayout {
         alignment: center;
-        sw := Switch {
+        switch := Switch {
             enabled: enabled;
             height: switch-height;
-            checked: is_checked;
             toggled() => {
                 toggle_switch_updated(self.checked);
             }
