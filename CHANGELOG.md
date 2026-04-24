@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-04-24
+
+### Fixed
+- Envelope display bug: attack, decay, and release values were displayed on a linear scale but are stored via a two-segment exponential curve; sliders now correctly reflect loaded values
+- `UIEnvelope` decay field was incorrectly reading release constants, causing decay and release to show the same value after patch load
+- Wavefolder asymmetric mode: negative folding side never fired due to an incorrect paramater index check; asymmetric mode now applies independent 
+  positive and negative folding as intended
+- Wavefolder toggle buttons. The enable toggle was not correctly brining back the negative folding slider after being disable and reenabled. This now works as expected.
+- LFO default range and all factory preset LFO values corrected to valid normalized range
+- Several small formating and naming fixes
+
+
 ## [0.2.0] - 2026-04-21
 
 ### Added
@@ -122,7 +134,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CoreAudio integration for macOS
 - Settings panel for device selection and configuration
 
-[Unreleased]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.2.0...HEAD
+[Unreleased]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.2.1...HEAD
+[0.2.1]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.2.0...v0.2.1
 [0.2.0]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.1.4...v0.2.0
 [0.1.4]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.1.3...v0.1.4
 [0.1.3]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.1.2...v0.1.3
