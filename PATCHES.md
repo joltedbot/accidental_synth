@@ -219,20 +219,21 @@ Array of 10 effect objects in fixed order. Each effect has:
 
 Effects are processed in this order:
 
-| Index | Name | Param 0 | Param 1 | Param 2 | Param 3 |
-|-------|------|---------|---------|---------|---------|
-| 0 | WaveFolder | amount | symmetry | mix | unused |
-| 1 | Clipper | threshold | mix | unused | unused |
-| 2 | Gate | attack | threshold | release | unused |
-| 3 | Rectifier | amount | mix | unused | unused |
-| 4 | BitShifter | bits (1-16 normalized) | mix | unused | unused |
-| 5 | Saturation | drive | mix | mode | unused |
-| 6 | Compressor | threshold | ratio | attack | release |
-| 7 | Delay | time | feedback | mix | unused |
-| 8 | AutoPan | rate | depth | unused | unused |
-| 9 | Tremolo | rate | depth | unused | unused |
+| Index | Name | Param 0                                             | Param 1               | Param 2                                    | Param 3      |
+|-------|------|-----------------------------------------------------|-----------------------|--------------------------------------------|--------------|
+| 0     | Saturation | type                                                | drive amount          | post drive level cut                       | unused       |
+| 1     | Compressor | threshold                                           | ratio                 | makeup gain                                | unused       |
+| 2     | WaveFolder | amount (in asymetric mode - positive sample amount) | asymetric mode toggle | in asymetric mode - negative sample amount | unused       |
+| 3     | Clipper | threshold                                           | pre-clip boost        | post-clip boost                            | notch toggle |
+| 4     | Gate | thereshold                                          | pre-gate level cut    | post-gate makeup gain                      | unused       |
+| 5     | Rectifier | half wave mode toggle                               | unused                | unused                                     | unused       |
+| 6     | BitShifter | bits (1-16 normalized)                              | unused                | unused                                     | unused       |
+| 7     | Delay | delay level                                         | time                  | feedback                                   | unused       |
+| 8     | AutoPan | rate                                                | width                 | wave shape                                 | unused       |
+| 9     | Tremolo | rate                                                | depth                 | wave shape                                 | unused       |
 
 All parameters use the range 0.0 to 1.0, including "unused" fields which should be set to 0.
+Toggle parameters are 0.0 for Off and > 0.0 values for on but 1.0 is the preffered On value.
 
 ### Example Effect
 
