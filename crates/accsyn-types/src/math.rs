@@ -838,7 +838,8 @@ mod tests {
     }
 
     #[test]
-    fn exponential_curve_envelope_time_from_normal_value_returns_correct_milliseconds_below_crossover() {
+    fn exponential_curve_envelope_time_from_normal_value_returns_correct_milliseconds_below_crossover()
+     {
         let normal_value = 0.25;
         let crossover = (0.5, 700.0);
         let min = 0;
@@ -855,7 +856,8 @@ mod tests {
     }
 
     #[test]
-    fn exponential_curve_envelope_time_from_normal_value_returns_correct_milliseconds_at_crossover() {
+    fn exponential_curve_envelope_time_from_normal_value_returns_correct_milliseconds_at_crossover()
+    {
         let normal_value = 0.5;
         let crossover = (0.5, 700.0);
         let min = 0;
@@ -871,7 +873,8 @@ mod tests {
     }
 
     #[test]
-    fn exponential_curve_envelope_time_from_normal_value_returns_correct_milliseconds_above_crossover() {
+    fn exponential_curve_envelope_time_from_normal_value_returns_correct_milliseconds_above_crossover()
+     {
         let normal_value = 0.75;
         let crossover = (0.5, 700.0);
         let min = 0;
