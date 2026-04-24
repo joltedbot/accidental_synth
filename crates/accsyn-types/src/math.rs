@@ -29,6 +29,81 @@ pub const EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES: (f32, f32) = (0.5, 1000.0);
 /// Exponential curve parameters for envelope release (min, max) in milliseconds.
 pub const EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES: (f32, f32) = (0.6, 2000.0);
 
+/// Converts a normalized 0.0–1.0 value to an envelope time in milliseconds using
+/// a two-segment quadratic curve parameterized by crossover values.
+#[inline]
+#[must_use]
+pub fn exponential_curve_envelope_time_from_normal_value(
+    normal_value: f32,
+    crossover_values: (f32, f32),
+    minimum: u32,
+    maximum: u32,
+) -> u32 {
+    if normal_value == 0.0 {
+        return 0;
+    }
+
+    // Envelope times in ms are ≤ 10_000, within f32 precision (2²³ = 8_388_608)
+    #[allow(clippy::cast_precision_loss)]
+    let minimum_f32 = minimum as f32;
+    #[allow(clippy::cast_precision_loss)]
+    let maximum_f32 = maximum as f32;
+
+    if normal_value < crossover_values.0 {
+        let renormalized_value = normal_value / crossover_values.0;
+        let quadratic_curve = renormalized_value.powi(2);
+        // Bounded to [0, crossover_values.1] (envelope times ≤ 10_000 ms), non-negative; safe to cast to u32
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        let segment = ((crossover_values.1 - minimum_f32) * quadratic_curve) as u32;
+        minimum + segment
+    } else {
+        let renormalized_value = (normal_value - crossover_values.0) / crossover_values.0;
+        let quadratic_curve = renormalized_value.powi(2);
+        // Bounded to [crossover_values.1, maximum] (envelope times ≤ 10_000 ms), non-negative; safe to cast to u32
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        let result = (crossover_values.1
+            + ((maximum_f32 - crossover_values.1) * quadratic_curve).round())
+            as u32;
+        result
+    }
+}
+
+/// Inverse of [`exponential_curve_envelope_time_from_normal_value`].
+/// Converts an envelope time in milliseconds back to a normalized 0.0–1.0 value.
+#[inline]
+#[must_use]
+pub fn normal_value_from_exponential_curve_envelope_time(
+    milliseconds: u32,
+    crossover_values: (f32, f32),
+    minimum: u32,
+    maximum: u32,
+) -> f32 {
+    if milliseconds == 0 {
+        return 0.0;
+    }
+
+    // Envelope times in ms are ≤ 10_000, within f32 precision (2²³ = 8_388_608)
+    #[allow(clippy::cast_precision_loss)]
+    let ms_f32 = milliseconds as f32;
+    #[allow(clippy::cast_precision_loss)]
+    let minimum_f32 = minimum as f32;
+    #[allow(clippy::cast_precision_loss)]
+    let maximum_f32 = maximum as f32;
+
+    let cv0 = crossover_values.0;
+    let cv1 = crossover_values.1;
+
+    if ms_f32 < cv1 {
+        // Inverse of lower segment: minimum + (cv1 - minimum) * (v / cv0)²
+        let normal = cv0 * ((ms_f32 - minimum_f32).max(0.0) / (cv1 - minimum_f32)).sqrt();
+        normal.clamp(0.0, 1.0)
+    } else {
+        // Inverse of upper segment: cv1 + (maximum - cv1) * ((v - cv0) / cv0)²
+        let normal = cv0 * (1.0 + ((ms_f32 - cv1).max(0.0) / (maximum_f32 - cv1)).sqrt());
+        normal.clamp(0.0, 1.0)
+    }
+}
+
 /// Converts a dBFS value to a linear f32 sample amplitude.
 #[inline]
 #[must_use]
@@ -208,6 +283,18 @@ pub fn normal_value_from_exponential_curve_and_coefficient(
     // exponential_coefficient is the log of the effective range for the linear scale you want to map to exponential range
     // If the range max is 1000x then min, then the exponential_coefficient is log(1000) = 6.908
     curve_value.ln() / exponential_coefficient
+}
+
+/// Converts a normalized value to an audio level using an exponential curve.
+/// Maps 0.0–1.0 to a perceptually linear level adjustment.
+#[inline]
+#[must_use]
+pub fn exponential_curve_level_adjustment_from_normal_value(normal_value: f32) -> f32 {
+    if normal_value == 0.0 {
+        return 0.0;
+    }
+    exponential_curve_from_normal_value_and_coefficient(normal_value, EXPONENTIAL_LEVEL_COEFFICIENT)
+        / LEVEL_CURVE_LINEAR_RANGE
 }
 
 /// Inverse of `exponential_curve_level_adjustment_from_normal_value`.
@@ -618,5 +705,179 @@ mod tests {
             "For: {high_midi_value}, Expected: \
         {high_expected_result}, got: {high_result}"
         );
+    }
+
+    #[test]
+    fn test_exponential_level_adjustment_zero() {
+        let normal_value = 0.0;
+        let actual = exponential_curve_level_adjustment_from_normal_value(normal_value);
+        let expected = 0.0;
+        assert!(f32s_are_equal(actual, expected));
+    }
+
+    #[test]
+    fn normal_value_from_exponential_curve_envelope_time_returns_zero_for_zero_milliseconds() {
+        let result = normal_value_from_exponential_curve_envelope_time(0, (0.5, 700.0), 0, 10000);
+        let expected = 0.0_f32;
+        assert!(
+            f32s_are_equal(result, expected),
+            "Expected: {expected}, got: {result}"
+        );
+    }
+
+    #[test]
+    fn normal_value_from_exponential_curve_envelope_time_round_trips_below_crossover() {
+        // normal=0.25 → forward lower segment: 0 + 700*0.25 = 175 (exact, no truncation with min=0)
+        let normal_value = 0.25_f32;
+        let crossover = (0.5_f32, 700.0_f32);
+        let ms =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, 0, 10000);
+        let result = normal_value_from_exponential_curve_envelope_time(ms, crossover, 0, 10000);
+        let expected = normal_value;
+        assert!(
+            f32s_are_equal(result, expected),
+            "Expected: {expected}, got: {result}"
+        );
+    }
+
+    #[test]
+    fn normal_value_from_exponential_curve_envelope_time_round_trips_at_crossover() {
+        // normal=0.5 → forward upper segment: 700 + 9300*0 = 700 (exact)
+        let normal_value = 0.5_f32;
+        let crossover = (0.5_f32, 700.0_f32);
+        let ms =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, 0, 10000);
+        let result = normal_value_from_exponential_curve_envelope_time(ms, crossover, 0, 10000);
+        let expected = normal_value;
+        assert!(
+            f32s_are_equal(result, expected),
+            "Expected: {expected}, got: {result}"
+        );
+    }
+
+    #[test]
+    fn normal_value_from_exponential_curve_envelope_time_round_trips_above_crossover() {
+        // normal=0.75 → forward upper segment: 700 + 9300*0.25 = 3025 (exact)
+        let normal_value = 0.75_f32;
+        let crossover = (0.5_f32, 700.0_f32);
+        let ms =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, 0, 10000);
+        let result = normal_value_from_exponential_curve_envelope_time(ms, crossover, 0, 10000);
+        let expected = normal_value;
+        assert!(
+            f32s_are_equal(result, expected),
+            "Expected: {expected}, got: {result}"
+        );
+    }
+
+    #[test]
+    fn normal_value_from_exponential_curve_envelope_time_round_trips_at_maximum_for_attack_profile()
+    {
+        // normal=1.0 → forward upper segment: 700 + 4300*1 = 5000 (exact, uses actual attack constants)
+        let normal_value = 1.0_f32;
+        let crossover = EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES;
+        let ms =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, 1, 5000);
+        let result = normal_value_from_exponential_curve_envelope_time(ms, crossover, 1, 5000);
+        let expected = normal_value;
+        assert!(
+            f32s_are_equal(result, expected),
+            "Expected: {expected}, got: {result}"
+        );
+    }
+
+    #[test]
+    fn normal_value_from_exponential_curve_envelope_time_round_trips_for_decay_profile() {
+        // normal=0.75 → forward upper segment: 1000 + 4000*0.25 = 2000 (exact)
+        let normal_value = 0.75_f32;
+        let crossover = EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES;
+        let ms =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, 10, 5000);
+        let result = normal_value_from_exponential_curve_envelope_time(ms, crossover, 10, 5000);
+        let expected = normal_value;
+        assert!(
+            f32s_are_equal(result, expected),
+            "Expected: {expected}, got: {result}"
+        );
+    }
+
+    #[test]
+    fn normal_value_from_exponential_curve_envelope_time_round_trips_for_release_profile() {
+        // Release uses cv0=0.6 (asymmetric). normal=0.9 → renorm=(0.9-0.6)/0.6=0.5
+        // upper segment: 2000 + 8000*0.25 = 4000 (exact)
+        let normal_value = 0.9_f32;
+        let crossover = EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES;
+        let ms =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, 10, 10000);
+        let result = normal_value_from_exponential_curve_envelope_time(ms, crossover, 10, 10000);
+        let expected = normal_value;
+        assert!(
+            f32s_are_equal(result, expected),
+            "Expected: {expected}, got: {result}"
+        );
+    }
+
+    #[test]
+    fn test_envelope_time_zero_value() {
+        let normal_value = 0.0;
+        let crossover = (0.5, 700.0);
+        let min = 0;
+        let max = 10000;
+
+        let actual =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, min, max);
+        let expected = 0;
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_envelope_time_below_crossover() {
+        let normal_value = 0.25;
+        let crossover = (0.5, 700.0);
+        let min = 0;
+        let max = 10000;
+
+        let actual =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, min, max);
+        // Renormalized: 0.25 / 0.5 = 0.5
+        // Quadratic: 0.5^2 = 0.25
+        // Result: 0 + (700 - 0) * 0.25 = 175
+        let expected = 175;
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_envelope_time_at_crossover() {
+        let normal_value = 0.5;
+        let crossover = (0.5, 700.0);
+        let min = 0;
+        let max = 10000;
+
+        let actual =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, min, max);
+        // At crossover point, renormalized value is 0.0, quadratic is 0.0
+        // Result: 700 + (10000 - 700) * 0.0 = 700
+        let expected = 700;
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_envelope_time_above_crossover() {
+        let normal_value = 0.75;
+        let crossover = (0.5, 700.0);
+        let min = 0;
+        let max = 10000;
+
+        let actual =
+            exponential_curve_envelope_time_from_normal_value(normal_value, crossover, min, max);
+        // Renormalized: (0.75 - 0.5) / 0.5 = 0.5
+        // Quadratic: 0.5^2 = 0.25
+        // Result: 700 + (10000 - 700) * 0.25 = 700 + 2325 = 3025
+        let expected = 3025;
+
+        assert_eq!(actual, expected);
     }
 }

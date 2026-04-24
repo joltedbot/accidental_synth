@@ -19,12 +19,12 @@ use accsyn_types::defaults::{
     OSCILLATOR_FINE_TUNE_MIN_CENTS,
 };
 use accsyn_types::math::{
-    EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT,
-    EXPONENTIAL_PORTAMENTO_COEFFICIENT, normalize_float_range, normalize_unsigned_integer_range,
-};
-use accsyn_types::math::{
-    normal_value_from_exponential_curve_and_coefficient, normal_value_from_exponential_level_curve,
-    normalize_signed_integer_range,
+    EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES, EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
+    EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES, EXPONENTIAL_FILTER_COEFFICIENT,
+    EXPONENTIAL_LFO_COEFFICIENT, EXPONENTIAL_PORTAMENTO_COEFFICIENT,
+    normal_value_from_exponential_curve_and_coefficient,
+    normal_value_from_exponential_curve_envelope_time, normal_value_from_exponential_level_curve,
+    normalize_float_range, normalize_signed_integer_range, normalize_unsigned_integer_range,
 };
 use std::sync::atomic::Ordering::Relaxed;
 
@@ -217,16 +217,24 @@ pub struct UIEnvelope {
 
 impl Default for UIEnvelope {
     fn default() -> Self {
-        // Envelope times in ms are ≤ 10_000, within f32 precision (2²³ = 8_388_608)
-        #[allow(clippy::cast_precision_loss)]
-        let attack = DEFAULT_ENVELOPE_MILLISECONDS as f32
-            / (MAX_ATTACK_MILLISECONDS - MIN_ATTACK_MILLISECONDS) as f32;
-        #[allow(clippy::cast_precision_loss)]
-        let decay = DEFAULT_ENVELOPE_MILLISECONDS as f32
-            / (MAX_DECAY_MILLISECONDS - MIN_DECAY_MILLISECONDS) as f32;
-        #[allow(clippy::cast_precision_loss)]
-        let release = DEFAULT_ENVELOPE_MILLISECONDS as f32
-            / (MAX_RELEASE_MILLISECONDS - MIN_RELEASE_MILLISECONDS) as f32;
+        let attack = normal_value_from_exponential_curve_envelope_time(
+            DEFAULT_ENVELOPE_MILLISECONDS,
+            EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES,
+            MIN_ATTACK_MILLISECONDS,
+            MAX_ATTACK_MILLISECONDS,
+        );
+        let decay = normal_value_from_exponential_curve_envelope_time(
+            DEFAULT_ENVELOPE_MILLISECONDS,
+            EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
+            MIN_DECAY_MILLISECONDS,
+            MAX_DECAY_MILLISECONDS,
+        );
+        let release = normal_value_from_exponential_curve_envelope_time(
+            DEFAULT_ENVELOPE_MILLISECONDS,
+            EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES,
+            MIN_RELEASE_MILLISECONDS,
+            MAX_RELEASE_MILLISECONDS,
+        );
 
         Self {
             attack,
@@ -241,19 +249,22 @@ impl Default for UIEnvelope {
 impl UIEnvelope {
     pub fn from_synth_parameters(parameters: &EnvelopeParameters) -> Self {
         Self {
-            attack: normalize_unsigned_integer_range(
+            attack: normal_value_from_exponential_curve_envelope_time(
                 parameters.attack_ms.load(),
+                EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES,
                 MIN_ATTACK_MILLISECONDS,
                 MAX_ATTACK_MILLISECONDS,
             ),
-            decay: normalize_unsigned_integer_range(
-                parameters.release_ms.load(),
-                MIN_RELEASE_MILLISECONDS,
-                MAX_RELEASE_MILLISECONDS,
+            decay: normal_value_from_exponential_curve_envelope_time(
+                parameters.decay_ms.load(),
+                EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
+                MIN_DECAY_MILLISECONDS,
+                MAX_DECAY_MILLISECONDS,
             ),
             sustain: parameters.sustain_level.load(),
-            release: normalize_unsigned_integer_range(
+            release: normal_value_from_exponential_curve_envelope_time(
                 parameters.release_ms.load(),
+                EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES,
                 MIN_RELEASE_MILLISECONDS,
                 MAX_RELEASE_MILLISECONDS,
             ),

@@ -11,9 +11,7 @@ use crate::modules::oscillator::OscillatorParameters;
 use crate::modules::oscillator::constants::{MAX_CLIP_BOOST, MIN_CLIP_BOOST};
 use crate::synthesizer::constants::{MAX_PITCH_BEND_RANGE, MIN_PITCH_BEND_RANGE};
 use crate::synthesizer::midi_value_converters::{
-    exponential_curve_envelope_time_from_normal_value,
     exponential_curve_filter_cutoff_from_normal_value,
-    exponential_curve_level_adjustment_from_normal_value,
     exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool,
     normal_value_to_f32_range, normal_value_to_number_of_filter_poles,
     normal_value_to_signed_integer_range, normal_value_to_unsigned_integer_range,
@@ -28,7 +26,9 @@ use accsyn_types::defaults::{
 use accsyn_types::math::{
     EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES, EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
     EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES, EXPONENTIAL_PORTAMENTO_COEFFICIENT,
+    exponential_curve_envelope_time_from_normal_value,
     exponential_curve_from_normal_value_and_coefficient,
+    exponential_curve_level_adjustment_from_normal_value,
 };
 use accsyn_types::synth_events::OscillatorIndex;
 use std::sync::Arc;
