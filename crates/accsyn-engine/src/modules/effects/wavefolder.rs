@@ -15,7 +15,7 @@ impl AudioEffect for WaveFolder {
         if !effect.is_enabled {
             return samples;
         }
-        
+
         let positive_amount = MAX_THRESHOLD - effect.parameters[0];
         let negative_amount = if effect.parameters[1].is_sign_positive() {
             MAX_THRESHOLD - effect.parameters[2]
@@ -117,7 +117,7 @@ mod tests {
         let mut wavefolder = WaveFolder::new();
         let effect = EffectParameters {
             is_enabled: true,
-            parameters: vec![0.7, 0.3, 0.0, 0.0], // Different positive values for asymmetry
+            parameters: vec![0.7, 1.0, 0.3, 0.0], // Different positive values for asymmetry
         };
         let input = (0.8, -0.9);
 
