@@ -78,7 +78,7 @@ mod tests {
     }
 
     #[test]
-    fn wavefolder_process_samples_returns_original_when_parameter_negative() {
+    fn wavefolder_process_samples_passes_through_when_positive_threshold_at_maximum() {
         let mut wavefolder = WaveFolder::new();
         let effect = EffectParameters {
             is_enabled: true,
