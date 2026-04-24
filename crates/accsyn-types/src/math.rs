@@ -92,14 +92,20 @@ pub fn normal_value_from_exponential_curve_envelope_time(
 
     let cv0 = crossover_values.0;
     let cv1 = crossover_values.1;
+    let lower_denominator = cv1 - minimum_f32;
+    let upper_denominator = maximum_f32 - cv1;
+
+    if lower_denominator <= 0.0 || upper_denominator <= 0.0 {
+        return 0.0;
+    }
 
     if ms_f32 < cv1 {
         // Inverse of lower segment: minimum + (cv1 - minimum) * (v / cv0)²
-        let normal = cv0 * ((ms_f32 - minimum_f32).max(0.0) / (cv1 - minimum_f32)).sqrt();
+        let normal = cv0 * ((ms_f32 - minimum_f32).max(0.0) / lower_denominator).sqrt();
         normal.clamp(0.0, 1.0)
     } else {
         // Inverse of upper segment: cv1 + (maximum - cv1) * ((v - cv0) / cv0)²
-        let normal = cv0 * (1.0 + ((ms_f32 - cv1).max(0.0) / (maximum_f32 - cv1)).sqrt());
+        let normal = cv0 * (1.0 + ((ms_f32 - cv1).max(0.0) / upper_denominator).sqrt());
         normal.clamp(0.0, 1.0)
     }
 }
@@ -818,7 +824,7 @@ mod tests {
     }
 
     #[test]
-    fn test_envelope_time_zero_value() {
+    fn exponential_curve_envelope_time_from_normal_value_returns_zero_for_zero_normal_value() {
         let normal_value = 0.0;
         let crossover = (0.5, 700.0);
         let min = 0;
@@ -832,7 +838,7 @@ mod tests {
     }
 
     #[test]
-    fn test_envelope_time_below_crossover() {
+    fn exponential_curve_envelope_time_from_normal_value_returns_correct_milliseconds_below_crossover() {
         let normal_value = 0.25;
         let crossover = (0.5, 700.0);
         let min = 0;
@@ -849,7 +855,7 @@ mod tests {
     }
 
     #[test]
-    fn test_envelope_time_at_crossover() {
+    fn exponential_curve_envelope_time_from_normal_value_returns_correct_milliseconds_at_crossover() {
         let normal_value = 0.5;
         let crossover = (0.5, 700.0);
         let min = 0;
@@ -865,7 +871,7 @@ mod tests {
     }
 
     #[test]
-    fn test_envelope_time_above_crossover() {
+    fn exponential_curve_envelope_time_from_normal_value_returns_correct_milliseconds_above_crossover() {
         let normal_value = 0.75;
         let crossover = (0.5, 700.0);
         let min = 0;
