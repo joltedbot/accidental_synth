@@ -103,7 +103,8 @@
       "hard_sync_enabled": false,
       "portamento_enabled": true,
       "portamento_time": 8,
-      "clipper_boost": 0
+      "clipper_boost": 0,
+      "pitch_envelope_amount": 0
     },
     {
       "fine_tune": 0,
@@ -117,7 +118,8 @@
       "hard_sync_enabled": false,
       "portamento_enabled": true,
       "portamento_time": 8,
-      "clipper_boost": 0
+      "clipper_boost": 0,
+      "pitch_envelope_amount": 0
     },
     {
       "fine_tune": 0,
@@ -131,7 +133,8 @@
       "hard_sync_enabled": false,
       "portamento_enabled": true,
       "portamento_time": 8,
-      "clipper_boost": 0
+      "clipper_boost": 0,
+      "pitch_envelope_amount": 0
     },
     {
       "fine_tune": 0,
@@ -145,7 +148,8 @@
       "hard_sync_enabled": false,
       "portamento_enabled": true,
       "portamento_time": 8,
-      "clipper_boost": 0
+      "clipper_boost": 0,
+      "pitch_envelope_amount": 0
     }
   ],
   "effects": [
