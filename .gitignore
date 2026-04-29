@@ -1,5 +1,5 @@
 /.idea
-/target
+target/
 .DS_Store
 flamegraph.svg
 flamegraph.html
