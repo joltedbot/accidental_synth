@@ -184,8 +184,8 @@ pub struct ModuleParameters {
     pub keyboard: KeyboardParameters,
     /// Parameters for the two LFOs (mod wheel and filter).
     pub lfos: [LfoParameters; 2],
-    /// Parameters for the two envelopes (amplitude and filter).
-    pub envelopes: [EnvelopeParameters; 2],
+    /// Parameters for the three envelopes (amplitude, pitch, and filter).
+    pub envelopes: [EnvelopeParameters; 3],
     /// Parameters for each of the four oscillators.
     pub oscillators: [OscillatorParameters; OscillatorIndex::COUNT],
     /// Parameters for the audio effects chain.

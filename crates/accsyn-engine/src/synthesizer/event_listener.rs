@@ -2,9 +2,9 @@ use crate::modules::effects::EffectIndex;
 use crate::modules::lfo::DEFAULT_LFO_PHASE;
 use crate::synthesizer::ModuleParameters;
 use crate::synthesizer::constants::{
-    ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, LFO_INDEX_FILTER, LFO_INDEX_MOD_WHEEL,
-    PATCH_DELETE_FAILURE, PATCH_DELETE_FILE_DOES_NOT_EXIST, PATCH_DELETE_SUCCESS,
-    PATCH_SAVE_ALREADY_EXISTS, PATCH_SAVE_FAILURE, PATCH_SAVE_SUCCESS,
+    ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, ENVELOPE_INDEX_PITCH, LFO_INDEX_FILTER,
+    LFO_INDEX_MOD_WHEEL, PATCH_DELETE_FAILURE, PATCH_DELETE_FILE_DOES_NOT_EXIST,
+    PATCH_DELETE_SUCCESS, PATCH_SAVE_ALREADY_EXISTS, PATCH_SAVE_FAILURE, PATCH_SAVE_SUCCESS,
 };
 use crate::synthesizer::midi_value_converters::bool_to_normal_value;
 use crate::synthesizer::patches::{Patches, PatchesError, get_module_parameters_from_patch_index};
@@ -16,9 +16,9 @@ use crate::synthesizer::set_parameters::{
     set_lfo_phase_reset, set_lfo_range, set_module_parameters_from_preset, set_oscillator_balance,
     set_oscillator_clip_boost, set_oscillator_course_tune, set_oscillator_fine_tune,
     set_oscillator_hard_sync, set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute,
-    set_oscillator_polarity, set_oscillator_shape_parameter1, set_oscillator_shape_parameter2,
-    set_output_balance, set_output_level, set_output_mute, set_pitch_bend_range,
-    set_portamento_enabled, set_portamento_time, set_velocity_curve,
+    set_oscillator_pitch_envelope_amount, set_oscillator_polarity, set_oscillator_shape_parameter1,
+    set_oscillator_shape_parameter2, set_output_balance, set_output_level, set_output_mute,
+    set_pitch_bend_range, set_portamento_enabled, set_portamento_time, set_velocity_curve,
 };
 use accsyn_types::casting::i32_to_u8_clamped;
 use accsyn_types::synth_events::{
@@ -100,8 +100,25 @@ pub fn start_update_event_listener(
                 }
                 SynthesizerUpdateEvents::ClipperBoost(oscillator_index, boost) => {
                     match usize::try_from(oscillator_index) {
-                        Ok(idx) if idx < module_parameters.oscillators.len() => {
-                            set_oscillator_clip_boost(&module_parameters.oscillators[idx], boost);
+                        Ok(index) if index < module_parameters.oscillators.len() => {
+                            set_oscillator_clip_boost(&module_parameters.oscillators[index], boost);
+                        }
+                        _ => {
+                            log::warn!(
+
+                                target: "synthesizer::events",
+                                "start_update_event_listener(): Invalid oscillator index: {oscillator_index}"
+                            );
+                        }
+                    }
+                }
+                SynthesizerUpdateEvents::PitchEnvelopeAmount(oscillator_index, boost) => {
+                    match usize::try_from(oscillator_index) {
+                        Ok(index) if index < module_parameters.oscillators.len() => {
+                            set_oscillator_pitch_envelope_amount(
+                                &module_parameters.oscillators[index],
+                                boost,
+                            );
                         }
                         _ => {
                             log::warn!(
@@ -176,6 +193,10 @@ pub fn start_update_event_listener(
                             &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
                             milliseconds,
                         ),
+                        ENVELOPE_INDEX_PITCH => set_envelope_attack_time(
+                            &module_parameters.envelopes[EnvelopeIndex::Pitch as usize],
+                            milliseconds,
+                        ),
                         _ => {
                             log::warn!(
                                 target: "synthesizer::events",
@@ -195,6 +216,10 @@ pub fn start_update_event_listener(
                         }
                         ENVELOPE_INDEX_FILTER => set_envelope_decay_time(
                             &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
+                            milliseconds,
+                        ),
+                        ENVELOPE_INDEX_PITCH => set_envelope_decay_time(
+                            &module_parameters.envelopes[EnvelopeIndex::Pitch as usize],
                             milliseconds,
                         ),
                         _ => {
@@ -220,6 +245,10 @@ pub fn start_update_event_listener(
                                 level,
                             );
                         }
+                        ENVELOPE_INDEX_PITCH => set_envelope_sustain_level(
+                            &module_parameters.envelopes[EnvelopeIndex::Pitch as usize],
+                            level,
+                        ),
                         _ => {
                             log::warn!(
                                 target: "synthesizer::events",
@@ -241,6 +270,10 @@ pub fn start_update_event_listener(
                             &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
                             milliseconds,
                         ),
+                        ENVELOPE_INDEX_PITCH => set_envelope_release_time(
+                            &module_parameters.envelopes[EnvelopeIndex::Pitch as usize],
+                            milliseconds,
+                        ),
                         _ => {
                             log::warn!(
                                 target: "synthesizer::events",
@@ -258,6 +291,10 @@ pub fn start_update_event_listener(
                         ),
                         ENVELOPE_INDEX_FILTER => set_envelope_inverted(
                             &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
+                            f32::from(is_inverted),
+                        ),
+                        ENVELOPE_INDEX_PITCH => set_envelope_inverted(
+                            &module_parameters.envelopes[EnvelopeIndex::Pitch as usize],
                             f32::from(is_inverted),
                         ),
                         _ => {

@@ -318,6 +318,12 @@ impl Envelope {
         self.is_inverted = is_inverted;
     }
 
+    /// Returns whether the envelope is currently inverted.
+    #[must_use]
+    pub fn get_is_inverted(&self) -> bool {
+        self.is_inverted
+    }
+
     fn state_action(&mut self, action: StageAction) {
         match (action, self.stage) {
             (StageAction::Start, _) => {

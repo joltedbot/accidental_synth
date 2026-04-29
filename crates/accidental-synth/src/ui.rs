@@ -48,6 +48,7 @@ pub(super) struct ParameterValues {
     oscillator_fine_tune: Vec<i32>,
     amp_envelope: UIEnvelope,
     filter_envelope: UIEnvelope,
+    pitch_envelope: UIEnvelope,
     mod_wheel_lfo: UILfo,
     filter_lfo: UILfo,
     filter_cutoff: UIFilterCutoff,
@@ -171,6 +172,9 @@ pub(super) fn push_values_to_ui(
         ui.set_filter_envelope_values(slint_envelope_from_ui_envelope(
             &ui_default_values.filter_envelope,
         ));
+        ui.set_pitch_envelope_values(slint_envelope_from_ui_envelope(
+            &ui_default_values.pitch_envelope,
+        ));
         ui.set_effects_values(slint_effect_values_from_effect_parameters(
             &ui_default_values.effects,
         ));
@@ -222,6 +226,9 @@ pub(super) fn update_ui_values_from_module_parameters(
         ),
         filter_envelope: UIEnvelope::from_synth_parameters(
             &parameters.envelopes[EnvelopeIndex::Filter as usize],
+        ),
+        pitch_envelope: UIEnvelope::from_synth_parameters(
+            &parameters.envelopes[EnvelopeIndex::Pitch as usize],
         ),
         mod_wheel_lfo: UILfo::from_synth_parameters(&parameters.lfos[LFOIndex::ModWheel as usize]),
         filter_lfo: UILfo::from_synth_parameters(&parameters.lfos[LFOIndex::Filter as usize]),
@@ -307,6 +314,7 @@ fn slint_oscillators_from_oscillators(oscillator_values: &[UIOscillator]) -> Mod
             clipper_boost: osc.clipper_boost,
             parameter1: osc.parameter1,
             parameter2: osc.parameter2,
+            pitch_envelope_amount: osc.pitch_envelope_amount,
         })
         .collect();
 

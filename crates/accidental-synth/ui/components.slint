@@ -113,9 +113,12 @@ export component EffectLabel inherits VerticalLayout {
 
 export component ComponentLabel inherits VerticalLayout {
     in property <string> label;
+    in property <TextVerticalAlignment> valign: center;
+    in property <TextHorizontalAlignment> halign: center;
 
     Text {
-        horizontal-alignment: center;
+        vertical-alignment: valign;
+        horizontal-alignment: halign;
         font-size: Theme.component-label-font-size;
         font-weight: Theme.component-label-font-weight;
         font-family: Theme.label-font-family;
@@ -365,10 +368,9 @@ export component HorizontalParameterSlider inherits VerticalLayout {
     in property <length> slider-height: 30px;
     in property <bool> enabled: true;
     in property <bool> show-value: false;
+    in property <bool> show-lable: true;
 
     callback horizontal-parameter-slider-changed(float);
-
-    spacing: 5px;
 
     property <int> gen: PatchState.generation;
     changed gen => {
@@ -385,6 +387,37 @@ export component HorizontalParameterSlider inherits VerticalLayout {
         value-units: value-units;
         show-value: show-value;
         enabled: enabled;
+    }
+
+    hslider := HorzontalSlider {
+        height: slider-height;
+        width: slider-width;
+        value: value;
+        enabled: enabled;
+
+        updated(new_value) => {
+            horizontal-parameter-slider-changed(new_value);
+        }
+    }
+}
+
+export component HorizontalParameterSliderNoLabel inherits VerticalLayout {
+    in property <float> value;
+    in property <length> slider-width: 100px;
+    in property <length> slider-height: 30px;
+    in property <bool> enabled: true;
+
+    callback horizontal-parameter-slider-changed(float);
+
+    spacing: 5px;
+
+    property <int> gen: PatchState.generation;
+    changed gen => {
+        hslider.value = value;
+    }
+
+    changed value => {
+        hslider.value = value;
     }
 
     hslider := HorzontalSlider {

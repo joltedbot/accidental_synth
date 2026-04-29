@@ -12,6 +12,7 @@ pub const MAX_VELOCITY_CURVE_EXPONENT: f32 = 4.0;
 // Envelope Constants
 pub const ENVELOPE_INDEX_AMP: i32 = 0;
 pub const ENVELOPE_INDEX_FILTER: i32 = 1;
+pub const ENVELOPE_INDEX_PITCH: i32 = 2;
 
 // LFO Constants
 pub const LFO_INDEX_MOD_WHEEL: i32 = 0;

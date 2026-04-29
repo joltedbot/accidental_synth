@@ -46,6 +46,9 @@ pub fn action_midi_note_events(
             module_parameters.envelopes[EnvelopeIndex::Filter as usize]
                 .gate_flag
                 .store(MidiGateEvent::GateOn as u8, Relaxed);
+            module_parameters.envelopes[EnvelopeIndex::Pitch as usize]
+                .gate_flag
+                .store(MidiGateEvent::GateOn as u8, Relaxed);
             for oscillator in &module_parameters.oscillators {
                 oscillator.gate_flag.store(true, Release);
             }
@@ -57,6 +60,9 @@ pub fn action_midi_note_events(
             module_parameters.envelopes[EnvelopeIndex::Filter as usize]
                 .gate_flag
                 .store(MidiGateEvent::GateOff as u8, Relaxed);
+            module_parameters.envelopes[EnvelopeIndex::Pitch as usize]
+                .gate_flag
+                .store(MidiGateEvent::GateOn as u8, Relaxed);
         }
     }
 }

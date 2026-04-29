@@ -112,7 +112,7 @@ impl Lfo {
         if self.range == 0.0 || self.frequency == 0.0 {
             return 0.0;
         }
-        let wave_sample = self.oscillator.generate(modulation);
+        let wave_sample = self.oscillator.generate(modulation, None);
         self.center_value + (wave_sample * (self.range / 2.0))
     }
 

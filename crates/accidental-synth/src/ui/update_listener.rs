@@ -211,6 +211,7 @@ pub fn start_ui_update_listener(
                         let envelope_values = match envelope_index {
                             EnvelopeIndex::Amp => &mut values.amp_envelope,
                             EnvelopeIndex::Filter => &mut values.filter_envelope,
+                            EnvelopeIndex::Pitch => &mut values.pitch_envelope,
                         };
                         set_envelope_stage_value(
                             &ui_weak_thread,
@@ -226,6 +227,7 @@ pub fn start_ui_update_listener(
                         let envelope_values = match envelope_index {
                             EnvelopeIndex::Amp => &mut values.amp_envelope,
                             EnvelopeIndex::Filter => &mut values.filter_envelope,
+                            EnvelopeIndex::Pitch => &mut values.pitch_envelope,
                         };
                         set_envelope_stage_value(
                             &ui_weak_thread,
@@ -241,6 +243,7 @@ pub fn start_ui_update_listener(
                         let envelope_values = match envelope_index {
                             EnvelopeIndex::Amp => &mut values.amp_envelope,
                             EnvelopeIndex::Filter => &mut values.filter_envelope,
+                            EnvelopeIndex::Pitch => &mut values.pitch_envelope,
                         };
                         set_envelope_stage_value(
                             &ui_weak_thread,
@@ -256,6 +259,7 @@ pub fn start_ui_update_listener(
                         let envelope_values = match envelope_index {
                             EnvelopeIndex::Amp => &mut values.amp_envelope,
                             EnvelopeIndex::Filter => &mut values.filter_envelope,
+                            EnvelopeIndex::Pitch => &mut values.pitch_envelope,
                         };
                         set_envelope_stage_value(
                             &ui_weak_thread,
@@ -271,6 +275,7 @@ pub fn start_ui_update_listener(
                         let envelope_values = match envelope_index {
                             EnvelopeIndex::Amp => &mut values.amp_envelope,
                             EnvelopeIndex::Filter => &mut values.filter_envelope,
+                            EnvelopeIndex::Pitch => &mut values.pitch_envelope,
                         };
                         set_envelope_inverted(
                             &ui_weak_thread,

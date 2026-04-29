@@ -47,6 +47,7 @@ pub fn register_callbacks(
     oscillators::callback_osc_clipper_boost_changed(ui_weak, synthesizer_update_sender.clone());
     oscillators::callback_osc_parameter1_changed(ui_weak, synthesizer_update_sender.clone());
     oscillators::callback_osc_parameter2_changed(ui_weak, synthesizer_update_sender.clone());
+    oscillators::callback_pitch_envelope_amount_changed(ui_weak, synthesizer_update_sender.clone());
 
     filter::callback_filter_cutoff_changed(ui_weak, synthesizer_update_sender.clone());
     filter::callback_filter_resonance_changed(ui_weak, synthesizer_update_sender.clone());

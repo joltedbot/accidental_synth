@@ -94,6 +94,7 @@ pub struct UIOscillator {
     pub clipper_boost: f32,
     pub parameter1: f32,
     pub parameter2: f32,
+    pub pitch_envelope_amount: f32,
 }
 
 impl Default for UIOscillator {
@@ -105,6 +106,7 @@ impl Default for UIOscillator {
             clipper_boost: 0.0,
             parameter1: 0.0,
             parameter2: 0.0,
+            pitch_envelope_amount: 0.0,
         }
     }
 }
@@ -126,6 +128,7 @@ impl UIOscillator {
             ),
             parameter1: parameters.shape_parameter1.load(),
             parameter2: parameters.shape_parameter2.load(),
+            pitch_envelope_amount: parameters.pitch_envelope_amount.load(),
         }
     }
 }

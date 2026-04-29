@@ -202,6 +202,9 @@ pub fn set_envelope_stage_value(
         EnvelopeIndex::Filter => {
             ui.set_filter_envelope_values(ui::slint_envelope_from_ui_envelope(&ui_envelope_values));
         }
+        EnvelopeIndex::Pitch => {
+            ui.set_pitch_envelope_values(ui::slint_envelope_from_ui_envelope(&ui_envelope_values));
+        }
     });
 }
 
@@ -220,6 +223,9 @@ pub fn set_envelope_inverted(
         }
         EnvelopeIndex::Filter => {
             ui.set_filter_envelope_values(ui::slint_envelope_from_ui_envelope(&ui_envelope_values));
+        }
+        EnvelopeIndex::Pitch => {
+            ui.set_pitch_envelope_values(ui::slint_envelope_from_ui_envelope(&ui_envelope_values));
         }
     });
 }

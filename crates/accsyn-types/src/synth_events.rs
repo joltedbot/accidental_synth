@@ -14,6 +14,8 @@ pub enum SynthesizerUpdateEvents {
     Parameter1(i32, f32),
     /// Change oscillator waveform parameter 2 (oscillator index, normalized value).
     Parameter2(i32, f32),
+    /// Change oscillator Pitch Envelope Amount (oscillator index, normalized value).
+    PitchEnvelopeAmount(i32, f32),
     /// Change filter cutoff frequency (normalized value).
     FilterCutoffFrequency(f32),
     /// Change filter resonance (normalized value).
@@ -132,6 +134,8 @@ pub enum EnvelopeIndex {
     Amp = 0,
     /// Filter modulation envelope (index 1).
     Filter = 1,
+    /// Pitch envelope (index 2)
+    Pitch = 2,
 }
 
 impl EnvelopeIndex {

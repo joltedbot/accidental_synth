@@ -131,6 +131,8 @@ pub struct OscillatorParameters {
     pub portamento_time: PortamentoBuffers,
     /// Clipper boost amount in dB for signal saturation.
     pub clipper_boost: AtomicU8,
+    /// Pitch Envelope Amount
+    pub pitch_envelope_amount: NormalizedValue,
 }
 
 impl OscillatorParameters {
@@ -175,6 +177,7 @@ impl Default for OscillatorParameters {
             portamento_enabled: AtomicBool::new(DEFAULT_PORTAMENTO_ENABLED),
             portamento_time: PortamentoBuffers::new(DEFAULT_PORTAMENTO_TIME_IN_BUFFERS),
             clipper_boost: AtomicU8::new(0),
+            pitch_envelope_amount: NormalizedValue::default(),
         }
     }
 }
@@ -247,6 +250,7 @@ pub struct Oscillator {
     wave_shape_index: u8,
     key_sync_enabled: bool,
     clipper_boost: u8,
+    pitch_envelope_amount: f32,
     tuning: Tuning,
     hard_sync: HardSync,
     portamento: Portamento,
@@ -268,6 +272,7 @@ impl Oscillator {
             tuning: Tuning::default(),
             hard_sync: HardSync::default(),
             portamento: Portamento::default(),
+            pitch_envelope_amount: 0.0,
             clipper_boost: 0,
             aftertouch: 0.0,
         }
@@ -289,17 +294,21 @@ impl Oscillator {
         );
         self.set_gate(&parameters.gate_flag);
         self.set_clipper_boost(parameters.clipper_boost.load(Relaxed));
+        self.set_pitch_envelope_amount(parameters.pitch_envelope_amount.load());
     }
 
     /// Generates the next audio sample with optional modulation input.
-    pub fn generate(&mut self, mut modulation: Option<f32>) -> f32 {
+    pub fn generate(&mut self, mut modulation: Option<f32>, pitch_envelope: Option<f32>) -> f32 {
         if modulation == Some(0.0) {
             modulation = None;
         }
 
+        let adjusted_frequency = (self.tuning.frequency
+            + (self.tuning.frequency * pitch_envelope.unwrap_or(0.0)))
+        .min(MAX_NOTE_FREQUENCY);
         let mut next_sample = self
             .wave_generator
-            .next_sample(self.tuning.frequency, modulation);
+            .next_sample(adjusted_frequency, modulation);
 
         next_sample = self.clip_signal(next_sample);
 
@@ -427,6 +436,11 @@ impl Oscillator {
         self.tuning.frequency = note_frequency;
     }
 
+    /// Return the current pitch envelope amount for this oscillatr
+    pub fn envelope_amount(&self) -> f32 {
+        self.pitch_envelope_amount
+    }
+
     fn run_portamento(&mut self, frequency: f32) -> f32 {
         if self.portamento.recalculate_increment {
             self.recalculate_portamento_increment(frequency);
@@ -507,6 +521,10 @@ impl Oscillator {
     fn set_clipper_boost(&mut self, clipper_boost: u8) {
         self.clipper_boost = clipper_boost;
     }
+
+    fn set_pitch_envelope_amount(&mut self, pitch_envelope_amount: f32) {
+        self.pitch_envelope_amount = pitch_envelope_amount;
+    }
 }
 
 fn get_wave_generator_from_wave_shape(
@@ -552,21 +570,27 @@ mod tests {
         let mut oscillator = Oscillator::new(sample_rate, wave_shape);
         oscillator.set_frequency(100.0);
 
-        let first_value = oscillator.generate(None);
+        let first_value = oscillator.generate(None, None);
         for _ in 0..5 {
-            assert!(!f32s_are_equal(oscillator.generate(None), first_value));
+            assert!(!f32s_are_equal(
+                oscillator.generate(None, None),
+                first_value
+            ));
         }
-        let first_sample = oscillator.generate(None);
+        let first_sample = oscillator.generate(None, None);
 
         oscillator.reset();
         oscillator.set_shape_parameter1(1.0);
         oscillator.set_shape_parameter2(2.0);
 
-        let first_value = oscillator.generate(None);
+        let first_value = oscillator.generate(None, None);
         for _ in 0..5 {
-            assert!(!f32s_are_equal(oscillator.generate(None), first_value));
+            assert!(!f32s_are_equal(
+                oscillator.generate(None, None),
+                first_value
+            ));
         }
-        let second_sample = oscillator.generate(None);
+        let second_sample = oscillator.generate(None, None);
 
         assert!(!f32s_are_equal(first_sample, second_sample));
     }
@@ -579,12 +603,15 @@ mod tests {
         let frequency = 100.0;
         oscillator.set_frequency(frequency);
 
-        let first_value = oscillator.generate(None);
+        let first_value = oscillator.generate(None, None);
         for _ in 0..5 {
-            assert!(!f32s_are_equal(oscillator.generate(None), first_value));
+            assert!(!f32s_are_equal(
+                oscillator.generate(None, None),
+                first_value
+            ));
         }
         oscillator.reset();
-        assert!(f32s_are_equal(oscillator.generate(None), first_value));
+        assert!(f32s_are_equal(oscillator.generate(None, None), first_value));
     }
 
     #[test]
@@ -664,7 +691,7 @@ mod tests {
 
         let negative_sample = -0.01;
         oscillator.hard_sync.last_sample = negative_sample;
-        let _ = oscillator.generate(None);
+        let _ = oscillator.generate(None, None);
 
         assert!(sync_buffer.load(Relaxed));
     }
@@ -679,25 +706,25 @@ mod tests {
 
         let expected_first_sample = 0.037_266_6;
 
-        let sample = oscillator.generate(None);
+        let sample = oscillator.generate(None, None);
         assert!(
             f32s_are_equal(sample, expected_first_sample),
             "Expected {expected_first_sample:?}, but got {sample:?}"
         );
 
         for _i in 0..3 {
-            let _ = oscillator.generate(None);
+            let _ = oscillator.generate(None, None);
         }
 
         sync_buffer.store(true, Release);
 
-        let not_yet_synced = oscillator.generate(None);
+        let not_yet_synced = oscillator.generate(None, None);
         assert!(
             !f32s_are_equal(not_yet_synced, expected_first_sample),
             "Expected {expected_first_sample:?}, but got {not_yet_synced:?}"
         );
 
-        let first_synced_sample = oscillator.generate(None);
+        let first_synced_sample = oscillator.generate(None, None);
         assert!(
             f32s_are_equal(first_synced_sample, expected_first_sample),
             "Expected {expected_first_sample:?}, but got {first_synced_sample:?}"

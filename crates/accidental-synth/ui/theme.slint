@@ -89,12 +89,14 @@ export global Theme {
     out property <string> tab-title-effects: "Effects";
 
     // Oscillators Panel
-    out property <length> oscillator-panel-height: 420px;
+    out property <length> oscillator-panel-height: 400px;
     out property <length> oscillator-panel-width: 600px;
     out property <length> oscillator-panel-padding: 0px;
     out property <length> oscillator-panel-spacing: 0px;
     out property <length> oscillator-panel-section-width: 285px;
     out property <length> oscillator-panel-widget-width: 230px;
+    out property <length> oscillator-panel-slider-width: 160px;
+    out property <length> oscillator-panel-widget-label-width: 60px;
 
     // Filter Panel
     out property <length> filter-panel-widget-width: 130px;
@@ -144,22 +146,24 @@ export global Theme {
     out property <string> osc-options-sustain: "Sustain";
     out property <string> amp-envelope-section-label: "Amp Envelope";
     out property <string> mod-wheel-section-label: "Mod Wheel";
+    out property <string> pitch-envelope-section-label: "Pitch Envelope";
 
     // Osciallator Controls Panel
-    out property <length> osc-controls-panel-padding: 8px;
-    out property <length> osc-controls-panel-spacing: 15px;
+    out property <length> osc-controls-panel-padding: 7px;
+    out property <length> osc-controls-panel-spacing: 8px;
     out property <[string]> osc-controls-panel-titles: ["Sub Oscillator", "Oscillator 1", "Oscillator 2", "Oscillator 3"];
     out property <string> osc-controls-wave-shape: "Wave Shape";
     out property <string> osc-controls-fine-tune: "Fine Tune";
     out property <string> osc-controls-course-tune: "Course Tune";
-    out property <string> osc-controls-clipper-boost: "Clipper Boost";
+    out property <string> osc-controls-clipper-boost: "Boost";
+    out property <string> osc-controls-pitch-eg: "Pitch Envelope Amount";
     out property <string> osc-controls-semitones: "semitones";
     out property <string> osc-controls-cents: "cents";
     out property <string> osc-controls-dbfs: "dbfs";
     out property <string> osc-controls-param1-pulse: "Pulse Width";
-    out property <string> osc-controls-param1-am: "Modulation Amount";
-    out property <string> osc-controls-param2-am: "Ring Mod =>  AM";
-    out property <string> osc-controls-param1-fm: "Modulation Amount";
+    out property <string> osc-controls-param1-am: "Amount";
+    out property <string> osc-controls-param2-am: "Ring Mod";
+    out property <string> osc-controls-param1-fm: "Amount";
     out property <string> osc-controls-param2-fm: "Ratio";
     out property <color> green-screen-text: #22AA55;
 

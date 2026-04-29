@@ -226,6 +226,10 @@ pub fn set_oscillator_clip_boost(parameters: &OscillatorParameters, normal_value
     parameters.clipper_boost.store(boost, Relaxed);
 }
 
+pub fn set_oscillator_pitch_envelope_amount(parameters: &OscillatorParameters, normal_value: f32) {
+    parameters.pitch_envelope_amount.store(normal_value);
+}
+
 pub fn set_portamento_enabled(parameters: &[OscillatorParameters; 4], normal_value: f32) {
     for parameters in parameters {
         parameters

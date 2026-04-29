@@ -110,3 +110,21 @@ pub fn callback_osc_parameter2_changed(
         });
     }
 }
+pub fn callback_pitch_envelope_amount_changed(
+    ui_weak: &Weak<AccidentalSynth>,
+    synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_pitch_envelope_amount_changed(move |oscillator_index, value| {
+            synthesizer_update_sender
+                .send(SynthesizerUpdateEvents::PitchEnvelopeAmount(
+                    oscillator_index,
+                    value,
+                ))
+                .expect(
+                    "callback_pitch_envelope_amount_changed(): Could not send new \
+            synthesizer oscillator parameter2 to the synthesizer module.Exiting.",
+                );
+        });
+    }
+}

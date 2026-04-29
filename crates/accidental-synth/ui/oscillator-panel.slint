@@ -4,12 +4,14 @@ import {
     PanelLabel,
     VerticalSpacer,
     HorizontalParameterSlider,
+    HorizontalParameterSliderNoLabel,
     CenteredParameterSlider,
     LabeledVerticalSlider,
     IntSpinBox,
     DropDownMenu,
     HorizontalSpacer,
     SectionLabel,
+    ComponentLabel,
 } from "components.slint";
 import {
     VerticalSlider,
@@ -25,6 +27,7 @@ export struct Oscillator {
     clipper-boost: float,
     parameter1: float,
     parameter2: float,
+    pitch-envelope-amount: float,
 }
 
 
@@ -40,6 +43,7 @@ export component OscControlsPanel inherits Panel {
     callback clipper-boost-changed(float);
     callback parameter1-changed(float);
     callback parameter2-changed(float);
+    callback pitch-envelope-amount-changed(float);
 
     function set_parameters_from_wave_shape(shape: string) {
         if (shape == "Pulse") {
@@ -126,10 +130,21 @@ export component OscControlsPanel inherits Panel {
 
             clip-boost := HorizontalParameterSlider {
                 label: Theme.osc-controls-clipper-boost;
+                show-value: false;
                 slider-width: Theme.oscillator-panel-widget-width;
                 value: oscillator.clipper-boost;
                 horizontal-parameter-slider-changed(boost) => {
                     clipper-boost-changed(boost);
+                }
+            }
+
+            pitch := HorizontalParameterSlider {
+                label: Theme.osc-controls-pitch-eg;
+                show-value: false;
+                slider-width: Theme.oscillator-panel-widget-width;
+                value: oscillator.pitch-envelope-amount;
+                horizontal-parameter-slider-changed(value) => {
+                    pitch-envelope-amount-changed(value);
                 }
             }
 
@@ -160,8 +175,11 @@ export component OscillatorsPanel inherits Panel {
     callback course-tune-changed(int, float);
     callback fine-tune-changed(int, float);
     callback clipper-boost-changed(int, float);
+    callback pitch-envelope-amount-changed(int, float);
     callback parameter1-changed(int, float);
     callback parameter2-changed(int, float);
+
+    height: Theme.oscillator-panel-height;
 
     HorizontalLayout {
         padding: Theme.oscillator-panel-padding;
@@ -184,6 +202,9 @@ export component OscillatorsPanel inherits Panel {
             }
             clipper-boost-changed(float) => {
                 clipper-boost-changed(Constant.OSCILLATOR_SUB_INDEX, float);
+            }
+            pitch-envelope-amount-changed(float) => {
+                pitch-envelope-amount-changed(Constant.OSCILLATOR_SUB_INDEX, float);
             }
             parameter1-changed(float) => {
                 parameter1-changed(Constant.OSCILLATOR_SUB_INDEX, float);
@@ -210,6 +231,9 @@ export component OscillatorsPanel inherits Panel {
             clipper-boost-changed(float) => {
                 clipper-boost-changed(Constant.OSCILLATOR_ONE_INDEX, float);
             }
+            pitch-envelope-amount-changed(float) => {
+                pitch-envelope-amount-changed(Constant.OSCILLATOR_ONE_INDEX, float);
+            }
             parameter1-changed(float) => {
                 parameter1-changed(Constant.OSCILLATOR_ONE_INDEX, float);
             }
@@ -235,6 +259,9 @@ export component OscillatorsPanel inherits Panel {
             clipper-boost-changed(float) => {
                 clipper-boost-changed(Constant.OSCILLATOR_TWO_INDEX, float);
             }
+            pitch-envelope-amount-changed(float) => {
+                pitch-envelope-amount-changed(Constant.OSCILLATOR_TWO_INDEX, float);
+            }
             parameter1-changed(float) => {
                 parameter1-changed(Constant.OSCILLATOR_TWO_INDEX, float);
             }
@@ -259,6 +286,9 @@ export component OscillatorsPanel inherits Panel {
             }
             clipper-boost-changed(float) => {
                 clipper-boost-changed(Constant.OSCILLATOR_THREE_INDEX, float);
+            }
+            pitch-envelope-amount-changed(float) => {
+                pitch-envelope-amount-changed(Constant.OSCILLATOR_THREE_INDEX, float);
             }
             parameter1-changed(float) => {
                 parameter1-changed(Constant.OSCILLATOR_THREE_INDEX, float);

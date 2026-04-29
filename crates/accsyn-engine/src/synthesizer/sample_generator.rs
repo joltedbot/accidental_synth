@@ -23,6 +23,7 @@ use std::time::Duration;
 struct Modules {
     amp_envelope: Envelope,
     filter_envelope: Envelope,
+    pitch_envelope: Envelope,
     filter_lfo: Lfo,
     filter: Filter,
     mod_wheel_lfo: Lfo,
@@ -103,6 +104,9 @@ pub fn sample_generator(
                 .filter_envelope
                 .set_parameters(&module_parameters.envelopes[EnvelopeIndex::Filter as usize]);
             modules
+                .pitch_envelope
+                .set_parameters(&module_parameters.envelopes[EnvelopeIndex::Pitch as usize]);
+            modules
                 .filter_lfo
                 .set_parameters(&module_parameters.lfos[LFOIndex::Filter as usize]);
             modules.filter.set_parameters(&module_parameters.filter);
@@ -140,10 +144,22 @@ pub fn sample_generator(
                 modules.amp_envelope.check_gate(
                     &module_parameters.envelopes[EnvelopeIndex::Amp as usize].gate_flag,
                 );
+                modules.pitch_envelope.check_gate(
+                    &module_parameters.envelopes[EnvelopeIndex::Pitch as usize].gate_flag,
+                );
+
+                let pitch_envelope_value = modules.pitch_envelope.generate();
+
                 let vibrato_value = modules.mod_wheel_lfo.generate(None);
 
                 for (index, input) in quad_mixer_inputs.iter_mut().enumerate() {
-                    input.sample = modules.oscillators[index].generate(Some(vibrato_value));
+                    let pitch_envelope_amount = module_parameters.oscillators[index]
+                        .pitch_envelope_amount
+                        .load();
+                    input.sample = modules.oscillators[index].generate(
+                        Some(vibrato_value),
+                        Some(pitch_envelope_value * pitch_envelope_amount),
+                    );
                 }
 
                 // Any per-oscillator processing should happen before this stereo mix down
@@ -240,6 +256,7 @@ fn initialize_synth_modules(sample_rate: u32) -> Modules {
     let mut modules = Modules {
         amp_envelope: Envelope::new(sample_rate),
         filter_envelope: Envelope::new(sample_rate),
+        pitch_envelope: Envelope::new(sample_rate),
         filter_lfo: Lfo::new(sample_rate),
         filter: Filter::new(sample_rate),
         mod_wheel_lfo: Lfo::new(sample_rate),

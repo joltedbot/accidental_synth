@@ -64,6 +64,7 @@ export component AccidentalSynth inherits Window {
     callback osc-clipper-boost-changed(int, float);
     callback osc-parameter1-changed(int, float);
     callback osc-parameter2-changed(int, float);
+    callback pitch-envelope-amount-changed(int, float);
 
     // Filter Panel Properties & Callbacks
     in property <FilterCutoff> filter-cutoff-values;
@@ -94,6 +95,7 @@ export component AccidentalSynth inherits Window {
     in property <[Mixer]> oscillator-mixer-values;
 
     in property <EnvelopeValues> amp-envelope-values;
+    in property <EnvelopeValues> pitch-envelope-values;
     in property <LFOValues> mod-wheel-lfo-values;
     in property <float> mod-wheel-lfo-frequency-display;
     in property <int> mod-wheel-lfo-phase-display;
@@ -207,6 +209,9 @@ export component AccidentalSynth inherits Window {
                                 clipper-boost-changed(oscillator, boost) => {
                                     osc-clipper-boost-changed(oscillator, boost);
                                 }
+                                pitch-envelope-amount-changed(oscillator, amount) => {
+                                   pitch-envelope-amount-changed(oscillator, amount);
+                                }
                                 parameter1-changed(oscillator, value) => {
                                     osc-parameter1-changed(oscillator, value);
                                 }
@@ -219,6 +224,7 @@ export component AccidentalSynth inherits Window {
                                 output-mixer-values: output-mixer-values;
                                 oscillator-mixer-values: oscillator-mixer-values;
                                 amp-envelope-values: amp-envelope-values;
+                                pitch-envelope-values: pitch-envelope-values;
                                 mod-wheel-lfo-values: mod-wheel-lfo-values;
                                 mod-wheel-lfo-frequency-display: mod-wheel-lfo-frequency-display;
                                 mod-wheel-lfo-phase-display: mod-wheel-lfo-phase-display;
