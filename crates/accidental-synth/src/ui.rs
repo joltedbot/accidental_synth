@@ -150,7 +150,7 @@ pub(super) fn push_values_to_ui(
     let ui_default_values = values.clone();
 
     ui_weak.upgrade_in_event_loop(move |ui| {
-        ui.set_version(SharedString::from(env!("CARGO_PKG_VERSION")));
+        ui.set_version(version());
         if let Some(patch_index) = ui_default_values.selected_patch_index {
             ui.set_selected_patch_index(patch_index);
         }
@@ -450,6 +450,13 @@ fn vec_to_model_rc_shared_string(input_values: &[String]) -> ModelRc<SharedStrin
 
 fn vec_to_model_rc_int(input_values: &Vec<i32>) -> ModelRc<i32> {
     ModelRc::new(VecModel::from(input_values.to_owned()))
+}
+
+fn version() -> SharedString {
+    const BUILD_DATE: &str = env!("VERGEN_BUILD_DATE");
+    const BUILD_NUMBER: &str = env!("BUILD_NUMBER");
+    let date = BUILD_DATE.replace('-', ".");
+    SharedString::from(format!("{date}.{BUILD_NUMBER}"))
 }
 
 #[cfg(test)]
