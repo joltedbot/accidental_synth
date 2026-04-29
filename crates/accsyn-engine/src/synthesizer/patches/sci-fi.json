@@ -111,6 +111,16 @@
       "release_ms": 400,
       "sustain_level": 0.3,
       "sustain_pedal": false
+    },
+    {
+      "amount": 1,
+      "attack_ms": 1,
+      "decay_ms": 200,
+      "gate_flag": 0,
+      "is_inverted": false,
+      "release_ms": 10,
+      "sustain_level": 0,
+      "sustain_pedal": false
     }
   ],
   "filter": {
