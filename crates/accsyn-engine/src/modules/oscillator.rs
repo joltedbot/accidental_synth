@@ -437,6 +437,7 @@ impl Oscillator {
     }
 
     /// Return the current pitch envelope amount for this oscillatr
+    #[must_use]
     pub fn envelope_amount(&self) -> f32 {
         self.pitch_envelope_amount
     }
