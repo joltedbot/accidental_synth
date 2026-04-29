@@ -35,8 +35,8 @@
 | Device Inquiry | No | No                |                                                                                                                                 |
 | File Dump | No | No                |                                                                                                                                 |
 | MIDI Tuning | No | No                |                                                                                                                                 |
-| Master Volume | No | No                |                                                                                                                                 |
-| Master Balance | No | No                |                                                                                                                                 |
+| Master Volume | No | Yes               |                                                                                                                                 |
+| Master Balance | No | Yes                |                                                                                                                                 |
 | Notation Information | No | No                |                                                                                                                                 |
 | Turn GM1 System On | No | No                |                                                                                                                                 |
 | Turn GM2 System On | No | No                |                                                                                                                                 |
