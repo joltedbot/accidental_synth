@@ -734,16 +734,17 @@ export component FixedCenterLFOSection inherits VerticalLayout {
     callback lfo-phase-changed(float);
     callback lfo-phase-reset();
 
+    width: Theme.lfo-widget-width;
     alignment: start;
-    spacing: 5px;
+    padding: Theme.lfo-widget-padding;
+    spacing: Theme.lfo-widget-spacing;
 
     VerticalLayout {
         alignment: start;
 
         HorizontalLayout {
-            padding: Theme.osc-controls-panel-padding;
-            spacing: Theme.osc-controls-panel-spacing;
-            alignment: start;
+
+            alignment: space-evenly;
 
             frequency := HorizontalParameterSlider {
                 label: Theme.lfo-label-frequency;

@@ -4,8 +4,8 @@ import { Palette, StyleMetrics } from "std-widgets.slint";
 
 export component SliderHandle inherits Rectangle {
     in property <Orientation> orientation: vertical;
-    property <length> handle_height: orientation == Orientation.vertical ? 10px : 20px;
-    property <length> handle_width: orientation == Orientation.vertical ? 20px : 10px;
+    property <length> handle_height: orientation == Orientation.vertical ? Theme.handle-short-dimension : Theme.handle-long-dimension;
+    property <length> handle_width: orientation == Orientation.vertical ? Theme.handle-long-dimension : Theme.handle-short-dimension;
     property <length> handle_border_width: 3px;
     property <length> handle_radius: 7px;
 

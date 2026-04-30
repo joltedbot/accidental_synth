@@ -412,9 +412,11 @@ export component ModWheelSection inherits VerticalLayout {
     padding: Theme.global-panel-padding;
     spacing: Theme.global-panel-spacing;
 
-    PanelLabel {
-        label: Theme.mod-wheel-section-label;
-    }
+        HorizontalLayout {
+            SectionLabel {
+                label: Theme.mod-wheel-section-label;
+            }
+        }
 
     HorizontalLayout {
         alignment: start;
@@ -555,19 +557,20 @@ export component GlobalPanel inherits Panel {
                 VerticalLayout {
                     padding: Theme.global-panel-padding;
                     spacing: Theme.global-panel-spacing;
-                    hard_sync := ToggleSwitch {
-                        label: Theme.osc-options-hard-sync;
-                        is_checked: global-options-values.hard-sync-is-enabled;
-                        toggle_switch_updated(is_enabled) => {
-                            hard-sync-enabled(is_enabled);
-                        }
-                    }
 
                     key_sync := ToggleSwitch {
                         label: Theme.osc-options-key-sync;
                         is_checked: global-options-values.key-sync-is-enabled;
                         toggle_switch_updated(is_enabled) => {
                             key-sync-enabled(is_enabled);
+                        }
+                    }
+
+                    hard_sync := ToggleSwitch {
+                        label: Theme.osc-options-hard-sync;
+                        is_checked: global-options-values.hard-sync-is-enabled;
+                        toggle_switch_updated(is_enabled) => {
+                            hard-sync-enabled(is_enabled);
                         }
                     }
 
@@ -581,6 +584,7 @@ export component GlobalPanel inherits Panel {
                 }
 
                 VerticalSpacer { }
+                
             }
 
             HorizontalSpacer { }
@@ -634,6 +638,8 @@ export component GlobalPanel inherits Panel {
                         lfo-phase-reset(lfo_index);
                     }
                 }
+
+                 VerticalSpacer { }
             }
         }
     }
