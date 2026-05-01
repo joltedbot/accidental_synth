@@ -1,18 +1,7 @@
 use crate::modules::lfo::DEFAULT_LFO_PHASE;
 use crate::modules::oscillator::OscillatorParameters;
 use crate::synthesizer::midi_value_converters::scaled_velocity_from_normal_value;
-use crate::synthesizer::set_parameters::{
-    set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted,
-    set_envelope_release_time, set_envelope_sustain_level, set_envelope_sustain_pedal,
-    set_filter_cutoff, set_filter_poles, set_filter_resonance, set_key_tracking_amount,
-    set_lfo_center_value, set_lfo_frequency, set_lfo_phase, set_lfo_phase_reset, set_lfo_range,
-    set_lfo_wave_shape, set_mod_wheel, set_oscillator_balance, set_oscillator_clip_boost,
-    set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_hard_sync,
-    set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute,
-    set_oscillator_shape_parameter1, set_oscillator_shape_parameter2, set_oscillator_wave_shape,
-    set_output_balance, set_output_level, set_output_mute, set_pitch_bend_range,
-    set_portamento_enabled, set_portamento_time, set_velocity_curve,
-};
+use crate::synthesizer::set_parameters::{set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted, set_envelope_release_time, set_envelope_sustain_level, set_envelope_sustain_pedal, set_filter_cutoff, set_filter_poles, set_filter_resonance, set_key_tracking_amount, set_lfo_center_value, set_lfo_frequency, set_lfo_phase, set_lfo_phase_reset, set_lfo_range, set_lfo_wave_shape, set_mod_wheel, set_oscillator_balance, set_oscillator_clip_boost, set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_hard_sync, set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute, set_oscillator_pitch_envelope_amount, set_oscillator_shape_parameter1, set_oscillator_shape_parameter2, set_oscillator_wave_shape, set_output_balance, set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled, set_portamento_time, set_velocity_curve};
 use crate::synthesizer::{
     CurrentNote, KeyboardParameters, MidiGateEvent, MidiNoteEvent, ModuleParameters,
     midi_value_converters,
@@ -187,105 +176,115 @@ pub fn process_midi_cc_values(
         CC::SubOscillatorShapeParameter1(value) => {
             let parameter1_value = normalize_midi_value(value);
             let oscillator_index = OscillatorIndex::Sub;
-            set_oscillator_shape_parameter1(
-                &module_parameters.oscillators[oscillator_index as usize],
-                parameter1_value,
-            );
-
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorParameter1(oscillator_index as i32, parameter1_value),
-            );
+            update_oscillator_parameter_1(&module_parameters, ui_update_sender, parameter1_value, oscillator_index);
         }
         CC::SubOscillatorShapeParameter2(value) => {
             let parameter2_value = normalize_midi_value(value);
             let oscillator_index = OscillatorIndex::Sub;
-            set_oscillator_shape_parameter2(
-                &module_parameters.oscillators[oscillator_index as usize],
-                parameter2_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorParameter2(oscillator_index as i32, parameter2_value),
-            );
+            update_oscillator_parameter_2(&module_parameters, ui_update_sender, parameter2_value, oscillator_index);
         }
         CC::Oscillator1ShapeParameter1(value) => {
             let parameter1_value = normalize_midi_value(value);
             let oscillator_index = OscillatorIndex::One;
-            set_oscillator_shape_parameter1(
-                &module_parameters.oscillators[oscillator_index as usize],
-                parameter1_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorParameter1(oscillator_index as i32, parameter1_value),
-            );
+            update_oscillator_parameter_1(&module_parameters, ui_update_sender, parameter1_value, oscillator_index);
         }
         CC::Oscillator1ShapeParameter2(value) => {
             let parameter2_value = normalize_midi_value(value);
             let oscillator_index = OscillatorIndex::One;
-            set_oscillator_shape_parameter2(
-                &module_parameters.oscillators[oscillator_index as usize],
-                parameter2_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorParameter2(oscillator_index as i32, parameter2_value),
-            );
+            update_oscillator_parameter_2(&module_parameters, ui_update_sender, parameter2_value, oscillator_index);
         }
         CC::Oscillator2ShapeParameter1(value) => {
             let parameter1_value = normalize_midi_value(value);
             let oscillator_index = OscillatorIndex::Two;
-            set_oscillator_shape_parameter1(
-                &module_parameters.oscillators[oscillator_index as usize],
-                parameter1_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorParameter1(oscillator_index as i32, parameter1_value),
-            );
+            update_oscillator_parameter_1(&module_parameters, ui_update_sender, parameter1_value, oscillator_index);
         }
         CC::Oscillator2ShapeParameter2(value) => {
             let parameter2_value = normalize_midi_value(value);
             let oscillator_index = OscillatorIndex::Two;
-            set_oscillator_shape_parameter2(
-                &module_parameters.oscillators[oscillator_index as usize],
-                parameter2_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorParameter2(oscillator_index as i32, parameter2_value),
-            );
+            update_oscillator_parameter_2(&module_parameters, ui_update_sender, parameter2_value, oscillator_index);
         }
         CC::Oscillator3ShapeParameter1(value) => {
             let parameter1_value = normalize_midi_value(value);
             let oscillator_index = OscillatorIndex::Three;
-            set_oscillator_shape_parameter1(
-                &module_parameters.oscillators[oscillator_index as usize],
-                parameter1_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorParameter1(oscillator_index as i32, parameter1_value),
-            );
+            update_oscillator_parameter_1(&module_parameters, ui_update_sender, parameter1_value, oscillator_index);
         }
         CC::Oscillator3ShapeParameter2(value) => {
             let parameter2_value = normalize_midi_value(value);
             let oscillator_index = OscillatorIndex::Three;
-            set_oscillator_shape_parameter2(
-                &module_parameters.oscillators[oscillator_index as usize],
-                parameter2_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorParameter2(oscillator_index as i32, parameter2_value),
-            );
+            update_oscillator_parameter_2(&module_parameters, ui_update_sender, parameter2_value, oscillator_index);
         }
         CC::OscillatorKeySyncEnabled(value) => {
             let normal_value = normalize_midi_value(value);
             set_oscillator_key_sync(&module_parameters.oscillators, normal_value);
-
             send_ui_update(ui_update_sender, UIUpdates::KeySync(normal_value));
+        }
+        CC::SubOscillatorPitchEnvelopeAmount(value) => {
+            let pitch_envelope_amount_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::Sub;
+            update_oscillator_pitch_amount(&module_parameters, ui_update_sender, pitch_envelope_amount_value, oscillator_index);
+        }
+        CC::Oscillator1PitchEnvelopeAmount(value) => {
+            let pitch_envelope_amount_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::One;
+            update_oscillator_pitch_amount(&module_parameters, ui_update_sender, pitch_envelope_amount_value, oscillator_index);
+        }
+        CC::Oscillator2PitchEnvelopeAmount(value) => {
+            let pitch_envelope_amount_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::Two;
+            update_oscillator_pitch_amount(&module_parameters, ui_update_sender, pitch_envelope_amount_value, oscillator_index);      
+        }
+        CC::Oscillator3PitchEnvelopeAmount(value) => {
+            let pitch_envelope_amount_value = normalize_midi_value(value);
+            let oscillator_index = OscillatorIndex::Three;
+            update_oscillator_pitch_amount(&module_parameters, ui_update_sender, pitch_envelope_amount_value, oscillator_index);
+        }
+        CC::PitchEnvelopeAttackTime(value) => {
+            let normal_value = normalize_midi_value(value);
+            set_envelope_attack_time(
+                &module_parameters.envelopes[EnvelopeIndex::Pitch as usize],
+                normal_value,
+            );
+            send_ui_update(
+                ui_update_sender,
+                UIUpdates::EnvelopeAttackTime(EnvelopeIndex::Pitch as i32, normal_value),
+            );
+        }
+        CC::PitchEnvelopeDecayTime(value) => {
+            let normal_value = normalize_midi_value(value);
+            set_envelope_decay_time(
+                &module_parameters.envelopes[EnvelopeIndex::Pitch as usize],
+                normal_value,
+            );
+            send_ui_update(
+                ui_update_sender,
+                UIUpdates::EnvelopeDecayTime(EnvelopeIndex::Pitch as i32, normal_value),
+            );
+        }
+        CC::PitchEnvelopeSustainLevel(value) => {
+            let normal_value = normalize_midi_value(value);
+            set_envelope_sustain_level(
+                &module_parameters.envelopes[EnvelopeIndex::Pitch as usize],
+                normal_value,
+            );
+            send_ui_update(
+                ui_update_sender,
+                UIUpdates::EnvelopeSustainLevel(EnvelopeIndex::Pitch as i32, normal_value),
+            );
+        }
+        CC::PitchEnvelopeReleaseTime(value) => {
+            let normal_value = normalize_midi_value(value);
+            set_envelope_release_time(
+                &module_parameters.envelopes[EnvelopeIndex::Pitch as usize],
+                normal_value,
+            );
+            send_ui_update(
+                ui_update_sender,
+                UIUpdates::EnvelopeReleaseTime(EnvelopeIndex::Pitch as i32, normal_value),
+            );
+        }
+        CC::PitchEnvelopeInverted(value) => {
+            let normal_value = normalize_midi_value(value);
+            update_envelope_inverted(&module_parameters, ui_update_sender,EnvelopeIndex::Pitch, normal_value);
         }
         CC::PortamentoTime(value) => {
             let normal_value = normalize_midi_value(value);
@@ -302,164 +301,58 @@ pub fn process_midi_cc_values(
         CC::SubOscillatorShape(value) => {
             let normal_value = normalize_midi_value(value);
             let oscillator_index = OscillatorIndex::Sub;
-            let shape_index = set_oscillator_wave_shape(
-                &module_parameters.oscillators[OscillatorIndex::Sub as usize],
-                normal_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)),
-            );
+            update_oscillator_shape(&module_parameters, ui_update_sender, normal_value, oscillator_index);
         }
         CC::Oscillator1Shape(value) => {
             let normal_value = normalize_midi_value(value);
             let oscillator_index = OscillatorIndex::One;
-            let shape_index = set_oscillator_wave_shape(
-                &module_parameters.oscillators[oscillator_index as usize],
-                normal_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)),
-            );
+            update_oscillator_shape(&module_parameters, ui_update_sender, normal_value, oscillator_index);
         }
         CC::Oscillator2Shape(value) => {
             let normal_value = normalize_midi_value(value);
             let oscillator_index = OscillatorIndex::Two;
-            let shape_index = set_oscillator_wave_shape(
-                &module_parameters.oscillators[oscillator_index as usize],
-                normal_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)),
-            );
+            update_oscillator_shape(&module_parameters, ui_update_sender, normal_value, oscillator_index);
         }
         CC::Oscillator3Shape(value) => {
             let normal_value = normalize_midi_value(value);
             let oscillator_index = OscillatorIndex::Three;
-            let shape_index = set_oscillator_wave_shape(
-                &module_parameters.oscillators[oscillator_index as usize],
-                normal_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)),
-            );
+            update_oscillator_shape(&module_parameters, ui_update_sender, normal_value, oscillator_index);
         }
         CC::SubOscillatorCourseTune(value) => {
             let oscillator_index = OscillatorIndex::Sub;
-            let course_tune = set_oscillator_course_tune(
-                &module_parameters.oscillators[oscillator_index as usize],
-                normalize_midi_value(value),
-            );
-
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorCourseTune(oscillator_index as i32, i32::from(course_tune)),
-            );
+            update_oscillator_course_tune(&module_parameters, ui_update_sender, value, oscillator_index);
         }
         CC::Oscillator1CourseTune(value) => {
             let oscillator_index = OscillatorIndex::One;
-            let course_tune = set_oscillator_course_tune(
-                &module_parameters.oscillators[oscillator_index as usize],
-                normalize_midi_value(value),
-            );
-
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorCourseTune(oscillator_index as i32, i32::from(course_tune)),
-            );
+            update_oscillator_course_tune(&module_parameters, ui_update_sender, value, oscillator_index);
         }
         CC::Oscillator2CourseTune(value) => {
             let oscillator_index = OscillatorIndex::Two;
-            let course_tune = set_oscillator_course_tune(
-                &module_parameters.oscillators[oscillator_index as usize],
-                normalize_midi_value(value),
-            );
-
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorCourseTune(oscillator_index as i32, i32::from(course_tune)),
-            );
+            update_oscillator_course_tune(&module_parameters, ui_update_sender, value, oscillator_index);
         }
         CC::Oscillator3CourseTune(value) => {
             let oscillator_index = OscillatorIndex::Three;
-            let course_tune = set_oscillator_course_tune(
-                &module_parameters.oscillators[oscillator_index as usize],
-                normalize_midi_value(value),
-            );
-
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorCourseTune(oscillator_index as i32, i32::from(course_tune)),
-            );
+            update_oscillator_course_tune(&module_parameters, ui_update_sender, value, oscillator_index);
         }
         CC::SubOscillatorFineTune(value) => {
-            let oscillator_index = OscillatorIndex::Sub;
             let fine_tune_normal_value = normalize_midi_value(value);
-            let cents = set_oscillator_fine_tune(
-                &module_parameters.oscillators[oscillator_index as usize],
-                fine_tune_normal_value,
-            );
-
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorFineTune(
-                    oscillator_index as i32,
-                    fine_tune_normal_value,
-                    i32::from(cents),
-                ),
-            );
+            let oscillator_index = OscillatorIndex::Sub;
+            update_oscillator_fine_tune(&module_parameters, ui_update_sender, oscillator_index, fine_tune_normal_value);
         }
         CC::Oscillator1FineTune(value) => {
-            let oscillator_index = OscillatorIndex::One;
             let fine_tune_normal_value = normalize_midi_value(value);
-            let cents = set_oscillator_fine_tune(
-                &module_parameters.oscillators[oscillator_index as usize],
-                fine_tune_normal_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorFineTune(
-                    oscillator_index as i32,
-                    fine_tune_normal_value,
-                    i32::from(cents),
-                ),
-            );
+            let oscillator_index = OscillatorIndex::One;
+            update_oscillator_fine_tune(&module_parameters, ui_update_sender, oscillator_index, fine_tune_normal_value);
         }
         CC::Oscillator2FineTune(value) => {
-            let oscillator_index = OscillatorIndex::Two;
             let fine_tune_normal_value = normalize_midi_value(value);
-            let cents = set_oscillator_fine_tune(
-                &module_parameters.oscillators[oscillator_index as usize],
-                fine_tune_normal_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorFineTune(
-                    oscillator_index as i32,
-                    fine_tune_normal_value,
-                    i32::from(cents),
-                ),
-            );
+            let oscillator_index = OscillatorIndex::Two;
+            update_oscillator_fine_tune(&module_parameters, ui_update_sender, oscillator_index, fine_tune_normal_value);
         }
         CC::Oscillator3FineTune(value) => {
-            let oscillator_index = OscillatorIndex::Three;
             let fine_tune_normal_value = normalize_midi_value(value);
-            let cents = set_oscillator_fine_tune(
-                &module_parameters.oscillators[oscillator_index as usize],
-                fine_tune_normal_value,
-            );
-
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::OscillatorFineTune(
-                    oscillator_index as i32,
-                    fine_tune_normal_value,
-                    i32::from(cents),
-                ),
-            );
+            let oscillator_index = OscillatorIndex::Three;
+            update_oscillator_fine_tune(&module_parameters, ui_update_sender, oscillator_index, fine_tune_normal_value);
         }
         CC::SubOscillatorLevel(value) => {
             let normal_value = normalize_midi_value(value);
@@ -686,15 +579,7 @@ pub fn process_midi_cc_values(
         }
         CC::AmpEGInverted(value) => {
             let normal_value = normalize_midi_value(value);
-            set_envelope_inverted(
-                &module_parameters.envelopes[EnvelopeIndex::Amp as usize],
-                normal_value,
-            );
-
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::EnvelopeInverted(EnvelopeIndex::Amp as i32, normal_value),
-            );
+            update_envelope_inverted(&module_parameters, ui_update_sender, EnvelopeIndex::Amp, normal_value);
         }
         CC::FilterEnvelopeAttackTime(value) => {
             let normal_value = normalize_midi_value(value);
@@ -742,14 +627,7 @@ pub fn process_midi_cc_values(
         }
         CC::FilterEnvelopeInverted(value) => {
             let normal_value = normalize_midi_value(value);
-            set_envelope_inverted(
-                &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
-                normal_value,
-            );
-            send_ui_update(
-                ui_update_sender,
-                UIUpdates::EnvelopeInverted(EnvelopeIndex::Filter as i32, normal_value),
-            );
+            update_envelope_inverted(&module_parameters, ui_update_sender, EnvelopeIndex::Filter, normal_value);
         }
         CC::FilterEnvelopeAmount(value) => {
             let normal_value = normalize_midi_value(value);
@@ -880,6 +758,103 @@ pub fn process_midi_cc_values(
             process_midi_note_off_message(module_parameters);
         }
     }
+}
+
+fn update_envelope_inverted(module_parameters: &&mut Arc<ModuleParameters>, ui_update_sender: &Sender<UIUpdates>,
+                            envelope_index: EnvelopeIndex,  normal_value: f32) {
+    set_envelope_inverted(
+        &module_parameters.envelopes[envelope_index as usize],
+        normal_value,
+    );
+
+    send_ui_update(
+        ui_update_sender,
+        UIUpdates::EnvelopeInverted(envelope_index as i32, normal_value),
+    );
+}
+
+fn update_oscillator_fine_tune(module_parameters: &&mut Arc<ModuleParameters>, ui_update_sender: &Sender<UIUpdates>, oscillator_index: OscillatorIndex, fine_tune_normal_value: f32) {
+    let cents = set_oscillator_fine_tune(
+        &module_parameters.oscillators[oscillator_index as usize],
+        fine_tune_normal_value,
+    );
+
+    send_ui_update(
+        ui_update_sender,
+        UIUpdates::OscillatorFineTune(
+            oscillator_index as i32,
+            fine_tune_normal_value,
+            i32::from(cents),
+        ),
+    );
+}
+
+fn update_oscillator_course_tune(module_parameters: &&mut Arc<ModuleParameters>, ui_update_sender: &Sender<UIUpdates>, value: u8, oscillator_index: OscillatorIndex) {
+    let course_tune = set_oscillator_course_tune(
+        &module_parameters.oscillators[oscillator_index as usize],
+        normalize_midi_value(value),
+    );
+
+    send_ui_update(
+        ui_update_sender,
+        UIUpdates::OscillatorCourseTune(oscillator_index as i32, i32::from(course_tune)),
+    );
+}
+
+fn update_oscillator_wave_shape(module_parameters: &&mut Arc<ModuleParameters>, ui_update_sender: &Sender<UIUpdates>, normal_value: f32, oscillator_index: OscillatorIndex) {
+    let shape_index = set_oscillator_wave_shape(
+        &module_parameters.oscillators[OscillatorIndex::Sub as usize],
+        normal_value,
+    );
+    send_ui_update(
+        ui_update_sender,
+        UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)),
+    );
+}
+
+fn update_oscillator_shape(module_parameters: &&mut Arc<ModuleParameters>, ui_update_sender: &Sender<UIUpdates>, normal_value: f32, oscillator_index: OscillatorIndex) {
+    let shape_index = set_oscillator_wave_shape(
+        &module_parameters.oscillators[oscillator_index as usize],
+        normal_value,
+    );
+    send_ui_update(
+        ui_update_sender,
+        UIUpdates::OscillatorWaveShape(oscillator_index as i32, i32::from(shape_index)),
+    );
+}
+
+fn update_oscillator_parameter_2(module_parameters: &&mut Arc<ModuleParameters>, ui_update_sender: &Sender<UIUpdates>, parameter2_value: f32, oscillator_index: OscillatorIndex) {
+    set_oscillator_shape_parameter2(
+        &module_parameters.oscillators[oscillator_index as usize],
+        parameter2_value,
+    );
+    send_ui_update(
+        ui_update_sender,
+        UIUpdates::OscillatorParameter2(oscillator_index as i32, parameter2_value),
+    );
+}
+
+fn update_oscillator_parameter_1(module_parameters: &&mut Arc<ModuleParameters>, ui_update_sender: &Sender<UIUpdates>, parameter1_value: f32, oscillator_index: OscillatorIndex) {
+    set_oscillator_shape_parameter1(
+        &module_parameters.oscillators[oscillator_index as usize],
+        parameter1_value,
+    );
+
+    send_ui_update(
+        ui_update_sender,
+        UIUpdates::OscillatorParameter1(oscillator_index as i32, parameter1_value),
+    );
+}
+
+fn update_oscillator_pitch_amount(module_parameters: &&mut Arc<ModuleParameters>, ui_update_sender: &Sender<UIUpdates>, pitch_envelope_amount_value: f32, oscillator_index: OscillatorIndex) {
+    set_oscillator_pitch_envelope_amount(
+        &module_parameters.oscillators[oscillator_index as usize],
+        pitch_envelope_amount_value,
+    );
+    send_ui_update(
+        ui_update_sender,
+        UIUpdates::OscillatorPitchEnvelopeAmount(oscillator_index as i32, pitch_envelope_amount_value),
+    );
 }
 
 #[cfg(test)]

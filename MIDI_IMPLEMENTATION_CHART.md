@@ -79,136 +79,136 @@
 
 ## Control Number Information
 
-| Control # | Function | Transmitted (Y/N) | Recognized (Y/N) | Remarks |
-|-----------|----------|-------------------|------------------|---------|
-| 0 | Bank Select (MSB) | N | N | |
-| 1 | Modulation Wheel (MSB) | N | Y | Controls LFO depth |
-| 2 | Breath Controller (MSB) | N | N | |
-| 3 | Velocity Curve | N | Y |  |
-| 4 | Foot Controller (MSB) | N | N | |
-| 5 | Pitch Bend Range | N | Y |  |
-| 6 | Data Entry (MSB) | N | N | |
-| 7 | Master Volume | N | Y | Channel Volume (MSB) |
-| 8 | Mute | N | Y |  |
-| 9 | | N | N | |
-| 10 | Stereo Balance | N | Y | Pan (MSB) |
-| 11 | Expression (MSB) | N | N | |
-| 12 | Sub Oscillator Shape Parameter 1 | N | Y |  |
-| 13 | Sub Oscillator Shape Parameter 2 | N | Y |  |
-| 14 | Oscillator 1 Shape Parameter 1 | N | Y |  |
-| 15 | Oscillator 1 Shape Parameter 2 | N | Y |  |
-| 16 | Oscillator 2 Shape Parameter 1 | N | Y |  |
-| 17 | Oscillator 2 Shape Parameter 2 | N | Y |  |
-| 18 | Oscillator 3 Shape Parameter 1 | N | Y |  |
-| 19 | Oscillator 3 Shape Parameter 2 | N | Y |  |
-| 20 | Oscillator Key Sync Enabled | N | Y |  |
-| 21 | | N | N | |
-| 22 | | N | N | |
-| 23 | | N | N | |
-| 24 | | N | N | |
-| 25 | | N | N | |
-| 26 | | N | N | |
-| 27 | | N | N | |
-| 28 | | N | N | |
-| 29 | | N | N | |
-| 30 | | N | N | |
-| 31 | | N | N | |
-| 32 | Bank Select (LSB) | N | N | |
-| 33 | Modulation Wheel (LSB) | N | N | |
-| 34 | Breath Controller (LSB) | N | N | |
-| 35 | | N | N | |
-| 36 | Foot Controller (LSB) | N | N | |
-| 37 | Portamento Time | N | Y | |
-| 38 | Oscillator Hard Sync | N | Y |  |
-| 39 | Channel Volume (LSB) | N | N | |
-| 40 | Sub Oscillator Shape | N | Y |  |
-| 41 | Oscillator 1 Shape | N | Y |  |
-| 42 | Oscillator 2 Shape | N | Y |  |
-| 43 | Oscillator 3 Shape | N | Y |  |
-| 44 | Sub Oscillator Coarse Tune | N | Y |  |
-| 45 | Oscillator 1 Coarse Tune | N | Y |  |
-| 46 | Oscillator 2 Coarse Tune | N | Y |  |
-| 47 | Oscillator 3 Coarse Tune | N | Y |  |
-| 48 | Sub Oscillator Fine Tune | N | Y |  |
-| 49 | Oscillator 1 Fine Tune | N | Y |  |
-| 50 | Oscillator 2 Fine Tune | N | Y |  |
-| 51 | Oscillator 3 Fine Tune | N | Y |  |
-| 52 | Sub Oscillator Level | N | Y |  |
-| 53 | Oscillator 1 Level | N | Y |  |
-| 54 | Oscillator 2 Level | N | Y |  |
-| 55 | Oscillator 3 Level | N | Y |  |
-| 56 | Sub Oscillator Mute | N | Y |  |
-| 57 | Oscillator 1 Mute | N | Y |  |
-| 58 | Oscillator 2 Mute | N | Y |  |
-| 59 | Oscillator 3 Mute | N | Y |  |
-| 60 | Sub Oscillator Balance | N | Y |  |
-| 61 | Oscillator 1 Balance | N | Y |  |
-| 62 | Oscillator 2 Balance | N | Y |  |
-| 63 | Oscillator 3 Balance | N | Y |  |
-| 64 | Sustain Pedal | N | Y | |
-| 65 | Portamento On/Off | N | Y | |
-| 66 | Sub Oscillator Clip Boost | N | Y |  |
-| 67 | Oscillator 1 Clip Boost | N | Y |  |
-| 68 | Oscillator 2 Clip Boost | N | Y |  |
-| 69 | Oscillator 3 Clip Boost | N | Y |  |
-| 70 | Filter Poles | N | Y |  |
-| 71 | Filter Resonance | N | Y | Sound Controller 2 (default: Timbre / Harmonic Quality) |
-| 72 | Amp Envelope Release Time | N | Y | Sound Controller 3 (default: Release Time) |
-| 73 | Amp Envelope Attack Time | N | Y | Sound Controller 4 (default: Attack Time) |
-| 74 | Filter Cutoff | N | Y | Sound Controller 5 (default: Brightness) |
-| 75 | Amp Envelope Decay Time | N | Y | Sound Controller 6 (GM2 default: Decay Time) |
-| 76 | Sound Controller 7 (GM2 default: Vibrato Rate) | N | N | |
-| 77 | Sound Controller 8 (GM2 default: Vibrato Depth) | N | N | |
-| 78 | Sound Controller 9 (GM2 default: Vibrato Delay) | N | N | |
-| 79 | Amp Envelope Sustain Level | N | Y |  |
-| 80 | Amp Envelope Inverted | N | Y |  |
-| 81 | General Purpose Controller 6 | N | N | |
-| 82 | General Purpose Controller 7 | N | N | |
-| 83 | General Purpose Controller 8 | N | N | |
-| 84 | Portamento Control | N | N | |
-| 85 | Filter Envelope Attack Time | N | Y |  |
-| 86 | Filter Envelope Decay Time | N | Y |  |
-| 87 | Filter Envelope Sustain Level | N | Y |  |
-| 88 | Filter Envelope Release Time | N | Y |  |
-| 89 | Filter Envelope Inverted | N | Y |  |
-| 90 | Filter Envelope Amount | N | Y |  |
-| 91 | Key Tracking Amount | N | Y |  |
-| 92 | Effects 2 Depth (default: Tremolo Depth) | N | N | |
-| 93 | Effects 3 Depth (default: Chorus Send) | N | N | |
-| 94 | Effects 4 Depth (default: Celeste [Detune] Depth) | N | N | |
-| 95 | Effects 5 Depth (default: Phaser Depth) | N | N | |
-| 96 | Data Increment | N | N | |
-| 97 | Data Decrement | N | N | |
-| 98 | Non-Registered Parameter Number (LSB) | N | N | |
-| 99 | Non-Registered Parameter Number (MSB) | N | N | |
-| 100 | Registered Parameter Number (LSB) | N | N | |
-| 101 | Registered Parameter Number (MSB) | N | N | |
-| 102 | Mod Wheel LFO Frequency | N | Y |  |
-| 103 | Mod Wheel LFO Center Value | N | Y |  |
-| 104 | Mod Wheel LFO Range | N | Y |  |
-| 105 | Mod Wheel LFO Wave Shape | N | Y |  |
-| 106 | Mod Wheel LFO Phase | N | Y |  |
-| 107 | Mod Wheel LFO Reset | N | Y |  |
-| 108 | Filter Mod LFO Frequency | N | Y |  |
-| 109 | Filter Mod LFO Amount | N | Y |  |
-| 110 | Filter Mod LFO Wave Shape | N | Y |  |
-| 111 | Filter Mod LFO Phase | N | Y |  |
-| 112 | Filter Mod LFO Reset | N | Y |  |
-| 113 | | N | N | |
-| 114 | | N | N | |
-| 115 | | N | N | |
-| 116 | | N | N | |
-| 117 | | N | N | |
-| 118 | | N | N | |
-| 119 | | N | N | |
-| 120 | All Sound Off | N | N | |
-| 121 | Reset All Controllers | N | N | |
-| 122 | Local Control On/Off | N | N | |
-| 123 | All Notes Off | N | Y | |
-| 124 | Omni Mode Off | N | N | |
-| 125 | Omni Mode On | N | N | |
-| 126 | Poly Mode Off | N | N | |
-| 127 | Poly Mode On | N | N | |
+| Control # | Function                                          | Transmitted (Y/N) | Recognized (Y/N) | Remarks |
+|-----------|---------------------------------------------------|-------------------|------------------|--------|
+| 0 | Bank Select (MSB)                                 | N | N                | |
+| 1 | Modulation Wheel (MSB)                            | N | Y                | Controls LFO depth |
+| 2 | Breath Controller (MSB)                           | N | N                | |
+| 3 | Velocity Curve                                    | N | Y                |  |
+| 4 | Foot Controller (MSB)                             | N | N                | |
+| 5 | Pitch Bend Range                                  | N | Y                |  |
+| 6 | Data Entry (MSB)                                  | N | N                | |
+| 7 | Master Volume                                     | N | Y                | Channel Volume (MSB) |
+| 8 | Mute                                              | N | Y                |  |
+| 9 |                                                   | N | N                | |
+| 10 | Stereo Balance                                    | N | Y                | Pan (MSB) |
+| 11 | Expression (MSB)                                  | N | N                | |
+| 12 | Sub Oscillator Shape Parameter 1                  | N | Y                |  |
+| 13 | Sub Oscillator Shape Parameter 2                  | N | Y                |  |
+| 14 | Oscillator 1 Shape Parameter 1                    | N | Y                |  |
+| 15 | Oscillator 1 Shape Parameter 2                    | N | Y                |  |
+| 16 | Oscillator 2 Shape Parameter 1                    | N | Y                |  |
+| 17 | Oscillator 2 Shape Parameter 2                    | N | Y                |  |
+| 18 | Oscillator 3 Shape Parameter 1                    | N | Y                |  |
+| 19 | Oscillator 3 Shape Parameter 2                    | N | Y                |  |
+| 20 | Oscillator Key Sync Enabled                       | N | Y                |  |
+| 21 | Sub Oscillator Pitch Envelope Amount              | N | Y                | |
+| 22 | Oscillator 1 Pitch Envelope Amount                | N | Y                | |
+| 23 | Oscillator 2 Pitch Envelope Amount                | N | Y                | |
+| 24 | Oscillator 3 Pitch Envelope Amount                | N | Y                | |
+| 25 | Pitch Envelope Attack Time                        | N | Y                | |
+| 26 | Pitch Envelope Decay Time                         | N | Y                | |
+| 27 | Pitch Envelope Sustain Level                      | N | Y                | |
+| 28 | Pitch Envelope Release Time                       | N | Y                | |
+| 29 | Pitch Envelope Inverted                           | N | Y                | |
+| 30 |                                                   | N | N                | |
+| 31 |                                                   | N | N                | |
+| 32 | Bank Select (LSB)                                 | N | N                | |
+| 33 | Modulation Wheel (LSB)                            | N | N                | |
+| 34 | Breath Controller (LSB)                           | N | N                | |
+| 35 |                                                   | N | N                | |
+| 36 | Foot Controller (LSB)                             | N | N                | |
+| 37 | Portamento Time                                   | N | Y                | |
+| 38 | Oscillator Hard Sync                              | N | Y                |  |
+| 39 | Channel Volume (LSB)                              | N | N                | |
+| 40 | Sub Oscillator Shape                              | N | Y                |  |
+| 41 | Oscillator 1 Shape                                | N | Y                |  |
+| 42 | Oscillator 2 Shape                                | N | Y                |  |
+| 43 | Oscillator 3 Shape                                | N | Y                |  |
+| 44 | Sub Oscillator Coarse Tune                        | N | Y                |  |
+| 45 | Oscillator 1 Coarse Tune                          | N | Y                |  |
+| 46 | Oscillator 2 Coarse Tune                          | N | Y                |  |
+| 47 | Oscillator 3 Coarse Tune                          | N | Y                |  |
+| 48 | Sub Oscillator Fine Tune                          | N | Y                |  |
+| 49 | Oscillator 1 Fine Tune                            | N | Y                |  |
+| 50 | Oscillator 2 Fine Tune                            | N | Y                |  |
+| 51 | Oscillator 3 Fine Tune                            | N | Y                |  |
+| 52 | Sub Oscillator Level                              | N | Y                |  |
+| 53 | Oscillator 1 Level                                | N | Y                |  |
+| 54 | Oscillator 2 Level                                | N | Y                |  |
+| 55 | Oscillator 3 Level                                | N | Y                |  |
+| 56 | Sub Oscillator Mute                               | N | Y                |  |
+| 57 | Oscillator 1 Mute                                 | N | Y                |  |
+| 58 | Oscillator 2 Mute                                 | N | Y                |  |
+| 59 | Oscillator 3 Mute                                 | N | Y                |  |
+| 60 | Sub Oscillator Balance                            | N | Y                |  |
+| 61 | Oscillator 1 Balance                              | N | Y                |  |
+| 62 | Oscillator 2 Balance                              | N | Y                |  |
+| 63 | Oscillator 3 Balance                              | N | Y                |  |
+| 64 | Sustain Pedal                                     | N | Y                | |
+| 65 | Portamento On/Off                                 | N | Y                | |
+| 66 | Sub Oscillator Clip Boost                         | N | Y                |  |
+| 67 | Oscillator 1 Clip Boost                           | N | Y                |  |
+| 68 | Oscillator 2 Clip Boost                           | N | Y                |  |
+| 69 | Oscillator 3 Clip Boost                           | N | Y                |  |
+| 70 | Filter Poles                                      | N | Y                |  |
+| 71 | Filter Resonance                                  | N | Y                | |
+| 72 | Amp Envelope Release Time                         | N | Y                |  |
+| 73 | Amp Envelope Attack Time                          | N | Y                |  |
+| 74 | Filter Cutoff                                     | N | Y                |  |
+| 75 | Amp Envelope Decay Time                           | N | Y                |  |
+| 76 | Sound Controller 7 (GM2 default: Vibrato Rate)    | N | N                | |
+| 77 | Sound Controller 8 (GM2 default: Vibrato Depth)   | N | N                | |
+| 78 | Sound Controller 9 (GM2 default: Vibrato Delay)   | N | N                | |
+| 79 | Amp Envelope Sustain Level                        | N | Y                |  |
+| 80 | Amp Envelope Inverted                             | N | Y                |  |
+| 81 | General Purpose Controller 6                      | N | N                | |
+| 82 | General Purpose Controller 7                      | N | N                | |
+| 83 | General Purpose Controller 8                      | N | N                | |
+| 84 | Portamento Control                                | N | N                | |
+| 85 | Filter Envelope Attack Time                       | N | Y                |  |
+| 86 | Filter Envelope Decay Time                        | N | Y                |  |
+| 87 | Filter Envelope Sustain Level                     | N | Y                |  |
+| 88 | Filter Envelope Release Time                      | N | Y                |  |
+| 89 | Filter Envelope Inverted                          | N | Y                |  |
+| 90 | Filter Envelope Amount                            | N | Y                |  |
+| 91 | Key Tracking Amount                               | N | Y                |  |
+| 92 | Effects 2 Depth (default: Tremolo Depth)          | N | N                | |
+| 93 | Effects 3 Depth (default: Chorus Send)            | N | N                | |
+| 94 | Effects 4 Depth (default: Celeste [Detune] Depth) | N | N                | |
+| 95 | Effects 5 Depth (default: Phaser Depth)           | N | N                | |
+| 96 | Data Increment                                    | N | N                | |
+| 97 | Data Decrement                                    | N | N                | |
+| 98 | Non-Registered Parameter Number (LSB)             | N | N                | |
+| 99 | Non-Registered Parameter Number (MSB)             | N | N                | |
+| 100 | Registered Parameter Number (LSB)                 | N | N                | |
+| 101 | Registered Parameter Number (MSB)                 | N | N                | |
+| 102 | Mod Wheel LFO Frequency                           | N | Y                |  |
+| 103 | Mod Wheel LFO Center Value                        | N | Y                |  |
+| 104 | Mod Wheel LFO Range                               | N | Y                |  |
+| 105 | Mod Wheel LFO Wave Shape                          | N | Y                |  |
+| 106 | Mod Wheel LFO Phase                               | N | Y                |  |
+| 107 | Mod Wheel LFO Reset                               | N | Y                |  |
+| 108 | Filter Mod LFO Frequency                          | N | Y                |  |
+| 109 | Filter Mod LFO Amount                             | N | Y                |  |
+| 110 | Filter Mod LFO Wave Shape                         | N | Y                |  |
+| 111 | Filter Mod LFO Phase                              | N | Y                |  |
+| 112 | Filter Mod LFO Reset                              | N | Y                |  |
+| 113 |                                                   | N | N                | |
+| 114 |                                                   | N | N                | |
+| 115 |                                                   | N | N                | |
+| 116 |                                                   | N | N                | |
+| 117 |                                                   | N | N                | |
+| 118 |                                                   | N | N                | |
+| 119 |                                                   | N | N                | |
+| 120 | All Sound Off                                     | N | N                | |
+| 121 | Reset All Controllers                             | N | N                | |
+| 122 | Local Control On/Off                              | N | N                | |
+| 123 | All Notes Off                                     | N | Y                | |
+| 124 | Omni Mode Off                                     | N | N                | |
+| 125 | Omni Mode On                                      | N | N                | |
+| 126 | Poly Mode Off                                     | N | N                | |
+| 127 | Poly Mode On                                      | N | N                | |
 
 ---
 

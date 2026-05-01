@@ -162,6 +162,15 @@ pub fn start_ui_update_listener(
 
                     set_oscillator_values(&ui_weak_thread, &mut values.oscillators);
                 }
+                UIUpdates::OscillatorPitchEnvelopeAmount(oscillator_index, value) => {
+                    let oscillator_values = &mut values.oscillators;
+                    #[allow(clippy::cast_sign_loss)]
+                    // Slint oscillator_index is always non-negative
+                    let idx = oscillator_index as usize;
+                    oscillator_values[idx].pitch_envelope_amount = value;
+
+                    set_oscillator_values(&ui_weak_thread, &mut values.oscillators);
+                }
                 UIUpdates::LFOFrequency(lfo_index, value) => {
                     if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
                         let lfo_values = match lfo_index {

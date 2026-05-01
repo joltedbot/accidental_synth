@@ -50,6 +50,24 @@ pub enum CC {
     Oscillator3ShapeParameter2(u8),
     /// Toggle oscillator key sync.
     OscillatorKeySyncEnabled(u8),
+    /// Sub-oscillator pitch envelope amount.
+    SubOscillatorPitchEnvelopeAmount(u8),
+    /// Oscillator 1 pitch envelope amount.
+    Oscillator1PitchEnvelopeAmount(u8),
+    /// Oscillator 2 pitch envelope amount.
+    Oscillator2PitchEnvelopeAmount(u8),
+    /// Oscillator 3 pitch envelope amount.
+    Oscillator3PitchEnvelopeAmount(u8),
+    /// Pitch envelope attack time
+    PitchEnvelopeAttackTime(u8),
+    /// Pitch envelope decay time
+    PitchEnvelopeDecayTime(u8),
+    /// Pitch envelope sustain level
+    PitchEnvelopeSustainLevel(u8),
+    /// Pitch envelope release time
+    PitchEnvelopeReleaseTime(u8),
+    /// Pitch envelope inversion toggle
+    PitchEnvelopeInverted(u8),
     /// Portamento glide time.
     PortamentoTime(u8),
     /// Toggle oscillator hard sync.

@@ -40,6 +40,8 @@ pub enum UIUpdates {
     OscillatorParameter1(i32, f32),
     /// Oscillator waveform parameter 2 changed (oscillator index, normalized value).
     OscillatorParameter2(i32, f32),
+    /// Oscillator pitch envelope modulation amount changed (oscillator index, normalized value).
+    OscillatorPitchEnvelopeAmount(i32, f32),
     /// LFO frequency changed (LFO index, normalized value).
     LFOFrequency(i32, f32),
     /// LFO frequency display value in Hz (LFO index, Hz).
