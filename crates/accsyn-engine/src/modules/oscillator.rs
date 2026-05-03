@@ -159,6 +159,8 @@ impl OscillatorParameters {
             .store(parameters.portamento_time.load());
         self.clipper_boost
             .store(parameters.clipper_boost.load(Relaxed), Relaxed);
+        self.pitch_envelope_amount
+            .store(parameters.pitch_envelope_amount.load());
     }
 }
 
