@@ -240,15 +240,15 @@ export component HorizontalControlLabel inherits Rectangle {
 
     HorizontalLayout {
         Text {
-            font-size: Theme.section-label-font-size;
-            font-weight: Theme.section-label-font-weight;
+            font-size: Theme.component-label-font-size;
+            font-weight: Theme.component-label-font-weight;
             color: text-color;
             text: label;
         }
 
         Text {
-            font-size: Theme.section-label-font-size;
-            font-weight: Theme.section-label-font-weight;
+            font-size: Theme.component-label-font-size;
+            font-weight: Theme.component-label-font-weight;
             color: text-color;
             horizontal-alignment: right;
             visible: show-value;
@@ -256,8 +256,8 @@ export component HorizontalControlLabel inherits Rectangle {
         }
 
         Text {
-            font-size: Theme.section-label-font-size;
-            font-weight: Theme.section-label-font-weight;
+            font-size: Theme.component-label-font-size;
+            font-weight: Theme.component-label-font-weight;
             color: text-color;
             visible: show-value;
             text: " " + value-units;
@@ -297,6 +297,7 @@ export component FilterControlLabel inherits Rectangle {
 
     Text {
         horizontal-alignment: center;
+        font-size: Theme.component-label-font-size;
         width: 100px;
         text: label;
         color: text-color;
@@ -325,7 +326,7 @@ export component ToggleSwitch inherits VerticalLayout {
     Text {
         horizontal-alignment: center;
         font-size: Theme.toggle-switch-font-size;
-        font-weight: Theme.section-label-font-weight;
+        font-weight: Theme.component-label-font-weight;
         color: text-color;
         text: label;
     }
@@ -601,8 +602,8 @@ export component MixerMute inherits VerticalLayout {
 
     Text {
         horizontal-alignment: center;
-        font-size: Theme.section-label-font-size;
-        font-weight: Theme.section-label-font-weight;
+        font-size: Theme.component-label-font-size;
+        font-weight: Theme.component-label-font-weight;
         text: "Mute";
     }
 
@@ -634,8 +635,8 @@ export component MixerBalance inherits VerticalLayout {
     Text {
         horizontal-alignment: center;
         width: slider.width;
-        font-size: Theme.section-label-font-size;
-        font-weight: Theme.section-label-font-weight;
+        font-size: Theme.component-label-font-size;
+        font-weight: Theme.component-label-font-weight;
         text: Theme.mixer-balance-label;
     }
 
