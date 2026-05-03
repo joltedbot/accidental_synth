@@ -1,20 +1,26 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+This project has switched from Semantic Versioning to Calendar Versioning.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [2026.05.03.1] - 2026-05-03
 
-## [0.2.1] - 2026-04-24
+### Added
+- Pitch envelope: a single ADSR envelope with independent per-oscillator amount controls
+- MIDI CC control for pitch envelope parameters and per-oscillator pitch envelope amounts
 
 ### Fixed
+- ToggleSwitch UI: MIDI and patch changes now correctly update the toggle state after manual interaction
+- Sustain pedal switch: completed missing MIDI and patch update connectivity
 - Envelope display bug: attack, decay, and release values were displayed on a linear scale but are stored via a two-segment exponential curve; sliders now correctly reflect loaded values
 - `UIEnvelope` decay field was incorrectly reading release constants, causing decay and release to show the same value after patch load
-- Wavefolder asymmetric mode: negative folding side never fired due to an incorrect paramater index check; asymmetric mode now applies independent 
-  positive and negative folding as intended
-- Wavefolder toggle buttons. The enable toggle was not correctly brining back the negative folding slider after being disable and reenabled. This now works as expected.
+- Wavefolder asymmetric mode: negative folding side never fired due to an incorrect parameter index check; asymmetric mode now applies independent positive and negative folding as intended
+- Wavefolder enable toggle was not correctly restoring the negative folding slider after being disabled and re-enabled
 - LFO default range and all factory preset LFO values corrected to valid normalized range
-- Several small formating and naming fixes
+- Several small formatting and naming fixes
+
+### Changed
+- Slider track size increased; global panel layout cleaned up
+- Version scheme updated from SemVer to CalVer
 
 
 ## [0.2.0] - 2026-04-21
@@ -133,12 +139,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hot-swappable MIDI and audio devices
 - CoreAudio integration for macOS
 - Settings panel for device selection and configuration
-
-[Unreleased]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.2.1...HEAD
-[0.2.1]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.2.0...v0.2.1
-[0.2.0]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.1.4...v0.2.0
-[0.1.4]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.1.3...v0.1.4
-[0.1.3]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.1.2...v0.1.3
-[0.1.2]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.1.1...v0.1.2
-[0.1.1]: https://gitlab.com/joltedbot-public/accidental-synth/-/compare/v0.1.0...v0.1.1
-[0.1.0]: https://gitlab.com/joltedbot-public/accidental-synth/-/tags/v0.1.0

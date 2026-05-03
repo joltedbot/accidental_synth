@@ -13,30 +13,21 @@ Accidental Synthesizer (AccSyn) is a standalone four‑oscillator mono synth for
 
 I am, perhaps foolishly, writing it in Rust, largely for my own education and amusement.
 
-It is a work in progress.
-
 ## Project Status
 Accidental Synthesizer is a working, playable synthesizer. The synth voice, MIDI integration, audio output, and UI are all fully connected and functional.
-
-Version 0.2.0 introduces a complete user patch system — save, load, delete, and list patches with MIDI program change support. Factory patches are bundled with the app.
 
 ## Features
 Current:
 - Four-oscillator mono synth voice with multiple waveforms (sine, saw, square, triangle, noise, pulse, supersaw, FM, AM)
 - Resonant lowpass filter with key tracking, envelope, and LFO modulation
-- Two ADSR envelopes (amplitude and filter) and two LFOs for modulation
-- Audio effects: wave folder, clipper, rectifier, bit shifter, saturation, compressor, tremolo, auto pan, delay, gate
-- Full patch system: save, load, delete, and list user patches; factory patches bundled with the app
-- MIDI program change for patch selection; sustain pedal support
-- MIDI input: Note On/Off, Velocity, Pitch Bend, Control Change, Channel Pressure (see implementation chart in the Wiki)
+- Three ADSR envelopes (amplitude, pitch, and filter) and two LFOs for modulation (pitch via the mod wheel and filter)
+- Audio effects: saturation, compressor, wave folder, clipper, gate, rectifier, bit shifter, delay, auto pan, and tremolo 
+- Preset & user patch system: save, load, and delete user patches; factory patches loaded in the app
+- MIDI input: Note On/Off, Velocity, Pitch Bend, Control Change, Channel Pressure, Sustain Pedal, Program Change (see implementation chart in the 
+  Wiki)
 - Virtual MIDI input device for DAW integration; omni mode or per-channel filtering
-- Native macOS UI built with Slint; hot-swappable MIDI and audio devices
-
-Planned:
-- Compact effects panel layout (R8)
-- Slider usability improvements (R7)
-- Per-oscillator tabs and oscillator panel space optimization (R1/R9)
-
+- Hot-swappable MIDI and audio devices
+- Native macOS UI
 
 ## Quick Start
 
