@@ -96,6 +96,8 @@ pub enum UIUpdates {
     HardSync(f32),
     /// Key sync enabled state changed (0.0 or 1.0).
     KeySync(f32),
+    /// Sustain pedal enabled state changed (0.0 or 1.0).
+    SustainPedal(f32),
     /// Effect parameters changed (effect index, enabled, param1, param2, param3, param4).
     Effect(i32, bool, f32, f32, f32, f32),
     /// Patch changed — UI should reload all parameter values from the patch at this index.

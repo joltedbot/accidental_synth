@@ -317,7 +317,7 @@ fn load_presets() -> Vec<Patch> {
         .collect()
 }
 
-/// Create patch collection from user patches directory.
+/// Create a patch collection from user patches directory.
 fn load_patches(patch_directory: &Path) -> Vec<Patch> {
     log::debug!(target: "synthesizer::patches", "Loading presets");
     let mut patches = vec![];

@@ -407,6 +407,11 @@ pub fn start_ui_update_listener(
                     global_options_values.key_sync_is_enabled = normal_value_to_bool(is_enabled);
                     set_global_options_values(&ui_weak_thread, global_options_values);
                 }
+                UIUpdates::SustainPedal(is_enabled) => {
+                    let global_options_values = &mut values.global_options;
+                    global_options_values.sustain_is_enabled = normal_value_to_bool(is_enabled);
+                    set_global_options_values(&ui_weak_thread, global_options_values);
+                }
                 UIUpdates::Effect(
                     effect_index,
                     is_enabled,

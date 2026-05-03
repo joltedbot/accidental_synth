@@ -4,6 +4,7 @@ target/
 flamegraph.svg
 flamegraph.html
 sonar-project.properties
+/docs
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .github/instructions/snyk_rules.instructions.md

@@ -17,6 +17,8 @@ pub const DEFAULT_KEY_SYNC_ENABLED: bool = false;
 pub const DEFAULT_HARD_SYNC_ENABLED: bool = false;
 /// Default state for waveform polarity flip.
 pub const DEFAULT_POLARITY_FLIPPED: bool = false;
+/// Default state for sustain pedal.
+pub const DEFAULT_SUSTAIN_PEDAL_FLIPPED: bool = false;
 /// Minimum clipper boost value in dB.
 pub const MIN_CLIP_BOOST: u8 = 0;
 /// Maximum clipper boost value in dB.

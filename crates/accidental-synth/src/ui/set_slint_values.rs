@@ -194,18 +194,7 @@ pub fn set_envelope_stage_value(
         }
     }
 
-    let ui_envelope_values = envelope_values.clone();
-    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match envelope_index {
-        EnvelopeIndex::Amp => {
-            ui.set_amp_envelope_values(ui::slint_envelope_from_ui_envelope(&ui_envelope_values));
-        }
-        EnvelopeIndex::Filter => {
-            ui.set_filter_envelope_values(ui::slint_envelope_from_ui_envelope(&ui_envelope_values));
-        }
-        EnvelopeIndex::Pitch => {
-            ui.set_pitch_envelope_values(ui::slint_envelope_from_ui_envelope(&ui_envelope_values));
-        }
-    });
+    set_ui_envelope_values(ui_weak_thread, envelope_index, envelope_values);
 }
 
 pub fn set_envelope_inverted(
@@ -215,7 +204,14 @@ pub fn set_envelope_inverted(
     normal_value: f32,
 ) {
     envelope_values.inverted = normal_value_to_bool(normal_value);
+    set_ui_envelope_values(ui_weak_thread, envelope_index, envelope_values);
+}
 
+fn set_ui_envelope_values(
+    ui_weak_thread: &Weak<AccidentalSynth>,
+    envelope_index: EnvelopeIndex,
+    envelope_values: &mut UIEnvelope,
+) {
     let ui_envelope_values = envelope_values.clone();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| match envelope_index {
         EnvelopeIndex::Amp => {

@@ -599,9 +599,10 @@ pub fn process_midi_cc_values(
                 UIUpdates::OscillatorMixerBalance(OscillatorIndex::Three as i32, normal_value),
             );
         }
-        CC::Sustain(value) => {
+        CC::SustainPedal(value) => {
             let normal_value = normalize_midi_value(value);
             set_envelope_sustain_pedal(&module_parameters.envelopes, normal_value);
+            send_ui_update(ui_update_sender, UIUpdates::SustainPedal(normal_value));
         }
         CC::PortamentoEnabled(value) => {
             let normal_value = normalize_midi_value(value);

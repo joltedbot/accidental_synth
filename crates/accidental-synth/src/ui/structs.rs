@@ -9,10 +9,7 @@ use accsyn_engine::modules::envelope::{
 use accsyn_engine::modules::filter::FilterParameters;
 use accsyn_engine::modules::lfo::{DEFAULT_LFO_FREQUENCY, LfoParameters};
 use accsyn_engine::modules::oscillator::OscillatorParameters;
-use accsyn_engine::modules::oscillator::constants::{
-    DEFAULT_HARD_SYNC_ENABLED, DEFAULT_KEY_SYNC_ENABLED, DEFAULT_POLARITY_FLIPPED, MAX_CLIP_BOOST,
-    MIN_CLIP_BOOST,
-};
+use accsyn_engine::modules::oscillator::constants::{DEFAULT_HARD_SYNC_ENABLED, DEFAULT_KEY_SYNC_ENABLED, DEFAULT_POLARITY_FLIPPED, DEFAULT_SUSTAIN_PEDAL_FLIPPED, MAX_CLIP_BOOST, MIN_CLIP_BOOST};
 use accsyn_engine::synthesizer::{KeyboardParameters, MixerParameters};
 use accsyn_types::defaults::{
     Defaults, MAX_FILTER_RESONANCE, MIN_FILTER_RESONANCE, OSCILLATOR_FINE_TUNE_MAX_CENTS,
@@ -271,7 +268,7 @@ impl UIEnvelope {
                 MIN_RELEASE_MILLISECONDS,
                 MAX_RELEASE_MILLISECONDS,
             ),
-            inverted: parameters.is_inverted.load(Relaxed),
+            inverted: parameters.is_inverted.load(Relaxed)
         }
     }
 }
@@ -355,7 +352,7 @@ impl Default for UIGlobalOptions {
             hard_sync_is_enabled: DEFAULT_HARD_SYNC_ENABLED,
             key_sync_is_enabled: DEFAULT_KEY_SYNC_ENABLED,
             polarity_is_flipped: DEFAULT_POLARITY_FLIPPED,
-            sustain_is_enabled: false,
+            sustain_is_enabled: DEFAULT_SUSTAIN_PEDAL_FLIPPED,
         }
     }
 }

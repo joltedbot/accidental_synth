@@ -62,9 +62,9 @@ pub enum SynthesizerUpdateEvents {
     PolarityFlipped(bool),
     /// Sustain Pedal State on/off
     SustainPedal(bool),
-    /// Change output mixer stereo balance (normalized value).
+    /// Change the output mixer stereo balance (normalized value).
     OutputBalance(f32),
-    /// Change output mixer level (normalized value).
+    /// Change the output mixer level (normalized value).
     OutputLevel(f32),
     /// Toggle output mixer mute on/off.
     OutputMute(bool),

@@ -53,7 +53,7 @@ pub(crate) fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Op
         61 => Some(CC::Oscillator1Balance(cc_value)),
         62 => Some(CC::Oscillator2Balance(cc_value)),
         63 => Some(CC::Oscillator3Balance(cc_value)),
-        64 => Some(CC::Sustain(cc_value)),
+        64 => Some(CC::SustainPedal(cc_value)),
         65 => Some(CC::PortamentoEnabled(cc_value)),
         66 => Some(CC::SubOscillatorClipBoost(cc_value)),
         67 => Some(CC::Oscillator1ClipBoost(cc_value)),

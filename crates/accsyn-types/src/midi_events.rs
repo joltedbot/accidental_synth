@@ -121,7 +121,7 @@ pub enum CC {
     /// Oscillator 3 stereo balance.
     Oscillator3Balance(u8),
     /// Sustain pedal (CC 64).
-    Sustain(u8),
+    SustainPedal(u8),
     /// Toggle portamento on/off.
     PortamentoEnabled(u8),
     /// Sub-oscillator clipper boost amount.
