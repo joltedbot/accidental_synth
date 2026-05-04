@@ -9,7 +9,7 @@ publish.workspace = true
 build = "build.rs"
 
 [dependencies]
-accsyn-types = { workspace = true }
+accsyn-core = { workspace = true }
 accsyn-engine = { workspace = true }
 accsyn-audio = { workspace = true }
 accsyn-midi = { workspace = true }

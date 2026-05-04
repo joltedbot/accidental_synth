@@ -39,10 +39,10 @@ use self::triangle::Triangle;
 use crate::modules::oscillator::constants::{
     DEFAULT_HARD_SYNC_ENABLED, DEFAULT_PORTAMENTO_ENABLED,
 };
-use accsyn_types::defaults::Defaults;
-use accsyn_types::math;
-use accsyn_types::math::{dbfs_to_f32_sample, f32s_are_equal};
-use accsyn_types::parameter_types::{
+use accsyn_core::defaults::Defaults;
+use accsyn_core::math;
+use accsyn_core::math::{dbfs_to_f32_sample, f32s_are_equal};
+use accsyn_core::parameter_types::{
     Cents, NormalizedValue, PitchBend, PortamentoBuffers, Semitones,
 };
 use generate_wave_trait::GenerateWave;
@@ -555,7 +555,7 @@ fn midi_note_to_frequency(note_number: u8) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     #[test]
     fn new_returns_oscillator_with_correct_default_values() {

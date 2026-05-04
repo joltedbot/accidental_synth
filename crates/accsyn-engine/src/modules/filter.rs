@@ -1,7 +1,7 @@
 // Derived from https://www.musicdsp.org/en/latest/Filters/253-perfect-lp4-filter.html
 
-use accsyn_types::defaults::MAX_FILTER_CUTOFF;
-use accsyn_types::parameter_types::{FilterPoles, Hertz, NormalizedValue};
+use accsyn_core::defaults::MAX_FILTER_CUTOFF;
+use accsyn_core::parameter_types::{FilterPoles, Hertz, NormalizedValue};
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::AtomicU8;
 use std::sync::atomic::Ordering::Relaxed;
@@ -336,7 +336,7 @@ fn calculate_feedback_gain(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     #[test]
     fn new_returns_filter_with_correct_default_values() {

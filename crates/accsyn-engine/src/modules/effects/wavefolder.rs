@@ -1,5 +1,5 @@
 use crate::modules::effects::constants::MAX_THRESHOLD;
-use accsyn_types::effects::{AudioEffect, EffectParameters};
+use accsyn_core::effects::{AudioEffect, EffectParameters};
 
 pub struct WaveFolder {}
 impl WaveFolder {
@@ -60,7 +60,7 @@ fn asymmetrical_fold_wave(sample: f32, positive_threshold: f32, negative_thresho
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     #[test]
     fn wavefolder_process_samples_returns_original_when_disabled() {

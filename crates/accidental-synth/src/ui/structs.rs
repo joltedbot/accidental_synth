@@ -14,11 +14,11 @@ use accsyn_engine::modules::oscillator::constants::{
     DEFAULT_SUSTAIN_PEDAL_FLIPPED, MAX_CLIP_BOOST, MIN_CLIP_BOOST,
 };
 use accsyn_engine::synthesizer::{KeyboardParameters, MixerParameters};
-use accsyn_types::defaults::{
+use accsyn_core::defaults::{
     Defaults, MAX_FILTER_RESONANCE, MIN_FILTER_RESONANCE, OSCILLATOR_FINE_TUNE_MAX_CENTS,
     OSCILLATOR_FINE_TUNE_MIN_CENTS,
 };
-use accsyn_types::math::{
+use accsyn_core::math::{
     EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES, EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
     EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES, EXPONENTIAL_FILTER_COEFFICIENT,
     EXPONENTIAL_LFO_COEFFICIENT, EXPONENTIAL_PORTAMENTO_COEFFICIENT,

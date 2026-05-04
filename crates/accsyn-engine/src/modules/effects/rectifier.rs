@@ -1,5 +1,5 @@
 use crate::synthesizer::midi_value_converters::normal_value_to_bool;
-use accsyn_types::effects::{AudioEffect, EffectParameters};
+use accsyn_core::effects::{AudioEffect, EffectParameters};
 
 pub struct Rectifier {}
 
@@ -50,7 +50,7 @@ fn full_wave_rectifier(sample: f32) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     #[test]
     fn rectifier_process_samples_returns_original_when_disabled() {

@@ -1,4 +1,4 @@
-use accsyn_types::parameter_types::{Milliseconds, NormalizedValue};
+use accsyn_core::parameter_types::{Milliseconds, NormalizedValue};
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8};
@@ -449,7 +449,7 @@ impl Envelope {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     #[test]
     fn new_returns_envelope_with_correct_default_values() {

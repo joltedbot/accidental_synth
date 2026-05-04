@@ -3,9 +3,9 @@ use crate::modules::effects::clipper::Clipper;
 use crate::modules::effects::gate::Gate;
 use crate::modules::effects::rectifier::Rectifier;
 use crate::modules::effects::wavefolder::WaveFolder;
-pub use accsyn_types::effects::EffectIndex;
-use accsyn_types::effects::{AudioEffect, EffectParameters, PARAMETERS_PER_EFFECT};
-use accsyn_types::parameter_types::NormalizedValue;
+pub use accsyn_core::effects::EffectIndex;
+use accsyn_core::effects::{AudioEffect, EffectParameters, PARAMETERS_PER_EFFECT};
+use accsyn_core::parameter_types::NormalizedValue;
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
@@ -122,7 +122,7 @@ fn extract_parameters(source: &AudioEffectParameters) -> EffectParameters {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     #[test]
     fn effect_index_from_i32_returns_saturation_for_0() {

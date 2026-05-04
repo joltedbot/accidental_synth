@@ -32,7 +32,7 @@ pub(crate) fn amplify_stereo(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     #[test]
     fn vca_returns_correct_value_from_valid_input() {

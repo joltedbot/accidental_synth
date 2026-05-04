@@ -7,9 +7,9 @@ use crate::synthesizer::constants::{
     MIN_VELOCITY_CURVE_EXPONENT, NORMAL_TO_BOOL_SWITCH_ON_VALUE, PITCH_BEND_AMOUNT_MAX_VALUE,
     PITCH_BEND_AMOUNT_ZERO_POINT,
 };
-use accsyn_types::defaults::Defaults;
-use accsyn_types::math;
-use accsyn_types::math::{
+use accsyn_core::defaults::Defaults;
+use accsyn_core::math;
+use accsyn_core::math::{
     EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT, f32s_are_equal,
     normalize_float_range,
 };
@@ -217,7 +217,7 @@ fn midi_value_to_pitch_bend_cents(pitch_bend_amount: u16, max_bend_in_cents: u16
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::{f32s_are_equal, normalize_midi_value};
+    use accsyn_core::math::{f32s_are_equal, normalize_midi_value};
 
     #[test]
     fn normalize_midi_value_correctly_maps_values() {

@@ -112,9 +112,9 @@ name = "accidental-synth"
 version = "0.0.0"
 dependencies = [
  "accsyn-audio",
+ "accsyn-core",
  "accsyn-engine",
  "accsyn-midi",
- "accsyn-types",
  "anyhow",
  "clap",
  "crossbeam-channel",
@@ -130,7 +130,7 @@ dependencies = [
 name = "accsyn-audio"
 version = "0.0.0"
 dependencies = [
- "accsyn-types",
+ "accsyn-core",
  "anyhow",
  "core-foundation 0.10.1",
  "coreaudio-sys",
@@ -142,10 +142,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "accsyn-core"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "strum",
+ "strum_macros",
+]
+
+[[package]]
 name = "accsyn-engine"
 version = "0.0.0"
 dependencies = [
- "accsyn-types",
+ "accsyn-core",
  "anyhow",
  "crossbeam-channel",
  "dirs",
@@ -164,21 +173,12 @@ dependencies = [
 name = "accsyn-midi"
 version = "0.0.0"
 dependencies = [
- "accsyn-types",
+ "accsyn-core",
  "anyhow",
  "crossbeam-channel",
  "log",
  "midir",
  "thiserror 2.0.18",
-]
-
-[[package]]
-name = "accsyn-types"
-version = "0.0.0"
-dependencies = [
- "serde",
- "strum",
- "strum_macros",
 ]
 
 [[package]]

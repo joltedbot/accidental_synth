@@ -20,11 +20,11 @@ use crate::synthesizer::set_parameters::{
     set_oscillator_shape_parameter2, set_output_balance, set_output_level, set_output_mute,
     set_pitch_bend_range, set_portamento_enabled, set_portamento_time, set_velocity_curve,
 };
-use accsyn_types::casting::i32_to_u8_clamped;
-use accsyn_types::synth_events::{
+use accsyn_core::casting::i32_to_u8_clamped;
+use accsyn_core::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
 };
-use accsyn_types::ui_events::UIUpdates;
+use accsyn_core::ui_events::UIUpdates;
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::{Arc, Mutex, PoisonError};

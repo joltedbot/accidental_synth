@@ -1,6 +1,6 @@
 use crate::synthesizer::midi_value_converters::normal_value_to_bool;
-use accsyn_types::defaults::MAX_SAMPLE_VALUE;
-use accsyn_types::effects::{AudioEffect, EffectParameters};
+use accsyn_core::defaults::MAX_SAMPLE_VALUE;
+use accsyn_core::effects::{AudioEffect, EffectParameters};
 
 pub struct Clipper {}
 
@@ -56,7 +56,7 @@ fn clip_sample(sample: f32, mut threshold: f32, pre_gain: f32, post_gain: f32, n
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     #[test]
     fn clipper_process_samples_returns_original_when_disabled() {

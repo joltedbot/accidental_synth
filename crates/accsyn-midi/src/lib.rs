@@ -20,8 +20,8 @@ use crate::constants::{
 };
 use crate::input_listener::{create_midi_input_listener, process_midi_message};
 
-use accsyn_types::midi_events::MidiEvent;
-use accsyn_types::ui_events::UIUpdates;
+use accsyn_core::midi_events::MidiEvent;
+use accsyn_core::ui_events::UIUpdates;
 
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};

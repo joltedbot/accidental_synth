@@ -2,8 +2,8 @@ use crate::modules::effects::constants::{
     DELAY_SMOOTHING_FACTOR, MAX_DELAY_SAMPLES, MIN_DELAY_SAMPLES,
 };
 use crate::synthesizer::midi_value_converters::normal_value_to_unsigned_integer_range;
-use accsyn_types::casting::f32_to_usize_clamped;
-use accsyn_types::effects::{AudioEffect, EffectParameters};
+use accsyn_core::casting::f32_to_usize_clamped;
+use accsyn_core::effects::{AudioEffect, EffectParameters};
 
 // Ensure MAX_DELAY_SAMPLES is a power of 2 to guarantee the bitwise wrapping logic is safe
 const _: () = assert!(MAX_DELAY_SAMPLES.is_power_of_two());
@@ -111,7 +111,7 @@ impl AudioEffect for Delay {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     #[test]
     fn delay_process_samples_returns_original_when_disabled() {

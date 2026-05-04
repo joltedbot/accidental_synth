@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "crates/accsyn-types",
+    "crates/accsyn-core",
     "crates/accsyn-engine",
     "crates/accsyn-audio",
     "crates/accsyn-midi",
@@ -17,7 +17,7 @@ publish = false
 
 [workspace.dependencies]
 # Internal crates
-accsyn-types = { path = "crates/accsyn-types" }
+accsyn-core = { path = "crates/accsyn-core" }
 accsyn-engine = { path = "crates/accsyn-engine" }
 accsyn-audio = { path = "crates/accsyn-audio" }
 accsyn-midi = { path = "crates/accsyn-midi" }

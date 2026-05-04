@@ -1,4 +1,4 @@
-use accsyn_types::midi_events::CC;
+use accsyn_core::midi_events::CC;
 
 /// Maps a MIDI CC number and value to the corresponding synthesizer [`CC`] variant.
 pub(crate) fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Option<CC> {

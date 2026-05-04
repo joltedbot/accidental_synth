@@ -1,5 +1,5 @@
 use crate::constants::OSSSTATUS_NO_ERROR;
-use accsyn_types::audio_events::AudioDeviceUpdateEvents;
+use accsyn_core::audio_events::AudioDeviceUpdateEvents;
 use anyhow::{Result, anyhow};
 use core_foundation::base::TCFType;
 use core_foundation::string::{CFString, CFStringRef};

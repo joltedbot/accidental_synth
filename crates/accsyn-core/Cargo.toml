@@ -1,6 +1,6 @@
 [package]
-name = "accsyn-types"
-description = "Shared types and utilities for Accidental Synthesizer"
+name = "accsyn-core"
+description = "Shared types, helper functions, constants, and defaults for Accidental Synthesizer"
 version.workspace = true
 authors.workspace = true
 license.workspace = true

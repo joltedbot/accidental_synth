@@ -3,9 +3,9 @@ use crate::modules::effects::constants::{
 };
 use crate::modules::lfo::{DEFAULT_LFO_FREQUENCY, Lfo};
 use crate::synthesizer::midi_value_converters::exponential_curve_lfo_frequency_from_normal_value;
-use accsyn_types::casting::f32_to_u8_clamped;
-use accsyn_types::effects::{AudioEffect, EffectParameters};
-use accsyn_types::math::f32s_are_equal;
+use accsyn_core::casting::f32_to_u8_clamped;
+use accsyn_core::effects::{AudioEffect, EffectParameters};
+use accsyn_core::math::f32s_are_equal;
 
 #[derive(Debug, Default)]
 struct LfoParameters {

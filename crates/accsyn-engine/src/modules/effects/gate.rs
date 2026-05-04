@@ -1,5 +1,5 @@
-use accsyn_types::defaults::MAX_SAMPLE_VALUE;
-use accsyn_types::effects::{AudioEffect, EffectParameters};
+use accsyn_core::defaults::MAX_SAMPLE_VALUE;
+use accsyn_core::effects::{AudioEffect, EffectParameters};
 
 pub struct Gate {}
 
@@ -47,7 +47,7 @@ fn gate_sample(sample: f32, threshold: f32, pre_gain: f32, post_gain: f32) -> f3
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     #[test]
     fn gate_process_samples_returns_original_when_disabled() {

@@ -10,11 +10,11 @@ mod set_parameters;
 
 use self::constants::MAX_MIDI_KEY_VELOCITY;
 
-use accsyn_types::audio_events::OutputStreamParameters;
-use accsyn_types::defaults::Defaults;
-use accsyn_types::midi_events::MidiEvent;
-use accsyn_types::synth_events::{OscillatorIndex, SynthesizerUpdateEvents};
-use accsyn_types::ui_events::UIUpdates;
+use accsyn_core::audio_events::OutputStreamParameters;
+use accsyn_core::defaults::Defaults;
+use accsyn_core::midi_events::MidiEvent;
+use accsyn_core::synth_events::{OscillatorIndex, SynthesizerUpdateEvents};
+use accsyn_core::ui_events::UIUpdates;
 
 use crate::modules::effects::AudioEffectParameters;
 use crate::modules::envelope::EnvelopeParameters;
@@ -32,7 +32,7 @@ use crate::synthesizer::midi_messages::{
 use crate::synthesizer::sample_generator::sample_generator;
 
 use crate::synthesizer::patches::Patches;
-use accsyn_types::parameter_types::{Balance, NormalizedValue};
+use accsyn_core::parameter_types::{Balance, NormalizedValue};
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender};
 use rtrb::Producer;

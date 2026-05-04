@@ -4,8 +4,8 @@ use crate::modules::effects::constants::{
 use crate::synthesizer::midi_value_converters::{
     normal_value_to_f32_range, normal_value_to_unsigned_integer_range,
 };
-use accsyn_types::defaults::MAX_SAMPLE_VALUE;
-use accsyn_types::effects::{AudioEffect, EffectParameters};
+use accsyn_core::defaults::MAX_SAMPLE_VALUE;
+use accsyn_core::effects::{AudioEffect, EffectParameters};
 
 pub struct Compressor {}
 
@@ -71,7 +71,7 @@ fn compress_sample(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     #[test]
     fn compressor_process_samples_returns_original_when_disabled() {

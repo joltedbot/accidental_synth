@@ -74,7 +74,7 @@ fn apply_balance(mut input_left: f32, mut input_right: f32, balance: f32) -> (f3
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     fn assert_stereo_eq(actual: (f32, f32), expected: (f32, f32)) {
         assert!(

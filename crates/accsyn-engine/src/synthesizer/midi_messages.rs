@@ -18,13 +18,13 @@ use crate::synthesizer::{
     CurrentNote, KeyboardParameters, MidiGateEvent, MidiNoteEvent, ModuleParameters,
     midi_value_converters,
 };
-use accsyn_types::defaults::Defaults;
-use accsyn_types::math::{normalize_midi_value, store_f32_as_atomic_u32};
-use accsyn_types::midi_events::CC;
-use accsyn_types::synth_events::{
+use accsyn_core::defaults::Defaults;
+use accsyn_core::math::{normalize_midi_value, store_f32_as_atomic_u32};
+use accsyn_core::midi_events::CC;
+use accsyn_core::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
 };
-use accsyn_types::ui_events::UIUpdates;
+use accsyn_core::ui_events::UIUpdates;
 use crossbeam_channel::Sender;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Relaxed, Release};
@@ -1033,7 +1033,7 @@ fn update_oscillator_pitch_amount(
 
 #[cfg(test)]
 mod tests {
-    use accsyn_types::defaults::Defaults;
+    use accsyn_core::defaults::Defaults;
 
     #[test]
     fn midi_note_frequencies_covers_all_valid_notes() {

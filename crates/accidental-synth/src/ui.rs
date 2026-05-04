@@ -20,15 +20,15 @@ use accsyn_engine::modules::oscillator::OscillatorParameters;
 use accsyn_engine::synthesizer::patches::{PatchList, Patches};
 use accsyn_engine::synthesizer::{ModuleParameters, QuadMixerInput};
 use accsyn_midi::MidiDeviceUpdateEvents;
-use accsyn_types::audio_events::AudioDeviceUpdateEvents;
-use accsyn_types::defaults::Defaults;
-use accsyn_types::effects::EffectParameters;
-use accsyn_types::math::{normal_value_from_exponential_level_curve, normalize_float_range};
-use accsyn_types::parameter_types::NormalizedValue;
-use accsyn_types::synth_events::{
+use accsyn_core::audio_events::AudioDeviceUpdateEvents;
+use accsyn_core::defaults::Defaults;
+use accsyn_core::effects::EffectParameters;
+use accsyn_core::math::{normal_value_from_exponential_level_curve, normalize_float_range};
+use accsyn_core::parameter_types::NormalizedValue;
+use accsyn_core::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
 };
-use accsyn_types::ui_events::UIUpdates;
+use accsyn_core::ui_events::UIUpdates;
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender, bounded};
 use slint::{ModelRc, SharedString, VecModel, Weak};

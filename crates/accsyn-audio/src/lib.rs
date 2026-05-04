@@ -8,9 +8,9 @@
 mod constants;
 mod device_monitor;
 
-use accsyn_types::audio_events::{AudioDeviceUpdateEvents, OutputStreamParameters};
-use accsyn_types::defaults::Defaults;
-use accsyn_types::ui_events::UIUpdates;
+use accsyn_core::audio_events::{AudioDeviceUpdateEvents, OutputStreamParameters};
+use accsyn_core::defaults::Defaults;
+use accsyn_core::ui_events::UIUpdates;
 
 use crate::constants::{
     AUDIO_MESSAGE_SENDER_CAPACITY, BUFFER_DROP_OUT_LOGGER,

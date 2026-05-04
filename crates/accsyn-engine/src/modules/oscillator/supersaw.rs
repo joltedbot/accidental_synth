@@ -1,6 +1,6 @@
 use super::WaveShape;
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
-use accsyn_types::math::frequency_from_cents;
+use accsyn_core::math::frequency_from_cents;
 use std::f32::consts::PI;
 
 const SHAPE: WaveShape = WaveShape::Supersaw;

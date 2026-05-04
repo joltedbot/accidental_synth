@@ -18,19 +18,19 @@ use crate::synthesizer::midi_value_converters::{
     normal_value_to_wave_shape_index, velocity_curve_from_normal_value,
 };
 use crate::synthesizer::{KeyboardParameters, MixerParameters, ModuleParameters};
-use accsyn_types::defaults::{
+use accsyn_core::defaults::{
     MAX_FILTER_RESONANCE, MIN_FILTER_RESONANCE, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL,
     OSCILLATOR_COURSE_TUNE_MIN_INTERVAL, OSCILLATOR_FINE_TUNE_MAX_CENTS,
     OSCILLATOR_FINE_TUNE_MIN_CENTS,
 };
-use accsyn_types::math::{
+use accsyn_core::math::{
     EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES, EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
     EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES, EXPONENTIAL_PORTAMENTO_COEFFICIENT,
     exponential_curve_envelope_time_from_normal_value,
     exponential_curve_from_normal_value_and_coefficient,
     exponential_curve_level_adjustment_from_normal_value,
 };
-use accsyn_types::synth_events::OscillatorIndex;
+use accsyn_core::synth_events::OscillatorIndex;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 

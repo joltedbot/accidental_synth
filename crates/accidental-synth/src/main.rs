@@ -4,7 +4,7 @@
 //!
 //! ## Library Crates
 //!
-//! - [`accsyn_types`] — Shared types, math utilities, and event enums
+//! - [`accsyn_core`] — Shared types, math utilities, and event enums
 //! - [`accsyn_engine`] — DSP synthesis engine (oscillators, filters, envelopes, effects)
 //! - [`accsyn_audio`] — CPAL audio output with hot-swappable device support
 //! - [`accsyn_midi`] — MIDI input handling with virtual port and channel filtering

@@ -1,5 +1,5 @@
-use accsyn_types::casting::f32_to_u32_clamped;
-use accsyn_types::effects::{AudioEffect, EffectParameters};
+use accsyn_core::casting::f32_to_u32_clamped;
+use accsyn_core::effects::{AudioEffect, EffectParameters};
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
 const WAVE_SHAPER_MAX_AMOUNT: f32 = 0.99;
@@ -138,7 +138,7 @@ fn saturation_chebyshev_polynomial(sample: f32, amount: f32) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     #[test]
     fn saturation_process_samples_returns_original_when_disabled() {

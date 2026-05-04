@@ -17,9 +17,9 @@ use accsyn_engine::synthesizer::midi_value_converters::{
     normal_value_to_wave_shape_index,
 };
 use accsyn_engine::synthesizer::patches::{Patches, get_module_parameters_from_patch_index};
-use accsyn_types::defaults::Defaults;
-use accsyn_types::synth_events::{EnvelopeIndex, LFOIndex};
-use accsyn_types::ui_events::{EnvelopeStage, UIUpdates};
+use accsyn_core::defaults::Defaults;
+use accsyn_core::synth_events::{EnvelopeIndex, LFOIndex};
+use accsyn_core::ui_events::{EnvelopeStage, UIUpdates};
 use crossbeam_channel::Receiver;
 use slint::Weak;
 use std::sync::{Arc, Mutex, PoisonError};

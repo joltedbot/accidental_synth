@@ -7,7 +7,7 @@ use crate::constants::{
     PROGRAM_CHANGE_VALUE_BYTE_INDEX, RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET,
 };
 use crate::{Status, control_change};
-use accsyn_types::midi_events::MidiEvent;
+use accsyn_core::midi_events::MidiEvent;
 use anyhow::Result;
 use crossbeam_channel::Sender;
 use midir::{MidiInput, MidiInputConnection, MidiInputPort};

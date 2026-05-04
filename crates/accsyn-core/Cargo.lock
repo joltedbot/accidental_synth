@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "accsyn-types"
+name = "accsyn-core"
 version = "0.1.3"
 dependencies = [
  "strum",

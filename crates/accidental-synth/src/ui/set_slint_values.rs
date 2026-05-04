@@ -11,9 +11,9 @@ use crate::ui::{
 };
 use crate::{AccidentalSynth, Mixer, ui};
 use accsyn_engine::synthesizer::midi_value_converters::normal_value_to_bool;
-use accsyn_types::effects::EffectParameters;
-use accsyn_types::synth_events::{EnvelopeIndex, LFOIndex};
-use accsyn_types::ui_events::EnvelopeStage;
+use accsyn_core::effects::EffectParameters;
+use accsyn_core::synth_events::{EnvelopeIndex, LFOIndex};
+use accsyn_core::ui_events::EnvelopeStage;
 use slint::{ModelRc, VecModel, Weak};
 use std::rc::Rc;
 

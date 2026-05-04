@@ -1,8 +1,8 @@
 use crate::modules::oscillator::constants::DEFAULT_PHASE;
 use crate::modules::oscillator::{Oscillator, WaveShape};
-use accsyn_types::defaults::Defaults;
-use accsyn_types::math::f32s_are_equal;
-use accsyn_types::parameter_types::{Balance, Hertz, LfoRange, NormalizedValue};
+use accsyn_core::defaults::Defaults;
+use accsyn_core::math::f32s_are_equal;
+use accsyn_core::parameter_types::{Balance, Hertz, LfoRange, NormalizedValue};
 use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::sync::atomic::Ordering::Relaxed;

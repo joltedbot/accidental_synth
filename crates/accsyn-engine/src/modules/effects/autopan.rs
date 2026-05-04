@@ -3,9 +3,9 @@ use crate::modules::effects::constants::{
 };
 use crate::modules::lfo::{DEFAULT_LFO_FREQUENCY, Lfo};
 use crate::synthesizer::midi_value_converters::exponential_curve_lfo_frequency_from_normal_value;
-use accsyn_types::casting::f32_to_u8_clamped;
-use accsyn_types::effects::{AudioEffect, EffectParameters};
-use accsyn_types::math::f32s_are_equal;
+use accsyn_core::casting::f32_to_u8_clamped;
+use accsyn_core::effects::{AudioEffect, EffectParameters};
+use accsyn_core::math::f32s_are_equal;
 use std::f32::consts::PI;
 
 #[derive(Debug, Default)]
@@ -81,7 +81,7 @@ fn autopan_samples(samples: (f32, f32), pan: f32) -> (f32, f32) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use accsyn_types::math::f32s_are_equal;
+    use accsyn_core::math::f32s_are_equal;
 
     #[test]
     fn autopan_process_samples_returns_original_when_disabled() {

@@ -1,5 +1,5 @@
 use crate::AccidentalSynth;
-use accsyn_types::synth_events::SynthesizerUpdateEvents;
+use accsyn_core::synth_events::SynthesizerUpdateEvents;
 use crossbeam_channel::Sender;
 use slint::Weak;
 
