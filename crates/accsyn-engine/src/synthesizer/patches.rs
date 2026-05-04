@@ -1,8 +1,8 @@
 use crate::synthesizer::ModuleParameters;
-use crate::synthesizer::constants::{MAX_PATCH_FILE_SIZE, MAX_PATCH_NAME_LENGTH};
-use anyhow::{Result, anyhow};
+use crate::synthesizer::constants::{MAX_PATCH_FILE_SIZE, MAX_PATCH_NAME_LENGTH, SYSTEM_PATCHES, SYSTEM_PATCH_INIT_PARAMETERS};
+use anyhow::{anyhow, Result};
 use serde_json::json;
-use std::fs::{DirEntry, read_to_string};
+use std::fs::{read_to_string, DirEntry};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
