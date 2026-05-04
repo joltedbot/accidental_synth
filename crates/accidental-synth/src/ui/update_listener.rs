@@ -11,15 +11,15 @@ use crate::ui::set_slint_values::{
     set_user_patch_list,
 };
 use crate::ui::{push_values_to_ui, update_ui_values_from_module_parameters};
+use accsyn_core::defaults::Defaults;
+use accsyn_core::synth_events::{EnvelopeIndex, LFOIndex};
+use accsyn_core::ui_events::{EnvelopeStage, UIUpdates};
 use accsyn_engine::synthesizer::midi_value_converters::{
     exponential_curve_lfo_frequency_from_normal_value, normal_value_to_bool,
     normal_value_to_number_of_filter_poles, normal_value_to_unsigned_integer_range,
     normal_value_to_wave_shape_index,
 };
 use accsyn_engine::synthesizer::patches::{Patches, get_module_parameters_from_patch_index};
-use accsyn_core::defaults::Defaults;
-use accsyn_core::synth_events::{EnvelopeIndex, LFOIndex};
-use accsyn_core::ui_events::{EnvelopeStage, UIUpdates};
 use crossbeam_channel::Receiver;
 use slint::Weak;
 use std::sync::{Arc, Mutex, PoisonError};

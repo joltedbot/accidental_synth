@@ -10,10 +10,10 @@ use crate::ui::{
     slint_patches_list_from_ui_patches_list, slint_patches_save_status_from_ui_patch_save_status,
 };
 use crate::{AccidentalSynth, Mixer, ui};
-use accsyn_engine::synthesizer::midi_value_converters::normal_value_to_bool;
 use accsyn_core::effects::EffectParameters;
 use accsyn_core::synth_events::{EnvelopeIndex, LFOIndex};
 use accsyn_core::ui_events::EnvelopeStage;
+use accsyn_engine::synthesizer::midi_value_converters::normal_value_to_bool;
 use slint::{ModelRc, VecModel, Weak};
 use std::rc::Rc;
 

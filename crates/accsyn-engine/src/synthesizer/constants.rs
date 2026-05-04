@@ -59,7 +59,10 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
         include_str!("patches/dirty-bass-echo.json"),
     ),
     ("Drifting Pad*", include_str!("patches/drifting-pad.json")),
-    ("Electric Piano*", include_str!("patches/electric-piano.json")),
+    (
+        "Electric Piano*",
+        include_str!("patches/electric-piano.json"),
+    ),
     ("FM Bells*", include_str!("patches/fm-bells.json")),
     ("House Hits*", include_str!("patches/house-hits.json")),
     ("Kick (Long)*", include_str!("patches/kick-long.json")),
@@ -67,11 +70,20 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
     ("Plucky Bass*", include_str!("patches/plucky-bass.json")),
     ("Plucky Keys*", include_str!("patches/plucky-keys.json")),
     ("Sci-Fi*", include_str!("patches/sci-fi.json")),
-    ("Reverse Bass Swells", include_str!("patches/reverse-bass-swells.json")),
-    ("Reverse Pulse Lead*", include_str!("patches/reverse-pulse-lead.json")),
+    (
+        "Reverse Bass Swells",
+        include_str!("patches/reverse-bass-swells.json"),
+    ),
+    (
+        "Reverse Pulse Lead*",
+        include_str!("patches/reverse-pulse-lead.json"),
+    ),
     ("Singing Bowls*", include_str!("patches/singing-bowls.json")),
     ("Slide Bass*", include_str!("patches/slide-bass.json")),
-    ("Supersaw 5ths Repeater*", include_str!("patches/supersaw-5ths-repeater.json")),
+    (
+        "Supersaw 5ths Repeater*",
+        include_str!("patches/supersaw-5ths-repeater.json"),
+    ),
     (
         "Supersaw Swirl*",
         include_str!("patches/supersaw-swirl.json"),

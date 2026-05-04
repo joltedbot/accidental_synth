@@ -6,10 +6,10 @@ mod oscillators;
 mod settings;
 
 use crate::AccidentalSynth;
-use accsyn_midi::MidiDeviceUpdateEvents;
 use accsyn_core::audio_events::AudioDeviceUpdateEvents;
 use accsyn_core::synth_events::SynthesizerUpdateEvents;
 use accsyn_core::ui_events::UIUpdates;
+use accsyn_midi::MidiDeviceUpdateEvents;
 use crossbeam_channel::Sender;
 use slint::Weak;
 

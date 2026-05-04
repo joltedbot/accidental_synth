@@ -14,12 +14,6 @@ use crate::ui::structs::{
     UIOscillator,
 };
 use crate::ui::update_listener::start_ui_update_listener;
-use accsyn_engine::modules::effects::AudioEffectParameters;
-use accsyn_engine::modules::lfo::DEFAULT_LFO_FREQUENCY;
-use accsyn_engine::modules::oscillator::OscillatorParameters;
-use accsyn_engine::synthesizer::patches::{PatchList, Patches};
-use accsyn_engine::synthesizer::{ModuleParameters, QuadMixerInput};
-use accsyn_midi::MidiDeviceUpdateEvents;
 use accsyn_core::audio_events::AudioDeviceUpdateEvents;
 use accsyn_core::defaults::Defaults;
 use accsyn_core::effects::EffectParameters;
@@ -29,6 +23,12 @@ use accsyn_core::synth_events::{
     EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
 };
 use accsyn_core::ui_events::UIUpdates;
+use accsyn_engine::modules::effects::AudioEffectParameters;
+use accsyn_engine::modules::lfo::DEFAULT_LFO_FREQUENCY;
+use accsyn_engine::modules::oscillator::OscillatorParameters;
+use accsyn_engine::synthesizer::patches::{PatchList, Patches};
+use accsyn_engine::synthesizer::{ModuleParameters, QuadMixerInput};
+use accsyn_midi::MidiDeviceUpdateEvents;
 use anyhow::Result;
 use crossbeam_channel::{Receiver, Sender, bounded};
 use slint::{ModelRc, SharedString, VecModel, Weak};
