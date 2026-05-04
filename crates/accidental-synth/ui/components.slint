@@ -306,6 +306,7 @@ export component FilterControlLabel inherits Rectangle {
 
 export component ToggleSwitch inherits VerticalLayout {
     in property <bool> is_checked;
+    out property <bool> async-enabled;
     in property <length> switch-height: 27px;
     in property <string> label;
     in property <bool> enabled: true;
@@ -321,6 +322,7 @@ export component ToggleSwitch inherits VerticalLayout {
 
     changed is_checked => {
         switch.checked = is_checked;
+        async-enabled = is_checked;
     }
 
     Text {
@@ -339,6 +341,7 @@ export component ToggleSwitch inherits VerticalLayout {
             height: switch-height;
             toggled() => {
                 toggle_switch_updated(self.checked);
+                async-enabled = self.checked;
             }
         }
     }
