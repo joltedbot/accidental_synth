@@ -44,8 +44,6 @@ impl FilterParameters {
         self.filter_poles.store(parameters.filter_poles.load());
         self.key_tracking_amount
             .store(parameters.key_tracking_amount.load());
-        self.cutoff_frequency
-            .store(parameters.cutoff_frequency.load());
     }
 }
 

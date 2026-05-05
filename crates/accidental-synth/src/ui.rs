@@ -24,8 +24,8 @@ use accsyn_core::synth_events::{
 };
 use accsyn_core::ui_events::UIUpdates;
 use accsyn_engine::modules::effects::AudioEffectParameters;
-use accsyn_engine::modules::lfo::DEFAULT_LFO_FREQUENCY;
 use accsyn_engine::modules::oscillator::OscillatorParameters;
+use accsyn_engine::synthesizer::midi_value_converters::exponential_curve_lfo_frequency_from_normal_value;
 use accsyn_engine::synthesizer::patches::{PatchList, Patches};
 use accsyn_engine::synthesizer::{ModuleParameters, QuadMixerInput};
 use accsyn_midi::MidiDeviceUpdateEvents;
@@ -180,8 +180,12 @@ pub(super) fn push_values_to_ui(
         ));
         ui.set_mod_wheel_lfo_values(slint_lfo_from_ui_lfo(&ui_default_values.mod_wheel_lfo));
         ui.set_filter_lfo_values(slint_lfo_from_ui_lfo(&ui_default_values.filter_lfo));
-        ui.set_mod_wheel_lfo_frequency_display(DEFAULT_LFO_FREQUENCY);
-        ui.set_filter_lfo_frequency_display(DEFAULT_LFO_FREQUENCY);
+        ui.set_mod_wheel_lfo_frequency_display(exponential_curve_lfo_frequency_from_normal_value(
+            ui_default_values.mod_wheel_lfo.frequency,
+        ));
+        ui.set_filter_lfo_frequency_display(exponential_curve_lfo_frequency_from_normal_value(
+            ui_default_values.filter_lfo.frequency,
+        ));
         ui.set_oscillator_values(slint_oscillators_from_oscillators(
             &ui_default_values.oscillators,
         ));

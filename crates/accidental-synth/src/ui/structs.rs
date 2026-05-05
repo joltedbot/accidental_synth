@@ -8,8 +8,7 @@ use accsyn_core::defaults::{
 use accsyn_core::math::{
     EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES, EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
     EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES, EXPONENTIAL_FILTER_COEFFICIENT,
-    EXPONENTIAL_LFO_COEFFICIENT, EXPONENTIAL_PORTAMENTO_COEFFICIENT,
-    normal_value_from_exponential_curve_and_coefficient,
+    EXPONENTIAL_PORTAMENTO_COEFFICIENT, normal_value_from_exponential_curve_and_coefficient,
     normal_value_from_exponential_curve_envelope_time, normal_value_from_exponential_level_curve,
     normalize_float_range, normalize_signed_integer_range, normalize_unsigned_integer_range,
 };
@@ -25,6 +24,7 @@ use accsyn_engine::modules::oscillator::constants::{
     DEFAULT_HARD_SYNC_ENABLED, DEFAULT_KEY_SYNC_ENABLED, DEFAULT_POLARITY_FLIPPED,
     DEFAULT_SUSTAIN_PEDAL_FLIPPED, MAX_CLIP_BOOST, MIN_CLIP_BOOST,
 };
+use accsyn_engine::synthesizer::midi_value_converters::normal_value_from_exponential_lfo_frequency;
 use accsyn_engine::synthesizer::{KeyboardParameters, MixerParameters};
 use std::sync::atomic::Ordering::Relaxed;
 
@@ -199,10 +199,7 @@ impl Default for UILfo {
 impl UILfo {
     pub fn from_synth_parameters(parameters: &LfoParameters) -> Self {
         Self {
-            frequency: normal_value_from_exponential_curve_and_coefficient(
-                parameters.frequency.load(),
-                EXPONENTIAL_LFO_COEFFICIENT,
-            ),
+            frequency: normal_value_from_exponential_lfo_frequency(parameters.frequency.load()),
             phase: parameters.phase.load(),
             wave_shape_index: i32::from(parameters.wave_shape.load(Relaxed)),
         }

@@ -17,8 +17,8 @@ pub const EXPONENTIAL_LEVEL_COEFFICIENT: f32 = 6.908;
 /// Level curve linear range: -60 to 0 dBFS = 60dB, so 10^(60/20) = 1000x.
 pub const LEVEL_CURVE_LINEAR_RANGE: f32 = 1000.0;
 /// Exponential coefficient for LFO rate mapping (ln(100000)).
-pub const EXPONENTIAL_LFO_COEFFICIENT: f32 = 13.81551;
-// ln(100_000) = 13.81551
+pub const EXPONENTIAL_LFO_COEFFICIENT: f32 = 14.5087;
+// ln(2_000_000) = 14.5087
 /// Exponential coefficient for portamento time mapping (ln(500)).
 pub const EXPONENTIAL_PORTAMENTO_COEFFICIENT: f32 = 6.214_608;
 // ln(500) = 6.214608

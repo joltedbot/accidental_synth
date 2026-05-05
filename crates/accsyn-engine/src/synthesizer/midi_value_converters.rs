@@ -11,7 +11,7 @@ use accsyn_core::defaults::Defaults;
 use accsyn_core::math;
 use accsyn_core::math::{
     EXPONENTIAL_FILTER_COEFFICIENT, EXPONENTIAL_LFO_COEFFICIENT, f32s_are_equal,
-    normalize_float_range,
+    normal_value_from_exponential_curve_and_coefficient, normalize_float_range,
 };
 
 /// Maps a normalized 0.0-1.0 value to a target f32 range.
@@ -123,6 +123,15 @@ pub fn exponential_curve_lfo_frequency_from_normal_value(normal_value: f32) -> f
         normal_value,
         EXPONENTIAL_LFO_COEFFICIENT,
     ) / 100.0
+}
+
+/// Converts a LFO frequency using an exponential curve to a normalized value
+#[must_use]
+pub fn normal_value_from_exponential_lfo_frequency(freq: f32) -> f32 {
+    if freq <= 0.0 {
+        return 0.0;
+    }
+    normal_value_from_exponential_curve_and_coefficient(freq * 100.0, EXPONENTIAL_LFO_COEFFICIENT)
 }
 
 /// Converts a normalized value to a velocity curve exponent for dynamic response shaping.
