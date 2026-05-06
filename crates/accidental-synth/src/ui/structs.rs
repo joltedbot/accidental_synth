@@ -309,6 +309,8 @@ impl UIMixer {
     }
 }
 
+// The bools are named and their purpose is clear in this struct so no confusion is introduced.
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Copy)]
 pub struct UIGlobalOptions {
     pub portamento_time: f32,
