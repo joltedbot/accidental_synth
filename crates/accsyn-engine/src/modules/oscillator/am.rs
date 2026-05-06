@@ -1,5 +1,5 @@
 use super::WaveShape;
-use super::constants::{DEFAULT_AM_TONE_AMOUNT, DEFAULT_AMPLITUDE_MODULATION_AMOUNT};
+use super::constants::{DEFAULT_RING_MOD_AMOUNT, DEFAULT_AMPLITUDE_MODULATION_AMOUNT};
 use super::sine::Sine;
 use crate::modules::oscillator::constants::{MAX_PHASE, MIN_PHASE};
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
@@ -10,7 +10,7 @@ pub struct AM {
     carrier: Box<dyn GenerateWave + Send + Sync>,
     modulator: Box<dyn GenerateWave + Send + Sync>,
     modulation_amount: f32,
-    am_tone_amount: f32, // 0.0 is ring modulation, 1.0 is proper AM
+    ring_mod_amount: f32, // 1.0 is full ring modulation, 0.0 is proper AM
 }
 
 impl AM {
@@ -22,7 +22,7 @@ impl AM {
             carrier: Box::new(Sine::new(sample_rate)),
             modulator: Box::new(Sine::new(sample_rate)),
             modulation_amount: DEFAULT_AMPLITUDE_MODULATION_AMOUNT,
-            am_tone_amount: DEFAULT_AM_TONE_AMOUNT,
+            ring_mod_amount: DEFAULT_RING_MOD_AMOUNT,
         }
     }
 }
@@ -33,7 +33,7 @@ impl GenerateWave for AM {
             .modulator
             .next_sample(tone_frequency * self.modulation_amount, modulation);
 
-        let am_tone_adjusted_modulator = modulator + (1.0 * self.am_tone_amount);
+        let am_tone_adjusted_modulator = modulator + (1.0 - self.ring_mod_amount);
 
         self.carrier.next_sample(tone_frequency, None) * am_tone_adjusted_modulator
     }
@@ -43,7 +43,7 @@ impl GenerateWave for AM {
     }
 
     fn set_shape_parameter2(&mut self, parameter: f32) {
-        self.am_tone_amount = parameter;
+        self.ring_mod_amount = parameter;
     }
 
     fn set_phase(&mut self, phase: f32) {
