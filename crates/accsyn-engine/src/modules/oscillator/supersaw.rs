@@ -6,7 +6,7 @@ use std::f32::consts::PI;
 const SHAPE: WaveShape = WaveShape::Supersaw;
 const DEFAULT_X_COORDINATE: f32 = 0.0;
 const DEFAULT_X_INCREMENT: f32 = 1.0;
-const VOICE_FREQUENCY_SPREAD_CENTS: [i8; 7] = [-12, -7, -4, 0, 4, 7, 12];
+const VOICE_FREQUENCY_OFFSETS: [f32; 7] = [0.893, 0.939, 0.98, 1.0, 1.02, 1.064, 1.11];
 const VOICE_COUNT_OUTPUT_LEVEL_OFFSET: f32 = 0.3;
 
 /// Multi-voice detuned supersaw oscillator blending seven saw waves.
@@ -56,11 +56,9 @@ impl GenerateWave for Supersaw {
             self.phase = None;
         }
 
-        for frequency_offset in VOICE_FREQUENCY_SPREAD_CENTS {
-            voice_samples.push(self.single_saw_sample(
-                frequency_from_cents(tone_frequency, i16::from(frequency_offset)),
-                self.x_coordinate,
-            ));
+        for frequency_offset in VOICE_FREQUENCY_OFFSETS {
+            voice_samples
+                .push(self.single_saw_sample(tone_frequency * frequency_offset, self.x_coordinate));
         }
 
         self.x_coordinate += self.x_increment * modulation.unwrap_or(1.0);
@@ -72,7 +70,7 @@ impl GenerateWave for Supersaw {
             }
         }
 
-        voice_samples.iter().sum::<f32>() * VOICE_COUNT_OUTPUT_LEVEL_OFFSET
+        voice_samples.iter().sum::<f32>() / 5.0
     }
 
     fn set_shape_parameter1(&mut self, _parameter: f32) {}
