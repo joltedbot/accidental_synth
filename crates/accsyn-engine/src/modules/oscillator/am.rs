@@ -1,5 +1,5 @@
 use super::WaveShape;
-use super::constants::{DEFAULT_RING_MOD_AMOUNT, DEFAULT_AMPLITUDE_MODULATION_AMOUNT};
+use super::constants::{DEFAULT_AMPLITUDE_MODULATION_AMOUNT, DEFAULT_RING_MOD_AMOUNT};
 use super::sine::Sine;
 use crate::modules::oscillator::constants::{MAX_PHASE, MIN_PHASE};
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
