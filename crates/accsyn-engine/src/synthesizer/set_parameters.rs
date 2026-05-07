@@ -354,6 +354,8 @@ pub fn set_module_parameters_from_preset(
         .iter()
         .enumerate()
         .for_each(|(index, effect)| {
-            effect.assign_from(&preset.effects[index]);
+            if index < preset.effects.len() {
+                effect.assign_from(&preset.effects[index]);
+            }
         });
 }

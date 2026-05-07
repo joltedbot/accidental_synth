@@ -71,7 +71,7 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
     ("Plucky Keys*", include_str!("patches/plucky-keys.json")),
     ("Sci-Fi*", include_str!("patches/sci-fi.json")),
     (
-        "Reverse Bass Swells",
+        "Reverse Bass Swells*",
         include_str!("patches/reverse-bass-swells.json"),
     ),
     (
