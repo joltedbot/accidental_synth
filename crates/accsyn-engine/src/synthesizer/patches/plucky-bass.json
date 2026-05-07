@@ -154,44 +154,104 @@
   ],
   "effects": [
     {
+      "name": "Saturation",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Colour Compressor",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Wave Folder",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Bit Shifter",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Clipper",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Gate Clipping",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Full/Half Wave Rectifier",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Auto-Pan",
       "is_enabled": false,
-      "parameters": [0.25, 0.4, 0.35, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Tremolo",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.2,
+        0.4,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Delay",
       "is_enabled": false,
-      "parameters": [0.2, 0.4, 0.0, 0.0]
+      "parameters": [
+        0.25,
+        0.4,
+        0.35,
+        0.0
+      ]
     }
   ]
 }

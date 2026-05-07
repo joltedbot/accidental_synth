@@ -154,44 +154,104 @@
   ],
   "effects": [
     {
+      "name": "Saturation",
       "is_enabled": true,
-      "parameters": [0.0, 0.34481996, 0.35866168, 0.0]
+      "parameters": [
+        0.0,
+        0.34481996,
+        0.35866168,
+        0.0
+      ]
     },
     {
+      "name": "Colour Compressor",
       "is_enabled": false,
-      "parameters": [1.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Wave Folder",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Bit Shifter",
       "is_enabled": false,
-      "parameters": [1.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Clipper",
       "is_enabled": false,
-      "parameters": [0.0, 1.0, 0.0, 0.0]
+      "parameters": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Gate Clipping",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Full/Half Wave Rectifier",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Auto-Pan",
       "is_enabled": true,
-      "parameters": [0.33160666, 0.16056386, 0.27539062, 0.0]
+      "parameters": [
+        0.079381794,
+        0.12810801,
+        1.0,
+        0.0
+      ]
     },
     {
+      "name": "Tremolo",
       "is_enabled": true,
-      "parameters": [0.079381794, 0.12810801, 1.0, 0.0]
+      "parameters": [
+        0.15869565,
+        0.4046875,
+        1.0,
+        0.0
+      ]
     },
     {
+      "name": "Delay",
       "is_enabled": true,
-      "parameters": [0.15869565, 0.4046875, 1.0, 0.0]
+      "parameters": [
+        0.33160666,
+        0.16056386,
+        0.27539062,
+        0.0
+      ]
     }
   ]
 }

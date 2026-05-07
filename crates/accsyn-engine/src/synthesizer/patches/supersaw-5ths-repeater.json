@@ -154,44 +154,104 @@
   ],
   "effects": [
     {
+      "name": "Saturation",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 1.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ]
     },
     {
+      "name": "Colour Compressor",
       "is_enabled": true,
-      "parameters": [0.2102072, 0.23296535, 0.4609375, 0.0]
+      "parameters": [
+        0.2102072,
+        0.23296535,
+        0.4609375,
+        0.0
+      ]
     },
     {
+      "name": "Wave Folder",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Bit Shifter",
       "is_enabled": false,
-      "parameters": [1.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Clipper",
       "is_enabled": false,
-      "parameters": [0.0, 1.0, 0.0, 0.0]
+      "parameters": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Gate Clipping",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Full/Half Wave Rectifier",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Auto-Pan",
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Tremolo",
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Delay",
       "is_enabled": true,
-      "parameters": [0.7181046, 0.4515455, 0.52556044, 0.0]
-    },
-    {
-      "is_enabled": false,
-      "parameters": [0.0, 1.0, 0.0, 0.0]
-    },
-    {
-      "is_enabled": false,
-      "parameters": [0.0, 1.0, 0.0, 0.0]
+      "parameters": [
+        0.7181046,
+        0.4515455,
+        0.52556044,
+        0.0
+      ]
     }
   ]
 }

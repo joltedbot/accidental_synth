@@ -154,44 +154,104 @@
   ],
   "effects": [
     {
+      "name": "Saturation",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 1.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ]
     },
     {
+      "name": "Colour Compressor",
       "is_enabled": false,
-      "parameters": [1.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Wave Folder",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Bit Shifter",
       "is_enabled": false,
-      "parameters": [1.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Clipper",
       "is_enabled": false,
-      "parameters": [0.0, 1.0, 0.0, 0.0]
+      "parameters": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Gate Clipping",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Full/Half Wave Rectifier",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Auto-Pan",
       "is_enabled": false,
-      "parameters": [0.33466372, 0.16088656, 0.5016644, 0.0]
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Tremolo",
       "is_enabled": false,
-      "parameters": [0.0, 1.0, 0.0, 0.0]
+      "parameters": [
+        0.44186482,
+        0.57640964,
+        0.0,
+        0.0
+      ]
     },
     {
+      "name": "Delay",
       "is_enabled": false,
-      "parameters": [0.44186482, 0.57640964, 0.0, 0.0]
+      "parameters": [
+        0.33466372,
+        0.16088656,
+        0.5016644,
+        0.0
+      ]
     }
   ]
 }

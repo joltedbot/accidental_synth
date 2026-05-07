@@ -154,6 +154,7 @@
   ],
   "effects": [
     {
+      "name": "Saturation",
       "is_enabled": false,
       "parameters": [
         0.0,
@@ -163,6 +164,7 @@
       ]
     },
     {
+      "name": "Colour Compressor",
       "is_enabled": false,
       "parameters": [
         0.16932745,
@@ -172,6 +174,7 @@
       ]
     },
     {
+      "name": "Wave Folder",
       "is_enabled": false,
       "parameters": [
         0.0,
@@ -181,24 +184,7 @@
       ]
     },
     {
-      "is_enabled": false,
-      "parameters": [
-        1.0,
-        0.0,
-        0.0,
-        0.0
-      ]
-    },
-    {
-      "is_enabled": false,
-      "parameters": [
-        0.0,
-        1.0,
-        0.0,
-        0.0
-      ]
-    },
-    {
+      "name": "Bit Shifter",
       "is_enabled": false,
       "parameters": [
         0.0,
@@ -208,24 +194,17 @@
       ]
     },
     {
-      "is_enabled": false,
-      "parameters": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ]
-    },
-    {
+      "name": "Clipper",
       "is_enabled": false,
       "parameters": [
         1.0,
-        0.14566916,
-        0.15337975,
+        0.0,
+        0.0,
         0.0
       ]
     },
     {
+      "name": "Gate Clipping",
       "is_enabled": false,
       "parameters": [
         0.0,
@@ -235,11 +214,42 @@
       ]
     },
     {
+      "name": "Full/Half Wave Rectifier",
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Auto-Pan",
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Tremolo",
       "is_enabled": false,
       "parameters": [
         0.0,
         0.0,
         2.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Delay",
+      "is_enabled": false,
+      "parameters": [
+        1.0,
+        0.14566916,
+        0.15337975,
         0.0
       ]
     }
