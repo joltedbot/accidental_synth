@@ -2,6 +2,18 @@
 
 This project has switched from Semantic Versioning to Calendar Versioning.
 
+## [2026.05.07.1] - 2026-05-6
+
+### Fixed
+ - LFO default frequency value display now correctly reflects the patch file value
+ - AM Oscillator Ring Mod Amount default is now set to AM by default rather than full ring mode by default
+ - Bumped some dependency versions
+ - Various formatting and linting fixes
+
+### Changed
+ - Effect names are now shown in the patch files to make it easier to identify them if editing manually
+ - Updated the supersaw to try and match the original detune spread better
+
 ## [2026.05.03.1] - 2026-05-03
 
 ### Added
