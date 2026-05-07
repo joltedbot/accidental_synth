@@ -74,6 +74,8 @@ pub const COMPRESSOR_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
 pub const CLIPPER_DEFAULT_PARAMETERS: [f32; 4] = [1.0, 0.0, 0.0, 0.0];
 /// Default gate effect parameters: [threshold, ratio, unused, unused].
 pub const GATE_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
+/// Default effect parameters when not otherwise specified.
+pub const DEFAULT_EFFECT_PARAMETERS: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 
 impl Defaults {
     /// MIDI note number to frequency (Hz) and note name lookup table.

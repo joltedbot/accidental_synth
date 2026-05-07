@@ -53,6 +53,7 @@ mod tests {
     fn bitshifter_process_samples_returns_original_when_disabled() {
         let mut bitshifter = BitShifter::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: false,
             parameters: vec![0.5, 0.0, 0.0, 0.0],
         };

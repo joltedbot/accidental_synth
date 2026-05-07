@@ -14,13 +14,13 @@ import {
     Saturation,
     Compressor,
     Wavefolder,
+    Bitshifter,
     Clipper,
     Gate,
     Rectifier,
-    Bitshifter,
-    Delay,
     AutoPan,
     Tremolo,
+    Delay,
 } from "effects.slint";
 
 export component EffectsPanel inherits Panel {
@@ -92,7 +92,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Clipper {
+                Bitshifter {
                     effect-index: 3;
                     effect_values: effects_values[self.effect-index];
 
@@ -109,7 +109,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Gate {
+                Clipper {
                     effect-index: 4;
                     effect_values: effects_values[self.effect-index];
 
@@ -133,7 +133,7 @@ export component EffectsPanel inherits Panel {
                 padding: Theme.effect-box-padding;
                 spacing: Theme.effect-box-spacing;
 
-                Rectifier {
+                Gate {
                     effect-index: 5;
                     effect_values: effects_values[self.effect-index];
 
@@ -150,7 +150,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Bitshifter {
+                Rectifier {
                     effect-index: 6;
                     effect_values: effects_values[self.effect-index];
 
@@ -167,7 +167,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Delay {
+                AutoPan {
                     effect-index: 7;
                     effect_values: effects_values[self.effect-index];
 
@@ -184,7 +184,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                AutoPan {
+                Tremolo {
                     effect-index: 8;
                     effect_values: effects_values[self.effect-index];
 
@@ -201,7 +201,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Tremolo {
+                Delay {
                     effect-index: 9;
                     effect_values: effects_values[self.effect-index];
 

@@ -144,6 +144,7 @@ mod tests {
     fn saturation_process_samples_returns_original_when_disabled() {
         let mut saturation = Saturation::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: false,
             parameters: vec![0.0, 0.5, 1.0, 0.0],
         };
@@ -159,6 +160,7 @@ mod tests {
     fn saturation_process_samples_returns_original_when_amount_is_zero() {
         let mut saturation = Saturation::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.0, 0.0, 1.0, 0.0], // amount = 0.0
         };
@@ -174,6 +176,7 @@ mod tests {
     fn saturation_process_samples_clamps_amount_to_max() {
         let mut saturation = Saturation::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.0, 1.5, 0.5, 0.0], // amount > WAVE_SHAPER_MAX_AMOUNT
         };
@@ -191,6 +194,7 @@ mod tests {
     fn saturation_process_samples_uses_analog_modeled_mode() {
         let mut saturation = Saturation::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.0, 0.5, 1.0, 0.0], // mode index 0 = AnalogModeled
         };
@@ -207,6 +211,7 @@ mod tests {
     fn saturation_process_samples_uses_tube_like_mode() {
         let mut saturation = Saturation::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![1.0, 0.5, 1.0, 0.0], // mode index 1 = TubeLike
         };
@@ -222,6 +227,7 @@ mod tests {
     fn saturation_process_samples_uses_soft_clipping_mode() {
         let mut saturation = Saturation::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![2.0, 0.5, 1.0, 0.0], // mode index 2 = SoftClipping
         };
@@ -237,6 +243,7 @@ mod tests {
     fn saturation_process_samples_uses_wave_shaping_mode() {
         let mut saturation = Saturation::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![3.0, 0.5, 1.0, 0.0], // mode index 3 = WaveShaping
         };
@@ -252,6 +259,7 @@ mod tests {
     fn saturation_process_samples_uses_sine_shaper_mode() {
         let mut saturation = Saturation::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![4.0, 0.5, 1.0, 0.0], // mode index 4 = SineShaper
         };
@@ -267,6 +275,7 @@ mod tests {
     fn saturation_process_samples_uses_polynomial_mode() {
         let mut saturation = Saturation::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![5.0, 0.5, 1.0, 0.0], // mode index 5 = Polynomial
         };
@@ -282,10 +291,12 @@ mod tests {
     fn saturation_process_samples_applies_gain_reduction() {
         let mut saturation = Saturation::new();
         let effect_full_gain = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.0, 0.5, 1.0, 0.0], // gain_reduction = 1.0
         };
         let effect_half_gain = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.0, 0.5, 0.5, 0.0], // gain_reduction = 0.5
         };

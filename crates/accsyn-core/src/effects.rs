@@ -1,10 +1,11 @@
 use crate::defaults::{
     AUTOPAN_DEFAULT_PARAMETERS, CLIPPER_DEFAULT_PARAMETERS, COMPRESSOR_DEFAULT_PARAMETERS,
-    DELAY_DEFAULT_PARAMETERS, GATE_DEFAULT_PARAMETERS, SATURATION_DEFAULT_PARAMETERS,
-    TREMOLO_DEFAULT_PARAMETERS,
+    DEFAULT_EFFECT_PARAMETERS, DELAY_DEFAULT_PARAMETERS, GATE_DEFAULT_PARAMETERS,
+    SATURATION_DEFAULT_PARAMETERS, TREMOLO_DEFAULT_PARAMETERS,
 };
+use std::string::ToString;
 use strum::IntoEnumIterator;
-use strum_macros::{EnumCount, EnumIter, FromRepr};
+use strum_macros::{Display, EnumCount, EnumIter, FromRepr};
 
 /// Number of adjustable parameters per audio effect.
 pub const PARAMETERS_PER_EFFECT: usize = 4;
@@ -16,29 +17,39 @@ pub trait AudioEffect {
 }
 
 /// Index identifying each available audio effect type.
-#[derive(Debug, Clone, Copy, EnumCount, EnumIter, FromRepr)]
+#[derive(Debug, Display, Clone, Copy, EnumCount, EnumIter, FromRepr, Eq, PartialEq, Hash)]
 #[repr(i32)]
 pub enum EffectIndex {
     /// Soft saturation distortion effect.
+    #[strum(to_string = "Saturation")]
     Saturation,
     /// Dynamic range compressor effect.
+    #[strum(to_string = "Colour Compressor")]
     Compressor,
     /// Wavefolder distortion effect.
+    #[strum(to_string = "Wave Folder")]
     WaveFolder,
+    /// Bit-shifting digital distortion effect.
+    #[strum(to_string = "Bit Shifter")]
+    BitShifter,
     /// Hard clipper distortion effect.
+    #[strum(to_string = "Clipper")]
     Clipper,
-    /// Noise gate effect.
+    /// Gate Clipping effect.
+    #[strum(to_string = "Gate Clipping")]
     Gate,
     /// Full-wave rectifier distortion effect.
+    #[strum(to_string = "Full/Half Wave Rectifier")]
     Rectifier,
-    /// Bit-shifting digital distortion effect.
-    BitShifter,
-    /// Stereo delay effect with feedback.
-    Delay,
     /// Automatic stereo panning effect.
+    #[strum(to_string = "Auto-Pan")]
     AutoPan,
     /// Amplitude tremolo modulation effect.
+    #[strum(to_string = "Tremolo")]
     Tremolo,
+    /// Stereo delay effect with feedback.
+    #[strum(to_string = "Delay")]
+    Delay,
 }
 
 impl EffectIndex {
@@ -52,6 +63,8 @@ impl EffectIndex {
 /// Runtime parameters for a single audio effect instance.
 #[derive(Debug, Clone)]
 pub struct EffectParameters {
+    /// Effect Name
+    pub name: String,
     /// Whether this effect is currently active in the signal chain.
     pub is_enabled: bool,
     /// The effect's adjustable parameter values.
@@ -67,46 +80,57 @@ impl EffectParameters {
         for effect in EffectIndex::iter() {
             match effect {
                 EffectIndex::WaveFolder | EffectIndex::Rectifier | EffectIndex::BitShifter => {
-                    effect_parameters.push(EffectParameters::default());
+                    effect_parameters.push(EffectParameters {
+                        name: effect.to_string(),
+                        is_enabled: false,
+                        parameters: DEFAULT_EFFECT_PARAMETERS.to_vec(),
+                    });
                 }
                 EffectIndex::Saturation => {
                     effect_parameters.push(EffectParameters {
+                        name: effect.to_string(),
                         is_enabled: false,
                         parameters: SATURATION_DEFAULT_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::Clipper => {
                     effect_parameters.push(EffectParameters {
+                        name: effect.to_string(),
                         is_enabled: false,
                         parameters: CLIPPER_DEFAULT_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::Gate => {
                     effect_parameters.push(EffectParameters {
+                        name: effect.to_string(),
                         is_enabled: false,
                         parameters: GATE_DEFAULT_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::Compressor => {
                     effect_parameters.push(EffectParameters {
+                        name: effect.to_string(),
                         is_enabled: false,
                         parameters: COMPRESSOR_DEFAULT_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::Delay => {
                     effect_parameters.push(EffectParameters {
+                        name: effect.to_string(),
                         is_enabled: false,
                         parameters: DELAY_DEFAULT_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::AutoPan => {
                     effect_parameters.push(EffectParameters {
+                        name: effect.to_string(),
                         is_enabled: false,
                         parameters: AUTOPAN_DEFAULT_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::Tremolo => {
                     effect_parameters.push(EffectParameters {
+                        name: effect.to_string(),
                         is_enabled: false,
                         parameters: TREMOLO_DEFAULT_PARAMETERS.to_vec(),
                     });
@@ -115,15 +139,5 @@ impl EffectParameters {
         }
 
         effect_parameters
-    }
-}
-
-impl Default for EffectParameters {
-    fn default() -> Self {
-        let parameters = vec![0.0; PARAMETERS_PER_EFFECT];
-        Self {
-            is_enabled: false,
-            parameters,
-        }
     }
 }

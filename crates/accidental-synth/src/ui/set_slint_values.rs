@@ -293,10 +293,9 @@ pub fn set_effect_display(
     // effect_index is a Slint UI-sourced index, always non-negative and bounded by array size
     #[allow(clippy::cast_sign_loss)]
     let idx = effect_index as usize;
-    effect_values[idx] = EffectParameters {
-        is_enabled,
-        parameters,
-    };
+    effect_values[idx].is_enabled = is_enabled;
+    effect_values[idx].parameters = parameters;
+
     let ui_effect_values = effect_values.to_vec();
     let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
         ui.set_effects_values(ui::slint_effect_values_from_effect_parameters(

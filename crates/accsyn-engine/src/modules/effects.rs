@@ -25,6 +25,8 @@ mod wavefolder;
 /// Shared atomic parameters for controlling a single audio effect from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AudioEffectParameters {
+    /// Effect name
+    pub name: String,
     /// Whether this effect is active in the processing chain.
     pub is_enabled: AtomicBool,
     /// Effect-specific parameter values.
@@ -48,6 +50,7 @@ impl AudioEffectParameters {
 impl Default for AudioEffectParameters {
     fn default() -> Self {
         Self {
+            name: String::new(),
             is_enabled: AtomicBool::new(false),
             parameters: [
                 NormalizedValue::default(),
@@ -81,8 +84,8 @@ impl Effects {
 
         Self {
             effects: vec![
-                saturation, compressor, wavefolder, clipper, gate, rectifier, bitshifter, delay,
-                autopan, tremolo,
+                saturation, compressor, wavefolder, bitshifter, clipper, gate, rectifier, autopan,
+                tremolo, delay,
             ],
             parameters: EffectParameters::default_all(),
         }
@@ -110,6 +113,7 @@ impl Effects {
 
 fn extract_parameters(source: &AudioEffectParameters) -> EffectParameters {
     EffectParameters {
+        name: source.name.clone(),
         is_enabled: source.is_enabled.load(Relaxed),
         parameters: source
             .parameters
@@ -148,6 +152,7 @@ mod tests {
     #[test]
     fn extract_parameters_copies_is_enabled() {
         let source = AudioEffectParameters {
+            name: String::new(),
             is_enabled: AtomicBool::new(true),
             parameters: [
                 NormalizedValue::new(0.5_f32),
@@ -163,8 +168,28 @@ mod tests {
     }
 
     #[test]
+    fn extract_parameters_copies_name() {
+        let test_name = "Test Effect";
+        let source = AudioEffectParameters {
+            name: String::from(test_name),
+            is_enabled: AtomicBool::new(false),
+            parameters: [
+                NormalizedValue::new(0.5_f32),
+                NormalizedValue::new(0.3_f32),
+                NormalizedValue::new(0.7_f32),
+                NormalizedValue::new(0.1_f32),
+            ],
+        };
+
+        let result = extract_parameters(&source);
+
+        assert_eq!(result.name, test_name);
+    }
+
+    #[test]
     fn extract_parameters_copies_parameters() {
         let source = AudioEffectParameters {
+            name: String::new(),
             is_enabled: AtomicBool::new(false),
             parameters: [
                 NormalizedValue::new(0.5_f32),
@@ -210,6 +235,10 @@ mod tests {
             AudioEffectParameters::default(),
             AudioEffectParameters::default(),
             AudioEffectParameters::default(),
+            AudioEffectParameters::default(),
+            AudioEffectParameters::default(),
+            AudioEffectParameters::default(),
+            AudioEffectParameters::default(),
         ];
         // Enable rectifier with half-wave mode
         params[EffectIndex::Rectifier as usize].is_enabled = AtomicBool::new(true);
@@ -220,14 +249,23 @@ mod tests {
         let result = effects.process(input);
 
         // Half-wave rectifier: positive passes, negative becomes 0
-        assert!(f32s_are_equal(result.0, 0.5));
-        assert!(f32s_are_equal(result.1, 0.0));
+        assert!(
+            f32s_are_equal(result.0, 0.5),
+            "Expected 0.5, Recieved {}",
+            result.0
+        );
+        assert!(
+            f32s_are_equal(result.1, 0.0),
+            "Expected 0.0, Recieved {}",
+            result.1
+        );
     }
 
     #[test]
     fn effects_process_chains_multiple_effects() {
         let mut effects = Effects::new(48000);
         let mut params = vec![
+            AudioEffectParameters::default(),
             AudioEffectParameters::default(),
             AudioEffectParameters::default(),
             AudioEffectParameters::default(),

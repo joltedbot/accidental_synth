@@ -280,6 +280,7 @@ fn synthesizer_effects_to_ui_effects(effects: &[AudioEffectParameters]) -> Vec<E
     let mut ui_effects: Vec<EffectParameters> = Vec::new();
     for effect in effects {
         ui_effects.push(EffectParameters {
+            name: effect.name.clone(),
             is_enabled: effect.is_enabled.load(Relaxed),
             parameters: effect
                 .parameters
@@ -444,6 +445,7 @@ fn slint_effect_values_from_effect_parameters(
         input_values
             .iter()
             .map(|effect| EffectsValues {
+                name: SharedString::from(effect.name.clone()),
                 is_enabled: effect.is_enabled,
                 parameters: ModelRc::new(VecModel::from(effect.parameters.clone())),
             })

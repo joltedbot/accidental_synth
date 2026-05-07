@@ -80,6 +80,7 @@ mod tests {
     fn tremolo_process_samples_returns_original_when_disabled() {
         let mut tremolo = Tremolo::new(44100);
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: false,
             parameters: vec![0.0, 0.0, 0.0, 0.0],
         };
@@ -95,6 +96,7 @@ mod tests {
     fn tremolo_process_samples_updates_frequency_when_changed() {
         let mut tremolo = Tremolo::new(44100);
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.5, 0.5, 0.0, 0.0],
         };
@@ -105,6 +107,7 @@ mod tests {
 
         // Change frequency parameter
         let new_effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.8, 0.5, 0.0, 0.0],
         };
@@ -121,6 +124,7 @@ mod tests {
     fn tremolo_process_samples_updates_depth_when_changed() {
         let mut tremolo = Tremolo::new(44100);
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.5, 0.3, 0.0, 0.0],
         };
@@ -131,6 +135,7 @@ mod tests {
 
         // Change depth parameter
         let new_effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.5, 0.7, 0.0, 0.0],
         };
@@ -144,6 +149,7 @@ mod tests {
     fn tremolo_process_samples_updates_shape_when_changed() {
         let mut tremolo = Tremolo::new(44100);
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.5, 0.5, 0.0, 0.0],
         };
@@ -154,6 +160,7 @@ mod tests {
 
         // Change shape parameter
         let new_effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.5, 0.5, 1.0, 0.0],
         };
@@ -170,6 +177,7 @@ mod tests {
     fn tremolo_process_samples_does_not_update_when_parameters_unchanged() {
         let mut tremolo = Tremolo::new(44100);
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.5, 0.6, 2.0, 0.0],
         };

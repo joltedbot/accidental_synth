@@ -56,6 +56,7 @@ mod tests {
     fn rectifier_process_samples_returns_original_when_disabled() {
         let mut rectifier = Rectifier::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: false,
             parameters: vec![0.0, 0.0, 0.0, 0.0],
         };

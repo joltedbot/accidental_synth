@@ -13,6 +13,7 @@ import { Switch } from "std-widgets.slint";
 import { PatchState, Constant } from "constants.slint";
 
 export struct EffectsValues {
+    name: string,
     is_enabled: bool,
     parameters: [float],
 }
@@ -66,7 +67,7 @@ export component Saturation inherits EffectBox {
     in property <EffectsValues> effect_values;
     property <int> patch_generation: PatchState.generation;
 
-    title: Theme.saturation-title;
+    title: effect_values.name;
     is_enabled: effect_values.is_enabled;
 
     changed patch_generation => {
@@ -122,7 +123,7 @@ export component Compressor inherits EffectBox {
     in property <EffectsValues> effect_values;
     property <int> patch_generation: PatchState.generation;
 
-    title: Theme.compressor-title;
+    title: effect_values.name;
     is_enabled: effect_values.is_enabled;
 
     changed patch_generation => {
@@ -173,7 +174,7 @@ export component Wavefolder inherits EffectBox {
     in property <EffectsValues> effect_values;
     property <int> patch_generation: PatchState.generation;
 
-    title: Theme.wavefolder-title;
+    title: effect_values.name;
     is_enabled: effect_values.is_enabled;
 
     changed patch_generation => {
@@ -222,12 +223,41 @@ export component Wavefolder inherits EffectBox {
     }
 }
 
+export component Bitshifter inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
+    title: effect_values.name;
+    is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
+
+    changed is_enabled => {
+        bits.enabled = self.is_enabled;
+    }
+
+    HorizontalSpacer { }
+
+    bits := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        value: effect_values.parameters[0];
+        label: Theme.bitshifter-parameter1;
+        horizontal-parameter-slider-changed(amount) => {
+            effect_parameter_changed(parent.effect-index, 0, amount);
+        }
+    }
+}
+
 export component Clipper inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
     property <int> patch_generation: PatchState.generation;
 
-    title: Theme.clipper-title;
+    title: effect_values.name;
     is_enabled: effect_values.is_enabled;
 
     changed patch_generation => {
@@ -292,7 +322,7 @@ export component Gate inherits EffectBox {
     in property <EffectsValues> effect_values;
     property <int> patch_generation: PatchState.generation;
 
-    title: Theme.gate-title;
+    title: effect_values.name;
     is_enabled: effect_values.is_enabled;
 
     changed patch_generation => {
@@ -343,7 +373,7 @@ export component Rectifier inherits EffectBox {
     in property <EffectsValues> effect_values;
     property <int> patch_generation: PatchState.generation;
 
-    title: Theme.rectifier-title;
+    title: effect_values.name;
     is_enabled: effect_values.is_enabled;
 
     changed patch_generation => {
@@ -370,92 +400,12 @@ export component Rectifier inherits EffectBox {
     }
 }
 
-export component Bitshifter inherits EffectBox {
-    callback effect_parameter_changed(int, int, float);
-    in property <EffectsValues> effect_values;
-    property <int> patch_generation: PatchState.generation;
-
-    title: Theme.bitshifter-title;
-    is_enabled: effect_values.is_enabled;
-
-    changed patch_generation => {
-        root.is_enabled = effect_values.is_enabled;
-    }
-
-    changed is_enabled => {
-        bits.enabled = self.is_enabled;
-    }
-
-    HorizontalSpacer { }
-
-    bits := HorizontalParameterSlider {
-        enabled: false;
-        slider-width: 230px;
-        value: effect_values.parameters[0];
-        label: Theme.bitshifter-parameter1;
-        horizontal-parameter-slider-changed(amount) => {
-            effect_parameter_changed(parent.effect-index, 0, amount);
-        }
-    }
-}
-
-export component Delay inherits EffectBox {
-    callback effect_parameter_changed(int, int, float);
-    in property <EffectsValues> effect_values;
-    property <int> patch_generation: PatchState.generation;
-
-    title: Theme.delay-title;
-    is_enabled: effect_values.is_enabled;
-
-    changed patch_generation => {
-        root.is_enabled = effect_values.is_enabled;
-    }
-
-    changed is_enabled => {
-        amount.enabled = self.is_enabled;
-        delay.enabled = self.is_enabled;
-        decay.enabled = self.is_enabled;
-    }
-
-    HorizontalSpacer { }
-
-    amount := HorizontalParameterSlider {
-        slider-width: 230px;
-        label: Theme.delay-parameter1;
-        value: effect_values.parameters[0];
-        enabled: false;
-        horizontal-parameter-slider-changed(theshold) => {
-            effect_parameter_changed(parent.effect-index, 0, theshold);
-        }
-    }
-
-    delay := HorizontalParameterSlider {
-        enabled: false;
-        slider-width: 230px;
-        label: Theme.delay-parameter2;
-        value: effect_values.parameters[1];
-        horizontal-parameter-slider-changed(amount) => {
-            effect_parameter_changed(parent.effect-index, 1, amount);
-        }
-    }
-
-    decay := HorizontalParameterSlider {
-        enabled: false;
-        slider-width: 230px;
-        label: Theme.delay-parameter3;
-        value: effect_values.parameters[2];
-        horizontal-parameter-slider-changed(amount) => {
-            effect_parameter_changed(parent.effect-index, 2, amount);
-        }
-    }
-}
-
 export component AutoPan inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
     property <int> patch_generation: PatchState.generation;
 
-    title: Theme.autopan-title;
+    title: effect_values.name;
     is_enabled: effect_values.is_enabled;
 
     changed patch_generation => {
@@ -507,7 +457,7 @@ export component Tremolo inherits EffectBox {
     in property <EffectsValues> effect_values;
     property <int> patch_generation: PatchState.generation;
 
-    title: Theme.tremolo-title;
+    title: effect_values.name;
     is_enabled: effect_values.is_enabled;
 
     changed patch_generation => {
@@ -550,6 +500,57 @@ export component Tremolo inherits EffectBox {
         value_index: effect_values.parameters[2];
         drop_down_changed(index, name) => {
             effect_parameter_changed(root.effect-index, 2, index);
+        }
+    }
+}
+
+export component Delay inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
+    title: effect_values.name;
+    is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
+
+    changed is_enabled => {
+        amount.enabled = self.is_enabled;
+        delay.enabled = self.is_enabled;
+        decay.enabled = self.is_enabled;
+    }
+
+    HorizontalSpacer { }
+
+    amount := HorizontalParameterSlider {
+        slider-width: 230px;
+        label: Theme.delay-parameter1;
+        value: effect_values.parameters[0];
+        enabled: false;
+        horizontal-parameter-slider-changed(theshold) => {
+            effect_parameter_changed(parent.effect-index, 0, theshold);
+        }
+    }
+
+    delay := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.delay-parameter2;
+        value: effect_values.parameters[1];
+        horizontal-parameter-slider-changed(amount) => {
+            effect_parameter_changed(parent.effect-index, 1, amount);
+        }
+    }
+
+    decay := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.delay-parameter3;
+        value: effect_values.parameters[2];
+        horizontal-parameter-slider-changed(amount) => {
+            effect_parameter_changed(parent.effect-index, 2, amount);
         }
     }
 }

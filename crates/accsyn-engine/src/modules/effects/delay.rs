@@ -117,6 +117,7 @@ mod tests {
     fn delay_process_samples_returns_original_when_disabled() {
         let mut delay = Delay::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: false,
             parameters: vec![0.5, 0.5, 0.5, 0.0],
         };
@@ -132,6 +133,7 @@ mod tests {
     fn delay_process_samples_fills_buffer_when_buffer_not_full() {
         let mut delay = Delay::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.5, 0.5, 0.5, 0.0],
         };
@@ -154,6 +156,7 @@ mod tests {
 
         // Enable and process samples to fill buffer
         let enabled_effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.5, 0.5, 0.5, 0.0],
         };
@@ -163,6 +166,7 @@ mod tests {
 
         // Disable effect - should trigger reset
         let disabled_effect = EffectParameters {
+            name: String::new(),
             is_enabled: false,
             parameters: vec![0.5, 0.5, 0.5, 0.0],
         };
@@ -190,6 +194,7 @@ mod tests {
 
         // Process with disabled effect - should not modify write index
         let disabled_effect = EffectParameters {
+            name: String::new(),
             is_enabled: false,
             parameters: vec![0.5, 0.5, 0.5, 0.0],
         };
@@ -204,6 +209,7 @@ mod tests {
     fn delay_process_samples_returns_original_when_buffer_filling() {
         let mut delay = Delay::new();
         let effect = EffectParameters {
+            name: String::new(),
             is_enabled: true,
             parameters: vec![0.5, 0.5, 0.5, 0.0],
         };
