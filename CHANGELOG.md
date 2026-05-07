@@ -2,11 +2,12 @@
 
 This project has switched from Semantic Versioning to Calendar Versioning.
 
-## [2026.05.07.1] - 2026-05-6
+## [2026.05.07.1] - 2026-05-7
 
 ### Fixed
  - LFO default frequency value display now correctly reflects the patch file value
  - AM Oscillator Ring Mod Amount default is now set to AM by default rather than full ring mode by default
+ - Full & Half wave rectifier effects were labeled backwards
  - Bumped some dependency versions
  - Various formatting and linting fixes
 
