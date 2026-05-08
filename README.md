@@ -18,7 +18,7 @@ Accidental Synthesizer is a working, playable synthesizer. The synth voice, MIDI
 
 ## Features
 Current:
-- Four-oscillator mono synth voice with multiple waveforms (sine, saw, square, triangle, noise, pulse, supersaw, FM, AM)
+- Four-oscillator mono synth voice with multiple waveforms (sine, saw, square, triangle, pulse, supersaw, FM, AM, Broken, noise)
 - Resonant lowpass filter with key tracking, envelope, and LFO modulation
 - Three ADSR envelopes (amplitude, pitch, and filter) and two LFOs for modulation (pitch via the mod wheel and filter)
 - Audio effects: saturation, compressor, wave folder, clipper, gate, rectifier, bit shifter, delay, auto pan, and tremolo 

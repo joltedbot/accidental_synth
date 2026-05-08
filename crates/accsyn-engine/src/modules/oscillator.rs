@@ -1,5 +1,6 @@
 /// Amplitude modulation oscillator.
 pub mod am;
+mod broken;
 /// Shared oscillator constants for tuning, phase, and shape parameters.
 pub mod constants;
 /// Frequency modulation oscillator.
@@ -23,6 +24,7 @@ pub mod supersaw;
 pub mod triangle;
 
 use self::am::AM;
+use self::broken::Broken;
 use self::constants::{
     DEFAULT_KEY_SYNC_ENABLED, DEFAULT_NOTE_FREQUENCY, DEFAULT_PORTAMENTO_TIME_IN_BUFFERS,
     MAX_MIDI_NOTE_NUMBER, MAX_NOTE_FREQUENCY, MIN_MIDI_NOTE_NUMBER, MIN_NOTE_FREQUENCY,
@@ -80,6 +82,8 @@ pub enum WaveShape {
     AM,
     /// Frequency modulation synthesis.
     FM,
+    /// Honestly, I have no idea what this is
+    Broken,
     /// White noise.
     Noise,
 }
@@ -113,7 +117,7 @@ pub struct OscillatorParameters {
     pub course_tune: Semitones,
     /// Pitch bend amount from MIDI controller.
     pub pitch_bend: PitchBend,
-    /// First wave-shape-specific parameter (e.g., FM amount, pulse width).
+    /// First wave-shape-specific parameter (e.g., FM amount, pulse width, Jank amount).
     pub shape_parameter1: NormalizedValue,
     /// Second wave-shape-specific parameter (e.g., FM ratio, AM tone).
     pub shape_parameter2: NormalizedValue,
@@ -544,6 +548,7 @@ fn get_wave_generator_from_wave_shape(
         WaveShape::Supersaw => Box::new(Supersaw::new(sample_rate)),
         WaveShape::AM => Box::new(AM::new(sample_rate)),
         WaveShape::FM => Box::new(FM::new(sample_rate)),
+        WaveShape::Broken => Box::new(Broken::new(sample_rate)),
         WaveShape::Noise => Box::new(Noise::new()),
     }
 }
@@ -669,6 +674,10 @@ mod tests {
         assert_eq!(
             get_wave_generator_from_wave_shape(sample_rate, WaveShape::Triangle).shape(),
             WaveShape::Triangle
+        );
+        assert_eq!(
+            get_wave_generator_from_wave_shape(sample_rate, WaveShape::Broken).shape(),
+            WaveShape::Broken
         );
     }
 

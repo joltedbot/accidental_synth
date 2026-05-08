@@ -61,6 +61,11 @@ export component OscControlsPanel inherits Panel {
             param2.label = Theme.osc-controls-param2-fm;
             param1.enabled = true;
             param2.enabled = true;
+        } else if (shape == "Broken") {
+            param1.label = Theme.osc-controls-param1-broken;
+            param2.label = Theme.control-label-default-string;
+            param1.enabled = true;
+            param2.enabled = false;
         } else {
             param1.label = Theme.control-label-default-string;
             param2.label = Theme.control-label-default-string;
