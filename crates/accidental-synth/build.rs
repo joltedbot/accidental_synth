@@ -2,7 +2,7 @@ use slint_build::CompilerConfiguration;
 use vergen::{BuildBuilder, Emitter};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let build = BuildBuilder::all_build()?;
+    let build = BuildBuilder::default().build_date(true).use_local(true).build()?;
     Emitter::default().add_instructions(&build)?.emit()?;
 
     let config = CompilerConfiguration::new().with_style(String::from("fluent"));
