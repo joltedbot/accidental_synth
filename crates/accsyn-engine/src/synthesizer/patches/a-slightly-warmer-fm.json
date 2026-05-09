@@ -102,7 +102,7 @@
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": true,
-      "portamento_time": 28,
+      "portamento_time": 5,
       "clipper_boost": 0,
       "pitch_envelope_amount": 0
     },
@@ -117,7 +117,7 @@
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": true,
-      "portamento_time": 28,
+      "portamento_time": 5,
       "clipper_boost": 0,
       "pitch_envelope_amount": 0
     },
@@ -132,7 +132,7 @@
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": true,
-      "portamento_time": 28,
+      "portamento_time": 5,
       "clipper_boost": 6,
       "pitch_envelope_amount": 0
     },
@@ -147,7 +147,7 @@
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": true,
-      "portamento_time": 28,
+      "portamento_time": 5,
       "clipper_boost": 3,
       "pitch_envelope_amount": 0
     }
@@ -156,102 +156,52 @@
     {
       "name": "Saturation",
       "is_enabled": false,
-      "parameters": [
-        0.0,
-        0.0,
-        1.0,
-        0.0
-      ]
+      "parameters": [0.0, 0.0, 1.0, 0.0]
     },
     {
       "name": "Colour Compressor",
       "is_enabled": false,
-      "parameters": [
-        0.16932745,
-        0.36032608,
-        0.5501019,
-        0.0
-      ]
+      "parameters": [0.16932745, 0.36032608, 0.5501019, 0.0]
     },
     {
       "name": "Wave Folder",
       "is_enabled": false,
-      "parameters": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ]
+      "parameters": [0.0, 0.0, 0.0, 0.0]
     },
     {
       "name": "Bit Shifter",
       "is_enabled": false,
-      "parameters": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ]
+      "parameters": [0.0, 0.0, 0.0, 0.0]
     },
     {
       "name": "Clipper",
       "is_enabled": false,
-      "parameters": [
-        1.0,
-        0.0,
-        0.0,
-        0.0
-      ]
+      "parameters": [1.0, 0.0, 0.0, 0.0]
     },
     {
       "name": "Gate Clipping",
       "is_enabled": false,
-      "parameters": [
-        0.0,
-        1.0,
-        0.0,
-        0.0
-      ]
+      "parameters": [0.0, 1.0, 0.0, 0.0]
     },
     {
-      "name": "Full/Half Wave Rectifier",
+      "name": "Wave Rectifier",
       "is_enabled": false,
-      "parameters": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ]
+      "parameters": [0.0, 0.0, 0.0, 0.0]
     },
     {
       "name": "Auto-Pan",
       "is_enabled": false,
-      "parameters": [
-        0.0,
-        1.0,
-        0.0,
-        0.0
-      ]
+      "parameters": [0.0, 1.0, 0.0, 0.0]
     },
     {
       "name": "Tremolo",
       "is_enabled": false,
-      "parameters": [
-        0.0,
-        0.0,
-        2.0,
-        0.0
-      ]
+      "parameters": [0.0, 0.0, 2.0, 0.0]
     },
     {
       "name": "Delay",
       "is_enabled": false,
-      "parameters": [
-        1.0,
-        0.14566916,
-        0.15337975,
-        0.0
-      ]
+      "parameters": [1.0, 0.14566916, 0.15337975, 0.0]
     }
   ]
 }

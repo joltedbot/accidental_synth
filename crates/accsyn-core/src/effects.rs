@@ -39,7 +39,7 @@ pub enum EffectIndex {
     #[strum(to_string = "Gate Clipping")]
     Gate,
     /// Full-wave rectifier distortion effect.
-    #[strum(to_string = "Full/Half Wave Rectifier")]
+    #[strum(to_string = "Wave Rectifier")]
     Rectifier,
     /// Automatic stereo panning effect.
     #[strum(to_string = "Auto-Pan")]

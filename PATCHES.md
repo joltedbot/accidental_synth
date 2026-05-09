@@ -228,7 +228,7 @@ Effects are processed in this order:
 | 3     | Bit Shifter              | bits (1-16 normalized)                              | unused                 | unused                                     | unused       |
 | 4     | Clipper                  | threshold                                           | pre-clip boost         | post-clip boost                            | notch toggle |
 | 5     | Gate Clipping            | threshold                                           | pre-gate level cut     | post-gate makeup gain                      | unused       |
-| 6     | Full/Half Wave Rectifier | half wave mode toggle                               | unused                 | unused                                     | unused       |
+| 6     | Wave Rectifier | half wave mode toggle                               | unused                 | unused                                     | unused       |
 | 7     | Auto-Pan                 | rate                                                | width                  | wave shape                                 | unused       |
 | 8     | Tremolo                  | rate                                                | depth                  | wave shape                                 | unused       |
 | 9     | Delay                    | delay level                                         | time                   | feedback                                   | unused       |
@@ -462,7 +462,7 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
     { "name": "Bit Shifter",             "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Clipper",                 "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Gate Clipping",           "is_enabled": false, "parameters": [0, 0, 0, 0] },
-    { "name": "Full/Half Wave Rectifier","is_enabled": false, "parameters": [0, 0, 0, 0] },
+    { "name": "Wave Rectifier","is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Auto-Pan",                "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Tremolo",                 "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Delay",                   "is_enabled": false, "parameters": [0, 0, 0, 0] }

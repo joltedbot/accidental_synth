@@ -214,7 +214,7 @@
       ]
     },
     {
-      "name": "Full/Half Wave Rectifier",
+      "name": "Wave Rectifier",
       "is_enabled": false,
       "parameters": [
         0.0,

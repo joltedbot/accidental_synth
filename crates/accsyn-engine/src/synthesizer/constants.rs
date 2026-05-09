@@ -64,6 +64,7 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
         include_str!("patches/electric-piano.json"),
     ),
     ("FM Bells*", include_str!("patches/fm-bells.json")),
+    ("Guys I Thing I Broke It*", include_str!("patches/guys-I-think-I-Broke-It.json")),
     ("House Hits*", include_str!("patches/house-hits.json")),
     ("Kick (Long)*", include_str!("patches/kick-long.json")),
     ("Kick (Short)*", include_str!("patches/kick-short.json")),
@@ -78,6 +79,7 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
         "Reverse Pulse Lead*",
         include_str!("patches/reverse-pulse-lead.json"),
     ),
+    ("Shred Auto-Arp*", include_str!("patches/shred-auto-arp.json")),
     ("Singing Bowls*", include_str!("patches/singing-bowls.json")),
     ("Slide Bass*", include_str!("patches/slide-bass.json")),
     (
@@ -91,5 +93,9 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
     (
         "Triangles and Claves*",
         include_str!("patches/triangles-and-claves.json"),
+    ),
+    (
+        "Wandering Saws*",
+        include_str!("patches/wandering-saws.json"),
     ),
 ];
