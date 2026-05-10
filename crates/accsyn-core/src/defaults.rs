@@ -221,6 +221,10 @@ pub const OSCILLATOR_FINE_TUNE_MIN_CENTS: i8 = -63;
 pub const OSCILLATOR_COURSE_TUNE_MAX_INTERVAL: i8 = 12;
 /// Minimum oscillator coarse-tune interval in semitones.
 pub const OSCILLATOR_COURSE_TUNE_MIN_INTERVAL: i8 = -12;
+/// Maximum oscillator pitch envelope amount.
+pub const OSCILLATOR_MAX_PITCH_ENVELOPE_AMOUNT: f32 = 1.0;
+/// Minimum oscillator pitch envelope amount.
+pub const OSCILLATOR_MIN_PITCH_ENVELOPE_AMOUNT: f32 = -1.0;
 /// Maximum filter cutoff frequency in Hz.
 pub const MAX_FILTER_CUTOFF: f32 = 20000.0;
 /// Minimum filter cutoff frequency in Hz.

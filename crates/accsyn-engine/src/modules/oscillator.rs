@@ -309,9 +309,18 @@ impl Oscillator {
             modulation = None;
         }
 
-        let adjusted_frequency = (self.tuning.frequency
-            + (self.tuning.frequency * pitch_envelope.unwrap_or(0.0)))
-        .min(MAX_NOTE_FREQUENCY);
+        let pitch_envelope_offset = if let Some(pitch_envelope) = pitch_envelope {
+            if pitch_envelope >= 0.0 {
+                self.tuning.frequency * pitch_envelope
+            } else {
+                (self.tuning.frequency / 2.0) * pitch_envelope
+            }
+        } else {
+            0.0
+        };
+
+        let adjusted_frequency =
+            (self.tuning.frequency + pitch_envelope_offset).min(MAX_NOTE_FREQUENCY);
         let mut next_sample = self
             .wave_generator
             .next_sample(adjusted_frequency, modulation);

@@ -3,7 +3,8 @@
 use crate::ui::constants::{DEFAULT_FINE_TUNE_NORMAL_VALUE, MIDI_CHANNEL_LIST};
 use accsyn_core::defaults::{
     Defaults, MAX_FILTER_RESONANCE, MIN_FILTER_RESONANCE, OSCILLATOR_FINE_TUNE_MAX_CENTS,
-    OSCILLATOR_FINE_TUNE_MIN_CENTS,
+    OSCILLATOR_FINE_TUNE_MIN_CENTS, OSCILLATOR_MAX_PITCH_ENVELOPE_AMOUNT,
+    OSCILLATOR_MIN_PITCH_ENVELOPE_AMOUNT,
 };
 use accsyn_core::math::{
     EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES, EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
@@ -128,7 +129,11 @@ impl UIOscillator {
             ),
             parameter1: parameters.shape_parameter1.load(),
             parameter2: parameters.shape_parameter2.load(),
-            pitch_envelope_amount: parameters.pitch_envelope_amount.load(),
+            pitch_envelope_amount: normalize_float_range(
+                parameters.pitch_envelope_amount.load(),
+                OSCILLATOR_MIN_PITCH_ENVELOPE_AMOUNT,
+                OSCILLATOR_MAX_PITCH_ENVELOPE_AMOUNT,
+            ),
         }
     }
 }

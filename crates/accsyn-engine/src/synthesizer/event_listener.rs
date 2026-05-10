@@ -112,12 +112,12 @@ pub fn start_update_event_listener(
                         }
                     }
                 }
-                SynthesizerUpdateEvents::PitchEnvelopeAmount(oscillator_index, boost) => {
+                SynthesizerUpdateEvents::PitchEnvelopeAmount(oscillator_index, amount) => {
                     match usize::try_from(oscillator_index) {
                         Ok(index) if index < module_parameters.oscillators.len() => {
                             set_oscillator_pitch_envelope_amount(
                                 &module_parameters.oscillators[index],
-                                boost,
+                                amount,
                             );
                         }
                         _ => {

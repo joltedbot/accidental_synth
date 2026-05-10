@@ -21,7 +21,8 @@ use crate::synthesizer::{KeyboardParameters, MixerParameters, ModuleParameters};
 use accsyn_core::defaults::{
     MAX_FILTER_RESONANCE, MIN_FILTER_RESONANCE, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL,
     OSCILLATOR_COURSE_TUNE_MIN_INTERVAL, OSCILLATOR_FINE_TUNE_MAX_CENTS,
-    OSCILLATOR_FINE_TUNE_MIN_CENTS,
+    OSCILLATOR_FINE_TUNE_MIN_CENTS, OSCILLATOR_MAX_PITCH_ENVELOPE_AMOUNT,
+    OSCILLATOR_MIN_PITCH_ENVELOPE_AMOUNT,
 };
 use accsyn_core::math::{
     EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES, EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
@@ -226,8 +227,18 @@ pub fn set_oscillator_clip_boost(parameters: &OscillatorParameters, normal_value
     parameters.clipper_boost.store(boost, Relaxed);
 }
 
-pub fn set_oscillator_pitch_envelope_amount(parameters: &OscillatorParameters, normal_value: f32) {
-    parameters.pitch_envelope_amount.store(normal_value);
+pub fn set_oscillator_pitch_envelope_amount(
+    parameters: &OscillatorParameters,
+    normal_value: f32,
+) -> f32 {
+    let amount = normal_value_to_f32_range(
+        normal_value,
+        OSCILLATOR_MIN_PITCH_ENVELOPE_AMOUNT,
+        OSCILLATOR_MAX_PITCH_ENVELOPE_AMOUNT,
+    );
+
+    parameters.pitch_envelope_amount.store(amount);
+    amount
 }
 
 pub fn set_portamento_enabled(parameters: &[OscillatorParameters; 4], normal_value: f32) {

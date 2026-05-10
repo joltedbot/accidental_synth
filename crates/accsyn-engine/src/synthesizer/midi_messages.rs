@@ -63,7 +63,7 @@ pub fn action_midi_note_events(
                 .store(MidiGateEvent::GateOff as u8, Relaxed);
             module_parameters.envelopes[EnvelopeIndex::Pitch as usize]
                 .gate_flag
-                .store(MidiGateEvent::GateOn as u8, Relaxed);
+                .store(MidiGateEvent::GateOff as u8, Relaxed);
         }
     }
 }
@@ -1015,19 +1015,16 @@ fn update_oscillator_parameter_1(
 fn update_oscillator_pitch_amount(
     module_parameters: &&mut Arc<ModuleParameters>,
     ui_update_sender: &Sender<UIUpdates>,
-    pitch_envelope_amount_value: f32,
+    pitch_envelope_amount: f32,
     oscillator_index: OscillatorIndex,
 ) {
-    set_oscillator_pitch_envelope_amount(
+    let scaled_amount = set_oscillator_pitch_envelope_amount(
         &module_parameters.oscillators[oscillator_index as usize],
-        pitch_envelope_amount_value,
+        pitch_envelope_amount,
     );
     send_ui_update(
         ui_update_sender,
-        UIUpdates::OscillatorPitchEnvelopeAmount(
-            oscillator_index as i32,
-            pitch_envelope_amount_value,
-        ),
+        UIUpdates::OscillatorPitchEnvelopeAmount(oscillator_index as i32, scaled_amount),
     );
 }
 

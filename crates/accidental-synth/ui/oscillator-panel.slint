@@ -143,13 +143,13 @@ export component OscControlsPanel inherits Panel {
                 }
             }
 
-            pitch := HorizontalParameterSlider {
+            pitch := CenteredParameterSlider {
                 label: Theme.osc-controls-pitch-eg;
                 show-value: false;
                 slider-width: Theme.oscillator-panel-widget-width;
                 value: oscillator.pitch-envelope-amount;
-                horizontal-parameter-slider-changed(value) => {
-                    pitch-envelope-amount-changed(value);
+                centered-parameter-slider-changed(amount) => {
+                    pitch-envelope-amount-changed(amount);
                 }
             }
 
