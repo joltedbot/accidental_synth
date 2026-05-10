@@ -181,6 +181,10 @@ export component Wavefolder inherits EffectBox {
         root.is_enabled = effect_values.is_enabled;
     }
 
+    init => {
+        negative-amount.enabled = false;
+    }
+
     changed is_enabled => {
         amount.enabled = self.is_enabled;
         negative-switch.enabled = self.is_enabled;
