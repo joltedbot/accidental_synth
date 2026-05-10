@@ -1,17 +1,16 @@
 use crate::constants::OSSSTATUS_NO_ERROR;
 use accsyn_core::audio_events::AudioDeviceUpdateEvents;
 use anyhow::{Result, anyhow};
-use core_foundation::base::TCFType;
-use core_foundation::string::{CFString, CFStringRef};
 use coreaudio_sys::{
-    AudioDeviceID, AudioObjectAddPropertyListener, AudioObjectGetPropertyData,
-    AudioObjectGetPropertyDataSize, AudioObjectID, AudioObjectPropertyAddress,
-    AudioObjectRemovePropertyListener, OSStatus, UInt32, kAudioDevicePropertyDeviceNameCFString,
-    kAudioDevicePropertyStreamConfiguration, kAudioHardwarePropertyDevices,
-    kAudioObjectPropertyElementMain, kAudioObjectPropertyElementMaster,
-    kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyScopeOutput, kAudioObjectSystemObject,
+    AudioObjectAddPropertyListener, AudioObjectID, AudioObjectPropertyAddress,
+    AudioObjectRemovePropertyListener, OSStatus, kAudioHardwarePropertyDevices,
+    kAudioObjectPropertyElementMain, kAudioObjectPropertyScopeGlobal, kAudioObjectSystemObject,
 };
 
+use coreaudio::audio_unit::Scope;
+use coreaudio::audio_unit::macos_helpers::{
+    get_audio_device_ids, get_audio_device_supports_scope, get_device_name,
+};
 use crossbeam_channel::Sender;
 use std::ffi::c_void;
 use std::ptr;
@@ -93,168 +92,6 @@ impl Drop for DeviceMonitor {
     }
 }
 
-pub fn get_audio_device_list() -> Result<Vec<String>, String> {
-    log::trace!(target: "audio::device", "Enumerating CoreAudio devices");
-    unsafe {
-        let property_address = AudioObjectPropertyAddress {
-            mSelector: kAudioHardwarePropertyDevices,
-            mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain,
-        };
-
-        let mut property_size: UInt32 = 0;
-        let status = AudioObjectGetPropertyDataSize(
-            kAudioObjectSystemObject,
-            &raw const property_address,
-            0,
-            ptr::null(),
-            &raw mut property_size,
-        );
-
-        if status != OSSSTATUS_NO_ERROR {
-            return Err(format!("Failed to get the device list size: {status}"));
-        }
-
-        // Get the device IDs
-        let device_count = property_size as usize / size_of::<AudioDeviceID>();
-        let mut devices = vec![0u32; device_count];
-
-        let status = AudioObjectGetPropertyData(
-            kAudioObjectSystemObject,
-            &raw const property_address,
-            0,
-            ptr::null(),
-            &raw mut property_size,
-            devices.as_mut_ptr().cast(),
-        );
-
-        if status != OSSSTATUS_NO_ERROR {
-            return Err(format!("Failed to get the device list: {status}"));
-        }
-
-        let mut result = Vec::new();
-        for &device_id in &devices {
-            if is_output_device(device_id) {
-                match get_device_name(device_id) {
-                    Ok(name) => {
-                        result.push(name);
-                    }
-                    Err(err) => {
-                        log::warn!(
-                            target: "audio::device",
-                            device_id = device_id,
-                            error = err.as_str();
-                            "Couldn't get the name for the audio output device from CoreAudio.",
-                        );
-                    }
-                }
-            }
-        }
-
-        Ok(result)
-    }
-}
-
-unsafe fn is_output_device(device_id: AudioDeviceID) -> bool {
-    unsafe {
-        let property_address = AudioObjectPropertyAddress {
-            mSelector: kAudioDevicePropertyStreamConfiguration,
-            mScope: kAudioObjectPropertyScopeOutput,
-            mElement: kAudioObjectPropertyElementMaster,
-        };
-
-        let mut property_size: UInt32 = 0;
-        let status = AudioObjectGetPropertyDataSize(
-            device_id,
-            &raw const property_address,
-            0,
-            ptr::null(),
-            &raw mut property_size,
-        );
-
-        // size_of::<T>() is always a small compile-time constant, well within u32 range
-        #[allow(clippy::cast_possible_truncation)]
-        if status != OSSSTATUS_NO_ERROR || property_size < size_of::<UInt32>() as UInt32 {
-            log::trace!(
-                target: "audio::device",
-                device_id = device_id,
-                status = status,
-                size = property_size;
-                "Failed to get device stream configuration size"
-            );
-            return false;
-        }
-
-        let mut buffer = vec![0u8; property_size as usize];
-        let mut property_data_size = property_size;
-
-        let status = AudioObjectGetPropertyData(
-            device_id,
-            &raw const property_address,
-            0,
-            ptr::null(),
-            &raw mut property_data_size,
-            buffer.as_mut_ptr().cast::<c_void>(),
-        );
-
-        if status != OSSSTATUS_NO_ERROR {
-            log::trace!(
-                target: "audio::device",
-                device_id = device_id,
-                status = status;
-                "Failed to get device stream configuration"
-            );
-            return false;
-        }
-
-        let num_buffers = if buffer.len() >= 4 {
-            u32::from_ne_bytes([buffer[0], buffer[1], buffer[2], buffer[3]])
-        } else {
-            log::warn!(
-                "is_output_device(): Returned buffer size is less than 4 bytes. Returning 0 and continuing."
-            );
-            0
-        };
-
-        num_buffers > 0
-    }
-}
-
-unsafe fn get_device_name(device_id: AudioDeviceID) -> Result<String, String> {
-    let property_address = AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyDeviceNameCFString,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMain,
-    };
-
-    // size_of::<T>() is always a small compile-time constant, well within u32 range
-    #[allow(clippy::cast_possible_truncation)]
-    let mut property_size = size_of::<CFStringRef>() as u32;
-    let mut cf_string: CFStringRef = ptr::null();
-
-    let status = unsafe {
-        AudioObjectGetPropertyData(
-            device_id,
-            &raw const property_address,
-            0,
-            ptr::null(),
-            &raw mut property_size,
-            (&raw mut cf_string).cast(),
-        )
-    };
-
-    if status != OSSSTATUS_NO_ERROR {
-        return Err(format!("Failed to get device name: {status}"));
-    }
-
-    if cf_string.is_null() {
-        return Err("Device name is null".to_string());
-    }
-
-    let cf_string_wrapper = unsafe { CFString::wrap_under_create_rule(cf_string) };
-    Ok(cf_string_wrapper.to_string())
-}
-
 extern "C" fn device_listener_callback(
     _in_object_id: AudioObjectID,
     _in_number_addresses: u32,
@@ -273,4 +110,16 @@ extern "C" fn device_listener_callback(
     }
 
     OSSSTATUS_NO_ERROR
+}
+
+pub fn get_audio_device_list() -> Result<Vec<String>> {
+    log::trace!(target: "audio::device", "Enumerating CoreAudio devices");
+    let device_ids = get_audio_device_ids()?;
+    Ok(device_ids
+        .iter()
+        .filter(|&device_id| {
+            get_audio_device_supports_scope(*device_id, Scope::Output).unwrap_or(false)
+        })
+        .filter_map(|device_id| get_device_name(*device_id).ok())
+        .collect::<Vec<String>>())
 }
