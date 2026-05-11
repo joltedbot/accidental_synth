@@ -2,6 +2,26 @@
 
 This project has switched from Semantic Versioning to Calendar Versioning.
 
+## [2026.05.10.1] - 2026-05-10
+
+### Added
+- New `Broken` waveform oscillator
+- 3 New presets
+
+### Fixed
+- The Wave Rectifier effect now correctly labels the half and full wave modes
+- Updated the README with more accurate information and a second screenshot
+- The Wave folder effect negative amount label now correctly follows the enabled state of the negative amount slider
+- The pitch envelope now has correct logic for positive and negative envelope amounts and the inverted mode
+
+### Changed
+- Changed the release build time that is used for CalVer version numbers to local time rather than UTC time so the relase number and release date match
+- Updated dependencies
+- Started the move to coreaudio-rs for audio processing by cleaning up the audio crates device enumeration function
+- The slider for pitch envelope per oscillator is now a bipolar slider allowing the new logic for negative envelope amounts to be applied
+
+
+
 ## [2026.05.07.1] - 2026-05-7
 
 ### Fixed
