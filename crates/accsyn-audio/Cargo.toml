@@ -10,10 +10,8 @@ publish.workspace = true
 [dependencies]
 accsyn-core = { workspace = true }
 anyhow = { workspace = true }
-core-foundation = { workspace = true }
 coreaudio-sys = { workspace = true }
 coreaudio-rs = { workspace = true }
-cpal = { workspace = true }
 crossbeam-channel = { workspace = true }
 log = { workspace = true }
 rtrb = { workspace = true }

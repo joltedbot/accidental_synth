@@ -19,21 +19,17 @@ use crate::constants::{
     STEREO_CHANNEL_COUNT, STEREO_SAMPLE_BUFFER_COUNT, USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET,
 };
 use crate::device_monitor::{DeviceMonitor, get_audio_device_list};
-
 use anyhow::{Result, anyhow};
-//use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-//use cpal::{BufferSize, Device, Host, Stream, StreamConfig, default_host};
 use coreaudio::audio_unit::audio_format::LinearPcmFlags;
 use coreaudio::audio_unit::macos_helpers::{
-    audio_unit_from_device_id_uninitialized, get_default_device_id,
-    get_device_id_from_name, get_device_name, set_device_sample_rate,
+    audio_unit_from_device_id_uninitialized, find_matching_physical_format, get_default_device_id, get_device_id_from_name,
+    get_device_name, set_device_physical_stream_format, set_device_sample_rate,
 };
 use coreaudio::audio_unit::render_callback::data;
 use coreaudio::audio_unit::{AudioUnit, SampleFormat, StreamFormat, render_callback};
 use coreaudio::audio_unit::{Element, Scope};
 use coreaudio_sys::{
-    AudioDeviceID, kAudioDevicePropertyBufferFrameSize, kAudioOutputUnitProperty_CurrentDevice,
-    kAudioUnitProperty_StreamFormat,
+    AudioDeviceID, kAudioDevicePropertyBufferFrameSize
 };
 use crossbeam_channel::{Receiver, Sender, bounded};
 use rtrb::{Consumer, Producer, RingBuffer};
@@ -71,6 +67,10 @@ pub enum AudioError {
     /// The selected audio device has no output channels.
     #[error("No Audio Output Channels Found")]
     NoAudioOutputChannels,
+
+    /// No matching physical audio stream format was found for this device
+    #[error("No Matching Audio Stream Format Found")]
+    NoMatchingAudioStreamFormat,
 }
 
 /// Audio device update events that can be sent to the audio subsystem.
@@ -105,7 +105,6 @@ impl Audio {
         let channel_count = stream_format.channels;
         let sample_rate = stream_format.sample_rate;
 
-        
         let output_stream_parameters = OutputStreamParameters {
             sample_rate: Arc::new(AtomicU32::new(f64_to_u32_clamped(sample_rate))),
             buffer_size: Arc::new(AtomicU32::new(
@@ -250,14 +249,19 @@ fn restart_main_audio_loop_with_new_device(
         UIUpdates::AudioDeviceBufferSizeIndex(output_steam_parameters.buffer_size_index() as i32),
     );
 
-    start_main_audio_output_loop(
+    match start_main_audio_output_loop(
         output_steam_parameters,
         output_device,
         current_output_channels,
         sample_consumer,
         buffer_dropout_counter.clone(),
-    )
-    .ok()
+    ) {
+        Ok(audio_unit) => Some(audio_unit),
+        Err(error) => {
+            log::error!(target: "audio::control", "Failed to start the main audio output loop. {error:?}");
+            None
+        }
+    }
 }
 
 #[allow(clippy::too_many_lines)]
@@ -508,7 +512,6 @@ fn default_audio_output_device() -> Option<OutputDevice> {
         "default_audio_output_device(): Using default audio output device: {name}");
 
         output_device_from_name_and_id(&name, default_output_device_id)
-
     } else {
         log::error!(target: "audio::control", "default_audio_output_device(): No default audio output device found.");
         None
@@ -522,7 +525,10 @@ fn new_output_device_from_name(name: &str) -> Option<OutputDevice> {
     output_device_from_name_and_id(name, output_device_id)
 }
 
-fn output_device_from_name_and_id(name: &str, output_device_id: AudioDeviceID) -> Option<OutputDevice> {
+fn output_device_from_name_and_id(
+    name: &str,
+    output_device_id: AudioDeviceID,
+) -> Option<OutputDevice> {
     log::trace!(target: "audio::control", "output_device_from_name_and_id(): Resolving device '{name}' (id={output_device_id})");
     let output_devices = get_audio_device_list().ok()?;
 
@@ -726,12 +732,20 @@ fn start_main_audio_output_loop(
     let number_of_channels = output_stream_parameters.channel_count.load(Relaxed) as usize;
     let output_channels_thread = output_channels.clone();
 
+    let mut output_audio_unit =
+        audio_unit_from_device_id_uninitialized(output_device.device, false)?;
+
     set_device_sample_rate(
         output_device.device,
         f64::from(output_stream_parameters.sample_rate.load(Relaxed)),
     )?;
-    let mut output_audio_unit =
-        audio_unit_from_device_id_uninitialized(output_device.device, false)?;
+
+    output_audio_unit.set_property(
+        kAudioDevicePropertyBufferFrameSize,
+        Scope::Output,
+        Element::Output,
+        Some(&output_stream_parameters.buffer_size.load(Relaxed)),
+    )?;
 
     let output_stream_format = StreamFormat {
         sample_rate: device_stream_format.sample_rate,
@@ -740,28 +754,15 @@ fn start_main_audio_output_loop(
         channels: device_stream_format.channels,
     };
 
-    output_audio_unit.set_property(
-        kAudioUnitProperty_StreamFormat,
-        Scope::Global,
-        Element::Output,
-        Some(&output_stream_format.to_asbd()),
-    )?;
+    let new_stream_format =
+        find_matching_physical_format(output_device.device, output_stream_format)
+            .ok_or(anyhow!(AudioError::NoMatchingAudioStreamFormat))?;
 
-    output_audio_unit.set_property(
-        kAudioOutputUnitProperty_CurrentDevice,
-        Scope::Global,
-        Element::Output,
-        Some(&output_device.device),
-    )?;
+    set_device_physical_stream_format(output_device.device, new_stream_format)?;
 
-    output_audio_unit.set_property(
-        kAudioDevicePropertyBufferFrameSize,
-        Scope::Global,
-        Element::Output,
-        Some(&output_device.device),
-    )?;
+    output_audio_unit.set_stream_format(output_stream_format, Scope::Input, Element::Output)?;
 
-    output_audio_unit.set_render_callback(move |args: Args| {
+    let render_callback_result = output_audio_unit.set_render_callback(move |args: Args| {
         let left_channel_index = output_channels_thread.left.load(Relaxed);
         let right_channel_index = output_channels_thread.right.load(Relaxed);
         let mut samples = if let Ok(samples) = sample_buffer.read_chunk(args.num_frames * 2) {
@@ -783,7 +784,11 @@ fn start_main_audio_output_loop(
         }
 
         Ok(())
-    })?;
+    });
+    if let Err(error) = render_callback_result {
+        log::error!(target: "audio::control", "start_main_audio_output_loop(): Failed to set render callback: {error}");
+        return Err(error.into());
+    }
     output_audio_unit.initialize()?;
     output_audio_unit.start()?;
 
