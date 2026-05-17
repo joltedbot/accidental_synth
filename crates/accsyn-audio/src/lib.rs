@@ -161,7 +161,7 @@ impl Audio {
 
         self.create_core_audio_device_monitor()?;
 
-        log::debug!(target: "audio", "Starting the Audio Output Device Listener");
+        log::debug!(target: "audio", "Starting the audio buffer dropout logger");
         start_audio_buffer_dropout_logger(self.buffer_dropout_counter.clone());
 
         log::debug!(target: "audio", "Starting the Audio Output Device Listener");
@@ -516,12 +516,14 @@ fn default_audio_output_device() -> Option<OutputDevice> {
 }
 
 fn new_output_device_from_name(name: &str) -> Option<OutputDevice> {
+    log::debug!(target: "audio::control", "new_output_device_from_name(): Looking up device: {name}");
     let is_input_device = false;
     let output_device_id = get_device_id_from_name(name, is_input_device)?;
     output_device_from_name_and_id(name, output_device_id)
 }
 
 fn output_device_from_name_and_id(name: &str, output_device_id: AudioDeviceID) -> Option<OutputDevice> {
+    log::trace!(target: "audio::control", "output_device_from_name_and_id(): Resolving device '{name}' (id={output_device_id})");
     let output_devices = get_audio_device_list().ok()?;
 
     output_devices
@@ -546,10 +548,12 @@ fn output_device_from_name_and_id(name: &str, output_device_id: AudioDeviceID) -
 }
 
 fn default_channels_from_device(output_device: &OutputDevice) -> Result<(i32, i32)> {
+    log::debug!(target: "audio::control", "default_channels_from_device(): Querying channels for '{}'", output_device.name);
     let stream_format = stream_format_from_device_id(output_device.device)?;
     let channel_count = stream_format.channels;
 
     if channel_count == 0 {
+        log::error!(target: "audio::control", "default_channels_from_device(): Device '{}' has no output channels", output_device.name);
         return Err(anyhow!(AudioError::NoAudioOutputChannels));
     }
 
@@ -561,12 +565,15 @@ fn default_channels_from_device(output_device: &OutputDevice) -> Result<(i32, i3
         Defaults::OUTPUT_CHANNEL_DISABLED_VALUE
     };
 
+    log::debug!(target: "audio::control", "default_channels_from_device(): channel_count={channel_count}, left={left_index}, right={right_index}");
     Ok((left_index, right_index))
 }
 
 fn stream_format_from_device_id(output_device_id: AudioDeviceID) -> Result<StreamFormat> {
+    log::trace!(target: "audio::control", "stream_format_from_device_id(): Querying stream format for device id={output_device_id}");
     let audio_unit = audio_unit_from_device_id_uninitialized(output_device_id, false)?;
     let stream_format = audio_unit.stream_format(Scope::Global, Element::Output)?;
+    log::trace!(target: "audio::control", "stream_format_from_device_id(): sample_rate={}, channels={}", stream_format.sample_rate, stream_format.channels);
     Ok(stream_format)
 }
 
@@ -601,6 +608,7 @@ fn update_device_properties(
     new_output_device: Option<&OutputDevice>,
     output_stream_parameters: &mut OutputStreamParameters,
 ) {
+    log::debug!(target: "audio::control", "update_device_properties(): device={:?}", new_output_device.map(|d| &d.name));
     update_current_channels(current_output_channels, new_output_device);
 
     let output_device_id = if let Some(output_device) = new_output_device {
@@ -626,6 +634,7 @@ fn update_current_channels(
     current_output_channels: &Arc<OutputChannels>,
     new_output_device: Option<&OutputDevice>,
 ) {
+    log::debug!(target: "audio::control", "update_current_channels(): device={:?}", new_output_device.map(|d| &d.name));
     let new_channel_indexes = if let Some(device) = new_output_device {
         default_channels_from_device(device).unwrap_or((
             Defaults::OUTPUT_CHANNEL_DISABLED_VALUE,
