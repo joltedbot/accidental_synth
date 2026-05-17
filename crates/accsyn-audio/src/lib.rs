@@ -9,6 +9,7 @@ mod constants;
 mod device_monitor;
 
 use accsyn_core::audio_events::{AudioDeviceUpdateEvents, OutputStreamParameters};
+use accsyn_core::casting::f64_to_u32_clamped;
 use accsyn_core::defaults::Defaults;
 use accsyn_core::ui_events::UIUpdates;
 
@@ -106,10 +107,12 @@ impl Audio {
 
         
         let output_stream_parameters = OutputStreamParameters {
-            sample_rate: Arc::new(AtomicU32::new(sample_rate as u32)),
+            sample_rate: Arc::new(AtomicU32::new(f64_to_u32_clamped(sample_rate))),
             buffer_size: Arc::new(AtomicU32::new(
                 Defaults::SUPPORTED_BUFFER_SIZES[Defaults::BUFFER_SIZE_INDEX],
             )),
+            // channel_count is a CoreAudio u32 that never exceeds u16::MAX in practice
+            #[allow(clippy::cast_possible_truncation)]
             channel_count: Arc::new(AtomicU16::new(channel_count as u16)),
         };
 
