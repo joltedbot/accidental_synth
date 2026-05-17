@@ -10,7 +10,7 @@ impl Defaults {
     /// Default right output channel index.
     pub const RIGHT_CHANNEL_INDEX: i32 = 1;
     /// Channel count for mono output.
-    pub const MONO_CHANNEL_COUNT: u16 = 1;
+    pub const MONO_CHANNEL_COUNT: u32 = 1;
     /// Sentinel value indicating a disabled output channel.
     pub const OUTPUT_CHANNEL_DISABLED_VALUE: i32 = -1;
     /// Default index into [`Defaults::SUPPORTED_SAMPLE_RATES`].

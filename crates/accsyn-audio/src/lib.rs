@@ -20,8 +20,20 @@ use crate::constants::{
 use crate::device_monitor::{DeviceMonitor, get_audio_device_list};
 
 use anyhow::{Result, anyhow};
-use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{BufferSize, Device, Host, Stream, StreamConfig, default_host};
+//use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+//use cpal::{BufferSize, Device, Host, Stream, StreamConfig, default_host};
+use coreaudio::audio_unit::audio_format::LinearPcmFlags;
+use coreaudio::audio_unit::macos_helpers::{
+    audio_unit_from_device_id_uninitialized, get_default_device_id,
+    get_device_id_from_name, get_device_name, set_device_sample_rate,
+};
+use coreaudio::audio_unit::render_callback::data;
+use coreaudio::audio_unit::{AudioUnit, SampleFormat, StreamFormat, render_callback};
+use coreaudio::audio_unit::{Element, Scope};
+use coreaudio_sys::{
+    AudioDeviceID, kAudioDevicePropertyBufferFrameSize, kAudioOutputUnitProperty_CurrentDevice,
+    kAudioUnitProperty_StreamFormat,
+};
 use crossbeam_channel::{Receiver, Sender, bounded};
 use rtrb::{Consumer, Producer, RingBuffer};
 use std::sync::Arc;
@@ -36,8 +48,8 @@ use thiserror::Error;
 pub struct OutputDevice {
     /// Human-readable device name.
     pub name: String,
-    /// CPAL device handle for audio output.
-    pub device: Device,
+    /// `CoreAudio` device handle for audio output.
+    pub device: AudioDeviceID,
     /// Index of this device in the host's output device list.
     pub device_index: i32,
 }
@@ -46,18 +58,6 @@ pub struct OutputDevice {
 pub struct OutputChannels {
     left: AtomicI32,
     right: AtomicI32,
-}
-
-/// Creates a CPAL `StreamConfig` from the current output stream parameters.
-pub(crate) fn stream_config_from_parameters(params: &OutputStreamParameters) -> StreamConfig {
-    let buffer_size_samples = params.buffer_size.load(Relaxed);
-    let buffer_size = BufferSize::Fixed(buffer_size_samples);
-
-    StreamConfig {
-        sample_rate: params.sample_rate.load(Relaxed),
-        buffer_size,
-        channels: params.channel_count.load(Relaxed),
-    }
 }
 
 /// Errors that can occur during audio device initialization.
@@ -71,6 +71,9 @@ pub enum AudioError {
     #[error("No Audio Output Channels Found")]
     NoAudioOutputChannels,
 }
+
+/// Audio device update events that can be sent to the audio subsystem.
+type Args = render_callback::Args<data::Interleaved<f32>>;
 
 /// Main audio output manager handling device selection, stream configuration, and sample delivery.
 pub struct Audio {
@@ -95,25 +98,19 @@ impl Audio {
         let (output_device_sender, output_device_receiver) = bounded(SAMPLE_BUFFER_SENDER_CAPACITY);
         let (device_update_sender, device_update_receiver) = bounded(AUDIO_MESSAGE_SENDER_CAPACITY);
 
-        let default_output_device =
-            default_audio_output_device().ok_or(AudioError::NoAudioOutputDevices)?;
+        let default_output_device_id =
+            get_default_device_id(false).ok_or(AudioError::NoAudioOutputDevices)?;
+        let stream_format = stream_format_from_device_id(default_output_device_id)?;
+        let channel_count = stream_format.channels;
+        let sample_rate = stream_format.sample_rate;
 
-        let sample_rate = default_output_device
-            .device
-            .default_output_config()?
-            .sample_rate();
-
-        let channel_count = default_output_device
-            .device
-            .default_output_config()?
-            .channels();
-
+        
         let output_stream_parameters = OutputStreamParameters {
-            sample_rate: Arc::new(AtomicU32::new(sample_rate)),
+            sample_rate: Arc::new(AtomicU32::new(sample_rate as u32)),
             buffer_size: Arc::new(AtomicU32::new(
                 Defaults::SUPPORTED_BUFFER_SIZES[Defaults::BUFFER_SIZE_INDEX],
             )),
-            channel_count: Arc::new(AtomicU16::new(channel_count)),
+            channel_count: Arc::new(AtomicU16::new(channel_count as u16)),
         };
 
         Ok(Self {
@@ -200,7 +197,7 @@ fn restart_main_audio_loop_with_new_device(
     output_device: &OutputDevice,
     current_output_channels: &Arc<OutputChannels>,
     buffer_dropout_counter: &Arc<AtomicU32>,
-) -> Option<Stream> {
+) -> Option<AudioUnit> {
     log::debug!(
         target: "audio::control",
         "restart_main_audio_loop_with_new_device(): New Audio Output Device: {:?}",
@@ -271,9 +268,8 @@ fn start_control_listener(
 ) {
     log::debug!(target: "audio::control_listener",  "Starting the Audio Device Event listener thread");
     thread::spawn(move || {
-        let mut audio_output_stream: Option<Stream> = None;
+        let mut audio_output_stream: Option<AudioUnit> = None;
         let mut current_output_device_name = String::new();
-        let host = default_host();
 
         let ui_update_sender = ui_update_sender.clone();
         let sample_producer_sender = sample_producer_sender.clone();
@@ -335,8 +331,8 @@ fn start_control_listener(
                         &mut output_stream_parameters,
                     );
 
-                    if let Some(stream) = audio_output_stream {
-                        let _ = stream.pause();
+                    if let Some(mut audio_unit) = audio_output_stream {
+                        let _ = audio_unit.stop();
                     }
 
                     audio_output_stream = start_new_output_device(
@@ -354,7 +350,7 @@ fn start_control_listener(
                         "AudioDeviceEvent::UIOutputDeviceUpdate: Received UI update for audio output device: {name}"
                     );
 
-                    let mut new_output_device = new_output_device_from_name(&host, &name);
+                    let mut new_output_device = new_output_device_from_name(&name);
 
                     if new_output_device.is_none() {
                         log::error!(
@@ -371,8 +367,8 @@ fn start_control_listener(
                         &mut output_stream_parameters,
                     );
 
-                    if let Some(stream) = audio_output_stream {
-                        let _ = stream.pause();
+                    if let Some(mut audio_unit) = audio_output_stream {
+                        let _ = audio_unit.stop();
                     }
 
                     audio_output_stream = start_new_output_device(
@@ -433,10 +429,10 @@ fn start_control_listener(
                         .store(numeric_sample_rate, Relaxed);
 
                     let new_output_device =
-                        new_output_device_from_name(&host, &current_output_device_name);
+                        new_output_device_from_name(&current_output_device_name);
 
-                    if let Some(stream) = audio_output_stream {
-                        let _ = stream.pause();
+                    if let Some(mut audio_unit) = audio_output_stream {
+                        let _ = audio_unit.stop();
                     }
 
                     audio_output_stream = start_new_output_device(
@@ -462,10 +458,10 @@ fn start_control_listener(
                         .store(numeric_buffer_size, Relaxed);
 
                     let new_output_device =
-                        new_output_device_from_name(&host, &current_output_device_name);
+                        new_output_device_from_name(&current_output_device_name);
 
-                    if let Some(stream) = audio_output_stream {
-                        let _ = stream.pause();
+                    if let Some(mut audio_unit) = audio_output_stream {
+                        let _ = audio_unit.stop();
                     }
 
                     audio_output_stream = start_new_output_device(
@@ -500,6 +496,77 @@ fn start_audio_buffer_dropout_logger(buffer_dropout_counter: Arc<AtomicU32>) {
     });
 }
 
+fn default_audio_output_device() -> Option<OutputDevice> {
+    if let Some(default_output_device_id) = get_default_device_id(false) {
+        let name = get_device_name(default_output_device_id).ok()?;
+
+        log::debug!(
+        target: "audio::control",
+        "default_audio_output_device(): Using default audio output device: {name}");
+
+        output_device_from_name_and_id(&name, default_output_device_id)
+
+    } else {
+        log::error!(target: "audio::control", "default_audio_output_device(): No default audio output device found.");
+        None
+    }
+}
+
+fn new_output_device_from_name(name: &str) -> Option<OutputDevice> {
+    let is_input_device = false;
+    let output_device_id = get_device_id_from_name(name, is_input_device)?;
+    output_device_from_name_and_id(name, output_device_id)
+}
+
+fn output_device_from_name_and_id(name: &str, output_device_id: AudioDeviceID) -> Option<OutputDevice> {
+    let output_devices = get_audio_device_list().ok()?;
+
+    output_devices
+        .iter()
+        .enumerate()
+        .find_map(|(index, device_name)| {
+            // The size of this value is limited by the number of audio devices that can be connected to the system.
+            // This can never exceed i32::MAX
+            #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+            let device_index = index as i32;
+
+            if device_name == name {
+                Some(OutputDevice {
+                    name: name.to_string(),
+                    device: output_device_id,
+                    device_index,
+                })
+            } else {
+                None
+            }
+        })
+}
+
+fn default_channels_from_device(output_device: &OutputDevice) -> Result<(i32, i32)> {
+    let stream_format = stream_format_from_device_id(output_device.device)?;
+    let channel_count = stream_format.channels;
+
+    if channel_count == 0 {
+        return Err(anyhow!(AudioError::NoAudioOutputChannels));
+    }
+
+    let left_index = Defaults::LEFT_CHANNEL_INDEX;
+
+    let right_index = if channel_count > Defaults::MONO_CHANNEL_COUNT {
+        Defaults::RIGHT_CHANNEL_INDEX
+    } else {
+        Defaults::OUTPUT_CHANNEL_DISABLED_VALUE
+    };
+
+    Ok((left_index, right_index))
+}
+
+fn stream_format_from_device_id(output_device_id: AudioDeviceID) -> Result<StreamFormat> {
+    let audio_unit = audio_unit_from_device_id_uninitialized(output_device_id, false)?;
+    let stream_format = audio_unit.stream_format(Scope::Global, Element::Output)?;
+    Ok(stream_format)
+}
+
 fn update_ui_with_new_device_index(
     current_output_device_name: &mut String,
     ui_update_sender: &Sender<UIUpdates>,
@@ -531,22 +598,24 @@ fn update_device_properties(
     new_output_device: Option<&OutputDevice>,
     output_stream_parameters: &mut OutputStreamParameters,
 ) {
-    *current_output_device_name = if let Some(device) = new_output_device {
-        device.name.clone()
-    } else {
-        String::new()
-    };
-
     update_current_channels(current_output_channels, new_output_device);
 
-    if let Some(default_config) = new_output_device
-        .as_ref()
-        .map(|device| device.device.default_output_config())
-        .and_then(std::result::Result::ok)
-    {
+    let output_device_id = if let Some(output_device) = new_output_device {
+        let output_device_name = output_device.name.clone();
+        *current_output_device_name = output_device_name;
+        output_device.device
+    } else {
+        *current_output_device_name = String::new();
+        return;
+    };
+
+    if let Ok(stream_format) = stream_format_from_device_id(output_device_id) {
+        // The size of this value is limited by the number of audio devices that can be connected to the system.
+        // This can never exceed u16::MAX
+        #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
         output_stream_parameters
             .channel_count
-            .store(default_config.channels(), Relaxed);
+            .store(stream_format.channels as u16, Relaxed);
     }
 }
 
@@ -581,7 +650,7 @@ fn start_new_output_device(
     ui_update_sender: &Sender<UIUpdates>,
     sample_producer_sender: &Sender<Producer<f32>>,
     buffer_dropout_counter: &Arc<AtomicU32>,
-) -> Option<Stream> {
+) -> Option<AudioUnit> {
     if let Some(device) = new_output_device {
         send_audio_ui_update(
             ui_update_sender,
@@ -630,8 +699,8 @@ fn start_main_audio_output_loop(
     output_channels: &Arc<OutputChannels>,
     mut sample_buffer: Consumer<f32>,
     buffer_dropout_counter: Arc<AtomicU32>,
-) -> Result<Stream> {
-    let device_stream_config = stream_config_from_parameters(output_stream_parameters);
+) -> Result<AudioUnit> {
+    let device_stream_format = stream_format_from_device_id(output_device.device)?;
 
     log::info!(
         target: "audio::control",
@@ -645,100 +714,68 @@ fn start_main_audio_output_loop(
     let number_of_channels = output_stream_parameters.channel_count.load(Relaxed) as usize;
     let output_channels_thread = output_channels.clone();
 
-    let stream = output_device.device.build_output_stream(
-        &device_stream_config,
-        move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
-            let left_channel_index = output_channels_thread.left.load(Relaxed);
-            let right_channel_index = output_channels_thread.right.load(Relaxed);
-            let number_of_frames = buffer.len() / number_of_channels;
-            let mut samples = if let Ok(samples) = sample_buffer.read_chunk(number_of_frames * 2) {
-                samples.into_iter()
-            } else {
-                let _ = buffer_dropout_counter.fetch_add(1, Relaxed);
-                return;
-            };
+    set_device_sample_rate(
+        output_device.device,
+        f64::from(output_stream_parameters.sample_rate.load(Relaxed)),
+    )?;
+    let mut output_audio_unit =
+        audio_unit_from_device_id_uninitialized(output_device.device, false)?;
 
-            // Allow usize cast sign loss: channel indices are small positive values (0-7 typical, 0-31 max)
-            // Right channel check guards against -1 (disabled), the left channel is never negative
-            #[allow(clippy::cast_sign_loss)]
-            for frame in buffer.chunks_mut(number_of_channels) {
-                frame[left_channel_index as usize] = samples.next().unwrap_or_default();
-                let right_sample = samples.next().unwrap_or_default();
-                if right_channel_index != Defaults::OUTPUT_CHANNEL_DISABLED_VALUE {
-                    frame[right_channel_index as usize] = right_sample;
-                }
-            }
-        },
-        |err| {
-            log::error!(target: "audio::control", "start_main_audio_output_loop(): Error in audio output stream: {err}");
-        },
-        None,
+    let output_stream_format = StreamFormat {
+        sample_rate: device_stream_format.sample_rate,
+        sample_format: SampleFormat::F32,
+        flags: LinearPcmFlags::IS_FLOAT | LinearPcmFlags::IS_PACKED,
+        channels: device_stream_format.channels,
+    };
+
+    output_audio_unit.set_property(
+        kAudioUnitProperty_StreamFormat,
+        Scope::Global,
+        Element::Output,
+        Some(&output_stream_format.to_asbd()),
     )?;
 
-    stream.play()?;
+    output_audio_unit.set_property(
+        kAudioOutputUnitProperty_CurrentDevice,
+        Scope::Global,
+        Element::Output,
+        Some(&output_device.device),
+    )?;
+
+    output_audio_unit.set_property(
+        kAudioDevicePropertyBufferFrameSize,
+        Scope::Global,
+        Element::Output,
+        Some(&output_device.device),
+    )?;
+
+    output_audio_unit.set_render_callback(move |args: Args| {
+        let left_channel_index = output_channels_thread.left.load(Relaxed);
+        let right_channel_index = output_channels_thread.right.load(Relaxed);
+        let mut samples = if let Ok(samples) = sample_buffer.read_chunk(args.num_frames * 2) {
+            samples.into_iter()
+        } else {
+            let _ = buffer_dropout_counter.fetch_add(1, Relaxed);
+            return Ok(());
+        };
+
+        // Allow usize cast sign loss: channel indices are small positive values (0-7 typical, 0-31 max)
+        // Right channel check guards against -1 (disabled), the left channel is never negative
+        #[allow(clippy::cast_sign_loss)]
+        for frame in args.data.buffer.chunks_mut(number_of_channels) {
+            frame[left_channel_index as usize] = samples.next().unwrap_or_default();
+            let right_sample = samples.next().unwrap_or_default();
+            if right_channel_index != Defaults::OUTPUT_CHANNEL_DISABLED_VALUE {
+                frame[right_channel_index as usize] = right_sample;
+            }
+        }
+
+        Ok(())
+    })?;
+    output_audio_unit.initialize()?;
+    output_audio_unit.start()?;
 
     log::debug!(target: "audio::control", "start_main_audio_output_loop(): Main audio loop started and playing.");
 
-    Ok(stream)
-}
-
-fn default_audio_output_device() -> Option<OutputDevice> {
-    let audio_host = default_host();
-    if let Some(device) = audio_host.default_output_device() {
-        let device_name = device.description().ok()?.name().to_string();
-        log::debug!(
-            target: "audio::control",
-            "default_audio_output_device(): Using default audio output device: {device_name}"
-        );
-
-        new_output_device_from_name(&audio_host, &device_name)
-    } else {
-        log::error!(target: "audio::control", "default_audio_output_device(): No default audio output device found.");
-        None
-    }
-}
-
-fn new_output_device_from_name(host: &Host, name: &str) -> Option<OutputDevice> {
-    let output_devices = host.output_devices().ok()?;
-
-    output_devices.enumerate().find_map(|(index, device)| {
-        // The size of this value is limited by the number of audio devices that can be connected to the system.
-        // This can never exceed i32::MAX
-        #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
-        let device_index = index as i32;
-
-        if device.description().ok()?.name() == name {
-            let channel_count = device.default_output_config().ok()?.channels();
-
-            if channel_count == 0 {
-                return None;
-            }
-
-            Some(OutputDevice {
-                name: name.to_string(),
-                device,
-                device_index,
-            })
-        } else {
-            None
-        }
-    })
-}
-
-fn default_channels_from_device(output_device: &OutputDevice) -> Result<(i32, i32)> {
-    let channel_count = output_device.device.default_output_config()?.channels();
-
-    if channel_count == 0 {
-        return Err(anyhow!(AudioError::NoAudioOutputChannels));
-    }
-
-    let left_index = Defaults::LEFT_CHANNEL_INDEX;
-
-    let right_index = if channel_count > Defaults::MONO_CHANNEL_COUNT {
-        Defaults::RIGHT_CHANNEL_INDEX
-    } else {
-        Defaults::OUTPUT_CHANNEL_DISABLED_VALUE
-    };
-
-    Ok((left_index, right_index))
+    Ok(output_audio_unit)
 }
