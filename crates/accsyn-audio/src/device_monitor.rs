@@ -8,7 +8,9 @@ use coreaudio_sys::{
 };
 
 use coreaudio::audio_unit::Scope;
-use coreaudio::audio_unit::macos_helpers::{get_audio_device_ids_for_scope, get_device_name};
+use coreaudio::audio_unit::macos_helpers::{
+    get_audio_device_ids_for_scope, get_audio_device_supports_scope, get_device_name,
+};
 use crossbeam_channel::Sender;
 use std::ffi::c_void;
 use std::ptr;
@@ -115,6 +117,10 @@ pub fn get_audio_device_list() -> Result<Vec<String>> {
     let device_ids = get_audio_device_ids_for_scope(Scope::Output)?;
     Ok(device_ids
         .iter()
+        .filter(|device_id| {
+            get_audio_device_supports_scope(**device_id, Scope::Output)
+                .is_ok_and(|device_supports_scope| device_supports_scope)
+        })
         .filter_map(|device_id| get_device_name(*device_id).ok())
         .collect::<Vec<String>>())
 }
