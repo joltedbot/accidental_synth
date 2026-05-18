@@ -43,9 +43,9 @@ pub struct OutputDevice {
     /// Human-readable device name.
     pub name: String,
     /// `CoreAudio` device handle for audio output.
-    pub device: AudioDeviceID,
+    pub id: AudioDeviceID,
     /// Index of this device in the host's output device list.
-    pub device_index: i32,
+    pub index: i32,
 }
 
 /// Atomic left/right channel index pair for the current output device.
@@ -247,8 +247,8 @@ fn output_device_from_name_and_id(
             if device_name == name {
                 Some(OutputDevice {
                     name: name.to_string(),
-                    device: output_device_id,
-                    device_index,
+                    id: output_device_id,
+                    index: device_index,
                 })
             } else {
                 None
@@ -258,7 +258,7 @@ fn output_device_from_name_and_id(
 
 fn default_channels_from_device(output_device: &OutputDevice) -> Result<(i32, i32)> {
     log::debug!(target: "audio::control", "default_channels_from_device(): Querying channels for '{}'", output_device.name);
-    let stream_format = stream_format_from_device_id(output_device.device)?;
+    let stream_format = stream_format_from_device_id(output_device.id)?;
     let channel_count = stream_format.channels;
 
     if channel_count == 0 {
@@ -323,7 +323,7 @@ fn update_device_properties(
     let output_device_id = if let Some(output_device) = new_output_device {
         let output_device_name = output_device.name.clone();
         *current_output_device_name = output_device_name;
-        output_device.device
+        output_device.id
     } else {
         *current_output_device_name = String::new();
         return;
@@ -373,10 +373,7 @@ fn start_main_audio_loop_with_new_device(
     buffer_dropout_counter: &Arc<AtomicU32>,
 ) -> Option<AudioUnit> {
     if let Some(device) = new_output_device {
-        send_audio_ui_update(
-            ui_update_sender,
-            UIUpdates::AudioDeviceIndex(device.device_index),
-        );
+        send_audio_ui_update(ui_update_sender, UIUpdates::AudioDeviceIndex(device.index));
 
         send_audio_ui_update(
             ui_update_sender,
@@ -439,7 +436,7 @@ fn restart_main_audio_loop_with_new_device(
 
     send_audio_ui_update(
         ui_update_sender,
-        UIUpdates::AudioDeviceIndex(output_device.device_index),
+        UIUpdates::AudioDeviceIndex(output_device.index),
     );
 
     send_audio_ui_update(

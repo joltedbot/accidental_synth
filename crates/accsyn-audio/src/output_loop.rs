@@ -1,4 +1,4 @@
-use crate::{Args, AudioError, OutputChannels, OutputDevice};
+use crate::{Args, AudioError, OutputChannels, OutputDevice, stream_format_from_device_id};
 use accsyn_core::audio_events::OutputStreamParameters;
 use accsyn_core::defaults::Defaults;
 use anyhow::anyhow;
@@ -22,7 +22,7 @@ pub fn start_main_audio_output_loop(
     buffer_dropout_counter: Arc<AtomicU32>,
 ) -> anyhow::Result<AudioUnit> {
     log::info!(
-        target: "audio::control",
+        target: "audio::loop",
         "Setting up audio output loop with the device: {}, sample rate: {} Hz, buffer size: {} samples, channels: {}",
         output_device.name,
         output_stream_parameters.sample_rate.load(Relaxed),
@@ -30,44 +30,47 @@ pub fn start_main_audio_output_loop(
         output_stream_parameters.channel_count.load(Relaxed)
     );
 
-    let device_stream_format = crate::stream_format_from_device_id(output_device.device)?;
+    let device_stream_format = stream_format_from_device_id(output_device.id)?;
     let number_of_channels = output_stream_parameters.channel_count.load(Relaxed) as usize;
     let output_channels_thread = output_channels.clone();
+    let sample_rate = f64::from(output_stream_parameters.sample_rate.load(Relaxed));
+    let buffer_size = output_stream_parameters.buffer_size.load(Relaxed);
 
-    set_device_sample_rate(
-        output_device.device,
-        f64::from(output_stream_parameters.sample_rate.load(Relaxed)),
-    )?;
+    log::debug!(target: "audio::loop", "Setting sample rate to: {sample_rate}");
+    set_device_sample_rate(output_device.id, sample_rate)?;
 
-    let mut output_audio_unit =
-        audio_unit_from_device_id_uninitialized(output_device.device, false)?;
+    log::debug!(target: "audio::loop", "Create uninitialized audio unit from device id: {}", output_device.id);
+    let mut output_audio_unit = audio_unit_from_device_id_uninitialized(output_device.id, false)?;
 
+    log::debug!(target: "audio::loop", "Setting buffer frame size: {buffer_size}");
     output_audio_unit.set_property(
         kAudioDevicePropertyBufferFrameSize,
         Scope::Output,
         Element::Output,
-        Some(&output_stream_parameters.buffer_size.load(Relaxed)),
+        Some(&buffer_size),
     )?;
 
     let output_stream_format = StreamFormat {
-        sample_rate: device_stream_format.sample_rate,
+        sample_rate,
         sample_format: SampleFormat::F32,
         flags: LinearPcmFlags::IS_FLOAT | LinearPcmFlags::IS_PACKED,
         channels: device_stream_format.channels,
     };
 
-    let new_stream_format =
-        find_matching_physical_format(output_device.device, output_stream_format)
+    let actual_stream_format =
+        find_matching_physical_format(output_device.id, output_stream_format)
             .ok_or(anyhow!(AudioError::NoMatchingAudioStreamFormat))?;
-    set_device_physical_stream_format(output_device.device, new_stream_format)?;
+
+    log::debug!(target: "audio::loop", "Setting physical device side stream format: {actual_stream_format:?}");
+    set_device_physical_stream_format(output_device.id, actual_stream_format)?;
 
     log::debug!(
-        target: "audio::control",
-        "Using render (output) stream format: {output_stream_format:?}",
+        target: "audio::loop",
+        "Setting audio unit stream format to: {output_stream_format:?}",
     );
     output_audio_unit.set_stream_format(output_stream_format, Scope::Input, Element::Output)?;
 
-    log::info!(target: "audio::control", "Starting Render (Output) Callback for Audio Unit");
+    log::info!(target: "audio::loop", "Starting Render (Output) Callback for Audio Unit");
     output_audio_unit.set_render_callback(move |args: Args| {
         let left_channel_index = output_channels_thread.left.load(Relaxed);
         let right_channel_index = output_channels_thread.right.load(Relaxed);
@@ -93,13 +96,13 @@ pub fn start_main_audio_output_loop(
         Ok(())
     })?;
 
-    log::debug!(target: "audio::control", "start_main_audio_output_loop(): Initializing the audio unit.");
+    log::debug!(target: "audio::loop", "start_main_audio_output_loop(): Initializing the audio unit.");
     output_audio_unit.initialize()?;
 
-    log::debug!(target: "audio::control", "start_main_audio_output_loop(): Starting the audio unit");
+    log::debug!(target: "audio::loop", "start_main_audio_output_loop(): Starting the audio unit");
     output_audio_unit.start()?;
 
-    log::info!(target: "audio::control", "start_main_audio_output_loop(): Main audio loop initialized and started.");
+    log::info!(target: "audio::loop", "start_main_audio_output_loop(): Main audio loop initialized and started.");
 
     Ok(output_audio_unit)
 }
