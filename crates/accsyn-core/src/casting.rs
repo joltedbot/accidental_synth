@@ -36,6 +36,19 @@ pub fn f32_to_usize_clamped(value: f32) -> usize {
     value.clamp(0.0, usize::MAX as f32) as usize
 }
 
+/// Converts `f64` to `u32` by clamping to `[0.0, u32::MAX]` before truncating.
+/// Use when the caller guarantees the value is a non-negative audio parameter (e.g., sample rate).
+#[allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_precision_loss
+)]
+#[must_use]
+pub fn f64_to_u32_clamped(value: f64) -> u32 {
+    // f64 can represent u32::MAX exactly (unlike f32), so the clamp bound is precise.
+    value.clamp(0.0, f64::from(u32::MAX)) as u32
+}
+
 /// Converts `i32` to `u8` by clamping to `[0, 255]` before converting.
 /// Use for wave shape indices and similar small UI-sourced integers.
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
