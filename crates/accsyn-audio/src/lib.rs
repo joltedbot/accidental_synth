@@ -15,19 +15,14 @@ use accsyn_core::casting::f64_to_u32_clamped;
 use accsyn_core::defaults::Defaults;
 use accsyn_core::ui_events::UIUpdates;
 
-use crate::constants::{
-    AUDIO_MESSAGE_SENDER_CAPACITY, BUFFER_DROP_OUT_LOGGER, SAMPLE_BUFFER_SENDER_CAPACITY,
-    STEREO_CHANNEL_COUNT, STEREO_SAMPLE_BUFFER_COUNT,
-};
+use crate::constants::{AUDIO_MESSAGE_SENDER_CAPACITY, BUFFER_DROP_OUT_LOGGER, I24_ALIGNED_HIGH_I32_MAX_VALUE, SAMPLE_BUFFER_SENDER_CAPACITY, STEREO_CHANNEL_COUNT, STEREO_SAMPLE_BUFFER_COUNT};
 use crate::device_monitor::{DeviceMonitor, get_audio_device_list};
 use anyhow::{Result, anyhow};
 use coreaudio::audio_unit::macos_helpers::{
     audio_unit_from_device_id_uninitialized, get_default_device_id, get_device_id_from_name,
     get_device_name,
 };
-use coreaudio::audio_unit::{
-    AudioUnit, Element, Scope, StreamFormat, render_callback, render_callback::data,
-};
+use coreaudio::audio_unit::{AudioUnit, Element, Scope, StreamFormat};
 use coreaudio_sys::AudioDeviceID;
 use crossbeam_channel::{Receiver, Sender, bounded};
 use rtrb::{Producer, RingBuffer};
@@ -69,9 +64,6 @@ pub enum AudioError {
     #[error("No Matching Audio Stream Format Found")]
     NoMatchingAudioStreamFormat,
 }
-
-/// Audio device update events that can be sent to the audio subsystem.
-type Args = render_callback::Args<data::Interleaved<f32>>;
 
 /// Main audio output manager handling device selection, stream configuration, and sample delivery.
 pub struct Audio {
@@ -284,6 +276,15 @@ fn stream_format_from_device_id(output_device_id: AudioDeviceID) -> Result<Strea
     let stream_format = audio_unit.stream_format(Scope::Global, Element::Output)?;
     log::trace!(target: "audio::control", "stream_format_from_device_id(): sample_rate={}, channels={}", stream_format.sample_rate, stream_format.channels);
     Ok(stream_format)
+}
+
+// f32 → i32 with 24-bit sample in high 3 bytes
+#[inline(always)]
+fn f32_to_int24_aligned_high(sample: f32) -> i32 {
+    let scaled = sample * I24_ALIGNED_HIGH_I32_MAX_VALUE;
+    let clamped = scaled.clamp(-I24_ALIGNED_HIGH_I32_MAX_VALUE, I24_ALIGNED_HIGH_I32_MAX_VALUE);
+    // mask low byte to guarantee alignment
+    (clamped as i32) & !0xFF
 }
 
 fn update_ui_with_new_device_index(
