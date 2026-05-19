@@ -9,20 +9,24 @@ mod constants;
 mod control_listener;
 mod device_monitor;
 mod output_loop;
+mod sample_convert;
 
 use accsyn_core::audio_events::{AudioDeviceUpdateEvents, OutputStreamParameters};
 use accsyn_core::casting::f64_to_u32_clamped;
 use accsyn_core::defaults::Defaults;
 use accsyn_core::ui_events::UIUpdates;
 
-use crate::constants::{AUDIO_MESSAGE_SENDER_CAPACITY, BUFFER_DROP_OUT_LOGGER, I24_ALIGNED_HIGH_I32_MAX_VALUE, SAMPLE_BUFFER_SENDER_CAPACITY, STEREO_CHANNEL_COUNT, STEREO_SAMPLE_BUFFER_COUNT};
+use crate::constants::{
+    AUDIO_MESSAGE_SENDER_CAPACITY, BUFFER_DROP_OUT_LOGGER, SAMPLE_BUFFER_SENDER_CAPACITY,
+    STEREO_CHANNEL_COUNT, STEREO_SAMPLE_BUFFER_COUNT,
+};
 use crate::device_monitor::{DeviceMonitor, get_audio_device_list};
 use anyhow::{Result, anyhow};
 use coreaudio::audio_unit::macos_helpers::{
     audio_unit_from_device_id_uninitialized, get_default_device_id, get_device_id_from_name,
     get_device_name,
 };
-use coreaudio::audio_unit::{AudioUnit, Element, Scope, StreamFormat};
+use coreaudio::audio_unit::{AudioUnit, Element, SampleFormat, Scope, StreamFormat};
 use coreaudio_sys::AudioDeviceID;
 use crossbeam_channel::{Receiver, Sender, bounded};
 use rtrb::{Producer, RingBuffer};
@@ -63,6 +67,10 @@ pub enum AudioError {
     /// No matching physical audio stream format was found for this device
     #[error("No Matching Audio Stream Format Found")]
     NoMatchingAudioStreamFormat,
+
+    /// No matching physical audio stream format was found for this device
+    #[error("Device Bit Depth is not Supported: {0}")]
+    BitDepthNotSupported(u32),
 }
 
 /// Main audio output manager handling device selection, stream configuration, and sample delivery.
@@ -278,15 +286,6 @@ fn stream_format_from_device_id(output_device_id: AudioDeviceID) -> Result<Strea
     Ok(stream_format)
 }
 
-// f32 → i32 with 24-bit sample in high 3 bytes
-#[inline(always)]
-fn f32_to_int24_aligned_high(sample: f32) -> i32 {
-    let scaled = sample * I24_ALIGNED_HIGH_I32_MAX_VALUE;
-    let clamped = scaled.clamp(-I24_ALIGNED_HIGH_I32_MAX_VALUE, I24_ALIGNED_HIGH_I32_MAX_VALUE);
-    // mask low byte to guarantee alignment
-    (clamped as i32) & !0xFF
-}
-
 fn update_ui_with_new_device_index(
     current_output_device_name: &mut String,
     ui_update_sender: &Sender<UIUpdates>,
@@ -310,6 +309,21 @@ fn update_ui_with_new_device_index(
         "AudioDeviceEvent::OutputDeviceListUpdate: The current device is still in the \
                         list. Updating UI with the new index: {new_device_index} and continuing"
     );
+}
+
+fn sample_format_from_supported_bit_depth(supported_bit_depth: u32) -> Result<SampleFormat> {
+    let sample_format = match supported_bit_depth {
+        32 => SampleFormat::F32,
+        24 => SampleFormat::I32,
+        16 => SampleFormat::I16,
+        8 => SampleFormat::I8,
+        _ => {
+            return Err(anyhow!(AudioError::BitDepthNotSupported(
+                supported_bit_depth
+            )));
+        }
+    };
+    Ok(sample_format)
 }
 
 fn update_device_properties(

@@ -7,5 +7,4 @@ pub const STEREO_SAMPLE_BUFFER_COUNT: u32 = 3;
 pub const USER_CHANNEL_TO_CHANNEL_INDEX_OFFSET: i32 = 1;
 pub const COREAUDIO_DEVICE_LIST_UPDATE_REST_PERIOD_IN_MS: u64 = 100;
 pub const OSSSTATUS_NO_ERROR: SInt32 = 0;
-pub const BUFFER_DROP_OUT_LOGGER: u64 = 2;
-pub const I24_ALIGNED_HIGH_I32_MAX_VALUE: f32 = 2_147_483_392.0;     // 2^31 - 256 = 2147483392, the max value with low byte zero.
+pub const BUFFER_DROP_OUT_LOGGER: u64 = 2; // 2^31 - 256 = 2147483392, the max value with low byte zero.

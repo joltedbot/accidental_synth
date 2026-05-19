@@ -28,7 +28,6 @@ pub const EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES: (f32, f32) = (0.5, 700.0);
 pub const EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES: (f32, f32) = (0.5, 1000.0);
 /// Exponential curve parameters for envelope release (min, max) in milliseconds.
 pub const EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES: (f32, f32) = (0.6, 2000.0);
-
 /// Converts a normalized 0.0–1.0 value to an envelope time in milliseconds using
 /// a two-segment quadratic curve parameterized by crossover values.
 #[inline]
