@@ -1,3 +1,4 @@
+use crate::modules::effects;
 use crate::modules::effects::constants::{
     MAX_MAKEUP_GAIN_FACTOR, MAX_RATIO, MIN_MAKEUP_GAIN_FACTOR, MIN_RATIO,
 };
@@ -23,7 +24,7 @@ impl AudioEffect for Compressor {
             return samples;
         }
 
-        (
+        let compressed_samples = (
             compress_sample(
                 samples.0,
                 effect.parameters[0],
@@ -36,7 +37,10 @@ impl AudioEffect for Compressor {
                 effect.parameters[1],
                 effect.parameters[2],
             ),
-        )
+        );
+
+        let blend_amount = effect.parameters[3];
+        effects::dry_wet_blend(samples, compressed_samples, blend_amount)
     }
 }
 

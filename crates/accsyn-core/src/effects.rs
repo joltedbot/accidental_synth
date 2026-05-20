@@ -1,7 +1,8 @@
 use crate::defaults::{
-    AUTOPAN_DEFAULT_PARAMETERS, CLIPPER_DEFAULT_PARAMETERS, COMPRESSOR_DEFAULT_PARAMETERS,
-    DEFAULT_EFFECT_PARAMETERS, DELAY_DEFAULT_PARAMETERS, GATE_DEFAULT_PARAMETERS,
-    SATURATION_DEFAULT_PARAMETERS, TREMOLO_DEFAULT_PARAMETERS,
+    AUTOPAN_DEFAULT_PARAMETERS, BITSHIFTER_DEFAULT_PARAMETERS, CLIPPER_DEFAULT_PARAMETERS,
+    COMPRESSOR_DEFAULT_PARAMETERS, DEFAULT_EFFECT_PARAMETERS, DELAY_DEFAULT_PARAMETERS,
+    GATE_DEFAULT_PARAMETERS, RECTIFIER_DEFAULT_PARAMETERS, SATURATION_DEFAULT_PARAMETERS,
+    TREMOLO_DEFAULT_PARAMETERS,
 };
 use std::string::ToString;
 use strum::IntoEnumIterator;
@@ -79,7 +80,7 @@ impl EffectParameters {
 
         for effect in EffectIndex::iter() {
             match effect {
-                EffectIndex::WaveFolder | EffectIndex::Rectifier | EffectIndex::BitShifter => {
+                EffectIndex::WaveFolder => {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
@@ -112,6 +113,20 @@ impl EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
                         parameters: COMPRESSOR_DEFAULT_PARAMETERS.to_vec(),
+                    });
+                }
+                EffectIndex::BitShifter => {
+                    effect_parameters.push(EffectParameters {
+                        name: effect.to_string(),
+                        is_enabled: false,
+                        parameters: BITSHIFTER_DEFAULT_PARAMETERS.to_vec(),
+                    });
+                }
+                EffectIndex::Rectifier => {
+                    effect_parameters.push(EffectParameters {
+                        name: effect.to_string(),
+                        is_enabled: false,
+                        parameters: RECTIFIER_DEFAULT_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::Delay => {

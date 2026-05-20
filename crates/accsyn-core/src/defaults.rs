@@ -69,7 +69,11 @@ pub const TREMOLO_DEFAULT_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
 /// Default Saturation effect parameters: [Amount, Cut, unused, unused].
 pub const SATURATION_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 0.0, 1.0, 0.0];
 /// Default compressor effect parameters: [threshold, ratio, unused, unused].
-pub const COMPRESSOR_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
+pub const COMPRESSOR_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
+/// Default bitshifter effect parameters: [Full/Half Wave, blend, unused, unused].
+pub const BITSHIFTER_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
+/// Default rectifier effect parameters: [Full/Half Wave, blend, unused, unused].
+pub const RECTIFIER_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
 /// Default clipper effect parameters: [threshold, unused, unused, unused].
 pub const CLIPPER_DEFAULT_PARAMETERS: [f32; 4] = [1.0, 0.0, 0.0, 0.0];
 /// Default gate effect parameters: [threshold, ratio, unused, unused].

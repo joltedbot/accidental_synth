@@ -134,6 +134,7 @@ export component Compressor inherits EffectBox {
         threshold.enabled = self.is_enabled;
         ratio.enabled = self.is_enabled;
         postgain.enabled = self.is_enabled;
+        blend.enabled = self.is_enabled;
     }
 
     HorizontalSpacer { }
@@ -165,6 +166,16 @@ export component Compressor inherits EffectBox {
         label: Theme.compressor-parameter3;
         horizontal-parameter-slider-changed(amount) => {
             effect_parameter_changed(parent.effect-index, 2, amount);
+        }
+    }
+
+    blend := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        value: effect_values.parameters[3];
+        label: Theme.rectifier-blend;
+        horizontal-parameter-slider-changed(amount) => {
+            effect_parameter_changed(parent.effect-index, 3, amount);
         }
     }
 }
@@ -241,6 +252,7 @@ export component Bitshifter inherits EffectBox {
 
     changed is_enabled => {
         bits.enabled = self.is_enabled;
+        blend.enabled = self.is_enabled;
     }
 
     HorizontalSpacer { }
@@ -252,6 +264,16 @@ export component Bitshifter inherits EffectBox {
         label: Theme.bitshifter-parameter1;
         horizontal-parameter-slider-changed(amount) => {
             effect_parameter_changed(parent.effect-index, 0, amount);
+        }
+    }
+
+    blend := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        value: effect_values.parameters[1];
+        label: Theme.rectifier-blend;
+        horizontal-parameter-slider-changed(amount) => {
+            effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 }
@@ -386,6 +408,7 @@ export component Rectifier inherits EffectBox {
 
     changed is_enabled => {
         full_wave.enabled = self.is_enabled;
+        blend.enabled = self.is_enabled;
     }
 
     HorizontalSpacer { }
@@ -400,6 +423,16 @@ export component Rectifier inherits EffectBox {
             } else {
                 effect_parameter_changed(parent.effect-index, 0, 0.0);
             }
+        }
+    }
+
+    blend := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        value: effect_values.parameters[1];
+        label: Theme.rectifier-blend;
+        horizontal-parameter-slider-changed(amount) => {
+            effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 }

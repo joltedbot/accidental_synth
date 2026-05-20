@@ -1,3 +1,4 @@
+use crate::modules::effects;
 use crate::modules::effects::constants::{MAX_BITSHIFT_BITS, MIN_BITSHIFT_BITS};
 use crate::synthesizer::midi_value_converters::normal_value_to_unsigned_integer_range;
 use accsyn_core::effects::{AudioEffect, EffectParameters};
@@ -24,7 +25,9 @@ impl AudioEffect for BitShifter {
             MAX_BITSHIFT_BITS,
         );
 
-        (shift_sample(samples.0, bits), shift_sample(samples.1, bits))
+        let bit_shifted_samples = (shift_sample(samples.0, bits), shift_sample(samples.1, bits));
+        let blend_amount = effect.parameters[1];
+        effects::dry_wet_blend(samples, bit_shifted_samples, blend_amount)
     }
 }
 

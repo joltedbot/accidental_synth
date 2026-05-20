@@ -161,7 +161,7 @@
     {
       "name": "Colour Compressor",
       "is_enabled": false,
-      "parameters": [0.16932745, 0.36032608, 0.5501019, 0.0]
+      "parameters": [0.16932745, 0.36032608, 0.5501019, 1.0]
     },
     {
       "name": "Wave Folder",
@@ -171,7 +171,7 @@
     {
       "name": "Bit Shifter",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [0.0, 1.0, 0.0, 0.0]
     },
     {
       "name": "Clipper",

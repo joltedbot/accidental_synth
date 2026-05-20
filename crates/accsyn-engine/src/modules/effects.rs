@@ -123,6 +123,16 @@ fn extract_parameters(source: &AudioEffectParameters) -> EffectParameters {
     }
 }
 
+fn dry_wet_blend(
+    samples: (f32, f32),
+    rectified_samples: (f32, f32),
+    blend_amount: f32,
+) -> (f32, f32) {
+    let left_sample = samples.0 * (1.0 - blend_amount) + rectified_samples.0 * blend_amount;
+    let right_sample = samples.1 * (1.0 - blend_amount) + rectified_samples.1 * blend_amount;
+    (left_sample, right_sample)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -243,6 +253,7 @@ mod tests {
         // Enable rectifier with half-wave mode
         params[EffectIndex::Rectifier as usize].is_enabled = AtomicBool::new(true);
         params[EffectIndex::Rectifier as usize].parameters[0] = NormalizedValue::new(0.0_f32); // half-wave
+        params[EffectIndex::Rectifier as usize].parameters[1] = NormalizedValue::new(1.0_f32); // 100% blend
         effects.set_parameters(&params);
         let input = (0.5, -0.3);
 
@@ -276,6 +287,7 @@ mod tests {
         // Enable rectifier with full-wave mode
         params[EffectIndex::Rectifier as usize].is_enabled = AtomicBool::new(true);
         params[EffectIndex::Rectifier as usize].parameters[0] = NormalizedValue::new(1.0_f32); // full-wave
+        params[EffectIndex::Rectifier as usize].parameters[1] = NormalizedValue::new(1.0_f32); // 100% blend
 
         // Enable clipper with low threshold and no gains
         params[EffectIndex::Clipper as usize].is_enabled = AtomicBool::new(true);
@@ -293,5 +305,74 @@ mod tests {
         // Rectifier full-wave: 0.4 stays 0.4, -0.4 becomes 0.4
         assert!(f32s_are_equal(result.0, 0.4));
         assert!(f32s_are_equal(result.1, 0.4));
+    }
+
+    #[test]
+    fn dry_wet_blend_returns_correct_blend_for_arbitrary_values() {
+        let samples = (0.1234, -0.9876);
+        let rectified_samples = (1.0, -1.0);
+        let blend_amount = 0.75;
+        let expected_values = (0.78085, -0.9969);
+
+        let result = dry_wet_blend(samples, rectified_samples, blend_amount);
+
+        assert!(
+            f32s_are_equal(result.0, expected_values.0),
+            "Expected {}, Recieved {}",
+            expected_values.0,
+            result.0
+        );
+        assert!(
+            f32s_are_equal(result.1, expected_values.1),
+            "Expected {}, Recieved {}",
+            expected_values.1,
+            result.1
+        );
+    }
+
+    #[test]
+    fn dry_wet_blend_returns_correct_blend_for_max_min_values() {
+        let samples = (1.0, -1.0);
+        let rectified_samples = (-1.0, 1.0);
+        let blend_amount = 1.0;
+        let expected_values = (-1.0, 1.0);
+
+        let result = dry_wet_blend(samples, rectified_samples, blend_amount);
+
+        assert!(
+            f32s_are_equal(result.0, expected_values.0),
+            "Expected {}, Recieved {}",
+            expected_values.0,
+            result.0
+        );
+        assert!(
+            f32s_are_equal(result.1, expected_values.1),
+            "Expected {}, Recieved {}",
+            expected_values.1,
+            result.1
+        );
+    }
+
+    #[test]
+    fn dry_wet_blend_returns_correctly_handles_zeros() {
+        let samples = (1.0, -1.0);
+        let rectified_samples = (0.0, 0.0);
+        let blend_amount = 0.0;
+        let expected_values = (1.0, -1.0);
+
+        let result = dry_wet_blend(samples, rectified_samples, blend_amount);
+
+        assert!(
+            f32s_are_equal(result.0, expected_values.0),
+            "Expected {}, Recieved {}",
+            expected_values.0,
+            result.0
+        );
+        assert!(
+            f32s_are_equal(result.1, expected_values.1),
+            "Expected {}, Recieved {}",
+            expected_values.1,
+            result.1
+        );
     }
 }
