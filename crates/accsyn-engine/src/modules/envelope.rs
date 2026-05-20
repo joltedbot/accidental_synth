@@ -125,7 +125,7 @@ pub struct Envelope {
 
 impl Envelope {
     /// Creates a new envelope generator initialized to the Off stage.
-    pub(crate) fn new(sample_rate: u32) -> Self {
+    pub fn new(sample_rate: u32) -> Self {
         log::debug!(target: "synthesizer::modules::envelope", "Constructing Envelope Module");
 
         // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
