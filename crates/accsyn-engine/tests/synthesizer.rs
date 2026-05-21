@@ -15,5 +15,9 @@ fn new_returns_ok() {
         channel_count: Arc::new(AtomicU16::new(2)),
     };
     let result = Synthesizer::new(params);
-    assert!(result.is_ok(), "Synthesizer::new() failed: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "Synthesizer::new() failed: {:?}",
+        result.err()
+    );
 }
