@@ -7,6 +7,7 @@ pub mod midi_value_converters;
 pub mod patches;
 mod sample_generator;
 mod set_parameters;
+mod clock;
 
 use self::constants::MAX_MIDI_KEY_VELOCITY;
 
@@ -43,6 +44,7 @@ use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use strum::EnumCount;
+use crate::synthesizer::clock::Clock;
 
 #[derive(Debug, Clone, Copy)]
 enum MidiNoteEvent {
@@ -199,7 +201,7 @@ pub struct Synthesizer {
     module_parameters: Arc<ModuleParameters>,
     ui_update_sender: Sender<SynthesizerUpdateEvents>,
     ui_update_receiver: Receiver<SynthesizerUpdateEvents>,
-    patches: Arc<Mutex<Patches>>,
+    patches: Arc<Mutex<Patches>>
 }
 
 impl Synthesizer {
@@ -286,7 +288,8 @@ impl Synthesizer {
     ) {
         let mut current_note = self.current_note.clone();
         let mut module_parameters = self.module_parameters.clone();
-
+        let mut clock = Clock::new();
+        
         thread::spawn(move || {
             log::debug!(target: "synthesizer", "start_midi_event_listener(): spawned thread to receive MIDI events");
 
@@ -323,6 +326,15 @@ impl Synthesizer {
                             &ui_update_receiver,
                             program_number,
                         );
+                    }
+                    MidiEvent::Clock => {
+                        if clock.tick_is_32nd_note() {
+                            log::trace!(target: "synthesizer", "Clock tick is 32nd note");
+                            if let Err(e) = ui_update_receiver.send(SynthesizerUpdateEvents::ThirtySecondNote) {
+                                log::error!(target: "synthesizer", "Failed to send midi clock tick 32nd note to \
+                                synthesizer: {e}");
+                            }
+                        }
                     }
                     MidiEvent::ControlChange(cc_value) => {
                         process_midi_cc_values(cc_value, &mut module_parameters, &ui_update_sender);

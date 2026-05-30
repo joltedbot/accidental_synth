@@ -19,6 +19,8 @@ import {
 // Component Structs
 export struct LFOValues {
     frequency: float,
+    thirty_second_notes: string,
+    clock_synced: bool,
     phase: float,
     wave-shape-index: int,
 }
@@ -235,6 +237,7 @@ export component HorizontalControlLabel inherits Rectangle {
     in property <string> value-units;
     in property <string> value;
     in property <bool> show-value: false;
+    in property <bool> show-units: false;
     in property <bool> enabled: true;
 
     property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
@@ -260,7 +263,7 @@ export component HorizontalControlLabel inherits Rectangle {
             font-size: Theme.component-label-font-size;
             font-weight: Theme.component-label-font-weight;
             color: text-color;
-            visible: show-value;
+            visible: show-units;
             text: " " + value-units;
         }
     }
@@ -306,8 +309,8 @@ export component FilterControlLabel inherits Rectangle {
 }
 
 export component ToggleSwitch inherits VerticalLayout {
-    in property <bool> is_checked;
-    out property <bool> async-enabled;
+    in property <bool> checked;
+    out property <bool> is_checked;
     in property <length> switch-height: 27px;
     in property <string> label;
     in property <bool> enabled: true;
@@ -318,12 +321,12 @@ export component ToggleSwitch inherits VerticalLayout {
     property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
     property <int> gen: PatchState.generation;
     changed gen => {
-        switch.checked = is_checked;
+        switch.checked = checked;
     }
 
-    changed is_checked => {
-        switch.checked = is_checked;
-        async-enabled = is_checked;
+    changed checked => {
+        switch.checked = checked;
+        is_checked = checked;
     }
 
     Text {
@@ -337,12 +340,12 @@ export component ToggleSwitch inherits VerticalLayout {
     HorizontalLayout {
         alignment: center;
         switch := Switch {
-            checked: is_checked;
+            checked: checked;
             enabled: enabled;
             height: switch-height;
             toggled() => {
                 toggle_switch_updated(self.checked);
-                async-enabled = self.checked;
+                is_checked = self.checked;
             }
         }
     }
@@ -383,6 +386,7 @@ export component HorizontalParameterSlider inherits VerticalLayout {
     in property <bool> enabled: true;
     in property <bool> show-value: false;
     in property <bool> show-lable: true;
+    in property <bool> show-units: false;
 
     callback horizontal-parameter-slider-changed(float);
 
@@ -400,6 +404,7 @@ export component HorizontalParameterSlider inherits VerticalLayout {
         value: display-value;
         value-units: value-units;
         show-value: show-value;
+        show-units: show-units;
         enabled: enabled;
     }
 
@@ -467,6 +472,7 @@ export component CenteredParameterSlider inherits VerticalLayout {
         value: display-value;
         value-units: value-units;
         show-value: show-value;
+        show-units: true;
     }
 
     hslider := BalanceSlider {
@@ -728,7 +734,7 @@ export component EnvelopeSection inherits VerticalLayout {
 
         ToggleSwitch {
             label: Theme.envelope-label-inverted;
-            is_checked: envelope-values.inverted;
+            checked: envelope-values.inverted;
             toggle_switch_updated(is_active) => {
                 envelope-invert-changed(is_active);
             }
@@ -747,6 +753,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
     callback lfo-shape-changed(int);
     callback lfo-phase-changed(float);
     callback lfo-phase-reset();
+    callback lfo-clock_sync_toggled(bool);
 
     width: Theme.lfo-widget-width;
     alignment: start;
@@ -763,10 +770,11 @@ export component FixedCenterLFOSection inherits VerticalLayout {
             frequency := HorizontalParameterSlider {
                 label: Theme.lfo-label-frequency;
                 value: lfo-values.frequency;
-                show-value: true;
-                value-units: Theme.display-units-hertz;
-                slider-width: Theme.global-panel-widget-width;
+                show-value: !sync_toggle.is_checked;
                 display-value: lfo-frequency-rounded;
+                value-units: sync_toggle.is_checked?lfo_values.thirty-second-notes:Theme.display-units-hertz;
+                show-units: true;
+                slider-width: Theme.global-panel-widget-width;
                 width: Theme.global-panel-widget-width;
                 horizontal-parameter-slider-changed(frequency) => {
                     lfo-frequency-changed(frequency);
@@ -794,6 +802,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
                 value: lfo-values.phase;
                 show-value: true;
                 value-units: Theme.display-units-degrees;
+                show-units: true;
                 display-value: lfo-phase-display;
                 slider-width: Theme.global-panel-widget-width;
 
@@ -802,6 +811,19 @@ export component FixedCenterLFOSection inherits VerticalLayout {
                 }
             }
 
+            HorizontalLayout {
+                alignment: center;
+                sync_toggle := ToggleSwitch {
+                    width: Theme.global-panel-widget-width;
+                    label: Theme.lfo-sync-toggle-label;
+                    checked: lfo-values.clock_synced;
+                    toggle_switch_updated(is_checked) => {
+                        lfo-clock_sync_toggled(is_checked);
+                    }
+                }
+            }
+
+/*
             reset := MomentaryButton {
                 label: Theme.lfo-label-reset;
                 button-width: 100px;
@@ -810,6 +832,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
                     lfo-phase-reset();
                 }
             }
+           */
         }
     }
 }

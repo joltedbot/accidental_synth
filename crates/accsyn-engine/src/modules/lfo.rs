@@ -2,7 +2,7 @@ use crate::modules::oscillator::constants::DEFAULT_PHASE;
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use accsyn_core::defaults::Defaults;
 use accsyn_core::math::f32s_are_equal;
-use accsyn_core::parameter_types::{Balance, Hertz, LfoRange, NormalizedValue};
+use accsyn_core::parameter_types::{Balance, Hertz, LfoRange, NormalizedValue, ThirtySecondNotes};
 use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::sync::atomic::Ordering::Relaxed;
@@ -25,12 +25,21 @@ const DEFAULT_CENTER_VALUE: f32 = 0.0;
 pub const DEFAULT_LFO_PHASE: f32 = 0.0;
 /// Default LFO frequency in Hz.
 pub const DEFAULT_LFO_FREQUENCY: f32 = 0.1;
+/// Default LFO sync interval in thirty-second notes.
+pub const DEFAULT_LFO_THIRTY_SECOND_NOTES: u16 = 0;
+/// Default LFO sync interval in thirty-second notes.
+pub const DEFAULT_CLOCK_SYNCED_STATE: bool = false;
+
 
 /// Shared atomic parameters for controlling an LFO from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LfoParameters {
     /// LFO oscillation frequency in Hz.
     pub frequency: Hertz,
+    /// LFO oscillation frequency in thirty-second notes when synced to a clock
+    pub thirty_second_notes: ThirtySecondNotes,
+    /// Indicates whether the lfo is synced to clock
+    pub clock_synced: AtomicBool,
     /// Center value (DC offset) of the LFO output.
     pub center_value: Balance,
     /// Peak-to-peak range of the LFO output.
@@ -60,6 +69,8 @@ impl Default for LfoParameters {
     fn default() -> Self {
         Self {
             frequency: Hertz::new(DEFAULT_LFO_FREQUENCY),
+            thirty_second_notes: ThirtySecondNotes::new(DEFAULT_LFO_THIRTY_SECOND_NOTES),
+            clock_synced: AtomicBool::new(DEFAULT_CLOCK_SYNCED_STATE),
             center_value: Balance::new(DEFAULT_CENTER_VALUE),
             range: LfoRange::new(Defaults::DEFAULT_RANGE),
             phase: NormalizedValue::new(DEFAULT_LFO_PHASE),

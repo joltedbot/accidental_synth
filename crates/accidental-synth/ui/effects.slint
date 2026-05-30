@@ -199,7 +199,7 @@ export component Wavefolder inherits EffectBox {
     changed is_enabled => {
         amount.enabled = self.is_enabled;
         negative-switch.enabled = self.is_enabled;
-        negative-amount.enabled = (self.is_enabled && negative-switch.async-enabled) ? true : false;
+        negative-amount.enabled = (self.is_enabled && negative-switch.is_checked) ? true : false;
     }
 
     HorizontalSpacer { }
@@ -217,7 +217,7 @@ export component Wavefolder inherits EffectBox {
     negative-switch := ToggleSwitch {
         enabled: parent.is_enabled;
         label: Theme.wavefolder-parameter2-switch;
-        is_checked: effect_values.parameters[1] > 0.0;
+        checked: effect_values.parameters[1] > 0.0;
         toggle_switch_updated(enabled) => {
             negative-amount.enabled = parent.is_enabled && enabled ? true : false;
             if (enabled) {
@@ -332,7 +332,7 @@ export component Clipper inherits EffectBox {
     notch := ToggleSwitch {
         enabled: false;
         label: Theme.clipper-parameter4;
-        is_checked: effect_values.parameters[3] > 0.0;
+        checked: effect_values.parameters[3] > 0.0;
         toggle_switch_updated(enabled) => {
             if (enabled) {
                 effect_parameter_changed(parent.effect-index, 3, 1.0);
@@ -415,8 +415,8 @@ export component Rectifier inherits EffectBox {
 
     full_wave := ToggleSwitch {
         enabled: false;
-        is_checked: effect_values.parameters[0] > 0.0;
-        label: self.is_checked ? Theme.rectifier-parameter1-on : Theme.rectifier-parameter1-off;
+        checked: effect_values.parameters[0] > 0.0;
+        label: self.checked ? Theme.rectifier-parameter1-on : Theme.rectifier-parameter1-off;
         toggle_switch_updated(enabled) => {
             if (enabled) {
                 effect_parameter_changed(parent.effect-index, 0, 1.0);

@@ -166,7 +166,7 @@ export component SynthSettings inherits VerticalLayout {
 
     ToggleSwitch {
         label: Theme.osc-options-polarity;
-        is_checked: polarity-is-flipped;
+        checked: polarity-is-flipped;
         toggle_switch_updated(is_flipped) => {
             polarity-flipped(is_flipped);
         }

@@ -144,6 +144,7 @@ dependencies = [
 name = "accsyn-core"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "serde",
  "strum",
  "strum_macros",

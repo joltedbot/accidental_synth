@@ -1,4 +1,6 @@
 use strum_macros::{EnumCount, EnumIter, FromRepr};
+use crate::parameter_types::ThirtySecondNotes;
+use anyhow::{anyhow, Result};
 
 /// Parameter change events sent to the synthesizer from the UI and MIDI subsystems.
 pub enum SynthesizerUpdateEvents {
@@ -84,6 +86,8 @@ pub enum SynthesizerUpdateEvents {
     PatchSaved(String),
     /// Delete the patch at the given index
     PatchDeleted(String),
+    /// Clock ticks mark a 32nd note
+    ThirtySecondNote,
 }
 
 /// Index identifying each oscillator in the synthesizer.
@@ -143,5 +147,127 @@ impl EnvelopeIndex {
     #[must_use]
     pub fn from_i32(index: i32) -> Option<Self> {
         Self::from_repr(index)
+    }
+}
+
+/// List of display names for time intervals for LFO when synced to a clock.
+pub const LFO_SYNC_INTERVAL_NAMES: [&str; 16] = [
+    "32/1", "24/1", "16/1", "12/1", "10/1", "8/1", "7/1", "6/1", "5/1", "4/1", "3/1", "2/1", "1/1", "1/2", "3/8", "1/4",
+];
+
+#[derive(Default, Clone, Copy, Debug)]
+/// List of time intervals for LFO when synced to a clock.
+pub enum LfoSyncInterval {
+    /// 32/1
+    ThirtyTwoBars,
+    /// 24/1
+    TwentyFourBars,
+    /// 16/1
+    SixteenBars,
+    /// 12/1
+    TwelveBars,
+    /// 10/1
+    TenBars,
+    /// 8/1
+    EightBars,
+    /// 7/1
+    SevenBars,
+    /// 6/1
+    SixBars,
+    /// 5/1
+    FiveBars,
+    /// 4/1
+    FourBars,
+    /// 3/1
+    ThreeBars,
+    /// 2/1
+    TwoBars,
+    #[default]
+    /// 1/1
+    OneBars,
+    /// 1/2
+    Half,
+    /// 3/8
+    DottedQuarter,
+    /// 1/4
+    Quarter,
+    /// 3/16
+    DottedEight,
+    /// 1/8
+    Eighth,
+    /// 3/32
+    DottedSixteenth,
+    /// 1/16
+    Sixteenth,
+    /// 1/32
+    ThirtySecond,
+}
+
+impl LfoSyncInterval {
+    /// Converts a number of 32nd notes to an LfoSyncInterval
+    ///
+    /// # Errors
+    ///
+    /// Will return an error if the `ThirtySecondNotes` value does corespond to a valid sunc interval
+    pub fn from_thirty_second_notes(thirty_second_notes: u16) -> Result<Self> {
+        match thirty_second_notes {
+            1024 => Ok(LfoSyncInterval::ThirtyTwoBars),
+            762 => Ok(LfoSyncInterval::TwentyFourBars),
+            512 => Ok(LfoSyncInterval::SixteenBars),
+            384 => Ok(LfoSyncInterval::TwelveBars),
+            320 => Ok(LfoSyncInterval::TenBars),
+            256 => Ok(LfoSyncInterval::EightBars),
+            224 => Ok(LfoSyncInterval::SevenBars),
+            192 => Ok(LfoSyncInterval::SixBars),
+            160 => Ok(LfoSyncInterval::FiveBars),
+            128 => Ok(LfoSyncInterval::FourBars),
+            96 => Ok(LfoSyncInterval::ThreeBars),
+            64 => Ok(LfoSyncInterval::TwoBars),
+            32 => Ok(LfoSyncInterval::OneBars),
+            16 => Ok(LfoSyncInterval::Half),
+            12 => Ok(LfoSyncInterval::DottedQuarter),
+            8 => Ok(LfoSyncInterval::Quarter),
+            6 => Ok(LfoSyncInterval::DottedEight),
+            4 => Ok(LfoSyncInterval::Eighth),
+            3 => Ok(LfoSyncInterval::DottedSixteenth),
+            2 => Ok(LfoSyncInterval::Sixteenth),
+            1 => Ok(LfoSyncInterval::ThirtySecond),
+            _ => Err(anyhow!("Invalid Sync Interval")),
+        }
+    }
+
+    /// Converts a time interval to the corresponding number of 32nd notes.
+    #[must_use]
+    pub fn to_thirty_second_notes(&self) -> ThirtySecondNotes {
+        let number_of_thirty_second_notes = match self {
+            LfoSyncInterval::ThirtyTwoBars => 1024,
+            LfoSyncInterval::TwentyFourBars => 762,
+            LfoSyncInterval::SixteenBars => 512,
+            LfoSyncInterval::TwelveBars => 384,
+            LfoSyncInterval::TenBars => 320,
+            LfoSyncInterval::EightBars => 256,
+            LfoSyncInterval::SevenBars => 224,
+            LfoSyncInterval::SixBars => 192,
+            LfoSyncInterval::FiveBars => 160,
+            LfoSyncInterval::FourBars => 128,
+            LfoSyncInterval::ThreeBars => 96,
+            LfoSyncInterval::TwoBars => 64,
+            LfoSyncInterval::OneBars => 32,
+            LfoSyncInterval::Half => 16,
+            LfoSyncInterval::DottedQuarter => 12,
+            LfoSyncInterval::Quarter => 8,
+            LfoSyncInterval::DottedEight => 6,
+            LfoSyncInterval::Eighth => 4,
+            LfoSyncInterval::DottedSixteenth => 3,
+            LfoSyncInterval::Sixteenth => 2,
+            LfoSyncInterval::ThirtySecond => 1,
+        };
+        ThirtySecondNotes::new(number_of_thirty_second_notes)
+    }
+
+    /// Converts a time interval to the corresponding display string.
+    #[must_use]
+    pub fn display(self) -> String {
+        LFO_SYNC_INTERVAL_NAMES[self as usize].to_string()
     }
 }

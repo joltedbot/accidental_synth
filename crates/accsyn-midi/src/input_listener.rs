@@ -97,6 +97,9 @@ fn event_from_message_status(
         Status::PitchBend => process_pitch_bend_message(message),
         Status::ProgramChange => process_program_change_message(message),
         Status::ChannelPressure => process_channel_pressure_message(message),
+        Status::Clock => {
+            Some(MidiEvent::Clock)
+        },
         _ => {
             log::debug!(target: "midi::input", "Unhandled MIDI status type: 0x{:02X}", message[MESSAGE_STATUS_BYTE_INDEX]);
             None
@@ -185,6 +188,7 @@ fn message_status_from_status_byte(status: u8) -> Status {
         0xC0 => Status::ProgramChange,
         0xD0 => Status::ChannelPressure,
         0xE0 => Status::PitchBend,
+        0xF0 => Status::Clock,
         _ => Status::Unknown,
     }
 }

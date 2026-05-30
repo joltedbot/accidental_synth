@@ -102,6 +102,57 @@ impl<'de> Deserialize<'de> for Hertz {
     }
 }
 
+
+/// Thread-safe LFO synced interval in thirty-second notes stored atomically.
+#[derive(Debug)]
+pub struct ThirtySecondNotes {
+    value: AtomicU16,
+}
+
+impl ThirtySecondNotes {
+    /// Creates a new thirty-second notes value.
+    #[inline]
+    #[must_use]
+    pub fn new(thirty_second_notes: u16) -> Self {
+        Self {
+            value: AtomicU16::new(thirty_second_notes),
+        }
+    }
+
+    /// Loads the current value in thirty-second notes.
+    #[inline]
+    pub fn load(&self) -> u16 {
+        self.value.load(Ordering::Relaxed)
+    }
+
+    /// Stores a new value in thirty-second notes.
+    #[inline]
+    pub fn store(&self, thirty_second_notes: u16) {
+        self.value.store(thirty_second_notes, Ordering::Relaxed);
+    }
+}
+
+impl Default for ThirtySecondNotes {
+    fn default() -> Self {
+        Self {
+            value: AtomicU16::new(0),
+        }
+    }
+}
+
+impl Serialize for ThirtySecondNotes {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_u16(self.load())
+    }
+}
+
+impl<'de> Deserialize<'de> for ThirtySecondNotes {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let thirty_second_notes = u16::deserialize(deserializer)?;
+        Ok(Self::new(thirty_second_notes))
+    }
+}
+
 /// Thread-safe LFO modulation range parameter stored as atomic bits.
 #[derive(Debug)]
 pub struct LfoRange {

@@ -273,7 +273,7 @@ export component OscillatorSection inherits VerticalLayout {
                 alignment: space-around;
 
                 ToggleSwitch {
-                    is_checked: global-option-values.portamento-is-enabled;
+                    checked: global-option-values.portamento-is-enabled;
                     label: Theme.osc-options-portamento-label;
                     toggle_switch_updated(is_enabled) => {
                         portamento-enabled(is_enabled);
@@ -560,7 +560,7 @@ export component GlobalPanel inherits Panel {
 
                     key_sync := ToggleSwitch {
                         label: Theme.osc-options-key-sync;
-                        is_checked: global-options-values.key-sync-is-enabled;
+                        checked: global-options-values.key-sync-is-enabled;
                         toggle_switch_updated(is_enabled) => {
                             key-sync-enabled(is_enabled);
                         }
@@ -568,7 +568,7 @@ export component GlobalPanel inherits Panel {
 
                     hard_sync := ToggleSwitch {
                         label: Theme.osc-options-hard-sync;
-                        is_checked: global-options-values.hard-sync-is-enabled;
+                        checked: global-options-values.hard-sync-is-enabled;
                         toggle_switch_updated(is_enabled) => {
                             hard-sync-enabled(is_enabled);
                         }
@@ -576,7 +576,7 @@ export component GlobalPanel inherits Panel {
 
                     Sustain := ToggleSwitch {
                         label: Theme.osc-options-sustain;
-                        is_checked: global-options-values.sustain-is-enabled;
+                        checked: global-options-values.sustain-is-enabled;
                         toggle_switch_updated(is_enabled) => {
                             sustain-enabled(is_enabled);
                         }

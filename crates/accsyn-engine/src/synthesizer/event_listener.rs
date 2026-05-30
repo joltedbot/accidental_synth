@@ -611,6 +611,9 @@ pub fn start_update_event_listener(
                         log::error!(target: "synthesizer::event_listener", "Failed to send new patch list to the UI: {e}");
                     }
                 }
+                SynthesizerUpdateEvents::ThirtySecondNote => {
+                    dbg!("32nd note");
+                }
             }
         }
     });
