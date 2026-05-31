@@ -35,6 +35,11 @@ use accsyn_core::synth_events::OscillatorIndex;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 
+pub fn set_lfo_clock_sync(parameters: &LfoParameters, normal_value: f32) {
+    let is_enabled = normal_value_to_bool(normal_value);
+    parameters.clock_synced.store(is_enabled, Relaxed);
+}
+
 pub fn set_lfo_frequency(parameters: &LfoParameters, normal_value: f32) -> f32 {
     let frequency = exponential_curve_lfo_frequency_from_normal_value(normal_value);
     parameters.frequency.store(frequency);

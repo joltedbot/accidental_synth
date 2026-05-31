@@ -1,19 +1,7 @@
 use crate::modules::lfo::DEFAULT_LFO_PHASE;
 use crate::modules::oscillator::OscillatorParameters;
 use crate::synthesizer::midi_value_converters::scaled_velocity_from_normal_value;
-use crate::synthesizer::set_parameters::{
-    set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted,
-    set_envelope_release_time, set_envelope_sustain_level, set_envelope_sustain_pedal,
-    set_filter_cutoff, set_filter_poles, set_filter_resonance, set_key_tracking_amount,
-    set_lfo_center_value, set_lfo_frequency, set_lfo_phase, set_lfo_phase_reset, set_lfo_range,
-    set_lfo_wave_shape, set_mod_wheel, set_oscillator_balance, set_oscillator_clip_boost,
-    set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_hard_sync,
-    set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute,
-    set_oscillator_pitch_envelope_amount, set_oscillator_shape_parameter1,
-    set_oscillator_shape_parameter2, set_oscillator_wave_shape, set_output_balance,
-    set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled,
-    set_portamento_time, set_velocity_curve,
-};
+use crate::synthesizer::set_parameters::{set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted, set_envelope_release_time, set_envelope_sustain_level, set_envelope_sustain_pedal, set_filter_cutoff, set_filter_poles, set_filter_resonance, set_key_tracking_amount, set_lfo_center_value, set_lfo_clock_sync, set_lfo_frequency, set_lfo_phase, set_lfo_phase_reset, set_lfo_range, set_lfo_wave_shape, set_mod_wheel, set_oscillator_balance, set_oscillator_clip_boost, set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_hard_sync, set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute, set_oscillator_pitch_envelope_amount, set_oscillator_shape_parameter1, set_oscillator_shape_parameter2, set_oscillator_wave_shape, set_output_balance, set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled, set_portamento_time, set_velocity_curve};
 use crate::synthesizer::{
     CurrentNote, KeyboardParameters, MidiGateEvent, MidiNoteEvent, ModuleParameters,
     midi_value_converters,
@@ -793,6 +781,13 @@ pub fn process_midi_cc_values(
             set_key_tracking_amount(&module_parameters.filter, normal_value);
             send_ui_update(ui_update_sender, UIUpdates::FilterKeyTracking(normal_value));
         }
+        CC::ModWheelLFOClockSync(value) => {
+            let normal_value = normalize_midi_value(value);
+            set_lfo_clock_sync(
+                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                normal_value,
+            );
+        }
         CC::ModWheelLFOFrequency(value) => {
             let normal_value = normalize_midi_value(value);
             set_lfo_frequency(
@@ -902,6 +897,13 @@ pub fn process_midi_cc_values(
                 UIUpdates::LFOPhase(LFOIndex::Filter as i32, DEFAULT_LFO_PHASE),
             );
         }
+        CC::FilterModLFOClockSync(value) => {
+            let normal_value = normalize_midi_value(value);
+            set_lfo_clock_sync(
+                &module_parameters.lfos[LFOIndex::Filter as usize],
+                normal_value,
+            );
+        }        
         CC::AllNotesOff => {
             process_midi_note_off_message(module_parameters);
         }

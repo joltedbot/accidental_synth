@@ -74,6 +74,7 @@ pub(crate) fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Op
         89 => Some(CC::FilterEnvelopeInverted(cc_value)),
         90 => Some(CC::FilterEnvelopeAmount(cc_value)),
         91 => Some(CC::KeyTrackingAmount(cc_value)),
+        101 => Some(CC::ModWheelLFOClockSync(cc_value)),
         102 => Some(CC::ModWheelLFOFrequency(cc_value)),
         103 => Some(CC::ModWheelLFOCenterValue(cc_value)),
         104 => Some(CC::ModWheelLFORange(cc_value)),
@@ -85,6 +86,7 @@ pub(crate) fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Op
         110 => Some(CC::FilterModLFOWaveShape(cc_value)),
         111 => Some(CC::FilterModLFOPhase(cc_value)),
         112 => Some(CC::FilterModLFOReset),
+        113 => Some(CC::FilterModLFOClockSync(cc_value)),       
         123 => Some(CC::AllNotesOff),
         _ => {
             log::debug!(target: "midi::cc", "Unmapped CC number: {cc_number}, value: {cc_value}");

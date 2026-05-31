@@ -164,6 +164,8 @@ pub enum CC {
     FilterEnvelopeAmount(u8),
     /// Filter key tracking amount.
     KeyTrackingAmount(u8),
+    /// Toggle mod wheel lfo clock sync.
+    ModWheelLFOClockSync(u8),
     /// Mod wheel LFO frequency.
     ModWheelLFOFrequency(u8),
     /// Mod wheel LFO center value.
@@ -186,6 +188,8 @@ pub enum CC {
     FilterModLFOPhase(u8),
     /// Reset filter modulation LFO phase to zero.
     FilterModLFOReset,
+    /// Toggle filter lfo clock sync.
+    FilterModLFOClockSync(u8),    
     /// Turn off all currently sounding notes.
     AllNotesOff,
 }
