@@ -903,7 +903,7 @@ pub fn process_midi_cc_values(
                 &module_parameters.lfos[LFOIndex::Filter as usize],
                 normal_value,
             );
-        }        
+        }
         CC::AllNotesOff => {
             process_midi_note_off_message(module_parameters);
         }

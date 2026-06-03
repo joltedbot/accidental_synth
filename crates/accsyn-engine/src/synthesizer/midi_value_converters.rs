@@ -75,6 +75,8 @@ pub fn normal_value_to_bool(normal_value: f32) -> bool {
     normal_value >= NORMAL_TO_BOOL_SWITCH_ON_VALUE
 }
 
+
+
 /// Converts a bool to a normal value (0.0 for False or 1.0 for true).
 #[must_use]
 pub fn bool_to_normal_value(value: bool) -> f32 {

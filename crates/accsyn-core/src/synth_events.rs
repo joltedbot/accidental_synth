@@ -48,6 +48,8 @@ pub enum SynthesizerUpdateEvents {
     LfoPhase(i32, f32),
     /// Reset LFO phase to zero (LFO index).
     LfoPhaseReset(i32),
+    /// Toggle the LFO sync to the clock (LFO index, is synced to clock).
+    LfoClockSyncEnabled(i32, bool),
     /// Toggle portamento on/off.
     PortamentoEnabled(bool),
     /// Change portamento glide time (normalized value).
