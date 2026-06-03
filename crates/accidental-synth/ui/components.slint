@@ -753,7 +753,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
     callback lfo-shape-changed(int);
     callback lfo-phase-changed(float);
     callback lfo-phase-reset();
-    callback lfo-clock_sync_toggled(bool);
+    callback lfo-clock-sync-enabled(bool);
 
     width: Theme.lfo-widget-width;
     alignment: start;
@@ -817,8 +817,8 @@ export component FixedCenterLFOSection inherits VerticalLayout {
                     width: Theme.global-panel-widget-width;
                     label: Theme.lfo-sync-toggle-label;
                     checked: lfo-values.clock_synced;
-                    toggle_switch_updated(is_checked) => {
-                        lfo-clock_sync_toggled(is_checked);
+                    toggle-switch-updated(is_checked) => {
+                        lfo-clock-sync-enabled(is_checked);
                     }
                 }
             }

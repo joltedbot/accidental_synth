@@ -65,6 +65,7 @@ pub fn register_callbacks(
     modulation::callback_lfo_shape_changed(ui_weak, synthesizer_update_sender.clone());
     modulation::callback_lfo_phase_changed(ui_weak, synthesizer_update_sender.clone());
     modulation::callback_lfo_phase_reset(ui_weak, synthesizer_update_sender.clone());
+    modulation::callback_lfo_clock_sync_enabled(ui_weak, synthesizer_update_sender.clone());
 
     global::callback_portamento_enabled(ui_weak, synthesizer_update_sender.clone());
     global::callback_portamento_time_changed(ui_weak, synthesizer_update_sender.clone());

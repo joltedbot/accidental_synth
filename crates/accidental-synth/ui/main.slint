@@ -89,6 +89,7 @@ export component AccidentalSynth inherits Window {
     callback lfo-shape-changed(int, int);
     callback lfo-phase-changed(int, float);
     callback lfo-phase-reset(int);
+    callback lfo-clock-sync-enabled(int, bool);
 
     // Global Panel Properties & Callbacks
     in property <Mixer> output-mixer-values;
@@ -257,6 +258,9 @@ export component AccidentalSynth inherits Window {
                                 lfo-phase-reset(lfo_index) => {
                                     lfo-phase-reset(lfo_index);
                                 }
+                                lfo-clock-sync-enabled(lfo_index, is_enabled) => {
+                                   lfo-clock-sync-enabled(lfo_index, is_enabled);
+                                }
                                 portamento-enabled(is_enabled) => {
                                     portamento-enabled(is_enabled);
                                 }
@@ -269,10 +273,10 @@ export component AccidentalSynth inherits Window {
                                 velocity-curve-changed(curve) => {
                                     velocity-curve-changed(curve);
                                 }
-                                hard-sync-enabled(is_enabled) => {
+                                hard-(is_enabled) => {
                                     hard-sync-enabled(is_enabled);
                                 }
-                                key-sync-enabled(is_enabled) => {
+                                key-(is_enabled) => {
                                     key-sync-enabled(is_enabled);
                                 }
                                 sustain-enabled(is_enabled) => {
@@ -353,6 +357,9 @@ export component AccidentalSynth inherits Window {
                             }
                             lfo-phase-reset(lfo_index) => {
                                 lfo-phase-reset(lfo_index);
+                            }
+                            lfo-clock-sync-enabled(lfo_index, is_enabled) => {
+                                lfo-clock-sync-enabled(lfo_index, is_enabled);
                             }
                         }
                     }

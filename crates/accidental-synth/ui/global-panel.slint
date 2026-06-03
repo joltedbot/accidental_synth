@@ -254,8 +254,8 @@ export component OscillatorSection inherits VerticalLayout {
     callback portamento-time-changed(float);
     callback pitch-bend-range-changed(float);
     callback velocity-curve-changed(float);
-    callback hard-sync-enabled(bool);
-    callback key-sync-enabled(bool);
+    callback hard-(bool);
+    callback key-(bool);
     callback sustain-enabled(bool);
 
     alignment: start;
@@ -407,6 +407,7 @@ export component ModWheelSection inherits VerticalLayout {
     callback lfo-shape-changed(int, int);
     callback lfo-phase-changed(int, float);
     callback lfo-phase-reset(int);
+    callback lfo-clock-sync-enabled(int, bool);
 
     alignment: start;
     padding: Theme.global-panel-padding;
@@ -425,6 +426,8 @@ export component ModWheelSection inherits VerticalLayout {
             lfo-values: mod-wheel-lfo-values;
             lfo-frequency-display: mod-wheel-lfo-frequency-display;
             lfo-phase-display: mod-wheel-lfo-phase-display;
+           
+            
 
             lfo-frequency-changed(frequency) => {
                 lfo-frequency-changed(Constant.LFO_MOD_WHEEL_INDEX, frequency);
@@ -437,6 +440,9 @@ export component ModWheelSection inherits VerticalLayout {
             }
             lfo-phase-reset() => {
                 lfo-phase-reset(Constant.LFO_MOD_WHEEL_INDEX);
+            }
+            lfo-clock-sync-enabled(is_enabled) => {
+                lfo-clock-sync-enabled(Constant.LFO_FILTER_INDEX, is_enabled);
             }
         }
     }
@@ -462,12 +468,13 @@ export component GlobalPanel inherits Panel {
     callback lfo-shape-changed(int, int);
     callback lfo-phase-changed(int, float);
     callback lfo-phase-reset(int);
+    callback lfo-clock-sync-enabled(int, bool);
     callback portamento-enabled(bool);
     callback portamento-time-changed(float);
     callback pitch-bend-range-changed(float);
     callback velocity-curve-changed(float);
-    callback hard-sync-enabled(bool);
-    callback key-sync-enabled(bool);
+    callback hard-(bool);
+    callback key-(bool);
     callback sustain-enabled(bool);
     callback output-balance-update(float);
     callback output-level-update(float);
@@ -562,7 +569,7 @@ export component GlobalPanel inherits Panel {
                         label: Theme.osc-options-key-sync;
                         checked: global-options-values.key-sync-is-enabled;
                         toggle_switch_updated(is_enabled) => {
-                            key-sync-enabled(is_enabled);
+                            key-(is_enabled);
                         }
                     }
 
@@ -570,7 +577,7 @@ export component GlobalPanel inherits Panel {
                         label: Theme.osc-options-hard-sync;
                         checked: global-options-values.hard-sync-is-enabled;
                         toggle_switch_updated(is_enabled) => {
-                            hard-sync-enabled(is_enabled);
+                            hard-(is_enabled);
                         }
                     }
 
@@ -606,11 +613,11 @@ export component GlobalPanel inherits Panel {
                     velocity-curve-changed(curve) => {
                         velocity-curve-changed(curve);
                     }
-                    hard-sync-enabled(is_enabled) => {
-                        hard-sync-enabled(is_enabled);
+                    hard-(is_enabled) => {
+                        hard-(is_enabled);
                     }
-                    key-sync-enabled(is_enabled) => {
-                        key-sync-enabled(is_enabled);
+                    key-(is_enabled) => {
+                        key-(is_enabled);
                     }
                     sustain-enabled(is_enabled) => {
                         sustain-enabled(is_enabled);
@@ -635,6 +642,9 @@ export component GlobalPanel inherits Panel {
                     }
                     lfo-phase-reset(lfo_index) => {
                         lfo-phase-reset(lfo_index);
+                    }
+                    lfo-clock-sync-enabled(lfo_index, is_enabled) => {
+                        lfo-clock-sync-enabled(lfo_index, is_enabled)
                     }
                 }
 

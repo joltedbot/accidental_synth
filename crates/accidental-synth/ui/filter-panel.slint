@@ -178,6 +178,7 @@ export component FilterPanel inherits Panel {
     callback lfo-shape-changed(int, int);
     callback lfo-phase-changed(int, float);
     callback lfo-phase-reset(int);
+    callback lfo-clock-sync-enabled(int, bool);
 
     VerticalLayout {
         padding: Theme.osc-controls-panel-padding;
@@ -263,6 +264,9 @@ export component FilterPanel inherits Panel {
             }
             lfo-phase-reset() => {
                 lfo-phase-reset(Constant.LFO_FILTER_INDEX);
+            }
+            lfo-clock-sync-enabled(is_enabled) => {
+                lfo-clock-sync-enabled(Constant.LFO_FILTER_INDEX, is_enabled);
             }
         }
     }

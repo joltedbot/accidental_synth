@@ -164,3 +164,20 @@ pub fn callback_lfo_phase_reset(
         });
     }
 }
+
+pub fn callback_lfo_clock_sync_enabled(
+    ui_weak: &Weak<AccidentalSynth>,
+    synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_lfo_clock_sync_enabled(move |lfo_index, is_enabled| {
+            synthesizer_update_sender
+                .send(SynthesizerUpdateEvents::LfoClockSyncEnabled(lfo_index, is_enabled))
+                .expect(
+                    "callback_lfo_clock_sync_enabled(): Could not send new \
+            LFO clock sync state to the synthesizer module.Exiting.",
+                );
+        });
+    }
+}
+
