@@ -5,12 +5,13 @@ use std::f32::consts::PI;
 const SHAPE: WaveShape = WaveShape::Supersaw;
 const DEFAULT_X_COORDINATE: f32 = 0.0;
 const DEFAULT_X_INCREMENT: f32 = 1.0;
-const VOICE_FREQUENCY_OFFSETS: [f32; 7] = [0.893, 0.939, 0.98, 1.0, 1.02, 1.064, 1.11];
+const VOICE_FREQUENCY_OFFSETS: [(f32,f32); 7] = [(0.893, 0.85), (0.939, 0.90), (0.98, 0.95), (1.0, 0.0), (1.02, 0.95)
+    , (1.064, 0.9), (1.11, 0.85)];
 
 /// Multi-voice detuned supersaw oscillator blending seven saw waves.
 pub struct Supersaw {
     shape: WaveShape,
-    x_coordinate: f32,
+    x_coordinate: [f32; 7],
     x_increment: f32,
     sample_rate: u32,
     phase: Option<f32>,
@@ -19,7 +20,7 @@ pub struct Supersaw {
 impl Supersaw {
     pub(crate) fn new(sample_rate: u32) -> Self {
         log::debug!(target: "synth::oscillator", shape = "Supersaw"; "Constructing wave generator");
-        let x_coordinate = DEFAULT_X_COORDINATE;
+        let x_coordinate = [1.0,3.0,11.0,15.0,13.0,21.0,35.0];
         let x_increment = DEFAULT_X_INCREMENT;
 
         Self {
@@ -49,26 +50,26 @@ impl GenerateWave for Supersaw {
 
         let mut voice_samples: Vec<f32> = vec![];
 
-        if let Some(phase) = self.phase {
-            self.x_coordinate = (phase / PI) * (sample_rate_f32 / tone_frequency);
-            self.phase = None;
-        }
 
-        for frequency_offset in VOICE_FREQUENCY_OFFSETS {
+        for (voice, (frequency_offset, level_offset)) in VOICE_FREQUENCY_OFFSETS.iter().enumerate() {
+            let sample = self.single_saw_sample(tone_frequency * frequency_offset, self.x_coordinate[voice]);
             voice_samples
-                .push(self.single_saw_sample(tone_frequency * frequency_offset, self.x_coordinate));
+                .push(sample * level_offset);
+            self.x_coordinate[voice] += self.x_increment * modulation.unwrap_or(1.0);
         }
 
-        self.x_coordinate += self.x_increment * modulation.unwrap_or(1.0);
+
 
         if tone_frequency > 0.0 {
             let period = sample_rate_f32 / tone_frequency;
-            if self.x_coordinate >= period {
-                self.x_coordinate -= period;
+            for voice in 0..7 {
+                if self.x_coordinate[voice as usize] >= period {
+                    self.x_coordinate[voice as usize] -= period;
+                }
             }
         }
 
-        voice_samples.iter().sum::<f32>() / 5.0
+        voice_samples.iter().sum::<f32>() / 2.0
     }
 
     fn set_shape_parameter1(&mut self, _parameter: f32) {}
@@ -84,7 +85,7 @@ impl GenerateWave for Supersaw {
     }
 
     fn reset(&mut self) {
-        self.x_coordinate = DEFAULT_X_COORDINATE;
+        self.x_coordinate = [DEFAULT_X_COORDINATE; 7];
         self.x_increment = DEFAULT_X_INCREMENT;
     }
 }
