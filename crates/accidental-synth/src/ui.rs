@@ -187,6 +187,8 @@ pub(super) fn push_values_to_ui(
         ui.set_oscillator_values(slint_oscillators_from_oscillators(
             &ui_default_values.oscillators,
         ));
+        ui.set_osc_fine_tune_cents(slint_oscillator_fine_tune_from_fine_tune_cents(ui_default_values
+            .oscillator_fine_tune));
         ui.set_output_mixer_values(slint_mixer_from_ui_mixer_options(
             &ui_default_values.output_mixer,
         ));
@@ -322,6 +324,11 @@ fn slint_oscillators_from_oscillators(oscillator_values: &[UIOscillator]) -> Mod
         .collect();
 
     ModelRc::from(Rc::new(oscillators))
+}
+
+fn slint_oscillator_fine_tune_from_fine_tune_cents(fine_tune_values: Vec<i32>) -> ModelRc<i32> {
+    let oscillator_fine_tune_cents: VecModel<i32> = VecModel::from(fine_tune_values);
+    ModelRc::from(Rc::new(oscillator_fine_tune_cents))
 }
 
 fn slint_audio_device_from_ui_audio_device(audio_device_values: &UIAudioDevice) -> AudioDevice {
