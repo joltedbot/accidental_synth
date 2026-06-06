@@ -151,6 +151,8 @@
     {
       "center_value": 1,
       "frequency": 0.2,
+      "thirty_second_notes": 32,
+      "clock_synced": false,
       "phase": 0,
       "range": 2.0,
       "reset": false,
@@ -159,6 +161,8 @@
     {
       "center_value": 0,
       "frequency": 0.08,
+      "thirty_second_notes": 32,
+      "clock_synced": false,
       "phase": 0.25,
       "range": 0.4,
       "reset": false,

@@ -42,20 +42,24 @@
   },
   "lfos": [
     {
-      "frequency": 16.810696,
       "center_value": 1.0,
-      "range": 2.0,
+      "frequency": 16.810696,
+      "thirty_second_notes": 32,
+      "clock_synced": false,
       "phase": 0.0,
-      "wave_shape": 7,
-      "reset": false
+      "range": 2.0,
+      "reset": false,
+      "wave_shape": 7
     },
     {
-      "frequency": 0.1,
       "center_value": 0.0,
-      "range": 0.0,
+      "frequency": 0.1,
+      "thirty_second_notes": 32,
+      "clock_synced": false,
       "phase": 0.0,
-      "wave_shape": 0,
-      "reset": false
+      "range": 0.0,
+      "reset": false,
+      "wave_shape": 0
     }
   ],
   "envelopes": [
