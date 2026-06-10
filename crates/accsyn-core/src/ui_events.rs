@@ -46,6 +46,8 @@ pub enum UIUpdates {
     LFOFrequency(i32, f32),
     /// LFO frequency display value in Hz (LFO index, Hz).
     LFOFrequencyDisplay(i32, f32),
+    /// LFO Clock Sync Intervale display value (LFO index, Interval String).
+    LFOClockSyncIntervalDisplay(i32, String),
     /// LFO phase changed (LFO index, normalized value).
     LFOPhase(i32, f32),
     /// LFO waveform shape changed (LFO index, normalized value).

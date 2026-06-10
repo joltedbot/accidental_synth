@@ -257,5 +257,8 @@
       "wave_shape_index": 0,
       "pitch_envelope_amount": 0
     }
-  ]
+  ],
+  "clock": {
+    "bpm": 1
+  }
 }

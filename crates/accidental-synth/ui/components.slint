@@ -748,6 +748,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
     in property <float> lfo-frequency-display: Constant.DEFAULT_LFO_FREQUENCY_NORMAL;
 
     property <float> lfo-frequency-rounded: lfo-frequency-display < 1 ? floor(lfo-frequency-display * 100) / 100.0 : floor(lfo-frequency-display);
+    property <bool> sync_is_checked: false;
 
     callback lfo-frequency-changed(float);
     callback lfo-shape-changed(int);
@@ -760,6 +761,8 @@ export component FixedCenterLFOSection inherits VerticalLayout {
     padding: Theme.lfo-widget-padding;
     spacing: Theme.lfo-widget-spacing;
 
+
+
     VerticalLayout {
         alignment: start;
 
@@ -770,9 +773,9 @@ export component FixedCenterLFOSection inherits VerticalLayout {
             frequency := HorizontalParameterSlider {
                 label: Theme.lfo-label-frequency;
                 value: lfo-values.frequency;
-                show-value: !sync_toggle.is_checked;
                 display-value: lfo-frequency-rounded;
-                value-units: sync_toggle.is_checked?lfo_values.thirty-second-notes:Theme.display-units-hertz;
+                show-value: sync_is_checked?false:true;
+                value-units: sync_is_checked?lfo_values.thirty-second-notes:Theme.display-units-hertz;
                 show-units: true;
                 slider-width: Theme.global-panel-widget-width;
                 width: Theme.global-panel-widget-width;
@@ -819,20 +822,10 @@ export component FixedCenterLFOSection inherits VerticalLayout {
                     checked: lfo-values.clock_synced;
                     toggle-switch-updated(is_checked) => {
                         lfo-clock-sync-enabled(is_checked);
+                        sync_is_checked = is_checked;
                     }
                 }
             }
-
-/*
-            reset := MomentaryButton {
-                label: Theme.lfo-label-reset;
-                button-width: 100px;
-                button-height: 27px;
-                momentary-button-pressed => {
-                    lfo-phase-reset();
-                }
-            }
-           */
         }
     }
 }

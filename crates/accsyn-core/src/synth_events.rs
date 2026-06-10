@@ -1,6 +1,6 @@
 use strum_macros::{EnumCount, EnumIter, FromRepr};
-use crate::parameter_types::ThirtySecondNotes;
 use anyhow::{anyhow, Result};
+use strum::EnumCount as LfoEnumCount;
 
 /// Parameter change events sent to the synthesizer from the UI and MIDI subsystems.
 pub enum SynthesizerUpdateEvents {
@@ -153,11 +153,13 @@ impl EnvelopeIndex {
 }
 
 /// List of display names for time intervals for LFO when synced to a clock.
-pub const LFO_SYNC_INTERVAL_NAMES: [&str; 16] = [
-    "32/1", "24/1", "16/1", "12/1", "10/1", "8/1", "7/1", "6/1", "5/1", "4/1", "3/1", "2/1", "1/1", "1/2", "3/8", "1/4",
-];
+pub const LFO_SYNC_INTERVAL_NAMES: [&str; 21] = [
+    "32/1", "24/1", "16/1", "12/1", "10/1", "8/1", "7/1", "6/1", "5/1", "4/1", "3/1", "2/1", "1/1", "1/2", "3/8",
+    "1/4", "3/16", "1/8", "3/32", "1/16", "1/32"];
 
-#[derive(Default, Clone, Copy, Debug)]
+
+#[derive(Debug, Clone, Copy, Default, EnumCount, EnumIter, FromRepr)]
+#[repr(u16)]
 /// List of time intervals for LFO when synced to a clock.
 pub enum LfoSyncInterval {
     /// 32/1
@@ -240,8 +242,8 @@ impl LfoSyncInterval {
 
     /// Converts a time interval to the corresponding number of 32nd notes.
     #[must_use]
-    pub fn to_thirty_second_notes(&self) -> ThirtySecondNotes {
-        let number_of_thirty_second_notes = match self {
+    pub fn to_thirty_second_notes(&self) -> u16 {
+        match self {
             LfoSyncInterval::ThirtyTwoBars => 1024,
             LfoSyncInterval::TwentyFourBars => 762,
             LfoSyncInterval::SixteenBars => 512,
@@ -263,13 +265,20 @@ impl LfoSyncInterval {
             LfoSyncInterval::DottedSixteenth => 3,
             LfoSyncInterval::Sixteenth => 2,
             LfoSyncInterval::ThirtySecond => 1,
-        };
-        ThirtySecondNotes::new(number_of_thirty_second_notes)
+        }
     }
 
     /// Converts a time interval to the corresponding display string.
     #[must_use]
     pub fn display(self) -> String {
         LFO_SYNC_INTERVAL_NAMES[self as usize].to_string()
+    }
+
+    /// Converts a normal value into an `LfoSyncInterval` variant
+    #[must_use]
+    pub fn from_normal_value(normal_value: f32) -> LfoSyncInterval {
+        let last_index = LfoSyncInterval::COUNT - 1;
+        let index = (last_index as f32 * normal_value).floor() as u16;
+        LfoSyncInterval::from_repr(index).unwrap_or_default()
     }
 }

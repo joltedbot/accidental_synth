@@ -9,13 +9,12 @@ use crate::synthesizer::{
 use accsyn_core::defaults::Defaults;
 use accsyn_core::math::{normalize_midi_value, store_f32_as_atomic_u32};
 use accsyn_core::midi_events::CC;
-use accsyn_core::synth_events::{
-    EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
-};
+use accsyn_core::synth_events::{EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents};
 use accsyn_core::ui_events::UIUpdates;
 use crossbeam_channel::Sender;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Relaxed, Release};
+
 
 fn send_ui_update(ui_update_sender: &Sender<UIUpdates>, update: UIUpdates) {
     if let Err(e) = ui_update_sender.send(update) {

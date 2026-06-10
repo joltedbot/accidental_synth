@@ -19,7 +19,7 @@ use accsyn_core::defaults::Defaults;
 use accsyn_core::effects::EffectParameters;
 use accsyn_core::math::{normal_value_from_exponential_level_curve, normalize_float_range};
 use accsyn_core::parameter_types::NormalizedValue;
-use accsyn_core::synth_events::{EnvelopeIndex, LFOIndex, LfoSyncInterval, OscillatorIndex, SynthesizerUpdateEvents};
+use accsyn_core::synth_events::{EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents};
 use accsyn_core::ui_events::UIUpdates;
 use accsyn_engine::modules::effects::AudioEffectParameters;
 use accsyn_engine::modules::oscillator::OscillatorParameters;
@@ -372,16 +372,9 @@ fn slint_envelope_from_ui_envelope(envelope_values: &UIEnvelope) -> EnvelopeValu
     }
 }
 fn slint_lfo_from_ui_lfo(lfo_values: &UILfo) -> LFOValues {
-    let thirty_second_note_value: String = if let Ok(interval_name) =
-        LfoSyncInterval::from_thirty_second_notes(lfo_values.thirty_second_notes) {
-        interval_name.display()
-    } else {
-        "".to_string()
-    };
-
     LFOValues {
         frequency: lfo_values.frequency,
-        thirty_second_notes: SharedString::from(thirty_second_note_value),
+        thirty_second_notes: SharedString::from(lfo_values.thirty_second_notes.clone()),
         clock_synced: lfo_values.clock_synced,
         phase: lfo_values.phase,
         wave_shape_index: lfo_values.wave_shape_index,

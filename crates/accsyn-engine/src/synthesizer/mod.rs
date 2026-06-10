@@ -44,7 +44,7 @@ use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use strum::EnumCount;
-use crate::synthesizer::clock::Clock;
+use crate::synthesizer::clock::{Clock, ClockParameters};
 
 #[derive(Debug, Clone, Copy)]
 enum MidiNoteEvent {
@@ -192,6 +192,8 @@ pub struct ModuleParameters {
     pub oscillators: [OscillatorParameters; OscillatorIndex::COUNT],
     /// Parameters for the audio effects chain.
     pub effects: Vec<AudioEffectParameters>,
+    /// Parameters for clock and clock syncronization
+    pub clock: ClockParameters,
 }
 
 /// Top-level synthesizer coordinating MIDI input, DSP processing, and audio output.

@@ -2,11 +2,11 @@ use crate::modules::oscillator::constants::DEFAULT_PHASE;
 use crate::modules::oscillator::{Oscillator, WaveShape};
 use accsyn_core::defaults::Defaults;
 use accsyn_core::math::f32s_are_equal;
-use accsyn_core::parameter_types::{Balance, Hertz, LfoRange, NormalizedValue, ThirtySecondNotes};
+use accsyn_core::parameter_types::{Balance, Hertz, LfoRange, NormalizedValue};
 use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::{AtomicBool, AtomicU8};
+use std::sync::atomic::{AtomicBool, AtomicU16, AtomicU8};
 
 /// Minimum LFO frequency in Hz.
 pub const MIN_LFO_FREQUENCY: f32 = 0.01;
@@ -25,6 +25,8 @@ const DEFAULT_CENTER_VALUE: f32 = 0.0;
 pub const DEFAULT_LFO_PHASE: f32 = 0.0;
 /// Default LFO frequency in Hz.
 pub const DEFAULT_LFO_FREQUENCY: f32 = 0.1;
+/// Default LFO frequency in Hz when clock synced
+pub const DEFAULT_LFO_SYNCED_FREQUENCY: f32 = 0.5;
 /// Default LFO sync interval in thirty-second notes.
 pub const DEFAULT_LFO_THIRTY_SECOND_NOTES: u16 = 0;
 /// Default LFO sync interval in thirty-second notes.
@@ -36,8 +38,10 @@ pub const DEFAULT_CLOCK_SYNCED_STATE: bool = false;
 pub struct LfoParameters {
     /// LFO oscillation frequency in Hz.
     pub frequency: Hertz,
+    /// LFO oscillation frequency in Hz based on clock sync interval and thirty second note duration
+    pub synced_frequency: Hertz,
     /// LFO oscillation frequency in thirty-second notes when synced to a clock
-    pub thirty_second_notes: ThirtySecondNotes,
+    pub thirty_second_notes: AtomicU16,
     /// Indicates whether the lfo is synced to clock
     pub clock_synced: AtomicBool,
     /// Center value (DC offset) of the LFO output.
@@ -56,6 +60,8 @@ impl LfoParameters {
     /// Replace all the values in these `LfoParameters` with the values from the provided `LfoParameters`.
     pub fn assign_from(&self, parameters: &LfoParameters) {
         self.frequency.store(parameters.frequency.load());
+        self.synced_frequency.store(parameters.synced_frequency.load());
+        self.clock_synced.store(parameters.clock_synced.load(Relaxed), Relaxed);
         self.center_value.store(parameters.center_value.load());
         self.range.store(parameters.range.load());
         self.phase.store(parameters.phase.load());
@@ -69,7 +75,8 @@ impl Default for LfoParameters {
     fn default() -> Self {
         Self {
             frequency: Hertz::new(DEFAULT_LFO_FREQUENCY),
-            thirty_second_notes: ThirtySecondNotes::new(DEFAULT_LFO_THIRTY_SECOND_NOTES),
+            synced_frequency: Hertz::new(DEFAULT_LFO_SYNCED_FREQUENCY),
+            thirty_second_notes: AtomicU16::new(DEFAULT_LFO_THIRTY_SECOND_NOTES),
             clock_synced: AtomicBool::new(DEFAULT_CLOCK_SYNCED_STATE),
             center_value: Balance::new(DEFAULT_CENTER_VALUE),
             range: LfoRange::new(Defaults::DEFAULT_RANGE),
@@ -84,6 +91,7 @@ impl Default for LfoParameters {
 pub struct Lfo {
     oscillator: Oscillator,
     frequency: f32,
+    clock_synced: bool,
     center_value: f32,
     wave_shape_index: u8,
     range: f32,
@@ -98,6 +106,7 @@ impl Lfo {
         Self {
             oscillator,
             frequency: DEFAULT_LFO_FREQUENCY,
+            clock_synced: false,
             center_value: DEFAULT_CENTER_VALUE,
             range: Defaults::DEFAULT_RANGE,
             phase: DEFAULT_LFO_PHASE,
@@ -107,7 +116,13 @@ impl Lfo {
 
     /// Updates all LFO settings from the shared parameter block.
     pub fn set_parameters(&mut self, parameters: &LfoParameters) {
-        self.set_frequency(parameters.frequency.load());
+        if parameters.clock_synced.load(Relaxed) {
+            self.clock_synced = true;
+            self.set_frequency(parameters.synced_frequency.load());
+        } else {
+            self.clock_synced = false;
+            self.set_frequency(parameters.frequency.load());
+        }
         self.set_center_value(parameters.center_value.load());
         self.set_range(parameters.range.load());
         self.set_phase(parameters.phase.load());
@@ -131,6 +146,11 @@ impl Lfo {
     pub fn set_frequency(&mut self, frequency: f32) {
         self.frequency = frequency.clamp(MIN_LFO_FREQUENCY, MAX_LFO_FREQUENCY);
         self.oscillator.set_frequency(self.frequency);
+    }
+
+    /// Sets the LFO frequency in Hz, clamped to the valid range.
+    pub fn set_clock_synced(&mut self, is_synced: bool) {
+        self.clock_synced = is_synced;
     }
 
     /// Sets the LFO center value (DC offset), clamped to [-1, 1].

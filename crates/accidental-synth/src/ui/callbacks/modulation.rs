@@ -103,9 +103,9 @@ pub fn callback_lfo_frequency_changed(
     synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
 ) {
     if let Some(ui) = ui_weak.upgrade() {
-        ui.on_lfo_frequency_changed(move |lfo_index, frequency| {
+        ui.on_lfo_frequency_changed(move |lfo_index, normal_value| {
             synthesizer_update_sender
-                .send(SynthesizerUpdateEvents::LfoFrequency(lfo_index, frequency))
+                .send(SynthesizerUpdateEvents::LfoFrequency(lfo_index, normal_value))
                 .expect(
                     "callback_filter_lfo_amount_changed(): Could not send new \
             LFO Frequency to the synthesizer module.Exiting.",

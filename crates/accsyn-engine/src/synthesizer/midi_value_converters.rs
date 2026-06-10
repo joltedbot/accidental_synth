@@ -136,6 +136,17 @@ pub fn normal_value_from_exponential_lfo_frequency(freq: f32) -> f32 {
     normal_value_from_exponential_curve_and_coefficient(freq * 100.0, EXPONENTIAL_LFO_COEFFICIENT)
 }
 
+/// Converts a normalized value to an oscillator wave shape index.
+#[must_use]
+pub fn normal_value_to_sync_interval_index(normal_value: f32) -> u8 {
+    normal_value_to_unsigned_integer_range(
+        normal_value,
+        FIRST_WAVE_SHAPE_INDEX,
+        LAST_WAVE_SHAPE_INDEX,
+    )
+        .clamp(FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX) as u8
+}
+
 /// Converts a normalized value to a velocity curve exponent for dynamic response shaping.
 #[must_use]
 pub fn velocity_curve_from_normal_value(normal_value: f32) -> f32 {

@@ -189,6 +189,17 @@ pub fn start_ui_update_listener(
                         set_lfo_frequency_display(&ui_weak_thread, lfo_index, value);
                     }
                 }
+                UIUpdates::LFOClockSyncIntervalDisplay(lfo_index, value) => {
+                    if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
+                        let lfo_values = match lfo_index {
+                            LFOIndex::ModWheel => &mut values.mod_wheel_lfo,
+                            LFOIndex::Filter => &mut values.filter_lfo,
+                        };
+                        lfo_values.thirty_second_notes = value;
+                        set_lfo_values(&ui_weak_thread, lfo_index, lfo_values);
+                    }
+                }
+                
                 UIUpdates::LFOWaveShape(lfo_index, value) => {
                     if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
                         let lfo_values = match lfo_index {
@@ -382,7 +393,7 @@ pub fn start_ui_update_listener(
                 }
                 UIUpdates::PitchBendRange(range) => {
                     let global_options_values = &mut values.global_options;
-                    // Pitch bend range is bounded to a small value (MINIMUM..MAXIMUM, e.g. 1–12), well within i32
+                    // Pitch bend range is bounded to a small value (MINIMUM..=MAXIMUM, e.g. 1–12), well within i32
                     #[allow(clippy::cast_possible_wrap)]
                     let pitch_bend = normal_value_to_unsigned_integer_range(
                         range,
