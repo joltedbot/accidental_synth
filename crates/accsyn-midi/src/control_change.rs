@@ -86,7 +86,7 @@ pub(crate) fn get_supported_cc_from_cc_number(cc_number: u8, cc_value: u8) -> Op
         110 => Some(CC::FilterModLFOWaveShape(cc_value)),
         111 => Some(CC::FilterModLFOPhase(cc_value)),
         112 => Some(CC::FilterModLFOReset),
-        113 => Some(CC::FilterModLFOClockSync(cc_value)),       
+        113 => Some(CC::FilterModLFOClockSync(cc_value)),
         123 => Some(CC::AllNotesOff),
         _ => {
             log::debug!(target: "midi::cc", "Unmapped CC number: {cc_number}, value: {cc_value}");

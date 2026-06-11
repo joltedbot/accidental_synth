@@ -75,8 +75,6 @@ pub fn normal_value_to_bool(normal_value: f32) -> bool {
     normal_value >= NORMAL_TO_BOOL_SWITCH_ON_VALUE
 }
 
-
-
 /// Converts a bool to a normal value (0.0 for False or 1.0 for true).
 #[must_use]
 pub fn bool_to_normal_value(value: bool) -> f32 {
@@ -144,7 +142,7 @@ pub fn normal_value_to_sync_interval_index(normal_value: f32) -> u8 {
         FIRST_WAVE_SHAPE_INDEX,
         LAST_WAVE_SHAPE_INDEX,
     )
-        .clamp(FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX) as u8
+    .clamp(FIRST_WAVE_SHAPE_INDEX, LAST_WAVE_SHAPE_INDEX) as u8
 }
 
 /// Converts a normalized value to a velocity curve exponent for dynamic response shaping.

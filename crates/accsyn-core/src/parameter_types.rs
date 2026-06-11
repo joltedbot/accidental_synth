@@ -102,7 +102,6 @@ impl<'de> Deserialize<'de> for Hertz {
     }
 }
 
-
 /// Thread-safe LFO synced interval in thirty-second notes stored atomically.
 #[derive(Debug)]
 pub struct ThirtySecondNotes {
@@ -130,7 +129,6 @@ impl ThirtySecondNotes {
     pub fn store(&self, thirty_second_notes: u16) {
         self.value.store(thirty_second_notes, Ordering::Relaxed);
     }
-
 }
 
 impl Default for ThirtySecondNotes {

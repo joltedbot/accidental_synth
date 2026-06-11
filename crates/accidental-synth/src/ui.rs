@@ -19,7 +19,9 @@ use accsyn_core::defaults::Defaults;
 use accsyn_core::effects::EffectParameters;
 use accsyn_core::math::{normal_value_from_exponential_level_curve, normalize_float_range};
 use accsyn_core::parameter_types::NormalizedValue;
-use accsyn_core::synth_events::{EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents};
+use accsyn_core::synth_events::{
+    EnvelopeIndex, LFOIndex, OscillatorIndex, SynthesizerUpdateEvents,
+};
 use accsyn_core::ui_events::UIUpdates;
 use accsyn_engine::modules::effects::AudioEffectParameters;
 use accsyn_engine::modules::oscillator::OscillatorParameters;
@@ -187,8 +189,9 @@ pub(super) fn push_values_to_ui(
         ui.set_oscillator_values(slint_oscillators_from_oscillators(
             &ui_default_values.oscillators,
         ));
-        ui.set_osc_fine_tune_cents(slint_oscillator_fine_tune_from_fine_tune_cents(ui_default_values
-            .oscillator_fine_tune));
+        ui.set_osc_fine_tune_cents(slint_oscillator_fine_tune_from_fine_tune_cents(
+            ui_default_values.oscillator_fine_tune,
+        ));
         ui.set_output_mixer_values(slint_mixer_from_ui_mixer_options(
             &ui_default_values.output_mixer,
         ));

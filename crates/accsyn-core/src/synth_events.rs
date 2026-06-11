@@ -1,6 +1,6 @@
-use strum_macros::{EnumCount, EnumIter, FromRepr};
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use strum::EnumCount as LfoEnumCount;
+use strum_macros::{EnumCount, EnumIter, FromRepr};
 
 /// Parameter change events sent to the synthesizer from the UI and MIDI subsystems.
 pub enum SynthesizerUpdateEvents {
@@ -154,9 +154,9 @@ impl EnvelopeIndex {
 
 /// List of display names for time intervals for LFO when synced to a clock.
 pub const LFO_SYNC_INTERVAL_NAMES: [&str; 21] = [
-    "32/1", "24/1", "16/1", "12/1", "10/1", "8/1", "7/1", "6/1", "5/1", "4/1", "3/1", "2/1", "1/1", "1/2", "3/8",
-    "1/4", "3/16", "1/8", "3/32", "1/16", "1/32"];
-
+    "32/1", "24/1", "16/1", "12/1", "10/1", "8/1", "7/1", "6/1", "5/1", "4/1", "3/1", "2/1", "1/1",
+    "1/2", "3/8", "1/4", "3/16", "1/8", "3/32", "1/16", "1/32",
+];
 
 #[derive(Debug, Clone, Copy, Default, EnumCount, EnumIter, FromRepr)]
 #[repr(u16)]

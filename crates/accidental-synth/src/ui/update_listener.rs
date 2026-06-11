@@ -199,7 +199,7 @@ pub fn start_ui_update_listener(
                         set_lfo_values(&ui_weak_thread, lfo_index, lfo_values);
                     }
                 }
-                
+
                 UIUpdates::LFOWaveShape(lfo_index, value) => {
                     if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
                         let lfo_values = match lfo_index {

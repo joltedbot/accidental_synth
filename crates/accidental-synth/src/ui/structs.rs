@@ -13,13 +13,16 @@ use accsyn_core::math::{
     normal_value_from_exponential_curve_envelope_time, normal_value_from_exponential_level_curve,
     normalize_float_range, normalize_signed_integer_range, normalize_unsigned_integer_range,
 };
+use accsyn_core::synth_events::LfoSyncInterval;
 use accsyn_engine::modules::envelope::{
     DEFAULT_ENVELOPE_MILLISECONDS, DEFAULT_ENVELOPE_SUSTAIN_LEVEL, EnvelopeParameters,
     MAX_ATTACK_MILLISECONDS, MAX_DECAY_MILLISECONDS, MAX_RELEASE_MILLISECONDS,
     MIN_ATTACK_MILLISECONDS, MIN_DECAY_MILLISECONDS, MIN_RELEASE_MILLISECONDS,
 };
 use accsyn_engine::modules::filter::FilterParameters;
-use accsyn_engine::modules::lfo::{DEFAULT_LFO_FREQUENCY, LfoParameters, DEFAULT_CLOCK_SYNCED_STATE};
+use accsyn_engine::modules::lfo::{
+    DEFAULT_CLOCK_SYNCED_STATE, DEFAULT_LFO_FREQUENCY, LfoParameters,
+};
 use accsyn_engine::modules::oscillator::OscillatorParameters;
 use accsyn_engine::modules::oscillator::constants::{
     DEFAULT_HARD_SYNC_ENABLED, DEFAULT_KEY_SYNC_ENABLED, DEFAULT_POLARITY_FLIPPED,
@@ -28,7 +31,6 @@ use accsyn_engine::modules::oscillator::constants::{
 use accsyn_engine::synthesizer::midi_value_converters::normal_value_from_exponential_lfo_frequency;
 use accsyn_engine::synthesizer::{KeyboardParameters, MixerParameters};
 use std::sync::atomic::Ordering::Relaxed;
-use accsyn_core::synth_events::LfoSyncInterval;
 
 #[derive(Clone, Debug)]
 pub struct UIAudioDevice {
@@ -210,8 +212,11 @@ impl UILfo {
     pub fn from_synth_parameters(parameters: &LfoParameters) -> Self {
         Self {
             frequency: normal_value_from_exponential_lfo_frequency(parameters.frequency.load()),
-            thirty_second_notes: LfoSyncInterval::from_thirty_second_notes(parameters.thirty_second_notes.load(Relaxed))
-                .unwrap_or_default().display(),
+            thirty_second_notes: LfoSyncInterval::from_thirty_second_notes(
+                parameters.thirty_second_notes.load(Relaxed),
+            )
+            .unwrap_or_default()
+            .display(),
             clock_synced: parameters.clock_synced.load(Relaxed),
             phase: parameters.phase.load(),
             wave_shape_index: i32::from(parameters.wave_shape.load(Relaxed)),

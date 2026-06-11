@@ -1,6 +1,7 @@
 use crate::modules::effects::EffectIndex;
 use crate::modules::lfo::DEFAULT_LFO_PHASE;
 use crate::synthesizer::ModuleParameters;
+use crate::synthesizer::clock::bpm_from_thirty_second_note_duration;
 use crate::synthesizer::constants::{
     ENVELOPE_INDEX_AMP, ENVELOPE_INDEX_FILTER, ENVELOPE_INDEX_PITCH, LFO_INDEX_FILTER,
     LFO_INDEX_MOD_WHEEL, PATCH_DELETE_FAILURE, PATCH_DELETE_FILE_DOES_NOT_EXIST,
@@ -8,16 +9,30 @@ use crate::synthesizer::constants::{
 };
 use crate::synthesizer::midi_value_converters::bool_to_normal_value;
 use crate::synthesizer::patches::{Patches, PatchesError, get_module_parameters_from_patch_index};
-use crate::synthesizer::set_parameters::{set_effect_is_enabled, set_effect_parameter, set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted, set_envelope_release_time, set_envelope_sustain_level, set_envelope_sustain_pedal, set_filter_cutoff, set_filter_poles, set_filter_resonance, set_key_tracking_amount, set_lfo_clock_sync, set_lfo_frequency, set_lfo_phase, set_lfo_phase_reset, set_lfo_range, set_module_parameters_from_preset, set_oscillator_balance, set_oscillator_clip_boost, set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_hard_sync, set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute, set_oscillator_pitch_envelope_amount, set_oscillator_polarity, set_oscillator_shape_parameter1, set_oscillator_shape_parameter2, set_output_balance, set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled, set_portamento_time, set_velocity_curve};
+use crate::synthesizer::set_parameters::{
+    set_effect_is_enabled, set_effect_parameter, set_envelope_amount, set_envelope_attack_time,
+    set_envelope_decay_time, set_envelope_inverted, set_envelope_release_time,
+    set_envelope_sustain_level, set_envelope_sustain_pedal, set_filter_cutoff, set_filter_poles,
+    set_filter_resonance, set_key_tracking_amount, set_lfo_clock_sync, set_lfo_frequency,
+    set_lfo_phase, set_lfo_phase_reset, set_lfo_range, set_module_parameters_from_preset,
+    set_oscillator_balance, set_oscillator_clip_boost, set_oscillator_course_tune,
+    set_oscillator_fine_tune, set_oscillator_hard_sync, set_oscillator_key_sync,
+    set_oscillator_level, set_oscillator_mute, set_oscillator_pitch_envelope_amount,
+    set_oscillator_polarity, set_oscillator_shape_parameter1, set_oscillator_shape_parameter2,
+    set_output_balance, set_output_level, set_output_mute, set_pitch_bend_range,
+    set_portamento_enabled, set_portamento_time, set_velocity_curve,
+};
 use accsyn_core::casting::i32_to_u8_clamped;
-use accsyn_core::synth_events::{EnvelopeIndex, LFOIndex, LfoSyncInterval, OscillatorIndex, SynthesizerUpdateEvents, LFO_SYNC_INTERVAL_NAMES};
+use accsyn_core::synth_events::{
+    EnvelopeIndex, LFO_SYNC_INTERVAL_NAMES, LFOIndex, LfoSyncInterval, OscillatorIndex,
+    SynthesizerUpdateEvents,
+};
 use accsyn_core::ui_events::UIUpdates;
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::{Arc, Mutex, PoisonError};
 use std::thread;
 use std::time::Instant;
-use crate::synthesizer::clock::bpm_from_thirty_second_note_duration;
 
 #[allow(clippy::too_many_lines)]
 pub fn start_update_event_listener(
@@ -298,42 +313,40 @@ pub fn start_update_event_listener(
                     }
                 }
                 SynthesizerUpdateEvents::LfoFrequency(lfo_index, normal_value) => {
-
                     if LFOIndex::from_i32(lfo_index).is_none() {
                         log::warn!(
-                                target: "synthesizer::events",
-                                "start_ui_event_listener():SynthesizerUpdateEvents::LfoFrequency: Invalid LFO index: {lfo_index}"
-                            );
+                            target: "synthesizer::events",
+                            "start_ui_event_listener():SynthesizerUpdateEvents::LfoFrequency: Invalid LFO index: {lfo_index}"
+                        );
                         continue;
                     }
 
+                    let lfo_sync_interval_index = LfoSyncInterval::from_normal_value(normal_value);
+                    let lfo_sync_interval =
+                        LFO_SYNC_INTERVAL_NAMES[lfo_sync_interval_index as usize];
 
-                        let lfo_sync_interval_index = LfoSyncInterval::from_normal_value(normal_value);
-                        let lfo_sync_interval = LFO_SYNC_INTERVAL_NAMES[lfo_sync_interval_index as usize];
-
-                        if let Err(e) =
-                            ui_update_sender.send(UIUpdates::LFOClockSyncIntervalDisplay(lfo_index, lfo_sync_interval
-                                .to_string()))
-                        {
-                            log::error!(target: "synthesizer::event_listener", "Failed to send LFO clock sync interval \
+                    if let Err(e) = ui_update_sender.send(UIUpdates::LFOClockSyncIntervalDisplay(
+                        lfo_index,
+                        lfo_sync_interval.to_string(),
+                    )) {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send LFO clock sync interval \
                             display value to the UI: {e}");
-                        }
+                    }
 
+                    module_parameters.lfos[lfo_index as usize]
+                        .thirty_second_notes
+                        .store(lfo_sync_interval_index.to_thirty_second_notes(), Relaxed);
 
-                        module_parameters.lfos[lfo_index as usize].thirty_second_notes.store(lfo_sync_interval_index.to_thirty_second_notes(), Relaxed);
+                    let display_frequency = set_lfo_frequency(
+                        &module_parameters.lfos[lfo_index as usize],
+                        normal_value,
+                    );
 
-                            let display_frequency = set_lfo_frequency(
-                                &module_parameters.lfos[lfo_index as usize],
-                                normal_value,
-                            );
-
-                            if let Err(e) =
-                                ui_update_sender.send(UIUpdates::LFOFrequencyDisplay(lfo_index, display_frequency))
-                            {
-                                log::error!(target: "synthesizer::event_listener", "Failed to send LFO frequency display value to the UI: {e}");
-                            }
-                        
-
+                    if let Err(e) = ui_update_sender
+                        .send(UIUpdates::LFOFrequencyDisplay(lfo_index, display_frequency))
+                    {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send LFO frequency display value to the UI: {e}");
+                    }
                 }
                 SynthesizerUpdateEvents::LfoShapeIndex(lfo_index, wave_shape_index) => {
                     match lfo_index {
@@ -641,30 +654,30 @@ pub fn start_update_event_listener(
                     }
                 }
                 SynthesizerUpdateEvents::ThirtySecondNote => {
-                    if let Some(last_thirty_second_note ) = last_thirty_second_note_time_now {
+                    if let Some(last_thirty_second_note) = last_thirty_second_note_time_now {
                         let current_note_time = Instant::now();
                         last_thirty_second_note_time_now = Some(current_note_time);
 
-                        let thirty_second_note_duration = current_note_time - last_thirty_second_note;
-                        let new_bpm =  bpm_from_thirty_second_note_duration(thirty_second_note_duration);
+                        let thirty_second_note_duration =
+                            current_note_time - last_thirty_second_note;
+                        let new_bpm =
+                            bpm_from_thirty_second_note_duration(thirty_second_note_duration);
                         module_parameters.clock.bpm.store(new_bpm, Relaxed);
-                        module_parameters.lfos.iter().for_each(|lfo|{
+                        module_parameters.lfos.iter().for_each(|lfo| {
                             if lfo.clock_synced.load(Relaxed) {
                                 // Thirty-second notes is constrained to a fixed range that is within U32::MAX
                                 #[allow(clippy::cast_possible_truncation)]
-                                let new_period = u128::from(lfo.thirty_second_notes.load(Relaxed)) *
-                                    thirty_second_note_duration.as_millis();
+                                let new_period = u128::from(lfo.thirty_second_notes.load(Relaxed))
+                                    * thirty_second_note_duration.as_millis();
 
                                 // Thirty-second notes is constrained to a fixed range that is within f32::MAX
                                 #[allow(clippy::cast_precision_loss)]
-                                lfo.synced_frequency.store(1000.0/new_period as f32);
+                                lfo.synced_frequency.store(1000.0 / new_period as f32);
                             }
                         });
-
                     } else {
                         last_thirty_second_note_time_now = Some(Instant::now());
                     }
-
                 }
             }
         }

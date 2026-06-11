@@ -761,8 +761,6 @@ export component FixedCenterLFOSection inherits VerticalLayout {
     padding: Theme.lfo-widget-padding;
     spacing: Theme.lfo-widget-spacing;
 
-
-
     VerticalLayout {
         alignment: start;
 
@@ -774,8 +772,8 @@ export component FixedCenterLFOSection inherits VerticalLayout {
                 label: Theme.lfo-label-frequency;
                 value: lfo-values.frequency;
                 display-value: lfo-frequency-rounded;
-                show-value: sync_is_checked?false:true;
-                value-units: sync_is_checked?lfo_values.thirty-second-notes:Theme.display-units-hertz;
+                show-value: sync_is_checked ? false : true;
+                value-units: sync_is_checked ? lfo_values.thirty-second-notes : Theme.display-units-hertz;
                 show-units: true;
                 slider-width: Theme.global-panel-widget-width;
                 width: Theme.global-panel-widget-width;

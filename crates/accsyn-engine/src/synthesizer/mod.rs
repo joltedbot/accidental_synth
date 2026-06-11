@@ -1,3 +1,4 @@
+mod clock;
 mod constants;
 mod event_listener;
 mod midi_messages;
@@ -7,7 +8,6 @@ pub mod midi_value_converters;
 pub mod patches;
 mod sample_generator;
 mod set_parameters;
-mod clock;
 
 use self::constants::MAX_MIDI_KEY_VELOCITY;
 
@@ -32,6 +32,7 @@ use crate::synthesizer::midi_messages::{
 };
 use crate::synthesizer::sample_generator::sample_generator;
 
+use crate::synthesizer::clock::{Clock, ClockParameters};
 use crate::synthesizer::patches::Patches;
 use accsyn_core::parameter_types::{Balance, NormalizedValue};
 use anyhow::Result;
@@ -44,7 +45,6 @@ use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use strum::EnumCount;
-use crate::synthesizer::clock::{Clock, ClockParameters};
 
 #[derive(Debug, Clone, Copy)]
 enum MidiNoteEvent {
@@ -203,7 +203,7 @@ pub struct Synthesizer {
     module_parameters: Arc<ModuleParameters>,
     ui_update_sender: Sender<SynthesizerUpdateEvents>,
     ui_update_receiver: Receiver<SynthesizerUpdateEvents>,
-    patches: Arc<Mutex<Patches>>
+    patches: Arc<Mutex<Patches>>,
 }
 
 impl Synthesizer {
@@ -291,7 +291,7 @@ impl Synthesizer {
         let mut current_note = self.current_note.clone();
         let mut module_parameters = self.module_parameters.clone();
         let mut clock = Clock::new();
-        
+
         thread::spawn(move || {
             log::debug!(target: "synthesizer", "start_midi_event_listener(): spawned thread to receive MIDI events");
 
@@ -332,7 +332,9 @@ impl Synthesizer {
                     MidiEvent::Clock => {
                         if clock.tick_is_32nd_note() {
                             log::trace!(target: "synthesizer", "Clock tick is 32nd note");
-                            if let Err(e) = ui_update_receiver.send(SynthesizerUpdateEvents::ThirtySecondNote) {
+                            if let Err(e) =
+                                ui_update_receiver.send(SynthesizerUpdateEvents::ThirtySecondNote)
+                            {
                                 log::error!(target: "synthesizer", "Failed to send midi clock tick 32nd note to \
                                 synthesizer: {e}");
                             }

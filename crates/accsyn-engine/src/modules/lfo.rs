@@ -6,7 +6,7 @@ use accsyn_core::parameter_types::{Balance, Hertz, LfoRange, NormalizedValue};
 use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::atomic::{AtomicBool, AtomicU16, AtomicU8};
+use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU16};
 
 /// Minimum LFO frequency in Hz.
 pub const MIN_LFO_FREQUENCY: f32 = 0.01;
@@ -31,7 +31,6 @@ pub const DEFAULT_LFO_SYNCED_FREQUENCY: f32 = 0.5;
 pub const DEFAULT_LFO_THIRTY_SECOND_NOTES: u16 = 0;
 /// Default LFO sync interval in thirty-second notes.
 pub const DEFAULT_CLOCK_SYNCED_STATE: bool = false;
-
 
 /// Shared atomic parameters for controlling an LFO from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
@@ -60,8 +59,10 @@ impl LfoParameters {
     /// Replace all the values in these `LfoParameters` with the values from the provided `LfoParameters`.
     pub fn assign_from(&self, parameters: &LfoParameters) {
         self.frequency.store(parameters.frequency.load());
-        self.synced_frequency.store(parameters.synced_frequency.load());
-        self.clock_synced.store(parameters.clock_synced.load(Relaxed), Relaxed);
+        self.synced_frequency
+            .store(parameters.synced_frequency.load());
+        self.clock_synced
+            .store(parameters.clock_synced.load(Relaxed), Relaxed);
         self.center_value.store(parameters.center_value.load());
         self.range.store(parameters.range.load());
         self.phase.store(parameters.phase.load());

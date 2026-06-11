@@ -189,7 +189,7 @@ pub enum CC {
     /// Reset filter modulation LFO phase to zero.
     FilterModLFOReset,
     /// Toggle filter lfo clock sync.
-    FilterModLFOClockSync(u8),    
+    FilterModLFOClockSync(u8),
     /// Turn off all currently sounding notes.
     AllNotesOff,
 }

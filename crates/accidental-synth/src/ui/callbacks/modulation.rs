@@ -105,7 +105,10 @@ pub fn callback_lfo_frequency_changed(
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_lfo_frequency_changed(move |lfo_index, normal_value| {
             synthesizer_update_sender
-                .send(SynthesizerUpdateEvents::LfoFrequency(lfo_index, normal_value))
+                .send(SynthesizerUpdateEvents::LfoFrequency(
+                    lfo_index,
+                    normal_value,
+                ))
                 .expect(
                     "callback_filter_lfo_amount_changed(): Could not send new \
             LFO Frequency to the synthesizer module.Exiting.",
@@ -172,7 +175,9 @@ pub fn callback_lfo_clock_sync_enabled(
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_lfo_clock_sync_enabled(move |lfo_index, is_enabled| {
             synthesizer_update_sender
-                .send(SynthesizerUpdateEvents::LfoClockSyncEnabled(lfo_index, is_enabled))
+                .send(SynthesizerUpdateEvents::LfoClockSyncEnabled(
+                    lfo_index, is_enabled,
+                ))
                 .expect(
                     "callback_lfo_clock_sync_enabled(): Could not send new \
             LFO clock sync state to the synthesizer module.Exiting.",
@@ -180,4 +185,3 @@ pub fn callback_lfo_clock_sync_enabled(
         });
     }
 }
-
