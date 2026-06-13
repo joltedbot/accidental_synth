@@ -20,7 +20,6 @@ pub const MIN_LFO_RANGE: f32 = 0.01;
 pub const MAX_LFO_CENTER_VALUE: f32 = 1.0;
 /// Minimum LFO center value (bipolar offset).
 pub const MIN_LFO_CENTER_VALUE: f32 = -1.0;
-const DEFAULT_CENTER_VALUE: f32 = 0.0;
 /// Default LFO starting phase.
 pub const DEFAULT_LFO_PHASE: f32 = 0.0;
 /// Default LFO frequency in Hz.
@@ -32,6 +31,8 @@ pub const DEFAULT_LFO_THIRTY_SECOND_NOTES: u16 = 0;
 /// Default LFO sync interval in thirty-second notes.
 pub const DEFAULT_CLOCK_SYNCED_STATE: bool = false;
 
+const DEFAULT_CENTER_VALUE: f32 = 0.0;
+
 /// Shared atomic parameters for controlling an LFO from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LfoParameters {
@@ -39,6 +40,8 @@ pub struct LfoParameters {
     pub frequency: Hertz,
     /// LFO oscillation frequency in Hz based on clock sync interval and thirty second note duration
     pub synced_frequency: Hertz,
+    /// A trigger condition to alert the LFO that a thirty second note event has occured
+    pub sync_triggered: AtomicBool,
     /// LFO oscillation frequency in thirty-second notes when synced to a clock
     pub thirty_second_notes: AtomicU16,
     /// Indicates whether the lfo is synced to clock
@@ -77,6 +80,7 @@ impl Default for LfoParameters {
         Self {
             frequency: Hertz::new(DEFAULT_LFO_FREQUENCY),
             synced_frequency: Hertz::new(DEFAULT_LFO_SYNCED_FREQUENCY),
+            sync_triggered: AtomicBool::new(false),
             thirty_second_notes: AtomicU16::new(DEFAULT_LFO_THIRTY_SECOND_NOTES),
             clock_synced: AtomicBool::new(DEFAULT_CLOCK_SYNCED_STATE),
             center_value: Balance::new(DEFAULT_CENTER_VALUE),
@@ -92,6 +96,7 @@ impl Default for LfoParameters {
 pub struct Lfo {
     oscillator: Oscillator,
     frequency: f32,
+    sync_armed: bool,
     clock_synced: bool,
     center_value: f32,
     wave_shape_index: u8,
@@ -107,6 +112,7 @@ impl Lfo {
         Self {
             oscillator,
             frequency: DEFAULT_LFO_FREQUENCY,
+            sync_armed: false,
             clock_synced: false,
             center_value: DEFAULT_CENTER_VALUE,
             range: Defaults::DEFAULT_RANGE,
@@ -118,16 +124,25 @@ impl Lfo {
     /// Updates all LFO settings from the shared parameter block.
     pub fn set_parameters(&mut self, parameters: &LfoParameters) {
         if parameters.clock_synced.load(Relaxed) {
+            if !self.clock_synced {
+                self.sync_armed = true;
+            }
             self.clock_synced = true;
             self.set_frequency(parameters.synced_frequency.load());
         } else {
             self.clock_synced = false;
+            self.sync_armed = false;
             self.set_frequency(parameters.frequency.load());
         }
         self.set_center_value(parameters.center_value.load());
         self.set_range(parameters.range.load());
         self.set_phase(parameters.phase.load());
         self.set_wave_shape(parameters.wave_shape.load(Relaxed));
+        if self.sync_armed && parameters.sync_triggered.load(Relaxed) {
+            self.reset();
+            parameters.reset.store(false, Relaxed);
+            self.sync_armed = false;
+        }
         if parameters.reset.load(Relaxed) {
             self.reset();
             parameters.reset.store(false, Relaxed);
@@ -186,8 +201,10 @@ impl Lfo {
         }
     }
 
+    // The default phase is a hand set value of 0.0 so it will never exceed f32::MAX
+    #[allow(clippy::cast_possible_truncation)]
     fn reset(&mut self) {
-        self.phase = DEFAULT_PHASE;
+        self.phase = DEFAULT_PHASE as f32;
         self.oscillator.reset();
     }
 }

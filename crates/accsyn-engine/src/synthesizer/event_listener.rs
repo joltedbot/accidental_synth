@@ -654,30 +654,34 @@ pub fn start_update_event_listener(
                     }
                 }
                 SynthesizerUpdateEvents::ThirtySecondNote => {
-                    if let Some(last_thirty_second_note) = last_thirty_second_note_time_now {
-                        let current_note_time = Instant::now();
-                        last_thirty_second_note_time_now = Some(current_note_time);
-
-                        let thirty_second_note_duration =
-                            current_note_time - last_thirty_second_note;
-                        let new_bpm =
-                            bpm_from_thirty_second_note_duration(thirty_second_note_duration);
-                        module_parameters.clock.bpm.store(new_bpm, Relaxed);
-                        module_parameters.lfos.iter().for_each(|lfo| {
-                            if lfo.clock_synced.load(Relaxed) {
-                                // Thirty-second notes is constrained to a fixed range that is within U32::MAX
-                                #[allow(clippy::cast_possible_truncation)]
-                                let new_period = u128::from(lfo.thirty_second_notes.load(Relaxed))
-                                    * thirty_second_note_duration.as_millis();
-
-                                // Thirty-second notes is constrained to a fixed range that is within f32::MAX
-                                #[allow(clippy::cast_precision_loss)]
-                                lfo.synced_frequency.store(1000.0 / new_period as f32);
-                            }
-                        });
-                    } else {
+                    let Some(last_thirty_second_note) = last_thirty_second_note_time_now else {
                         last_thirty_second_note_time_now = Some(Instant::now());
-                    }
+                        continue;
+                    };
+
+                    let current_note_time = Instant::now();
+                    last_thirty_second_note_time_now = Some(current_note_time);
+                    let thirty_second_note_duration = current_note_time - last_thirty_second_note;
+
+                    let new_bpm = bpm_from_thirty_second_note_duration(thirty_second_note_duration);
+                    module_parameters.clock.bpm.store(new_bpm, Relaxed);
+
+                    module_parameters
+                        .lfos
+                        .iter()
+                        .filter(|lfo| lfo.clock_synced.load(Relaxed))
+                        .for_each(|lfo| {
+                            let thirty_second_notes_per_interval =
+                                lfo.thirty_second_notes.load(Relaxed);
+                            let new_period = f64::from(thirty_second_notes_per_interval)
+                                * thirty_second_note_duration.as_secs_f64();
+                            let new_frequency = 1.0 / new_period;
+
+                            // LFO frequencies live in roughly 0.1–50 Hz, which fits will within an f32
+                            #[allow(clippy::cast_possible_truncation)]
+                            lfo.synced_frequency.store(new_frequency as f32);
+                            lfo.sync_triggered.store(true, Relaxed);
+                        });
                 }
             }
         }

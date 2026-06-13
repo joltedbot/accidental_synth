@@ -3,7 +3,7 @@ use std::sync::atomic::AtomicU16;
 use std::time::Duration;
 
 const PULSES_PER_THIRTY_SECOND_NOTE: u8 = 3; // 24 PPQN / 8 thirty-second notes per quarter note;
-const MIN_BEATS_PER_MINUTE: f64 = 0.0;
+const MIN_BEATS_PER_MINUTE: f64 = 20.0;
 const MAX_BEATS_PER_MINUTE: f64 = 400.0;
 
 /// Parameters for the clock and clock synchronization
