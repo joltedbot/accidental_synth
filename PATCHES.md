@@ -15,6 +15,7 @@ A patch file has the following top-level keys:
 
 ```
 {
+  "clock": {...},
   "effects": [...],
   "envelopes": [...],
   "filter": {...},
@@ -44,7 +45,8 @@ Array of 4 oscillator objects, in order: Sub, Osc 1, Osc 2, Osc 3.
 | `portamento_time`    | integer | 0-65535    | Glide duration in audio buffers                                 |
 | `hard_sync_enabled`  | boolean |            | Enable hard sync to master oscillator                           |
 | `key_sync_enabled`   | boolean |            | Reset phase on each note                                        |
-| `gate_flag`          | boolean |            | [Performance state](#performance-state-fields) - leave as false |
+| `gate_flag`              | boolean |          | [Performance state](#performance-state-fields) - leave as false |
+| `pitch_envelope_amount`  | number  | 0.0-1.0  | Depth of pitch envelope modulation                              |
 
 ### Example Oscillator
 
@@ -61,7 +63,8 @@ Array of 4 oscillator objects, in order: Sub, Osc 1, Osc 2, Osc 3.
   "portamento_time": 7,
   "hard_sync_enabled": false,
   "key_sync_enabled": false,
-  "gate_flag": false
+  "gate_flag": false,
+  "pitch_envelope_amount": 0
 }
 ```
 
@@ -91,7 +94,7 @@ Single filter object controlling the resonant lowpass filter.
 
 ## Envelopes
 
-Array of 2 envelope objects: [Amplitude Envelope, Filter Envelope].
+Array of 3 envelope objects: [Amplitude Envelope, Filter Envelope, Pitch Envelope].
 
 Each envelope is an ADSR (Attack, Decay, Sustain, Release) generator.
 
@@ -127,14 +130,18 @@ Array of 2 LFO objects: [LFO 1, LFO 2].
 
 Low-frequency oscillators provide modulation sources for other parameters.
 
-| Field          | Type    | Range        | Description                                 |
-|----------------|---------|--------------|---------------------------------------------|
-| `wave_shape`   | integer | 0-9          | Waveform shape (see Waveforms table)        |
-| `frequency`    | number  | 0.01-20000.0 | Oscillation frequency in Hz                 |
-| `center_value` | number  | -1.0 to 1.0  | Center point of modulation range            |
-| `range`        | number  | 0.0-2.0      | Modulation depth (0 disables modulation)    |
-| `phase`        | number  | 0.0-1.0      | Starting phase (0.0 to 1.0 wraps one cycle) |
-| `reset`        | boolean |              | Reset phase to 0 on note-on                 |
+| Field                | Type    | Range        | Description                                                                             |
+|----------------------|---------|--------------|-----------------------------------------------------------------------------------------|
+| `wave_shape`         | integer | 0-9          | Waveform shape (see Waveforms table)                                                    |
+| `frequency`          | number  | 0.01-20000.0 | Oscillation frequency in Hz (used when `clock_synced` is false)                         |
+| `synced_frequency`   | number  |              | Calculated frequency in Hz derived from BPM and `thirty_second_notes` (auto-updated)   |
+| `clock_synced`       | boolean |              | When true, LFO rate is locked to MIDI clock using `thirty_second_notes`                 |
+| `thirty_second_notes`| integer | 1+           | LFO period expressed in 32nd notes (e.g., 32 = one bar, 16 = half bar, 8 = quarter)   |
+| `sync_triggered`     | boolean |              | When true, LFO phase resets at the next 32nd-note boundary to lock to the beat         |
+| `center_value`       | number  | -1.0 to 1.0  | Center point of modulation range                                                        |
+| `range`              | number  | 0.0-2.0      | Modulation depth (0 disables modulation)                                                |
+| `phase`              | number  | 0.0-1.0      | Starting phase (0.0 to 1.0 wraps one cycle)                                            |
+| `reset`              | boolean |              | Reset phase to 0 on note-on                                                             |
 
 ### Example LFO
 
@@ -142,6 +149,10 @@ Low-frequency oscillators provide modulation sources for other parameters.
 {
   "wave_shape": 0,
   "frequency": 10,
+  "synced_frequency": 0.5,
+  "clock_synced": false,
+  "thirty_second_notes": 32,
+  "sync_triggered": false,
   "center_value": 1,
   "range": 0,
   "phase": 0,
@@ -205,6 +216,22 @@ Single keyboard object controlling MIDI response and velocity sensitivity.
   "aftertouch_amount": 0,
   "mod_wheel_amount": 0,
   "polarity_flipped": false
+}
+```
+
+## Clock
+
+Single clock object controlling the internal tempo used for clock-synced LFOs.
+
+| Field | Type    | Range | Description                                              |
+|-------|---------|-------|----------------------------------------------------------|
+| `bpm` | integer | 1+    | Tempo in beats per minute (used when MIDI clock is absent) |
+
+### Example Clock
+
+```json
+{
+  "bpm": 1
 }
 ```
 
@@ -345,7 +372,8 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
       "portamento_time": 150,
       "hard_sync_enabled": false,
       "key_sync_enabled": false,
-      "gate_flag": false
+      "gate_flag": false,
+      "pitch_envelope_amount": 0
     },
     {
       "wave_shape_index": 3,
@@ -359,7 +387,8 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
       "portamento_time": 150,
       "hard_sync_enabled": false,
       "key_sync_enabled": false,
-      "gate_flag": false
+      "gate_flag": false,
+      "pitch_envelope_amount": 0
     },
     {
       "wave_shape_index": 3,
@@ -373,7 +402,8 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
       "portamento_time": 150,
       "hard_sync_enabled": false,
       "key_sync_enabled": false,
-      "gate_flag": false
+      "gate_flag": false,
+      "pitch_envelope_amount": 0
     },
     {
       "wave_shape_index": 0,
@@ -387,7 +417,8 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
       "portamento_time": 7,
       "hard_sync_enabled": false,
       "key_sync_enabled": false,
-      "gate_flag": false
+      "gate_flag": false,
+      "pitch_envelope_amount": 0
     }
   ],
   "filter": {
@@ -417,12 +448,26 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
       "is_inverted": false,
       "sustain_pedal": false,
       "gate_flag": 0
+    },
+    {
+      "amount": 0,
+      "attack_ms": 1,
+      "decay_ms": 200,
+      "sustain_level": 0,
+      "release_ms": 10,
+      "is_inverted": false,
+      "sustain_pedal": false,
+      "gate_flag": 0
     }
   ],
   "lfos": [
     {
       "wave_shape": 0,
       "frequency": 5,
+      "synced_frequency": 0.5,
+      "clock_synced": false,
+      "thirty_second_notes": 32,
+      "sync_triggered": false,
       "center_value": 1,
       "range": 0,
       "phase": 0,
@@ -431,6 +476,10 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
     {
       "wave_shape": 0,
       "frequency": 0.1,
+      "synced_frequency": 0.5,
+      "clock_synced": false,
+      "thirty_second_notes": 32,
+      "sync_triggered": false,
       "center_value": 0,
       "range": 0,
       "phase": 0,
@@ -466,6 +515,9 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
     { "name": "Auto-Pan",                "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Tremolo",                 "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Delay",                   "is_enabled": false, "parameters": [0, 0, 0, 0] }
-  ]
+  ],
+  "clock": {
+    "bpm": 120
+  }
 }
 ```
