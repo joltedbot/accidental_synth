@@ -48,15 +48,19 @@ pub(crate) fn process_midi_message(
     if message.is_empty() {
         return;
     }
+    let message_channel = channel_from_status_byte(message[MESSAGE_STATUS_BYTE_INDEX]);
+    let Some(event) = event_from_message_status(message, current_note_arc) else {
+        return;
+    };
 
-    if !message_channel_matches_current_channel(message, current_channel_arc) {
+    if event != MidiEvent::Clock
+        && !message_channel_matches_current_channel(message_channel, current_channel_arc)
+    {
         log::trace!(target: "midi::input", "Dropping message for non-matching channel");
         return;
     }
 
-    if let Some(event) = event_from_message_status(message, current_note_arc)
-        && let Err(err) = midi_message_sender.send(event)
-    {
+    if let Err(err) = midi_message_sender.send(event) {
         log::error!(
             target: "midi::input",
             "Could not send MIDI message to the synthesizer module: {err}"
@@ -65,10 +69,9 @@ pub(crate) fn process_midi_message(
 }
 
 fn message_channel_matches_current_channel(
-    message: &[u8],
+    message_channel: u8,
     current_channel_arc: &Arc<Mutex<Option<u8>>>,
 ) -> bool {
-    let message_channel = channel_from_status_byte(message[MESSAGE_STATUS_BYTE_INDEX]);
     let current_channel = current_channel_arc
         .lock()
         .unwrap_or_else(PoisonError::into_inner);
@@ -98,6 +101,7 @@ fn event_from_message_status(
         Status::ProgramChange => process_program_change_message(message),
         Status::ChannelPressure => process_channel_pressure_message(message),
         Status::Clock => Some(MidiEvent::Clock),
+        Status::Reset => Some(MidiEvent::Reset),
         _ => {
             log::debug!(target: "midi::input", "Unhandled MIDI status type: 0x{:02X}", message[MESSAGE_STATUS_BYTE_INDEX]);
             None
@@ -177,7 +181,12 @@ fn channel_from_status_byte(status: u8) -> u8 {
 }
 
 fn message_status_from_status_byte(status: u8) -> Status {
-    let status_type = status & MESSAGE_STATUS_BYTE_TYPE_MASK;
+    let status_type = if status >= 0xF0 {
+        status
+    } else {
+        status & MESSAGE_STATUS_BYTE_TYPE_MASK
+    };
+
     match status_type {
         0x80 => Status::NoteOff,
         0x90 => Status::NoteOn,
@@ -186,7 +195,8 @@ fn message_status_from_status_byte(status: u8) -> Status {
         0xC0 => Status::ProgramChange,
         0xD0 => Status::ChannelPressure,
         0xE0 => Status::PitchBend,
-        0xF0 => Status::Clock,
+        0xF8 => Status::Clock,
+        0xFF => Status::Reset,
         _ => Status::Unknown,
     }
 }
@@ -269,7 +279,7 @@ mod tests {
     #[test]
     fn message_type_from_status_byte_correctly_returns_unknown_from_max_status_byte() {
         let status_byte = 0xFF;
-        let expected_result = Status::Unknown;
+        let expected_result = Status::Reset;
         let result = message_status_from_status_byte(status_byte);
         assert_eq!(result, expected_result);
     }

@@ -67,6 +67,7 @@ enum Status {
     ChannelPressure,
     PitchBend,
     Clock,
+    Reset,
     Unknown,
 }
 

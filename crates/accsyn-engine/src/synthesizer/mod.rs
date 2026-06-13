@@ -343,6 +343,11 @@ impl Synthesizer {
                     MidiEvent::ControlChange(cc_value) => {
                         process_midi_cc_values(cc_value, &mut module_parameters, &ui_update_sender);
                     }
+                    MidiEvent::Reset => {
+                        // As this is a mono synth and there is no arpeggiator or sequencer a reset only needs to stop
+                        // the playing note
+                        process_midi_note_off_message(&mut module_parameters);
+                    }
                 }
             }
 

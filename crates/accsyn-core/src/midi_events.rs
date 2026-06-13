@@ -15,6 +15,8 @@ pub enum MidiEvent {
     ChannelPressure(u8),
     /// Clock pulse event
     Clock,
+    /// Reset event - Usually from a panic button
+    Reset,
     /// Program change event (program number).
     ProgramChange(u8),
 }

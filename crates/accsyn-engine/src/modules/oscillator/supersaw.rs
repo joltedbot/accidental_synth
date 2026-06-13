@@ -4,7 +4,7 @@ use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use std::f64::consts::PI;
 
 const SHAPE: WaveShape = WaveShape::Supersaw;
-const DEFAULT_DETUNE:f64 = 0.3;
+const DEFAULT_DETUNE: f64 = 0.3;
 const VOICE_FREQUENCY_OFFSETS: [(f64, f64); 7] = [
     (0.893, 0.85),
     (0.939, 0.90),
@@ -58,12 +58,10 @@ impl GenerateWave for Supersaw {
 
         let sample_modulation = modulation.unwrap_or(1.0) as f64;
 
-
-
         for (voice, (frequency_offset, level_offset)) in VOICE_FREQUENCY_OFFSETS.iter().enumerate()
         {
-
-            let voice_frequency = tone_frequency_f64 * (1.0 + self.detune * (frequency_offset - 1.0));
+            let voice_frequency =
+                tone_frequency_f64 * (1.0 + self.detune * (frequency_offset - 1.0));
 
             let sample = self.single_saw_sample(voice_frequency, self.x_coordinate[voice]);
             self.x_coordinate[voice] += self.x_increment * sample_modulation;
