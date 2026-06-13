@@ -1,5 +1,4 @@
 use super::WaveShape;
-use super::constants::{MAX_PHASE, MIN_PHASE};
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use crate::modules::oscillator::sine::Sine;
 
@@ -62,7 +61,7 @@ impl GenerateWave for FM {
     }
 
     fn set_phase(&mut self, phase: f32) {
-        self.carrier.set_phase(phase.clamp(MIN_PHASE, MAX_PHASE));
+        self.carrier.set_phase(phase);
     }
 
     fn shape(&self) -> WaveShape {

@@ -1,21 +1,20 @@
 use super::WaveShape;
+use super::constants::{DEFAULT_X_COORDINATE, DEFAULT_X_INCREMENT};
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 
 const SHAPE: WaveShape = WaveShape::Broken;
-const DEFAULT_X_COORDINATE: f32 = 0.0;
-const DEFAULT_X_INCREMENT: f32 = 1.0;
-const MIN_JANK: f32 = 0.0;
-const MAX_JANK: f32 = 0.99;
+const MIN_JANK: f64 = 0.0;
+const MAX_JANK: f64 = 0.99;
 
 /// Some kind of broken wave generator using a saw and then some jank
 pub struct Broken {
     shape: WaveShape,
-    x_coordinate: f32,
+    x_coordinate: f64,
     sample_rate: u32,
-    phase: Option<f32>,
-    jank_factor: f32,
-    jank_amount: f32,
+    phase: Option<f64>,
+    jank_factor: f64,
+    jank_amount: f64,
 }
 
 impl Broken {
@@ -37,43 +36,44 @@ impl Broken {
 
 impl GenerateWave for Broken {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
-        // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
-        #[allow(clippy::cast_precision_loss)]
-        let sample_rate_f32 = self.sample_rate as f32;
+        let sample_rate_f64 = self.sample_rate as f64;
+        let tone_frequency_f64 = tone_frequency as f64;
 
         if let Some(phase) = self.phase {
-            self.x_coordinate = (phase / PI) * (sample_rate_f32 / tone_frequency);
+            self.x_coordinate = (phase / PI) * (sample_rate_f64 / tone_frequency_f64);
             self.phase = None;
         }
 
-        let y_coordinate: f32 = (-2.0 / PI)
+        let y_coordinate = (-2.0 / PI)
             * self.jank_factor
-            * (1.0f32 / (tone_frequency * PI * (self.x_coordinate / sample_rate_f32)).tan()).atan();
+            * (1.0 / (tone_frequency_f64 * PI * (self.x_coordinate / sample_rate_f64)).tan())
+                .atan();
 
         if y_coordinate > self.jank_amount || y_coordinate < -self.jank_amount {
             self.jank_factor = -self.jank_factor;
         }
 
-        self.x_coordinate += DEFAULT_X_INCREMENT * modulation.unwrap_or(1.0);
+        self.x_coordinate += DEFAULT_X_INCREMENT * modulation.unwrap_or(1.0) as f64;
 
-        if tone_frequency > 0.0 {
-            let period = sample_rate_f32 / tone_frequency;
+        if tone_frequency_f64 > 0.0 {
+            let period = sample_rate_f64 / tone_frequency_f64;
             if self.x_coordinate >= period {
                 self.x_coordinate -= period;
             }
         }
 
-        y_coordinate
+        y_coordinate as f32
     }
 
     fn set_shape_parameter1(&mut self, parameter: f32) {
-        self.jank_amount = parameter.clamp(MIN_JANK, MAX_JANK);
+        let internal_jank = f64::from(parameter);
+        self.jank_amount = internal_jank.clamp(MIN_JANK, MAX_JANK);
     }
 
     fn set_shape_parameter2(&mut self, _parameter: f32) {}
 
     fn set_phase(&mut self, phase: f32) {
-        self.phase = Some(phase);
+        self.phase = Some(phase as f64);
     }
 
     fn shape(&self) -> WaveShape {

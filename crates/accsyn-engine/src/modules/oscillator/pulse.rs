@@ -8,10 +8,10 @@ use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 /// Pulse wave oscillator with variable duty cycle (pulse width).
 pub struct Pulse {
     shape: WaveShape,
-    x_coordinate: f32,
+    x_coordinate: f64,
     sample_rate: u32,
-    width: f32,
-    phase: Option<f32>,
+    width: f64,
+    phase: Option<f64>,
 }
 
 impl Pulse {
@@ -31,22 +31,21 @@ impl Pulse {
 
 impl GenerateWave for Pulse {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
-        // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
-        #[allow(clippy::cast_precision_loss)]
-        let sample_rate_f32 = self.sample_rate as f32;
+        let sample_rate_f64 = self.sample_rate as f64;
+        let tone_frequency_f64 = tone_frequency as f64;
 
         let duty_cycle = match modulation {
-            Some(modulation) => modulation - OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR,
+            Some(modulation) => modulation as f64 - OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR,
             None => self.width,
         };
 
         if let Some(phase) = self.phase {
-            self.x_coordinate = (phase / RADS_PER_CYCLE) * (sample_rate_f32 / tone_frequency);
+            self.x_coordinate = (phase / RADS_PER_CYCLE) * (sample_rate_f64 / tone_frequency_f64);
             self.phase = None;
         }
 
-        let mut y_coordinate: f32 =
-            (tone_frequency * RADS_PER_CYCLE * (self.x_coordinate / sample_rate_f32)).sin();
+        let mut y_coordinate =
+            (tone_frequency_f64 * RADS_PER_CYCLE * (self.x_coordinate / sample_rate_f64)).sin();
 
         if y_coordinate >= 0.0 + duty_cycle {
             y_coordinate = 1.0;
@@ -56,24 +55,24 @@ impl GenerateWave for Pulse {
 
         self.x_coordinate += DEFAULT_X_INCREMENT;
 
-        if tone_frequency > 0.0 {
-            let period = sample_rate_f32 / tone_frequency;
+        if tone_frequency_f64 > 0.0 {
+            let period = sample_rate_f64 / tone_frequency_f64;
             if self.x_coordinate >= period {
                 self.x_coordinate -= period;
             }
         }
 
-        y_coordinate
+        y_coordinate as f32
     }
 
     fn set_shape_parameter1(&mut self, parameter: f32) {
-        self.width = parameter;
+        self.width = f64::from(parameter);
     }
 
     fn set_shape_parameter2(&mut self, _parameter: f32) {}
 
     fn set_phase(&mut self, phase: f32) {
-        self.phase = Some(phase);
+        self.phase = Some(phase as f64);
     }
 
     fn shape(&self) -> WaveShape {

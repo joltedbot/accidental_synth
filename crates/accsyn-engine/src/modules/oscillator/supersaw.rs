@@ -1,15 +1,15 @@
 use super::WaveShape;
+use super::constants::{DEFAULT_X_COORDINATE, DEFAULT_X_INCREMENT};
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 
 const SHAPE: WaveShape = WaveShape::Supersaw;
-const DEFAULT_X_COORDINATE: f32 = 0.0;
-const DEFAULT_X_INCREMENT: f32 = 1.0;
-const VOICE_FREQUENCY_OFFSETS: [(f32, f32); 7] = [
+const DEFAULT_DETUNE:f64 = 0.3;
+const VOICE_FREQUENCY_OFFSETS: [(f64, f64); 7] = [
     (0.893, 0.85),
     (0.939, 0.90),
     (0.98, 0.95),
-    (1.0, 0.0),
+    (1.0, 1.0),
     (1.02, 0.95),
     (1.064, 0.9),
     (1.11, 0.85),
@@ -18,10 +18,11 @@ const VOICE_FREQUENCY_OFFSETS: [(f32, f32); 7] = [
 /// Multi-voice detuned supersaw oscillator blending seven saw waves.
 pub struct Supersaw {
     shape: WaveShape,
-    x_coordinate: [f32; 7],
-    x_increment: f32,
+    x_coordinate: [f64; 7],
+    x_increment: f64,
+    detune: f64,
     sample_rate: u32,
-    phase: Option<f32>,
+    phase: Option<f64>,
 }
 
 impl Supersaw {
@@ -34,55 +35,60 @@ impl Supersaw {
             shape: SHAPE,
             x_coordinate,
             x_increment,
+            detune: DEFAULT_DETUNE,
             sample_rate,
             phase: None,
         }
     }
 
-    fn single_saw_sample(&mut self, tone_frequency: f32, x_coordinate: f32) -> f32 {
-        // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
-        #[allow(clippy::cast_precision_loss)]
-        let sample_rate_f32 = self.sample_rate as f32;
-        let y_coordinate: f32 = (-2.0 / PI)
-            * (1.0f32 / (tone_frequency * PI * (x_coordinate / sample_rate_f32)).tan()).atan();
+    fn single_saw_sample(&mut self, tone_frequency: f64, x_coordinate: f64) -> f64 {
+        let sample_rate_f64 = self.sample_rate as f64;
+        let y_coordinate = (-2.0 / PI)
+            * (1.0 / (tone_frequency * PI * (x_coordinate / sample_rate_f64)).tan()).atan();
         y_coordinate
     }
 }
 
 impl GenerateWave for Supersaw {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
-        // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
-        #[allow(clippy::cast_precision_loss)]
-        let sample_rate_f32 = self.sample_rate as f32;
+        let sample_rate_f64 = self.sample_rate as f64;
+        let tone_frequency_f64 = tone_frequency as f64;
 
-        let mut voice_samples: Vec<f32> = vec![];
+        let mut voice_mix = 0.0;
+
+        let sample_modulation = modulation.unwrap_or(1.0) as f64;
+
+
 
         for (voice, (frequency_offset, level_offset)) in VOICE_FREQUENCY_OFFSETS.iter().enumerate()
         {
-            let sample =
-                self.single_saw_sample(tone_frequency * frequency_offset, self.x_coordinate[voice]);
-            voice_samples.push(sample * level_offset);
-            self.x_coordinate[voice] += self.x_increment * modulation.unwrap_or(1.0);
-        }
 
-        if tone_frequency > 0.0 {
-            let period = sample_rate_f32 / tone_frequency;
-            for voice in 0..7 {
-                if self.x_coordinate[voice as usize] >= period {
-                    self.x_coordinate[voice as usize] -= period;
+            let voice_frequency = tone_frequency_f64 * (1.0 + self.detune * (frequency_offset - 1.0));
+
+            let sample = self.single_saw_sample(voice_frequency, self.x_coordinate[voice]);
+            self.x_coordinate[voice] += self.x_increment * sample_modulation;
+
+            voice_mix += sample * level_offset;
+
+            if tone_frequency_f64 > 0.0 {
+                let period = sample_rate_f64 / voice_frequency;
+                if self.x_coordinate[voice] >= period {
+                    self.x_coordinate[voice] -= period;
                 }
             }
         }
 
-        voice_samples.iter().sum::<f32>() / 2.0
+        voice_mix as f32 / 2.0
     }
 
-    fn set_shape_parameter1(&mut self, _parameter: f32) {}
+    fn set_shape_parameter1(&mut self, parameter: f32) {
+        self.detune = f64::from(parameter);
+    }
 
     fn set_shape_parameter2(&mut self, _parameter: f32) {}
 
     fn set_phase(&mut self, phase: f32) {
-        self.phase = Some(phase);
+        self.phase = Some(f64::from(phase));
     }
 
     fn shape(&self) -> WaveShape {

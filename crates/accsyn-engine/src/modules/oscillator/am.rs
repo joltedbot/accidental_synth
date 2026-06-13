@@ -1,7 +1,6 @@
 use super::WaveShape;
 use super::constants::{DEFAULT_AMPLITUDE_MODULATION_AMOUNT, DEFAULT_RING_MOD_AMOUNT};
 use super::sine::Sine;
-use crate::modules::oscillator::constants::{MAX_PHASE, MIN_PHASE};
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 
 /// Amplitude modulation oscillator using carrier and modulator sine waves.
@@ -47,7 +46,7 @@ impl GenerateWave for AM {
     }
 
     fn set_phase(&mut self, phase: f32) {
-        self.carrier.set_phase(phase.clamp(MIN_PHASE, MAX_PHASE));
+        self.carrier.set_phase(phase);
     }
 
     fn shape(&self) -> WaveShape {
