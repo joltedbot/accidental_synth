@@ -2,28 +2,28 @@
   "effects": [
     {
       "name": "Saturation",
-      "is_enabled": true,
-      "parameters": [0.0, 1.0, 0.32309783, 0.0]
+      "is_enabled": false,
+      "parameters": [0.0, 0.0, 1.0, 0.0]
     },
     {
       "name": "Colour Compressor",
-      "is_enabled": true,
-      "parameters": [0.14381793, 0.3469769, 0.42065218, 0.5209409]
+      "is_enabled": false,
+      "parameters": [1.0, 0.0, 0.0, 1.0]
     },
     {
       "name": "Wave Folder",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [0.0, -1.0, 0.0, 0.0]
     },
     {
       "name": "Bit Shifter",
-      "is_enabled": true,
-      "parameters": [0.80991846, 0.5047894, 0.0, 0.0]
+      "is_enabled": false,
+      "parameters": [0.8798234, 0.0, 0.0, 0.0]
     },
     {
       "name": "Clipper",
       "is_enabled": false,
-      "parameters": [1.0, 0.0, 0.0, 0.0]
+      "parameters": [0.05932405, 1.0, 1.0, 0.0]
     },
     {
       "name": "Gate Clipping",
@@ -37,45 +37,45 @@
     },
     {
       "name": "Auto-Pan",
-      "is_enabled": false,
-      "parameters": [0.0, 1.0, 0.0, 0.0]
+      "is_enabled": true,
+      "parameters": [0.03350883, 0.32058424, 7.0, 0.0]
     },
     {
       "name": "Tremolo",
       "is_enabled": true,
-      "parameters": [0.05436481, 0.39074388, 8.0, 0.0]
+      "parameters": [0.028600544, 0.52139944, 8.0, 0.0]
     },
     {
       "name": "Delay",
       "is_enabled": true,
-      "parameters": [0.44023436, 0.2273947, 0.541678, 0.0]
+      "parameters": [0.7578295, 0.5680027, 0.37734374, 0.0]
     }
   ],
   "envelopes": [
     {
       "amount": 1.0,
-      "attack_ms": 18,
-      "decay_ms": 200,
+      "attack_ms": 15,
+      "decay_ms": 514,
       "gate_flag": 0,
       "is_inverted": false,
-      "release_ms": 200,
-      "sustain_level": 1.0,
+      "release_ms": 199,
+      "sustain_level": 0.6471788,
       "sustain_pedal": false
     },
     {
-      "amount": 0.33858266,
-      "attack_ms": 200,
-      "decay_ms": 413,
+      "amount": 0.063792065,
+      "attack_ms": 68,
+      "decay_ms": 78,
       "gate_flag": 0,
       "is_inverted": false,
-      "release_ms": 75,
+      "release_ms": 0,
       "sustain_level": 0.0,
       "sustain_pedal": false
     },
     {
       "amount": 1.0,
-      "attack_ms": 1,
-      "decay_ms": 200,
+      "attack_ms": 0,
+      "decay_ms": 5000,
       "gate_flag": 0,
       "is_inverted": false,
       "release_ms": 10,
@@ -84,23 +84,23 @@
     }
   ],
   "filter": {
-    "current_note_number": 36,
-    "cutoff_frequency": 0.0,
+    "current_note_number": 61,
+    "cutoff_frequency": 380.26227,
     "filter_poles": 4,
     "key_tracking_amount": 0.5,
-    "resonance": 0.21028231
+    "resonance": 0.9
   },
   "keyboard": {
     "aftertouch_amount": 0.0,
-    "mod_wheel_amount": 0.0,
+    "mod_wheel_amount": 0.062992126,
     "pitch_bend_range": 12,
-    "velocity_curve": 0.5,
+    "velocity_curve": 0.98722655,
     "polarity_flipped": false
   },
   "lfos": [
     {
       "center_value": 1.0,
-      "frequency": 10.0,
+      "frequency": 0.01771703,
       "synced_frequency": 0.5,
       "sync_triggered": false,
       "thirty_second_notes": 32,
@@ -112,13 +112,13 @@
     },
     {
       "center_value": 0.0,
-      "frequency": 0.1,
+      "frequency": 3.4995105,
       "synced_frequency": 0.5,
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
       "phase": 0.0,
-      "range": 0.0,
+      "range": 0.08236178,
       "reset": false,
       "wave_shape": 0
     }
@@ -126,22 +126,22 @@
   "mixer": {
     "balance": 0.0,
     "is_muted": false,
-    "level": 0.42797792,
+    "level": 0.5365719,
     "quad_mixer_inputs": [
       {
         "balance": 0.0,
-        "level": 0.0,
-        "mute": false
+        "level": 1.0002447,
+        "mute": true
       },
       {
         "balance": 0.0,
         "level": 1.0,
-        "mute": false
+        "mute": true
       },
       {
         "balance": 0.0,
         "level": 1.0,
-        "mute": false
+        "mute": true
       },
       {
         "balance": 0.0,
@@ -152,22 +152,22 @@
   },
   "oscillators": [
     {
-      "clipper_boost": 8,
-      "course_tune": 0,
-      "fine_tune": -9,
+      "clipper_boost": 0,
+      "course_tune": 9,
+      "fine_tune": -5,
       "gate_flag": false,
       "hard_sync_enabled": false,
       "key_sync_enabled": false,
       "pitch_bend": 0,
       "portamento_enabled": false,
-      "portamento_time": 7,
-      "shape_parameter1": 0.0,
+      "portamento_time": 15,
+      "shape_parameter1": 0.7406759,
       "shape_parameter2": 0.0,
-      "wave_shape_index": 6,
+      "wave_shape_index": 4,
       "pitch_envelope_amount": 0.0
     },
     {
-      "clipper_boost": 8,
+      "clipper_boost": 0,
       "course_tune": 0,
       "fine_tune": 0,
       "gate_flag": false,
@@ -175,40 +175,40 @@
       "key_sync_enabled": false,
       "pitch_bend": 0,
       "portamento_enabled": false,
-      "portamento_time": 7,
+      "portamento_time": 15,
       "shape_parameter1": 0.0,
       "shape_parameter2": 0.0,
-      "wave_shape_index": 6,
+      "wave_shape_index": 2,
       "pitch_envelope_amount": 0.0
     },
     {
-      "clipper_boost": 7,
-      "course_tune": 0,
-      "fine_tune": 10,
+      "clipper_boost": 0,
+      "course_tune": 4,
+      "fine_tune": 13,
       "gate_flag": false,
       "hard_sync_enabled": false,
       "key_sync_enabled": false,
       "pitch_bend": 0,
       "portamento_enabled": false,
-      "portamento_time": 7,
+      "portamento_time": 15,
       "shape_parameter1": 0.0,
       "shape_parameter2": 0.0,
-      "wave_shape_index": 6,
+      "wave_shape_index": 2,
       "pitch_envelope_amount": 0.0
     },
     {
-      "clipper_boost": 9,
-      "course_tune": 0,
-      "fine_tune": -8,
+      "clipper_boost": 0,
+      "course_tune": 7,
+      "fine_tune": -13,
       "gate_flag": false,
       "hard_sync_enabled": false,
       "key_sync_enabled": false,
       "pitch_bend": 0,
       "portamento_enabled": false,
-      "portamento_time": 7,
+      "portamento_time": 15,
       "shape_parameter1": 0.0,
       "shape_parameter2": 0.0,
-      "wave_shape_index": 6,
+      "wave_shape_index": 2,
       "pitch_envelope_amount": 0.0
     }
   ],
