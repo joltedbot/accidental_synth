@@ -24,7 +24,7 @@ pub const SAMPLE_PRODUCER_LOOP_SLEEP_DURATION_MICROSECONDS: u64 = 100;
 // MISC Constants
 pub const SYNTHESIZER_MESSAGE_SENDER_CAPACITY: usize = 10;
 pub const MAX_PATCH_NAME_LENGTH: usize = 24;
-pub const MAX_PATCH_FILE_SIZE: u64 = 5120;
+pub const MAX_PATCH_FILE_SIZE: u64 = 10_240;
 
 // Patch Save Status Messages
 pub const PATCH_SAVE_SUCCESS: &str = "Patch saved successfully!";
@@ -47,10 +47,12 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
         include_str!("patches/alien-invasion.json"),
     ),
     ("Ambient Drone*", include_str!("patches/ambient-drone.json")),
+    ("Analog Nostalgia*", include_str!("patches/analog-nostalgia.json")),
     (
         "Arpable Dirty FM*",
         include_str!("patches/arpable-dirty-fm.json"),
     ),
+    ("Bass Erosion*", include_str!("patches/bass-erosion.json")),
     ("Bright Lead*", include_str!("patches/bright-lead.json")),
     ("Buzz Brass*", include_str!("patches/buzz-brass.json")),
     ("Deep Bass*", include_str!("patches/deep-bass.json")),
@@ -71,8 +73,12 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
     ("House Hits*", include_str!("patches/house-hits.json")),
     ("Kick (Long)*", include_str!("patches/kick-long.json")),
     ("Kick (Short)*", include_str!("patches/kick-short.json")),
+    ("m7 Noise Arp*", include_str!("patches/m7-noise-arp.json")),
+    ("Major 6 Bounce*", include_str!("patches/major-6-bounce.json")),
     ("Plucky Bass*", include_str!("patches/plucky-bass.json")),
     ("Plucky Keys*", include_str!("patches/plucky-keys.json")),
+    ("Power Chords*", include_str!("patches/power-chords.json")),
+    ("Rave Chord*", include_str!("patches/rave-chord.json")),
     ("Sci-Fi*", include_str!("patches/sci-fi.json")),
     (
         "Reverse Bass Swells*",
