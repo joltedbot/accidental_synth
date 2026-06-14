@@ -1,6 +1,7 @@
 use super::WaveShape;
 use super::constants::{DEFAULT_X_COORDINATE, DEFAULT_X_INCREMENT};
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
+use accsyn_core::casting::f64_to_f32_clamped;
 use std::f64::consts::PI;
 
 const SHAPE: WaveShape = WaveShape::Supersaw;
@@ -42,21 +43,19 @@ impl Supersaw {
     }
 
     fn single_saw_sample(&mut self, tone_frequency: f64, x_coordinate: f64) -> f64 {
-        let sample_rate_f64 = self.sample_rate as f64;
-        let y_coordinate = (-2.0 / PI)
-            * (1.0 / (tone_frequency * PI * (x_coordinate / sample_rate_f64)).tan()).atan();
-        y_coordinate
+        let sample_rate_f64 = f64::from(self.sample_rate);
+        (-2.0 / PI) * (1.0 / (tone_frequency * PI * (x_coordinate / sample_rate_f64)).tan()).atan()
     }
 }
 
 impl GenerateWave for Supersaw {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
-        let sample_rate_f64 = self.sample_rate as f64;
-        let tone_frequency_f64 = tone_frequency as f64;
+        let sample_rate_f64 = f64::from(self.sample_rate);
+        let tone_frequency_f64 = f64::from(tone_frequency);
 
         let mut voice_mix = 0.0;
 
-        let sample_modulation = modulation.unwrap_or(1.0) as f64;
+        let sample_modulation = f64::from(modulation.unwrap_or(1.0));
 
         for (voice, (frequency_offset, level_offset)) in VOICE_FREQUENCY_OFFSETS.iter().enumerate()
         {
@@ -76,7 +75,7 @@ impl GenerateWave for Supersaw {
             }
         }
 
-        voice_mix as f32 / 2.0
+        f64_to_f32_clamped(voice_mix) / 2.0
     }
 
     fn set_shape_parameter1(&mut self, parameter: f32) {

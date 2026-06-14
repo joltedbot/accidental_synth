@@ -3,7 +3,7 @@ use accsyn_engine::synthesizer::Synthesizer;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU16, AtomicU32};
 
-/// Verifies that Synthesizer::new() succeeds with default stream parameters.
+/// Verifies that `Synthesizer::new()` succeeds with default stream parameters.
 ///
 /// Exercises the full construction path: embedded init-patch deserialization,
 /// Application Support directory creation, and user patch discovery.

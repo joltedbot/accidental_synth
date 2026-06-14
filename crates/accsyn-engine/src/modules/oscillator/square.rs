@@ -1,5 +1,6 @@
 use super::WaveShape;
 use super::constants::{DEFAULT_X_COORDINATE, DEFAULT_X_INCREMENT, RADS_PER_CYCLE};
+use accsyn_core::casting::f64_to_f32_clamped;
 const SHAPE: WaveShape = WaveShape::Square;
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 
@@ -27,8 +28,8 @@ impl Square {
 
 impl GenerateWave for Square {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
-        let sample_rate_f64 = self.sample_rate as f64;
-        let tone_frequency_f64 = tone_frequency as f64;
+        let sample_rate_f64 = f64::from(self.sample_rate);
+        let tone_frequency_f64 = f64::from(tone_frequency);
 
         if let Some(phase) = self.phase {
             self.x_coordinate = (phase / RADS_PER_CYCLE) * (sample_rate_f64 / tone_frequency_f64);
@@ -44,7 +45,7 @@ impl GenerateWave for Square {
             y_coordinate = -1.0;
         }
 
-        self.x_coordinate += DEFAULT_X_INCREMENT * modulation.unwrap_or(1.0) as f64;
+        self.x_coordinate += DEFAULT_X_INCREMENT * f64::from(modulation.unwrap_or(1.0));
 
         if tone_frequency_f64 > 0.0 {
             let period = sample_rate_f64 / tone_frequency_f64;
@@ -53,7 +54,7 @@ impl GenerateWave for Square {
             }
         }
 
-        y_coordinate as f32
+        f64_to_f32_clamped(y_coordinate)
     }
 
     fn set_shape_parameter1(&mut self, _parameter: f32) {}
@@ -61,7 +62,7 @@ impl GenerateWave for Square {
     fn set_shape_parameter2(&mut self, _parameter: f32) {}
 
     fn set_phase(&mut self, phase: f32) {
-        self.phase = Some(phase as f64);
+        self.phase = Some(f64::from(phase));
     }
 
     fn shape(&self) -> WaveShape {

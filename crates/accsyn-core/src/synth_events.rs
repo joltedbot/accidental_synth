@@ -1,3 +1,4 @@
+use crate::casting::f32_to_u16_clamped;
 use anyhow::{Result, anyhow};
 use strum::EnumCount as LfoEnumCount;
 use strum_macros::{EnumCount, EnumIter, FromRepr};
@@ -208,7 +209,7 @@ pub enum LfoSyncInterval {
 }
 
 impl LfoSyncInterval {
-    /// Converts a number of 32nd notes to an LfoSyncInterval
+    /// Converts a number of 32nd notes to an `LfoSyncInterval`
     ///
     /// # Errors
     ///
@@ -278,7 +279,11 @@ impl LfoSyncInterval {
     #[must_use]
     pub fn from_normal_value(normal_value: f32) -> LfoSyncInterval {
         let last_index = LfoSyncInterval::COUNT - 1;
-        let index = (last_index as f32 * normal_value).floor() as u16;
-        LfoSyncInterval::from_repr(index).unwrap_or_default()
+
+        // The number of LfoSyncInterval enum variants is constrained to 24 options
+        // and normal value is range [0.0, 1.0] It can never exceed the mantissa of an f32
+        #[allow(clippy::cast_precision_loss)]
+        let index = (last_index as f32 * normal_value).floor();
+        LfoSyncInterval::from_repr(f32_to_u16_clamped(index)).unwrap_or_default()
     }
 }

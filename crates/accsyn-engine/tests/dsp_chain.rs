@@ -29,6 +29,8 @@ fn gate_on_produces_nonzero_audio() {
         sum_sq += (osc_sample * env_val).powi(2);
     }
 
+    // It is set to a fixed value above so it won't truncate
+    #[allow(clippy::cast_precision_loss)]
     let rms = (sum_sq / sample_count as f32).sqrt();
     assert!(
         rms > 0.0,

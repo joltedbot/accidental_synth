@@ -4,6 +4,7 @@ use super::constants::{
     OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR, RADS_PER_CYCLE,
 };
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
+use accsyn_core::casting::f64_to_f32_clamped;
 
 /// Pulse wave oscillator with variable duty cycle (pulse width).
 pub struct Pulse {
@@ -31,11 +32,11 @@ impl Pulse {
 
 impl GenerateWave for Pulse {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
-        let sample_rate_f64 = self.sample_rate as f64;
-        let tone_frequency_f64 = tone_frequency as f64;
+        let sample_rate_f64 = f64::from(self.sample_rate);
+        let tone_frequency_f64 = f64::from(tone_frequency);
 
         let duty_cycle = match modulation {
-            Some(modulation) => modulation as f64 - OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR,
+            Some(modulation) => f64::from(modulation) - OSCILLATOR_MOD_TO_PWM_ADJUSTMENT_FACTOR,
             None => self.width,
         };
 
@@ -62,7 +63,7 @@ impl GenerateWave for Pulse {
             }
         }
 
-        y_coordinate as f32
+        f64_to_f32_clamped(y_coordinate)
     }
 
     fn set_shape_parameter1(&mut self, parameter: f32) {
@@ -72,7 +73,7 @@ impl GenerateWave for Pulse {
     fn set_shape_parameter2(&mut self, _parameter: f32) {}
 
     fn set_phase(&mut self, phase: f32) {
-        self.phase = Some(phase as f64);
+        self.phase = Some(f64::from(phase));
     }
 
     fn shape(&self) -> WaveShape {

@@ -8,6 +8,14 @@ pub fn f32_to_u8_clamped(value: f32) -> u8 {
     value.clamp(0.0, f32::from(u8::MAX)) as u8
 }
 
+/// Converts `f32` to `u16` by clamping to `[0.0, f16::MAX]` before truncating.
+/// Use when the caller guarantees the value represents a moderate sized index or count.
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+#[must_use]
+pub fn f32_to_u16_clamped(value: f32) -> u16 {
+    value.clamp(0.0, f32::from(u16::MAX)) as u16
+}
+
 /// Converts `f32` to `u32` by clamping to `[0.0, u32::MAX]` before truncating.
 /// Use when the caller guarantees the value is a non-negative index or enum repr.
 #[allow(
@@ -34,6 +42,14 @@ pub fn f32_to_usize_clamped(value: f32) -> usize {
     // usize::MAX as f32 rounds up to 2^64 on 64-bit targets due to f32 precision; as-cast from f32
     // to usize saturates at usize::MAX (Rust 1.45+ guaranteed), so the clamp is still correct.
     value.clamp(0.0, usize::MAX as f32) as usize
+}
+
+/// Converts `f64` to `f32` by clamping to `[0.0, f32::MAX]` before truncating.
+/// Use when the caller guarantees the value can not exceed `f32::MAX`
+#[allow(clippy::cast_possible_truncation)]
+#[must_use]
+pub fn f64_to_f32_clamped(value: f64) -> f32 {
+    value.clamp(0.0, f64::from(f32::MAX)) as f32
 }
 
 /// Converts `f64` to `u32` by clamping to `[0.0, u32::MAX]` before truncating.

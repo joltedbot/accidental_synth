@@ -333,12 +333,12 @@ pub fn start_update_event_listener(
                             display value to the UI: {e}");
                     }
 
-                    module_parameters.lfos[lfo_index as usize]
+                    module_parameters.lfos[lfo_index.unsigned_abs() as usize]
                         .thirty_second_notes
                         .store(lfo_sync_interval_index.to_thirty_second_notes(), Relaxed);
 
                     let display_frequency = set_lfo_frequency(
-                        &module_parameters.lfos[lfo_index as usize],
+                        &module_parameters.lfos[lfo_index.unsigned_abs() as usize],
                         normal_value,
                     );
 
