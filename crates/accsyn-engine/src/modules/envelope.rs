@@ -125,6 +125,7 @@ pub struct Envelope {
 
 impl Envelope {
     /// Creates a new envelope generator initialized to the Off stage.
+    #[must_use]
     pub fn new(sample_rate: u32) -> Self {
         log::debug!(target: "synthesizer::modules::envelope", "Constructing Envelope Module");
 

@@ -82,7 +82,7 @@ mod tests {
     #[test]
     fn f32_to_int24_aligned_high_converts_negative_full_scale() {
         let result = f32_to_int24_aligned_high(-1.0);
-        let expected = (-2_147_483_392_i32) & !0xFF;
+        let expected = -0x7fff_ff00_i32 & !0xFF;
         assert_eq!(result, expected, "Expected: {expected}, got: {result}");
     }
 
