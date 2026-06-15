@@ -195,8 +195,8 @@
 | 111       | Filter Mod LFO Phase                              | N                 | Y                |                      |
 | 112       | Filter Mod LFO Reset                              | N                 | Y                |                      |
 | 113       | Filter Mod LFO Clock Sync Enabled                 | N                 | Y                |                      |
-| 114       |                                                   | N                 | N                |                      |
-| 115       |                                                   | N                 | N                |                      |
+| 114       | Filter Mod LFO Key Sync Enabled                   | N                 | Y                |                      |
+| 115       | Mod Wheel LFO Key Sync Enabled                    | N                 | Y                |                      |
 | 116       |                                                   | N                 | N                |                      |
 | 117       |                                                   | N                 | N                |                      |
 | 118       |                                                   | N                 | N                |                      |

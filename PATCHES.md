@@ -138,25 +138,29 @@ Low-frequency oscillators provide modulation sources for other parameters.
 | `clock_synced`       | boolean |              | When true, LFO rate is locked to MIDI clock using `thirty_second_notes`                 |
 | `thirty_second_notes`| integer | 1+           | LFO period expressed in 32nd notes (e.g., 32 = one bar, 16 = half bar, 8 = quarter)   |
 | `sync_triggered`     | boolean |              | When true, LFO phase resets at the next 32nd-note boundary to lock to the beat         |
+| `key_synced`         | boolean |              | When true, LFO phase resets on MIDI note-on. If `clock_synced` is also true, the reset waits for the next 32nd-note trigger after the key press so the LFO stays on beat |
 | `center_value`       | number  | -1.0 to 1.0  | Center point of modulation range                                                        |
 | `range`              | number  | 0.0-2.0      | Modulation depth (0 disables modulation)                                                |
 | `phase`              | number  | 0.0-1.0      | Starting phase (0.0 to 1.0 wraps one cycle)                                            |
 | `reset`              | boolean |              | Reset phase to 0 on note-on                                                             |
+| `gate_flag`          | boolean |              | [Performance state](#performance-state-fields) - leave as false                         |
 
 ### Example LFO
 
 ```json
 {
-  "wave_shape": 0,
+  "center_value": 1,
   "frequency": 10,
   "synced_frequency": 0.5,
-  "clock_synced": false,
-  "thirty_second_notes": 32,
   "sync_triggered": false,
-  "center_value": 1,
-  "range": 0,
+  "thirty_second_notes": 32,
+  "clock_synced": false,
+  "key_synced": false,
   "phase": 0,
-  "reset": false
+  "range": 0,
+  "reset": false,
+  "wave_shape": 0,
+  "gate_flag": false
 }
 ```
 
@@ -302,6 +306,7 @@ Some fields reflect live performance state - they are updated in real time by MI
 - `filter.current_note_number` - Leave at 0 (overwritten by note on)
 - `envelopes[*].sustain_pedal` - Leave as false (overwritten by MIDI sustain pedal)
 - `envelopes[*].gate_flag` - Leave at 0 (overwritten by note on/off)
+- `lfos[*].gate_flag` - Leave as false (overwritten by note on/off)
 
 ### Key Tracking
 
@@ -462,28 +467,32 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
   ],
   "lfos": [
     {
-      "wave_shape": 0,
+      "center_value": 1,
       "frequency": 5,
       "synced_frequency": 0.5,
-      "clock_synced": false,
-      "thirty_second_notes": 32,
       "sync_triggered": false,
-      "center_value": 1,
-      "range": 0,
+      "thirty_second_notes": 32,
+      "clock_synced": false,
+      "key_synced": false,
       "phase": 0,
-      "reset": false
+      "range": 0,
+      "reset": false,
+      "wave_shape": 0,
+      "gate_flag": false
     },
     {
-      "wave_shape": 0,
+      "center_value": 0,
       "frequency": 0.1,
       "synced_frequency": 0.5,
-      "clock_synced": false,
-      "thirty_second_notes": 32,
       "sync_triggered": false,
-      "center_value": 0,
-      "range": 0,
+      "thirty_second_notes": 32,
+      "clock_synced": false,
+      "key_synced": false,
       "phase": 0,
-      "reset": false
+      "range": 0,
+      "reset": false,
+      "wave_shape": 0,
+      "gate_flag": false
     }
   ],
   "mixer": {
