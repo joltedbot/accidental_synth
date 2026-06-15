@@ -155,10 +155,12 @@
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
+      "key_synced": false,
       "phase": 0.25,
       "range": 2.0,
       "reset": true,
-      "wave_shape": 3
+      "wave_shape": 3,
+      "gate_flag": false
     },
     {
       "center_value": 0,
@@ -167,10 +169,12 @@
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
+      "key_synced": false,
       "phase": 0.5,
       "range": 0.8,
       "reset": false,
-      "wave_shape": 1
+      "wave_shape": 1,
+      "gate_flag": false
     }
   ],
   "mixer": {

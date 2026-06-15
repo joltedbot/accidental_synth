@@ -47,10 +47,12 @@
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
+      "key_synced": false,
       "center_value": 1.0,
       "range": 2.0,
       "phase": 0.0,
       "wave_shape": 0,
+      "gate_flag": false,
       "reset": false
     },
     {
@@ -59,10 +61,12 @@
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
+      "key_synced": false,
       "center_value": 0.0,
       "range": 0.0,
       "phase": 0.0,
       "wave_shape": 0,
+      "gate_flag": false,
       "reset": false
     }
   ],
@@ -164,52 +168,102 @@
     {
       "name": "Saturation",
       "is_enabled": true,
-      "parameters": [1.0, 1.0, 0.4181216, 0.0]
+      "parameters": [
+        1.0,
+        1.0,
+        0.4181216,
+        0.0
+      ]
     },
     {
       "name": "Colour Compressor",
       "is_enabled": true,
-      "parameters": [0.16472487, 0.25069633, 0.3917799, 1.0]
+      "parameters": [
+        0.16472487,
+        0.25069633,
+        0.3917799,
+        1.0
+      ]
     },
     {
       "name": "Wave Folder",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
       "name": "Bit Shifter",
       "is_enabled": true,
-      "parameters": [0.893767, 0.44670516, 0.0, 0.0]
+      "parameters": [
+        0.893767,
+        0.44670516,
+        0.0,
+        0.0
+      ]
     },
     {
       "name": "Clipper",
       "is_enabled": false,
-      "parameters": [0.1798913, 0.0, 0.25565556, 0.0]
+      "parameters": [
+        0.1798913,
+        0.0,
+        0.25565556,
+        0.0
+      ]
     },
     {
       "name": "Gate Clipping",
       "is_enabled": false,
-      "parameters": [0.06180367, 1.0, 0.5179518, 0.0]
+      "parameters": [
+        0.06180367,
+        1.0,
+        0.5179518,
+        0.0
+      ]
     },
     {
       "name": "Wave Rectifier",
       "is_enabled": true,
-      "parameters": [1.0, 0.5665591, 0.0, 0.0]
+      "parameters": [
+        1.0,
+        0.5665591,
+        0.0,
+        0.0
+      ]
     },
     {
       "name": "Auto-Pan",
       "is_enabled": true,
-      "parameters": [0.03722826, 0.16227922, 0.0, 0.0]
+      "parameters": [
+        0.03722826,
+        0.16227922,
+        0.0,
+        0.0
+      ]
     },
     {
       "name": "Tremolo",
       "is_enabled": false,
-      "parameters": [0.0, 1.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
     },
     {
       "name": "Delay",
       "is_enabled": true,
-      "parameters": [0.70850885, 0.25460258, 0.42865148, 0.0]
+      "parameters": [
+        0.70850885,
+        0.25460258,
+        0.42865148,
+        0.0
+      ]
     }
   ],
   "clock": {

@@ -3,52 +3,102 @@
     {
       "name": "Saturation",
       "is_enabled": false,
-      "parameters": [0.0, 0.0, 1.0, 0.0]
+      "parameters": [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ]
     },
     {
       "name": "Colour Compressor",
       "is_enabled": false,
-      "parameters": [1.0, 0.0, 0.0, 1.0]
+      "parameters": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
     },
     {
       "name": "Wave Folder",
       "is_enabled": false,
-      "parameters": [0.0, -1.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        -1.0,
+        0.0,
+        0.0
+      ]
     },
     {
       "name": "Bit Shifter",
       "is_enabled": false,
-      "parameters": [0.8798234, 0.0, 0.0, 0.0]
+      "parameters": [
+        0.8798234,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
     {
       "name": "Clipper",
       "is_enabled": false,
-      "parameters": [0.05932405, 1.0, 1.0, 0.0]
+      "parameters": [
+        0.05932405,
+        1.0,
+        1.0,
+        0.0
+      ]
     },
     {
       "name": "Gate Clipping",
       "is_enabled": false,
-      "parameters": [0.0, 1.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
     },
     {
       "name": "Wave Rectifier",
       "is_enabled": false,
-      "parameters": [0.0, 1.0, 0.0, 0.0]
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
     },
     {
       "name": "Auto-Pan",
       "is_enabled": true,
-      "parameters": [0.03350883, 0.32058424, 7.0, 0.0]
+      "parameters": [
+        0.03350883,
+        0.32058424,
+        7.0,
+        0.0
+      ]
     },
     {
       "name": "Tremolo",
       "is_enabled": true,
-      "parameters": [0.028600544, 0.52139944, 8.0, 0.0]
+      "parameters": [
+        0.028600544,
+        0.52139944,
+        8.0,
+        0.0
+      ]
     },
     {
       "name": "Delay",
       "is_enabled": true,
-      "parameters": [0.7578295, 0.5680027, 0.37734374, 0.0]
+      "parameters": [
+        0.7578295,
+        0.5680027,
+        0.37734374,
+        0.0
+      ]
     }
   ],
   "envelopes": [
@@ -105,10 +155,12 @@
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
+      "key_synced": false,
       "phase": 0.0,
       "range": 2.0,
       "reset": false,
-      "wave_shape": 0
+      "wave_shape": 0,
+      "gate_flag": false
     },
     {
       "center_value": 0.0,
@@ -117,10 +169,12 @@
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
+      "key_synced": false,
       "phase": 0.0,
       "range": 0.08236178,
       "reset": false,
-      "wave_shape": 0
+      "wave_shape": 0,
+      "gate_flag": false
     }
   ],
   "mixer": {

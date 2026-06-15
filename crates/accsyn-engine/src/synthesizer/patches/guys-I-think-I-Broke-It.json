@@ -48,10 +48,12 @@
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
+      "key_synced": false,
       "phase": 0.0,
       "range": 2.0,
       "reset": false,
-      "wave_shape": 0
+      "wave_shape": 0,
+      "gate_flag": false
     },
     {
       "center_value": 0.0,
@@ -60,10 +62,12 @@
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
+      "key_synced": false,
       "phase": 0.0,
       "range": 0.10381611,
       "reset": false,
-      "wave_shape": 8
+      "wave_shape": 8,
+      "gate_flag": false
     }
   ],
   "envelopes": [
