@@ -28,8 +28,14 @@ pub const DEFAULT_LFO_FREQUENCY: f32 = 0.1;
 pub const DEFAULT_LFO_SYNCED_FREQUENCY: f32 = 0.5;
 /// Default LFO sync interval in thirty-second notes.
 pub const DEFAULT_LFO_THIRTY_SECOND_NOTES: u16 = 0;
-/// Default LFO sync interval in thirty-second notes.
+/// Default LFO clock sync state
 pub const DEFAULT_CLOCK_SYNCED_STATE: bool = false;
+/// Default LFO key sync state
+pub const DEFAULT_KEY_SYNCED_STATE: bool = false;
+/// Default LFO reset state
+pub const DEFAULT_LFO_RESET_STATE: bool = false;
+/// Default LFO gate  state
+pub const DEFAULT_LFO_GATE_STATE: bool = false;
 
 const DEFAULT_CENTER_VALUE: f32 = 0.0;
 
@@ -46,6 +52,8 @@ pub struct LfoParameters {
     pub thirty_second_notes: AtomicU16,
     /// Indicates whether the lfo is synced to clock
     pub clock_synced: AtomicBool,
+    /// Indicates whether the lfo is synced to key press
+    pub key_synced: AtomicBool,
     /// Center value (DC offset) of the LFO output.
     pub center_value: Balance,
     /// Peak-to-peak range of the LFO output.
@@ -56,6 +64,8 @@ pub struct LfoParameters {
     pub wave_shape: AtomicU8,
     /// Flag to trigger a phase reset on the next processing cycle.
     pub reset: AtomicBool,
+    /// Gate state flag: 0 = waiting, 1 = gate triggered
+    pub gate_flag: AtomicBool,
 }
 
 impl LfoParameters {
@@ -66,6 +76,8 @@ impl LfoParameters {
             .store(parameters.synced_frequency.load());
         self.clock_synced
             .store(parameters.clock_synced.load(Relaxed), Relaxed);
+        self.key_synced
+            .store(parameters.key_synced.load(Relaxed), Relaxed);
         self.center_value.store(parameters.center_value.load());
         self.range.store(parameters.range.load());
         self.phase.store(parameters.phase.load());
@@ -83,11 +95,13 @@ impl Default for LfoParameters {
             sync_triggered: AtomicBool::new(false),
             thirty_second_notes: AtomicU16::new(DEFAULT_LFO_THIRTY_SECOND_NOTES),
             clock_synced: AtomicBool::new(DEFAULT_CLOCK_SYNCED_STATE),
+            key_synced: AtomicBool::new(DEFAULT_KEY_SYNCED_STATE),
             center_value: Balance::new(DEFAULT_CENTER_VALUE),
             range: LfoRange::new(Defaults::DEFAULT_RANGE),
             phase: NormalizedValue::new(DEFAULT_LFO_PHASE),
             wave_shape: AtomicU8::new(WaveShape::default() as u8),
-            reset: AtomicBool::new(false),
+            reset: AtomicBool::new(DEFAULT_LFO_RESET_STATE),
+            gate_flag: AtomicBool::new(DEFAULT_LFO_GATE_STATE),
         }
     }
 }
@@ -98,6 +112,7 @@ pub struct Lfo {
     frequency: f32,
     sync_armed: bool,
     clock_synced: bool,
+    key_synced: bool,
     center_value: f32,
     wave_shape_index: u8,
     range: f32,
@@ -114,6 +129,7 @@ impl Lfo {
             frequency: DEFAULT_LFO_FREQUENCY,
             sync_armed: false,
             clock_synced: false,
+            key_synced: false,
             center_value: DEFAULT_CENTER_VALUE,
             range: Defaults::DEFAULT_RANGE,
             phase: DEFAULT_LFO_PHASE,
@@ -123,16 +139,10 @@ impl Lfo {
 
     /// Updates all LFO settings from the shared parameter block.
     pub fn set_parameters(&mut self, parameters: &LfoParameters) {
-        if parameters.clock_synced.load(Relaxed) {
-            if !self.clock_synced {
-                self.sync_armed = true;
-            }
-            self.clock_synced = true;
-            self.set_frequency(parameters.synced_frequency.load());
-        } else {
-            self.clock_synced = false;
-            self.sync_armed = false;
-            self.set_frequency(parameters.frequency.load());
+        self.set_clock_synced(parameters);
+        self.set_key_synced(parameters.key_synced.load(Relaxed));
+        if parameters.gate_flag.swap(false, Relaxed) {
+            self.handle_gate_flag();
         }
         self.set_center_value(parameters.center_value.load());
         self.set_range(parameters.range.load());
@@ -147,6 +157,33 @@ impl Lfo {
             self.reset();
             parameters.reset.store(false, Relaxed);
         }
+    }
+
+    fn set_clock_synced(&mut self, parameters: &LfoParameters) {
+        if parameters.clock_synced.load(Relaxed) {
+            if !self.clock_synced {
+                self.sync_armed = true;
+                self.clock_synced = true;
+            }
+            self.set_frequency(parameters.synced_frequency.load());
+        } else {
+            self.clock_synced = false;
+            self.sync_armed = false;
+            self.set_frequency(parameters.frequency.load());
+        }
+    }
+
+    fn handle_gate_flag(&mut self) {
+        if !self.key_synced {
+            return;
+        }
+
+        if self.clock_synced {
+            self.sync_armed = true;
+            return;
+        }
+
+        self.reset();
     }
 
     /// Generates the next LFO output sample, scaled by center value and range.
@@ -164,9 +201,9 @@ impl Lfo {
         self.oscillator.set_frequency(self.frequency);
     }
 
-    /// Sets the LFO frequency in Hz, clamped to the valid range.
-    pub fn set_clock_synced(&mut self, is_synced: bool) {
-        self.clock_synced = is_synced;
+    /// Sets the key synced state
+    pub fn set_key_synced(&mut self, is_synced: bool) {
+        self.key_synced = is_synced;
     }
 
     /// Sets the LFO center value (DC offset), clamped to [-1, 1].

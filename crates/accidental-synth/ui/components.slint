@@ -19,8 +19,9 @@ import {
 // Component Structs
 export struct LFOValues {
     frequency: float,
-    thirty_second_notes: string,
-    clock_synced: bool,
+    thirty-second-notes: string,
+    clock-synced: bool,
+    key-synced: bool,
     phase: float,
     wave-shape-index: int,
 }
@@ -310,11 +311,11 @@ export component FilterControlLabel inherits Rectangle {
 
 export component ToggleSwitch inherits VerticalLayout {
     in property <bool> checked;
-    out property <bool> is_checked;
+    out property <bool> is-checked;
     in property <length> switch-height: 27px;
     in property <string> label;
     in property <bool> enabled: true;
-    callback toggle_switch_updated(bool);
+    callback toggle-switch-updated(bool);
 
     alignment: start;
 
@@ -326,7 +327,7 @@ export component ToggleSwitch inherits VerticalLayout {
 
     changed checked => {
         switch.checked = checked;
-        is_checked = checked;
+        is-checked = checked;
     }
 
     Text {
@@ -344,8 +345,8 @@ export component ToggleSwitch inherits VerticalLayout {
             enabled: enabled;
             height: switch-height;
             toggled() => {
-                toggle_switch_updated(self.checked);
-                is_checked = self.checked;
+                toggle-switch-updated(self.checked);
+                is-checked = self.checked;
             }
         }
     }
@@ -414,8 +415,8 @@ export component HorizontalParameterSlider inherits VerticalLayout {
         value: value;
         enabled: enabled;
 
-        updated(new_value) => {
-            horizontal-parameter-slider-changed(new_value);
+        updated(new-value) => {
+            horizontal-parameter-slider-changed(new-value);
         }
     }
 }
@@ -445,8 +446,8 @@ export component HorizontalParameterSliderNoLabel inherits VerticalLayout {
         value: value;
         enabled: enabled;
 
-        updated(new_value) => {
-            horizontal-parameter-slider-changed(new_value);
+        updated(new-value) => {
+            horizontal-parameter-slider-changed(new-value);
         }
     }
 }
@@ -574,7 +575,7 @@ export component DropDownMenu inherits VerticalLayout {
     in property <length> dropdown-height: 25px;
     in property <bool> enabled: true;
     in-out property <string> current-value: dropdown.current-value;
-    callback drop_down_changed(int, string);
+    callback drop-down-changed(int, string);
 
     spacing: 5px;
 
@@ -600,15 +601,15 @@ export component DropDownMenu inherits VerticalLayout {
         current-index: value-index;
 
         selected(value) => {
-            drop_down_changed(self.current-index, value);
+            drop-down-changed(self.current-index, value);
         }
     }
 }
 
 export component MixerMute inherits VerticalLayout {
-    in property <bool> is_muted: false;
+    in property <bool> is-muted: false;
     in property <length> switch-height: 25px;
-    callback mixer_mute_update(bool);
+    callback mixer-mute-update(bool);
 
     Text {
         horizontal-alignment: center;
@@ -619,20 +620,20 @@ export component MixerMute inherits VerticalLayout {
 
     property <int> gen: PatchState.generation;
     changed gen => {
-        sw.checked = is_muted;
+        sw.checked = is-muted;
     }
 
-    changed is_muted => {
-        sw.checked = is_muted;
+    changed is-muted => {
+        sw.checked = is-muted;
     }
 
     HorizontalLayout {
         alignment: center;
         sw := Switch {
             height: switch-height;
-            checked: is_muted;
+            checked: is-muted;
             toggled() => {
-                mixer_mute_update(self.checked);
+                mixer-mute-update(self.checked);
             }
         }
     }
@@ -735,8 +736,8 @@ export component EnvelopeSection inherits VerticalLayout {
         ToggleSwitch {
             label: Theme.envelope-label-inverted;
             checked: envelope-values.inverted;
-            toggle_switch_updated(is_active) => {
-                envelope-invert-changed(is_active);
+            toggle-switch-updated(is-active) => {
+                envelope-invert-changed(is-active);
             }
         }
     }
@@ -748,13 +749,15 @@ export component FixedCenterLFOSection inherits VerticalLayout {
     in property <float> lfo-frequency-display: Constant.DEFAULT_LFO_FREQUENCY_NORMAL;
 
     property <float> lfo-frequency-rounded: lfo-frequency-display < 1 ? floor(lfo-frequency-display * 100) / 100.0 : floor(lfo-frequency-display);
-    property <bool> sync_is_checked: false;
+    property <bool> clock-sync-is-checked: false;
+    property <bool> key-sync-is-checked: false;
 
     callback lfo-frequency-changed(float);
     callback lfo-shape-changed(int);
     callback lfo-phase-changed(float);
     callback lfo-phase-reset();
     callback lfo-clock-sync-enabled(bool);
+    callback lfo-key-sync-enabled(bool);
 
     width: Theme.lfo-widget-width;
     alignment: start;
@@ -772,8 +775,8 @@ export component FixedCenterLFOSection inherits VerticalLayout {
                 label: Theme.lfo-label-frequency;
                 value: lfo-values.frequency;
                 display-value: lfo-frequency-rounded;
-                show-value: sync_is_checked ? false : true;
-                value-units: sync_is_checked ? lfo_values.thirty-second-notes : Theme.display-units-hertz;
+                show-value: clock-sync-is-checked ? false : true;
+                value-units: clock-sync-is-checked ? lfo-values.thirty-second-notes : Theme.display-units-hertz;
                 show-units: true;
                 slider-width: Theme.global-panel-widget-width;
                 width: Theme.global-panel-widget-width;
@@ -787,7 +790,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
                 value-list: Constant.OSC_WAVE_SHAPES;
                 value-index: lfo-values.wave-shape-index;
                 dropdown-width: Theme.global-panel-widget-width;
-                drop_down_changed(index, name) => {
+                drop-down-changed(index, name) => {
                     lfo-shape-changed(index);
                 }
             }
@@ -812,16 +815,21 @@ export component FixedCenterLFOSection inherits VerticalLayout {
                 }
             }
 
-            HorizontalLayout {
-                alignment: center;
-                sync_toggle := ToggleSwitch {
-                    width: Theme.global-panel-widget-width;
-                    label: Theme.lfo-sync-toggle-label;
-                    checked: lfo-values.clock_synced;
-                    toggle-switch-updated(is_checked) => {
-                        lfo-clock-sync-enabled(is_checked);
-                        sync_is_checked = is_checked;
-                    }
+            clock-sync-toggle := ToggleSwitch {
+                label: Theme.lfo-clock-sync-toggle-label;
+                checked: lfo-values.clock-synced;
+                toggle-switch-updated(is-checked) => {
+                    lfo-clock-sync-enabled(is-checked);
+                    clock-sync-is-checked = is-checked;
+                }
+            }
+
+            key-sync-toggle := ToggleSwitch {
+                label: Theme.lfo-key-sync-toggle-label;
+                checked: lfo-values.key-synced;
+                toggle-switch-updated(is-checked) => {
+                    lfo-key-sync-enabled(is-checked);
+                    key-sync-is-checked = is-checked;
                 }
             }
         }

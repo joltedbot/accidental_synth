@@ -41,15 +41,14 @@ pub fn action_midi_note_events(
 ) {
     match midi_events {
         MidiNoteEvent::NoteOn => {
-            module_parameters.envelopes[EnvelopeIndex::Amp as usize]
-                .gate_flag
-                .store(MidiGateEvent::GateOn as u8, Relaxed);
-            module_parameters.envelopes[EnvelopeIndex::Filter as usize]
-                .gate_flag
-                .store(MidiGateEvent::GateOn as u8, Relaxed);
-            module_parameters.envelopes[EnvelopeIndex::Pitch as usize]
-                .gate_flag
-                .store(MidiGateEvent::GateOn as u8, Relaxed);
+            for envelope in &module_parameters.envelopes {
+                envelope
+                    .gate_flag
+                    .store(MidiGateEvent::GateOn as u8, Relaxed);
+            }
+            for lfo in &module_parameters.lfos {
+                lfo.gate_flag.store(true, Relaxed);
+            }
             for oscillator in &module_parameters.oscillators {
                 oscillator.gate_flag.store(true, Release);
             }

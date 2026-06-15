@@ -275,8 +275,8 @@ export component OscillatorSection inherits VerticalLayout {
                 ToggleSwitch {
                     checked: global-option-values.portamento-is-enabled;
                     label: Theme.osc-options-portamento-label;
-                    toggle_switch_updated(is_enabled) => {
-                        portamento-enabled(is_enabled);
+                    toggle_switch_updated(is-enabled) => {
+                        portamento-enabled(is-enabled);
                     }
                 }
 
@@ -408,6 +408,7 @@ export component ModWheelSection inherits VerticalLayout {
     callback lfo-phase-changed(int, float);
     callback lfo-phase-reset(int);
     callback lfo-clock-sync-enabled(int, bool);
+    callback lfo-key-sync-enabled(int, bool);
 
     alignment: start;
     padding: Theme.global-panel-padding;
@@ -439,8 +440,11 @@ export component ModWheelSection inherits VerticalLayout {
             lfo-phase-reset() => {
                 lfo-phase-reset(Constant.LFO_MOD_WHEEL_INDEX);
             }
-            lfo-clock-sync-enabled(is_enabled) => {
-                lfo-clock-sync-enabled(Constant.LFO_MOD_WHEEL_INDEX, is_enabled);
+            lfo-clock-sync-enabled(is-enabled) => {
+                lfo-clock-sync-enabled(Constant.LFO_MOD_WHEEL_INDEX, is-enabled);
+            }
+            lfo-key-sync-enabled(is-enabled) => {
+                lfo-key-sync-enabled(Constant.LFO_MOD_WHEEL_INDEX, is-enabled);
             }
         }
     }
@@ -467,6 +471,7 @@ export component GlobalPanel inherits Panel {
     callback lfo-phase-changed(int, float);
     callback lfo-phase-reset(int);
     callback lfo-clock-sync-enabled(int, bool);
+    callback lfo-key-sync-enabled(int, bool);
     callback portamento-enabled(bool);
     callback portamento-time-changed(float);
     callback pitch-bend-range-changed(float);
@@ -566,24 +571,24 @@ export component GlobalPanel inherits Panel {
                     key_sync := ToggleSwitch {
                         label: Theme.osc-options-key-sync;
                         checked: global-options-values.key-sync-is-enabled;
-                        toggle_switch_updated(is_enabled) => {
-                            key-(is_enabled);
+                        toggle_switch_updated(is-enabled) => {
+                            key-(is-enabled);
                         }
                     }
 
                     hard_sync := ToggleSwitch {
                         label: Theme.osc-options-hard-sync;
                         checked: global-options-values.hard-sync-is-enabled;
-                        toggle_switch_updated(is_enabled) => {
-                            hard-(is_enabled);
+                        toggle_switch_updated(is-enabled) => {
+                            hard-(is-enabled);
                         }
                     }
 
                     Sustain := ToggleSwitch {
                         label: Theme.osc-options-sustain;
                         checked: global-options-values.sustain-is-enabled;
-                        toggle_switch_updated(is_enabled) => {
-                            sustain-enabled(is_enabled);
+                        toggle_switch_updated(is-enabled) => {
+                            sustain-enabled(is-enabled);
                         }
                     }
                 }
@@ -599,8 +604,8 @@ export component GlobalPanel inherits Panel {
                 osc-section := OscillatorSection {
                     global-option-values: global-options-values;
 
-                    portamento-enabled(is_enabled) => {
-                        portamento-enabled(is_enabled);
+                    portamento-enabled(is-enabled) => {
+                        portamento-enabled(is-enabled);
                     }
                     portamento-time-changed(milliseconds) => {
                         portamento-time-changed(milliseconds);
@@ -611,14 +616,14 @@ export component GlobalPanel inherits Panel {
                     velocity-curve-changed(curve) => {
                         velocity-curve-changed(curve);
                     }
-                    hard-(is_enabled) => {
-                        hard-(is_enabled);
+                    hard-(is-enabled) => {
+                        hard-(is-enabled);
                     }
-                    key-(is_enabled) => {
-                        key-(is_enabled);
+                    key-(is-enabled) => {
+                        key-(is-enabled);
                     }
-                    sustain-enabled(is_enabled) => {
-                        sustain-enabled(is_enabled);
+                    sustain-enabled(is-enabled) => {
+                        sustain-enabled(is-enabled);
                     }
                 }
 
@@ -641,8 +646,11 @@ export component GlobalPanel inherits Panel {
                     lfo-phase-reset(lfo_index) => {
                         lfo-phase-reset(lfo_index);
                     }
-                    lfo-clock-sync-enabled(lfo_index, is_enabled) => {
-                        lfo-clock-sync-enabled(lfo_index, is_enabled)
+                    lfo-clock-sync-enabled(lfo_index, is-enabled) => {
+                        lfo-clock-sync-enabled(lfo_index, is-enabled)
+                    }
+                    lfo-key-sync-enabled(lfo_index, is-enabled) => {
+                        lfo-key-sync-enabled(lfo_index, is-enabled)
                     }
                 }
 

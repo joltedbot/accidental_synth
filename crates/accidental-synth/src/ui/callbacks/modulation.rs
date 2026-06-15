@@ -185,3 +185,21 @@ pub fn callback_lfo_clock_sync_enabled(
         });
     }
 }
+
+pub fn callback_lfo_key_sync_enabled(
+    ui_weak: &Weak<AccidentalSynth>,
+    synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_lfo_key_sync_enabled(move |lfo_index, is_enabled| {
+            synthesizer_update_sender
+                .send(SynthesizerUpdateEvents::LfoKeySyncEnabled(
+                    lfo_index, is_enabled,
+                ))
+                .expect(
+                    "callback_lfo_key_sync_enabled(): Could not send new \
+            LFO key sync state to the synthesizer module.Exiting.",
+                );
+        });
+    }
+}

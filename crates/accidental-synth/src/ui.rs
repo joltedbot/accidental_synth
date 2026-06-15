@@ -379,6 +379,7 @@ fn slint_lfo_from_ui_lfo(lfo_values: &UILfo) -> LFOValues {
         frequency: lfo_values.frequency,
         thirty_second_notes: SharedString::from(lfo_values.thirty_second_notes.clone()),
         clock_synced: lfo_values.clock_synced,
+        key_synced: lfo_values.key_synced,
         phase: lfo_values.phase,
         wave_shape_index: lfo_values.wave_shape_index,
     }

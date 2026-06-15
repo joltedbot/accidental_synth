@@ -14,13 +14,13 @@ use crate::synthesizer::set_parameters::{
     set_envelope_decay_time, set_envelope_inverted, set_envelope_release_time,
     set_envelope_sustain_level, set_envelope_sustain_pedal, set_filter_cutoff, set_filter_poles,
     set_filter_resonance, set_key_tracking_amount, set_lfo_clock_sync, set_lfo_frequency,
-    set_lfo_phase, set_lfo_phase_reset, set_lfo_range, set_module_parameters_from_preset,
-    set_oscillator_balance, set_oscillator_clip_boost, set_oscillator_course_tune,
-    set_oscillator_fine_tune, set_oscillator_hard_sync, set_oscillator_key_sync,
-    set_oscillator_level, set_oscillator_mute, set_oscillator_pitch_envelope_amount,
-    set_oscillator_polarity, set_oscillator_shape_parameter1, set_oscillator_shape_parameter2,
-    set_output_balance, set_output_level, set_output_mute, set_pitch_bend_range,
-    set_portamento_enabled, set_portamento_time, set_velocity_curve,
+    set_lfo_key_sync, set_lfo_phase, set_lfo_phase_reset, set_lfo_range,
+    set_module_parameters_from_preset, set_oscillator_balance, set_oscillator_clip_boost,
+    set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_hard_sync,
+    set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute,
+    set_oscillator_pitch_envelope_amount, set_oscillator_polarity, set_oscillator_shape_parameter1,
+    set_oscillator_shape_parameter2, set_output_balance, set_output_level, set_output_mute,
+    set_pitch_bend_range, set_portamento_enabled, set_portamento_time, set_velocity_curve,
 };
 use accsyn_core::casting::i32_to_u8_clamped;
 use accsyn_core::synth_events::{
@@ -435,6 +435,29 @@ pub fn start_update_event_listener(
                             log::warn!(
                                 target: "synthesizer::events",
                                 "start_ui_event_listener():SynthesizerUpdateEvents::LfoClockSyncEnabled: Invalid LFO index: \
+                                {lfo_index}"
+                            );
+                        }
+                    }
+                }
+                SynthesizerUpdateEvents::LfoKeySyncEnabled(lfo_index, is_enabled) => {
+                    match lfo_index {
+                        LFO_INDEX_MOD_WHEEL => {
+                            set_lfo_key_sync(
+                                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                                bool_to_normal_value(is_enabled),
+                            );
+                        }
+                        LFO_INDEX_FILTER => {
+                            set_lfo_key_sync(
+                                &module_parameters.lfos[LFOIndex::Filter as usize],
+                                bool_to_normal_value(is_enabled),
+                            );
+                        }
+                        _ => {
+                            log::warn!(
+                                target: "synthesizer::events",
+                                "start_ui_event_listener():SynthesizerUpdateEvents::LfoKeySyncEnabled: Invalid LFO index: \
                                 {lfo_index}"
                             );
                         }

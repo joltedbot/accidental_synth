@@ -47,7 +47,10 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
         include_str!("patches/alien-invasion.json"),
     ),
     ("Ambient Drone*", include_str!("patches/ambient-drone.json")),
-    ("Analog Nostalgia*", include_str!("patches/analog-nostalgia.json")),
+    (
+        "Analog Nostalgia*",
+        include_str!("patches/analog-nostalgia.json"),
+    ),
     (
         "Arpable Dirty FM*",
         include_str!("patches/arpable-dirty-fm.json"),
@@ -74,7 +77,10 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
     ("Kick (Long)*", include_str!("patches/kick-long.json")),
     ("Kick (Short)*", include_str!("patches/kick-short.json")),
     ("m7 Noise Arp*", include_str!("patches/m7-noise-arp.json")),
-    ("Major 6 Bounce*", include_str!("patches/major-6-bounce.json")),
+    (
+        "Major 6 Bounce*",
+        include_str!("patches/major-6-bounce.json"),
+    ),
     ("Plucky Bass*", include_str!("patches/plucky-bass.json")),
     ("Plucky Keys*", include_str!("patches/plucky-keys.json")),
     ("Power Chords*", include_str!("patches/power-chords.json")),

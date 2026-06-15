@@ -90,6 +90,7 @@ export component AccidentalSynth inherits Window {
     callback lfo-phase-changed(int, float);
     callback lfo-phase-reset(int);
     callback lfo-clock-sync-enabled(int, bool);
+    callback lfo-key-sync-enabled(int, bool);
 
     // Global Panel Properties & Callbacks
     in property <Mixer> output-mixer-values;
@@ -261,6 +262,9 @@ export component AccidentalSynth inherits Window {
                                 lfo-clock-sync-enabled(lfo_index, is_enabled) => {
                                     lfo-clock-sync-enabled(lfo_index, is_enabled);
                                 }
+                                lfo-key-sync-enabled(lfo_index, is_enabled) => {
+                                    lfo-key-sync-enabled(lfo_index, is_enabled);
+                                }
                                 portamento-enabled(is_enabled) => {
                                     portamento-enabled(is_enabled);
                                 }
@@ -360,6 +364,9 @@ export component AccidentalSynth inherits Window {
                             }
                             lfo-clock-sync-enabled(lfo_index, is_enabled) => {
                                 lfo-clock-sync-enabled(lfo_index, is_enabled);
+                            }
+                            lfo-key-sync-enabled(lfo_index, is_enabled) => {
+                                lfo-key-sync-enabled(lfo_index, is_enabled);
                             }
                         }
                     }

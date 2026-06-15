@@ -21,7 +21,7 @@ use accsyn_engine::modules::envelope::{
 };
 use accsyn_engine::modules::filter::FilterParameters;
 use accsyn_engine::modules::lfo::{
-    DEFAULT_CLOCK_SYNCED_STATE, DEFAULT_LFO_FREQUENCY, LfoParameters,
+    DEFAULT_CLOCK_SYNCED_STATE, DEFAULT_KEY_SYNCED_STATE, DEFAULT_LFO_FREQUENCY, LfoParameters,
 };
 use accsyn_engine::modules::oscillator::OscillatorParameters;
 use accsyn_engine::modules::oscillator::constants::{
@@ -192,6 +192,7 @@ pub struct UILfo {
     pub frequency: f32,
     pub thirty_second_notes: String,
     pub clock_synced: bool,
+    pub key_synced: bool,
     pub phase: f32,
     pub wave_shape_index: i32,
 }
@@ -202,6 +203,7 @@ impl Default for UILfo {
             frequency: DEFAULT_LFO_FREQUENCY,
             thirty_second_notes: LfoSyncInterval::default().display(),
             clock_synced: DEFAULT_CLOCK_SYNCED_STATE,
+            key_synced: DEFAULT_KEY_SYNCED_STATE,
             phase: 0.0,
             wave_shape_index: 0,
         }
@@ -218,6 +220,7 @@ impl UILfo {
             .unwrap_or_default()
             .display(),
             clock_synced: parameters.clock_synced.load(Relaxed),
+            key_synced: parameters.key_synced.load(Relaxed),
             phase: parameters.phase.load(),
             wave_shape_index: i32::from(parameters.wave_shape.load(Relaxed)),
         }
