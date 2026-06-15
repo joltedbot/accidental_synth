@@ -52,6 +52,10 @@ pub enum UIUpdates {
     LFOPhase(i32, f32),
     /// LFO waveform shape changed (LFO index, normalized value).
     LFOWaveShape(i32, f32),
+    /// LFO Clock sync switch (LFO Index, bool)
+    LFOClockSync(i32, bool),
+    /// LFO Key sync switch (LFO Index, bool)
+    LFOKeySync(i32, bool),
     /// Envelope attack time changed (envelope index, normalized value).
     EnvelopeAttackTime(i32, f32),
     /// Envelope decay time changed (envelope index, normalized value).

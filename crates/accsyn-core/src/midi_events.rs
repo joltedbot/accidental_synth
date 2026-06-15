@@ -192,6 +192,10 @@ pub enum CC {
     FilterModLFOReset,
     /// Toggle filter lfo clock sync.
     FilterModLFOClockSync(u8),
+    /// Toggle filter lfo key sync.
+    FilterModLFOKeySync(u8),
+    /// Toggle filter lfo key sync.
+    ModWheelLFOKeySync(u8),
     /// Turn off all currently sounding notes.
     AllNotesOff,
 }

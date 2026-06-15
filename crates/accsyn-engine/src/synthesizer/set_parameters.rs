@@ -35,13 +35,11 @@ use accsyn_core::synth_events::OscillatorIndex;
 use std::sync::Arc;
 use std::sync::atomic::Ordering::Relaxed;
 
-pub fn set_lfo_clock_sync(parameters: &LfoParameters, normal_value: f32) {
-    let is_enabled = normal_value_to_bool(normal_value);
+pub fn set_lfo_clock_sync(parameters: &LfoParameters, is_enabled: bool) {
     parameters.clock_synced.store(is_enabled, Relaxed);
 }
 
-pub fn set_lfo_key_sync(parameters: &LfoParameters, normal_value: f32) {
-    let is_enabled = normal_value_to_bool(normal_value);
+pub fn set_lfo_key_sync(parameters: &LfoParameters, is_enabled: bool) {
     parameters.key_synced.store(is_enabled, Relaxed);
 }
 

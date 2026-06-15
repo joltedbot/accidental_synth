@@ -226,6 +226,26 @@ pub fn start_ui_update_listener(
                         set_lfo_phase_display(&ui_weak_thread, lfo_index, lfo_display_value);
                     }
                 }
+                UIUpdates::LFOClockSync(lfo_index, value) => {
+                    if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
+                        let lfo_values = match lfo_index {
+                            LFOIndex::ModWheel => &mut values.mod_wheel_lfo,
+                            LFOIndex::Filter => &mut values.filter_lfo,
+                        };
+                        lfo_values.clock_synced = value;
+                        set_lfo_values(&ui_weak_thread, lfo_index, lfo_values);
+                    }
+                }
+                UIUpdates::LFOKeySync(lfo_index, value) => {
+                    if let Some(lfo_index) = LFOIndex::from_i32(lfo_index) {
+                        let lfo_values = match lfo_index {
+                            LFOIndex::ModWheel => &mut values.mod_wheel_lfo,
+                            LFOIndex::Filter => &mut values.filter_lfo,
+                        };
+                        lfo_values.key_synced = value;
+                        set_lfo_values(&ui_weak_thread, lfo_index, lfo_values);
+                    }
+                }
                 UIUpdates::EnvelopeAttackTime(envelope_index, value) => {
                     if let Some(envelope_index) = EnvelopeIndex::from_i32(envelope_index) {
                         let envelope_values = match envelope_index {

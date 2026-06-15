@@ -4,8 +4,8 @@ use crate::modules::oscillator::{
 };
 use crate::synthesizer::constants::{
     CENTS_PER_SEMITONE, MAX_MIDI_KEY_VELOCITY, MAX_VELOCITY_CURVE_EXPONENT,
-    MIN_VELOCITY_CURVE_EXPONENT, NORMAL_TO_BOOL_SWITCH_ON_VALUE, PITCH_BEND_AMOUNT_MAX_VALUE,
-    PITCH_BEND_AMOUNT_ZERO_POINT,
+    MIDI_VALUE_TO_BOOL_SWITCH_ON_VALUE, MIN_VELOCITY_CURVE_EXPONENT,
+    NORMAL_TO_BOOL_SWITCH_ON_VALUE, PITCH_BEND_AMOUNT_MAX_VALUE, PITCH_BEND_AMOUNT_ZERO_POINT,
 };
 use accsyn_core::defaults::Defaults;
 use accsyn_core::math;
@@ -73,6 +73,12 @@ pub fn normal_value_to_signed_integer_range(
 #[must_use]
 pub fn normal_value_to_bool(normal_value: f32) -> bool {
     normal_value >= NORMAL_TO_BOOL_SWITCH_ON_VALUE
+}
+
+/// Converts a midi byte value to a boolean, treating values at or above 63 as true.
+#[must_use]
+pub fn midi_value_to_bool(midi_value: u8) -> bool {
+    midi_value >= MIDI_VALUE_TO_BOOL_SWITCH_ON_VALUE
 }
 
 /// Converts a bool to a normal value (0.0 for False or 1.0 for true).
@@ -246,7 +252,7 @@ mod tests {
     }
 
     #[test]
-    fn midi_value_to_bool_correctly_converts_threshold() {
+    fn normal_value_to_bool_correctly_converts_threshold() {
         assert!(!normal_value_to_bool(0.0));
         assert!(!normal_value_to_bool(0.49));
         assert!(normal_value_to_bool(0.5));

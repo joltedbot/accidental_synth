@@ -1,11 +1,13 @@
 use crate::modules::lfo::DEFAULT_LFO_PHASE;
 use crate::modules::oscillator::OscillatorParameters;
-use crate::synthesizer::midi_value_converters::scaled_velocity_from_normal_value;
+use crate::synthesizer::midi_value_converters::{
+    midi_value_to_bool, scaled_velocity_from_normal_value,
+};
 use crate::synthesizer::set_parameters::{
     set_envelope_amount, set_envelope_attack_time, set_envelope_decay_time, set_envelope_inverted,
     set_envelope_release_time, set_envelope_sustain_level, set_envelope_sustain_pedal,
     set_filter_cutoff, set_filter_poles, set_filter_resonance, set_key_tracking_amount,
-    set_lfo_center_value, set_lfo_clock_sync, set_lfo_frequency, set_lfo_phase,
+    set_lfo_center_value, set_lfo_clock_sync, set_lfo_frequency, set_lfo_key_sync, set_lfo_phase,
     set_lfo_phase_reset, set_lfo_range, set_lfo_wave_shape, set_mod_wheel, set_oscillator_balance,
     set_oscillator_clip_boost, set_oscillator_course_tune, set_oscillator_fine_tune,
     set_oscillator_hard_sync, set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute,
@@ -793,10 +795,16 @@ pub fn process_midi_cc_values(
             send_ui_update(ui_update_sender, UIUpdates::FilterKeyTracking(normal_value));
         }
         CC::ModWheelLFOClockSync(value) => {
-            let normal_value = normalize_midi_value(value);
+            let is_enabled = midi_value_to_bool(value);
+
             set_lfo_clock_sync(
                 &module_parameters.lfos[LFOIndex::ModWheel as usize],
-                normal_value,
+                is_enabled,
+            );
+
+            send_ui_update(
+                ui_update_sender,
+                UIUpdates::LFOClockSync(LFOIndex::ModWheel as i32, is_enabled),
             );
         }
         CC::ModWheelLFOFrequency(value) => {
@@ -909,10 +917,42 @@ pub fn process_midi_cc_values(
             );
         }
         CC::FilterModLFOClockSync(value) => {
-            let normal_value = normalize_midi_value(value);
+            let is_enabled = midi_value_to_bool(value);
+
             set_lfo_clock_sync(
                 &module_parameters.lfos[LFOIndex::Filter as usize],
-                normal_value,
+                is_enabled,
+            );
+
+            send_ui_update(
+                ui_update_sender,
+                UIUpdates::LFOClockSync(LFOIndex::Filter as i32, is_enabled),
+            );
+        }
+        CC::FilterModLFOKeySync(value) => {
+            let is_enabled = midi_value_to_bool(value);
+
+            set_lfo_key_sync(
+                &module_parameters.lfos[LFOIndex::Filter as usize],
+                is_enabled,
+            );
+
+            send_ui_update(
+                ui_update_sender,
+                UIUpdates::LFOKeySync(LFOIndex::Filter as i32, is_enabled),
+            );
+        }
+        CC::ModWheelLFOKeySync(value) => {
+            let is_enabled = midi_value_to_bool(value);
+
+            set_lfo_key_sync(
+                &module_parameters.lfos[LFOIndex::ModWheel as usize],
+                is_enabled,
+            );
+
+            send_ui_update(
+                ui_update_sender,
+                UIUpdates::LFOKeySync(LFOIndex::ModWheel as i32, is_enabled),
             );
         }
         CC::AllNotesOff => {

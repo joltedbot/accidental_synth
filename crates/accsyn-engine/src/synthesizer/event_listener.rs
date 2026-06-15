@@ -422,13 +422,13 @@ pub fn start_update_event_listener(
                         LFO_INDEX_MOD_WHEEL => {
                             set_lfo_clock_sync(
                                 &module_parameters.lfos[LFOIndex::ModWheel as usize],
-                                bool_to_normal_value(is_enabled),
+                                is_enabled,
                             );
                         }
                         LFO_INDEX_FILTER => {
                             set_lfo_clock_sync(
                                 &module_parameters.lfos[LFOIndex::Filter as usize],
-                                bool_to_normal_value(is_enabled),
+                                is_enabled,
                             );
                         }
                         _ => {
@@ -445,13 +445,13 @@ pub fn start_update_event_listener(
                         LFO_INDEX_MOD_WHEEL => {
                             set_lfo_key_sync(
                                 &module_parameters.lfos[LFOIndex::ModWheel as usize],
-                                bool_to_normal_value(is_enabled),
+                                is_enabled,
                             );
                         }
                         LFO_INDEX_FILTER => {
                             set_lfo_key_sync(
                                 &module_parameters.lfos[LFOIndex::Filter as usize],
-                                bool_to_normal_value(is_enabled),
+                                is_enabled,
                             );
                         }
                         _ => {
