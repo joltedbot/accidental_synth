@@ -26,7 +26,7 @@ pub const MAX_CLIP_BOOST: u8 = 30;
 
 // Oscillator Shape Specific Constants
 /// Default modulation depth for AM synthesis.
-pub const DEFAULT_AMPLITUDE_MODULATION_AMOUNT: f32 = 4.0;
+pub const DEFAULT_AMPLITUDE_MODULATION_AMOUNT: f32 = 0.0;
 /// Default AM tone amount (0.0 = ring mod, 1.0 = proper AM).
 pub const DEFAULT_RING_MOD_AMOUNT: f32 = 0.0;
 /// Default pulse width for the pulse wave oscillator.
