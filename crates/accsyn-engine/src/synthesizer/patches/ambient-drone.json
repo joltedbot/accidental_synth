@@ -216,7 +216,7 @@
       "portamento_enabled": true,
       "portamento_time": 15,
       "shape_parameter1": 0.3,
-      "shape_parameter2": 0,
+      "shape_parameter2": 1.00,
       "wave_shape_index": 6,
       "pitch_envelope_amount": 0
     },
@@ -231,7 +231,7 @@
       "portamento_enabled": true,
       "portamento_time": 15,
       "shape_parameter1": 0.3,
-      "shape_parameter2": 0,
+      "shape_parameter2": 1.0,
       "wave_shape_index": 6,
       "pitch_envelope_amount": 0
     },

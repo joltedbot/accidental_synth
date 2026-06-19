@@ -215,8 +215,8 @@
       "pitch_bend": 0,
       "portamento_enabled": true,
       "portamento_time": 12,
-      "shape_parameter1": 0.3,
-      "shape_parameter2": 0.0,
+      "shape_parameter1": 0.2,
+      "shape_parameter2": 1.0,
       "wave_shape_index": 6,
       "pitch_envelope_amount": 0
     },
@@ -230,8 +230,8 @@
       "pitch_bend": 0,
       "portamento_enabled": true,
       "portamento_time": 12,
-      "shape_parameter1": 0.3,
-      "shape_parameter2": 0.0,
+      "shape_parameter1": 0.2,
+      "shape_parameter2": 1.0,
       "wave_shape_index": 6,
       "pitch_envelope_amount": 0
     },
@@ -245,14 +245,14 @@
       "pitch_bend": 0,
       "portamento_enabled": true,
       "portamento_time": 12,
-      "shape_parameter1": 0.3,
-      "shape_parameter2": 0.0,
+      "shape_parameter1": 0.2,
+      "shape_parameter2": 1.0,
       "wave_shape_index": 6,
       "pitch_envelope_amount": 0
     },
     {
       "clipper_boost": 0,
-      "course_tune": -12,
+      "course_tune": 0,
       "fine_tune": 0,
       "gate_flag": false,
       "hard_sync_enabled": false,
@@ -260,9 +260,9 @@
       "pitch_bend": 0,
       "portamento_enabled": true,
       "portamento_time": 12,
-      "shape_parameter1": 0.0,
-      "shape_parameter2": 0.0,
-      "wave_shape_index": 3,
+      "shape_parameter1": 0.2,
+      "shape_parameter2": 1.0,
+      "wave_shape_index": 6,
       "pitch_envelope_amount": 0
     }
   ],

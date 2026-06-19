@@ -125,7 +125,7 @@
     {
       "amount": 1.0,
       "attack_ms": 1,
-      "decay_ms": 200,
+      "decay_ms": 0,
       "gate_flag": 0,
       "is_inverted": false,
       "release_ms": 10,
@@ -215,10 +215,10 @@
       "pitch_bend": 0,
       "portamento_enabled": false,
       "portamento_time": 7,
-      "shape_parameter1": 0.31328124,
-      "shape_parameter2": 0.0,
+      "shape_parameter1": 0.1,
+      "shape_parameter2": 0.5,
       "wave_shape_index": 6,
-      "pitch_envelope_amount": -0.32136548
+      "pitch_envelope_amount": 0
     },
     {
       "clipper_boost": 0,
@@ -230,8 +230,8 @@
       "pitch_bend": 0,
       "portamento_enabled": false,
       "portamento_time": 7,
-      "shape_parameter1": 0.17481318,
-      "shape_parameter2": 0.0,
+      "shape_parameter1": 0.1,
+      "shape_parameter2": 0.5,
       "wave_shape_index": 6,
       "pitch_envelope_amount": 0.0
     },
@@ -245,10 +245,10 @@
       "pitch_bend": 0,
       "portamento_enabled": false,
       "portamento_time": 7,
-      "shape_parameter1": 0.1610394,
-      "shape_parameter2": 0.0,
+      "shape_parameter1": 0.1,
+      "shape_parameter2": 0.5,
       "wave_shape_index": 6,
-      "pitch_envelope_amount": 0.26732337
+      "pitch_envelope_amount": 0
     },
     {
       "clipper_boost": 0,
@@ -260,8 +260,8 @@
       "pitch_bend": 0,
       "portamento_enabled": false,
       "portamento_time": 7,
-      "shape_parameter1": 0.17841372,
-      "shape_parameter2": 0.0,
+      "shape_parameter1": 0.1,
+      "shape_parameter2": 0.5,
       "wave_shape_index": 6,
       "pitch_envelope_amount": 0.0
     }
