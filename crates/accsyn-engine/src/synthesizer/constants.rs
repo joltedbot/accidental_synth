@@ -86,7 +86,6 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
     ("Plucky Keys*", include_str!("patches/plucky-keys.json")),
     ("Power Chords*", include_str!("patches/power-chords.json")),
     ("Rave Chord*", include_str!("patches/rave-chord.json")),
-    ("Sci-Fi*", include_str!("patches/sci-fi.json")),
     (
         "Reverse Bass Swells*",
         include_str!("patches/reverse-bass-swells.json"),
@@ -95,6 +94,7 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
         "Reverse Pulse Lead*",
         include_str!("patches/reverse-pulse-lead.json"),
     ),
+    ("Sci-Fi*", include_str!("patches/sci-fi.json")),
     (
         "Shred Auto-Arp*",
         include_str!("patches/shred-auto-arp.json"),

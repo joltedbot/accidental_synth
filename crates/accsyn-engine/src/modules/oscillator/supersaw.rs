@@ -5,8 +5,8 @@ use accsyn_core::casting::f64_to_f32_clamped;
 use std::f64::consts::PI;
 
 const SHAPE: WaveShape = WaveShape::Supersaw;
-const DEFAULT_DETUNE: f64 = 0.3;
-const DEFAULT_BLEND: f64 = 0.3;
+const DEFAULT_DETUNE: f64 = 0.1;
+const DEFAULT_BLEND: f64 = 1.0;
 
 const VOICE_FREQUENCY_OFFSETS: [(f64, f64); 6] = [
     (0.893, 0.85),
