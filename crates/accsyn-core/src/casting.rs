@@ -44,12 +44,12 @@ pub fn f32_to_usize_clamped(value: f32) -> usize {
     value.clamp(0.0, usize::MAX as f32) as usize
 }
 
-/// Converts `f64` to `f32` by clamping to `[0.0, f32::MAX]` before truncating.
+/// Converts `f64` to `f32` by clamping to `[f32::MIN, f32::MAX]` before truncating.
 /// Use when the caller guarantees the value can not exceed `f32::MAX`
 #[allow(clippy::cast_possible_truncation)]
 #[must_use]
 pub fn f64_to_f32_clamped(value: f64) -> f32 {
-    value.clamp(0.0, f64::from(f32::MAX)) as f32
+    value.clamp(f64::from(f32::MIN), f64::from(f32::MAX)) as f32
 }
 
 /// Converts `f64` to `u32` by clamping to `[0.0, u32::MAX]` before truncating.
