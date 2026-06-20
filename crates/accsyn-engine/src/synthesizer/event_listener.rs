@@ -1,5 +1,6 @@
 use crate::modules::effects::EffectIndex;
 use crate::modules::lfo::DEFAULT_LFO_PHASE;
+use crate::modules::oscillator::constants::OSCILLATOR_WAVESHAPE_PARAMETER_DEFAULTS;
 use crate::synthesizer::ModuleParameters;
 use crate::synthesizer::clock::bpm_from_thirty_second_note_duration;
 use crate::synthesizer::constants::{
@@ -54,6 +55,47 @@ pub fn start_update_event_listener(
                             module_parameters.oscillators[idx]
                                 .wave_shape_index
                                 .store(i32_to_u8_clamped(wave_shape_index), Relaxed);
+
+                            if let Err(e) = ui_update_sender.send(UIUpdates::OscillatorWaveShape(
+                                oscillator_index,
+                                wave_shape_index,
+                            )) {
+                                log::error!(target: "synthesizer::event_listener", "Failed to send oscillator \
+                                Wave Shape Update to the UI: {e}");
+                            }
+                            #[allow(clippy::cast_sign_loss)]
+                            // Oscillator_index is always non-negative
+                            let shape_parameter1 = OSCILLATOR_WAVESHAPE_PARAMETER_DEFAULTS
+                                [wave_shape_index as usize]
+                                .0;
+                            module_parameters.oscillators[idx]
+                                .shape_parameter1
+                                .store(shape_parameter1);
+
+                            if let Err(e) = ui_update_sender.send(UIUpdates::OscillatorParameter1(
+                                oscillator_index,
+                                shape_parameter1,
+                            )) {
+                                log::error!(target: "synthesizer::event_listener", "Failed to send oscillator \
+                                Shape Parameter 1 Update to the UI: {e}");
+                            }
+
+                            #[allow(clippy::cast_sign_loss)]
+                            // Oscillator_index is always non-negative
+                            let shape_parameter2 = OSCILLATOR_WAVESHAPE_PARAMETER_DEFAULTS
+                                [wave_shape_index as usize]
+                                .1;
+                            module_parameters.oscillators[idx]
+                                .shape_parameter2
+                                .store(shape_parameter2);
+
+                            if let Err(e) = ui_update_sender.send(UIUpdates::OscillatorParameter2(
+                                oscillator_index,
+                                shape_parameter2,
+                            )) {
+                                log::error!(target: "synthesizer::event_listener", "Failed to send oscillator \
+                                Shape Parameter 2 Update to the UI: {e}");
+                            }
                         }
                         _ => {
                             log::warn!(

@@ -7,6 +7,8 @@ use std::f64::consts::PI;
 const SHAPE: WaveShape = WaveShape::Broken;
 const MIN_JANK: f64 = 0.0;
 const MAX_JANK: f64 = 0.99;
+const DEFAULT_JANK_FACTOR: f64 = 1.0;
+const DEFAULT_JANK_AMOUNT: f64 = 0.5;
 
 /// Some kind of broken wave generator using a saw and then some jank
 pub struct Broken {
@@ -29,8 +31,8 @@ impl Broken {
             x_coordinate,
             sample_rate,
             phase: None,
-            jank_factor: 1.0,
-            jank_amount: 1.0,
+            jank_factor: DEFAULT_JANK_FACTOR,
+            jank_amount: DEFAULT_JANK_AMOUNT,
         }
     }
 }

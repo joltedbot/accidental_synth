@@ -3,8 +3,8 @@ use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use crate::modules::oscillator::sine::Sine;
 
 const SHAPE: WaveShape = WaveShape::FM;
-const DEFAULT_RATIO: f32 = 1.0;
-const DEFAULT_MODULATION_AMOUNT: f32 = 1.0;
+const DEFAULT_RATIO: f32 = 0.0;
+const DEFAULT_MODULATION_AMOUNT: f32 = 0.0;
 const AMOUNT_PARAMETER_MAX: f32 = 6000.0;
 const RATIO_PARAMETER_MAX: f32 = 10.0;
 const RATIO_PARAMETER_MIN: f32 = 0.01;
