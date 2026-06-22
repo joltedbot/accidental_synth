@@ -20,7 +20,7 @@ import {
 } from "custom-widgets.slint";
 import { Switch } from "std-widgets.slint";
 import { Theme } from "theme.slint";
-import { Constant } from "constants.slint";
+import { Constant, PatchState } from "constants.slint";
 
 export struct FilterCutoff {
     cutoff: float,
@@ -64,6 +64,11 @@ export component FilterCutoffSection inherits HorizontalLayout {
 
 export component FilterOptionsSection inherits VerticalLayout {
     in property <FilterOptions> filter-options-values;
+    property <int> patch_generation: PatchState.generation;
+    property <float> key-track-live;
+    property <float> poles-live;
+    property <float> envelope-amount-live;
+    property <float> lfo-amount-live;
 
     callback filter-poles-changed(float);
     callback filter-key-tracking-changed(float);
@@ -74,8 +79,34 @@ export component FilterOptionsSection inherits VerticalLayout {
     spacing: Theme.osc-controls-panel-spacing;
     alignment: start;
 
+    function normalized_poles_to_slope(normalized_poles: float) -> int {
+        // normalized_poles = 0.0 - 1.0
+        // normalized_poles * 3 gives 4 pole values but zero based.
+        // + 1 makes it 1 based
+        // * 6 converts to slope as there are 6 db/octave/pole
+        ((normalized_poles * 3) + 1) * 6
+    }
+
+    init => {
+        key-track-live = filter-options-values.key-track;
+        poles-live = filter-options-values.poles;
+        envelope-amount-live = filter-options-values.envelope-amount;
+        lfo-amount-live = filter-options-values.lfo-amount;
+    }
+
+    changed patch_generation => {
+        key-track-live = filter-options-values.key-track;
+        poles-live = filter-options-values.poles;
+        envelope-amount-live = filter-options-values.envelope-amount;
+        lfo-amount-live = filter-options-values.lfo-amount;
+    }
+
     poles := IntSpinBox {
         label: Theme.filter-label-poles;
+        value-units: Theme.filter-label-slope;
+        display-value: normalized_poles_to_slope(poles-live);
+        show-value: true;
+        show-units: true;
         height: 50px;
         step: 1;
         minimum: 1;
@@ -83,33 +114,49 @@ export component FilterOptionsSection inherits VerticalLayout {
         value: filter-options-values.poles;
         spinbox-width: Theme.filter-panel-widget-width;
         spinbox-changed(poles) => {
+            poles-live = poles;
             filter-poles-changed(poles);
         }
     }
 
     keytrack := CenteredParameterSlider {
         label: Theme.filter-label-key-tracking;
+        display-value: round((key-track-live - 0.5) * 200);
+        value-units: Theme.controls-unit-percent;
+        show-value: true;
+        show-units: true;
         slider-width: Theme.filter-panel-widget-width;
         value: filter-options-values.key-track;
         centered-parameter-slider-changed(amount) => {
+            key-track-live = amount;
             filter-key-tracking-changed(amount);
         }
     }
 
     envelope_amount := HorizontalParameterSlider {
         label: Theme.filter-label-envelope-amount;
+        display-value: round(envelope-amount-live * 100);
+        value-units: Theme.controls-unit-percent;
+        show-value: true;
+        show-units: true;
         value: filter-options-values.envelope-amount;
         slider-width: Theme.filter-panel-widget-width;
         horizontal-parameter-slider-changed(amount) => {
+            envelope-amount-live = amount;
             filter-envelope-amount-changed(amount);
         }
     }
 
     lfo_amount := HorizontalParameterSlider {
         label: Theme.filter-label-lfo-amount;
+        display-value: round(lfo-amount-live * 100);
+        value-units: Theme.controls-unit-percent;
+        show-value: true;
+        show-units: true;
         value: filter-options-values.lfo-amount;
         slider-width: Theme.filter-panel-widget-width;
         horizontal-parameter-slider-changed(amount) => {
+            lfo-amount-live = amount;
             filter-lfo-amount-changed(amount);
         }
     }

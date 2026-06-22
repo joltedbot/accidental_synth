@@ -127,12 +127,12 @@ export component OscControlsPanel inherits Panel {
 
             course-tune := IntSpinBox {
                 label: Theme.osc-controls-course-tune;
+                value: oscillator.course-tune;
                 value-units: Theme.osc-controls-semitones;
                 show-units: true;
                 step: 1;
                 minimum: Constant.MIN_COURSE_TUNE_SEMITONES;
                 maximum: Constant.MAX_COURSE_TUNE_SEMITONES;
-                value: oscillator.course-tune;
                 spinbox-width: Theme.oscillator-panel-widget-width;
                 spinbox-changed(semitones) => {
                     course-tune-changed(semitones);
@@ -157,7 +157,7 @@ export component OscControlsPanel inherits Panel {
                 show-value: true;
                 show-units: true;
                 display-value: round(clip-boost-live * 100);
-                value-units: Theme.osc-controls-unit-percent;
+                value-units: Theme.controls-unit-percent;
                 slider-width: Theme.oscillator-panel-widget-width;
                 value: oscillator.clipper-boost;
                 horizontal-parameter-slider-changed(boost) => {
@@ -171,7 +171,7 @@ export component OscControlsPanel inherits Panel {
                 show-value: true;
                 show-units: true;
                 display-value: round((pitch-envelope-live - 0.5) * 200);
-                value-units: Theme.osc-controls-unit-percent;
+                value-units: Theme.controls-unit-percent;
                 slider-width: Theme.oscillator-panel-widget-width;
                 value: oscillator.pitch-envelope-amount;
                 centered-parameter-slider-changed(amount) => {
@@ -185,7 +185,7 @@ export component OscControlsPanel inherits Panel {
                 show-value: true;
                 show-units: true;
                 display-value: round(param1-live * 100);
-                value-units: Theme.osc-controls-unit-percent;
+                value-units: Theme.controls-unit-percent;
                 value: oscillator.parameter1;
                 horizontal-parameter-slider-changed(value) => {
                     param1-live = value;
@@ -198,7 +198,7 @@ export component OscControlsPanel inherits Panel {
                 show-value: true;
                 show-units: true;
                 display-value: round(param2-live * 100);
-                value-units: Theme.osc-controls-unit-percent;
+                value-units: Theme.controls-unit-percent;
                 value: oscillator.parameter2;
                 horizontal-parameter-slider-changed(value) => {
                     param2-live = value;

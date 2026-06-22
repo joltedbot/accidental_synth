@@ -236,18 +236,38 @@ pub fn start_update_event_listener(
                 }
                 SynthesizerUpdateEvents::FilterPoleCount(poles) => {
                     set_filter_poles(&module_parameters.filter, poles);
+
+                    if let Err(e) = ui_update_sender.send(UIUpdates::FilterPoles(poles)) {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send filter poles \
+                        display value to the UI: {e}");
+                    }
                 }
                 SynthesizerUpdateEvents::FilterKeyTrackingAmount(amount) => {
                     set_key_tracking_amount(&module_parameters.filter, amount);
+
+                    if let Err(e) = ui_update_sender.send(UIUpdates::FilterKeyTracking(amount)) {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send filter key-tracking \
+                        display value to the UI: {e}");
+                    }
                 }
                 SynthesizerUpdateEvents::FilterEnvelopeAmount(amount) => {
                     set_envelope_amount(
                         &module_parameters.envelopes[EnvelopeIndex::Filter as usize],
                         amount,
                     );
+
+                    if let Err(e) = ui_update_sender.send(UIUpdates::FilterEnvelopeAmount(amount)) {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send filter envelope amount \
+                        display value to the UI: {e}");
+                    }
                 }
                 SynthesizerUpdateEvents::FilterLfoAmount(amount) => {
                     set_lfo_range(&module_parameters.lfos[LFOIndex::Filter as usize], amount);
+
+                    if let Err(e) = ui_update_sender.send(UIUpdates::FilterLFOAmount(amount)) {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send filter LFO amount \
+                        display value to the UI: {e}");
+                    }
                 }
                 SynthesizerUpdateEvents::FilterEnvelopeAttack(envelope_index, milliseconds) => {
                     match envelope_index {

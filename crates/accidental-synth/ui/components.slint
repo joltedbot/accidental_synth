@@ -526,9 +526,11 @@ export component LabeledVerticalSlider inherits VerticalLayout {
 
 export component IntSpinBox inherits VerticalLayout {
     in property <string> label;
-    in property <string> value-units;
     in property <bool> show-units;
-    in property <float> value;
+    in property <bool> show-value;
+    in property <string> value-units;
+    in property <int> value;
+    in property <int> display-value;
     in property <int> step;
     in property <int> minimum;
     in property <int> maximum;
@@ -545,8 +547,10 @@ export component IntSpinBox inherits VerticalLayout {
     hslider-label := HorizontalControlLabel {
         label: label;
         enabled: enabled;
+        value: display-value;
         value-units: value-units;
         show-units: show-units;
+        show-value: show-value;
     }
 
     property <int> gen: PatchState.generation;
