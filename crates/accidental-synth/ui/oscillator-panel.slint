@@ -128,6 +128,7 @@ export component OscControlsPanel inherits Panel {
             course-tune := IntSpinBox {
                 label: Theme.osc-controls-course-tune;
                 value-units: Theme.osc-controls-semitones;
+                show-units: true;
                 step: 1;
                 minimum: Constant.MIN_COURSE_TUNE_SEMITONES;
                 maximum: Constant.MAX_COURSE_TUNE_SEMITONES;
@@ -144,6 +145,7 @@ export component OscControlsPanel inherits Panel {
                 display-value: fine-tune-cents;
                 value-units: Theme.osc-controls-cents;
                 show-value: true;
+                show-units: true;
                 slider-width: Theme.oscillator-panel-widget-width;
                 centered-parameter-slider-changed(cents) => {
                     fine-tune-changed(cents);

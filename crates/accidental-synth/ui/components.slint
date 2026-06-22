@@ -527,6 +527,7 @@ export component LabeledVerticalSlider inherits VerticalLayout {
 export component IntSpinBox inherits VerticalLayout {
     in property <string> label;
     in property <string> value-units;
+    in property <bool> show-units;
     in property <float> value;
     in property <int> step;
     in property <int> minimum;
@@ -545,6 +546,7 @@ export component IntSpinBox inherits VerticalLayout {
         label: label;
         enabled: enabled;
         value-units: value-units;
+        show-units: show-units;
     }
 
     property <int> gen: PatchState.generation;
