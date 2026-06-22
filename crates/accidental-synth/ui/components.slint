@@ -244,6 +244,7 @@ export component HorizontalControlLabel inherits Rectangle {
     property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
 
     HorizontalLayout {
+        alignment: space-between;
         Text {
             font-size: Theme.component-label-font-size;
             font-weight: Theme.component-label-font-weight;
@@ -251,21 +252,23 @@ export component HorizontalControlLabel inherits Rectangle {
             text: label;
         }
 
-        Text {
-            font-size: Theme.component-label-font-size;
-            font-weight: Theme.component-label-font-weight;
-            color: text-color;
-            horizontal-alignment: right;
-            visible: show-value;
-            text: value;
-        }
+        HorizontalLayout {
+            Text {
+                font-size: Theme.component-label-font-size;
+                font-weight: Theme.component-label-font-weight;
+                color: text-color;
+                horizontal-alignment: right;
+                visible: show-value;
+                text: value;
+            }
 
-        Text {
-            font-size: Theme.component-label-font-size;
-            font-weight: Theme.component-label-font-weight;
-            color: text-color;
-            visible: show-units;
-            text: " " + value-units;
+            Text {
+                font-size: Theme.component-label-font-size;
+                font-weight: Theme.component-label-font-weight;
+                color: text-color;
+                visible: show-units;
+                text: " " + value-units;
+            }
         }
     }
 }
@@ -461,6 +464,7 @@ export component CenteredParameterSlider inherits VerticalLayout {
     in property <length> slider-width: 100px;
     in property <length> slider-height: 25px;
     in property <bool> enabled: true;
+    in property <bool> show-units: false;
 
     callback centered-parameter-slider-changed(float);
 
@@ -473,7 +477,7 @@ export component CenteredParameterSlider inherits VerticalLayout {
         value: display-value;
         value-units: value-units;
         show-value: show-value;
-        show-units: true;
+        show-units: show-units;
     }
 
     hslider := BalanceSlider {

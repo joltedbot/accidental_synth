@@ -110,7 +110,7 @@
       "is_inverted": false,
       "release_ms": 2000,
       "sustain_level": 0.7,
-      "sustain_pedal": true
+      "sustain_pedal": false
     },
     {
       "amount": 0.3,
@@ -120,7 +120,7 @@
       "is_inverted": false,
       "release_ms": 1500,
       "sustain_level": 0.5,
-      "sustain_pedal": true
+      "sustain_pedal": false
     },
     {
       "amount": 1,

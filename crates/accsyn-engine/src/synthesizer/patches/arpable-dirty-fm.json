@@ -12,7 +12,7 @@
     "is_muted": false,
     "quad_mixer_inputs": [
       {
-        "level": 0.32421345,
+        "level": 0.9,
         "balance": 0.0,
         "mute": false
       },
@@ -108,7 +108,7 @@
       "course_tune": 0,
       "pitch_bend": 0,
       "shape_parameter1": 0.0,
-      "shape_parameter2": 0.0,
+      "shape_parameter2": 0.85,
       "wave_shape_index": 9,
       "gate_flag": false,
       "key_sync_enabled": false,

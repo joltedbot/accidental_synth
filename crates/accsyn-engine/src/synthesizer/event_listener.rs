@@ -150,6 +150,12 @@ pub fn start_update_event_listener(
                     match usize::try_from(oscillator_index) {
                         Ok(index) if index < module_parameters.oscillators.len() => {
                             set_oscillator_clip_boost(&module_parameters.oscillators[index], boost);
+
+                            if let Err(e) = ui_update_sender
+                                .send(UIUpdates::OscillatorClipperBoost(oscillator_index, boost))
+                            {
+                                log::error!(target: "synthesizer::event_listener", "Failed to send oscillator clipper boost display value to the UI: {e}");
+                            }
                         }
                         _ => {
                             log::warn!(
@@ -176,13 +182,20 @@ pub fn start_update_event_listener(
                         }
                     }
                 }
-                SynthesizerUpdateEvents::Parameter1(oscillator_index, boost) => {
+                SynthesizerUpdateEvents::Parameter1(oscillator_index, parameter) => {
                     match usize::try_from(oscillator_index) {
                         Ok(idx) if idx < module_parameters.oscillators.len() => {
                             set_oscillator_shape_parameter1(
                                 &module_parameters.oscillators[idx],
-                                boost,
+                                parameter,
                             );
+
+                            if let Err(e) = ui_update_sender
+                                .send(UIUpdates::OscillatorParameter1(oscillator_index, parameter))
+                            {
+                                log::error!(target: "synthesizer::event_listener", "Failed to send oscillator shape \
+                                parameter 1 display value to the UI: {e}");
+                            }
                         }
                         _ => {
                             log::warn!(
@@ -192,13 +205,20 @@ pub fn start_update_event_listener(
                         }
                     }
                 }
-                SynthesizerUpdateEvents::Parameter2(oscillator_index, boost) => {
+                SynthesizerUpdateEvents::Parameter2(oscillator_index, parameter) => {
                     match usize::try_from(oscillator_index) {
                         Ok(idx) if idx < module_parameters.oscillators.len() => {
                             set_oscillator_shape_parameter2(
                                 &module_parameters.oscillators[idx],
-                                boost,
+                                parameter,
                             );
+
+                            if let Err(e) = ui_update_sender
+                                .send(UIUpdates::OscillatorParameter2(oscillator_index, parameter))
+                            {
+                                log::error!(target: "synthesizer::event_listener", "Failed to send oscillator shape \
+                                parameter 2 display value to the UI: {e}");
+                            }
                         }
                         _ => {
                             log::warn!(
