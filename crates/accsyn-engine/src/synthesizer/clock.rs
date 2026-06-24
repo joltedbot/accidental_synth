@@ -10,7 +10,7 @@ const MICROSECONDS_PER_MINUTE: f64 = 60.0 * 1_000_000.0;
 /// Parameters for the clock and clock synchronization
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct ClockParameters {
-    pub(crate) bpm: AtomicU16,
+    pub bpm: AtomicU16,
 }
 
 pub struct Clock {

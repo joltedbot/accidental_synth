@@ -771,6 +771,12 @@ pub fn start_update_event_listener(
                     let new_bpm = bpm_from_thirty_second_note_duration(thirty_second_note_duration);
                     module_parameters.clock.bpm.store(new_bpm, Relaxed);
 
+                    if let Err(e) = ui_update_sender.send(UIUpdates::MidiClock(i32::from(new_bpm)))
+                    {
+                        log::error!(target: "synthesizer::event_listener", "Failed to send midi \
+                                clock bpm update to the UI: {e}");
+                    }
+
                     module_parameters
                         .lfos
                         .iter()

@@ -39,6 +39,12 @@ pub fn set_midi_screen_values(
     });
 }
 
+pub fn set_midi_clock_value(ui_weak_thread: &Weak<AccidentalSynth>, clock_value: i32) {
+    let _ = ui_weak_thread.upgrade_in_event_loop(move |ui| {
+        ui.set_midi_clock_value(clock_value);
+    });
+}
+
 pub fn set_midi_port_values(
     ui_weak_thread: &Weak<AccidentalSynth>,
     midi_port_values: &mut UIMidiPort,

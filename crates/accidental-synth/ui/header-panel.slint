@@ -4,6 +4,7 @@ import {
     VerticalSpacer,
     HorizontalControlLabel,
     GreenScreenText,
+    HorizontalSpacer,
 } from "components.slint";
 import { Theme } from "theme.slint";
 import { Button, ComboBox, HorizontalBox } from "std-widgets.slint";
@@ -18,6 +19,7 @@ import {
 
 component MidiScroller inherits Rectangle {
     in property <[string]> output;
+    in property <string> clock-output;
 
     background: Theme.midi-scroller-background;
     border-width: 1px;
@@ -83,6 +85,33 @@ component MidiScroller inherits Rectangle {
                 horizontal-alignment: left;
                 opacity: 0.3;
             }
+
+            Spacer := GreenScreenText {
+                text: "|";
+                font-size: Theme.midi-scroller-font-size;
+                font-family: Theme.midi-scroller-font;
+                letter-spacing: 1px;
+                opacity: 0.35;
+            }
+
+            bpm := GreenScreenText {
+                text: Theme.midi-clock-title;
+                width: Theme.midi-scroller-title-width;
+                font-size: Theme.midi-scroller-font-size;
+                font-family: Theme.midi-scroller-font;
+                letter-spacing: Theme.midi-scoller-letter-spacing;
+                horizontal-alignment: left;
+                opacity: 0.65;
+            }
+
+            bpm-value := GreenScreenText {
+                text: clock-output;
+                width: Theme.midi-scroller-note-width;
+                font-size: Theme.midi-scoller-note-font-size;
+                font-family: Theme.midi-scroller-font;
+                letter-spacing: Theme.midi-scoller-letter-spacing;
+                horizontal-alignment: left;
+            }
         }
     }
 }
@@ -140,6 +169,7 @@ export component HeaderPanel inherits Panel {
     in property <PatchStatus> patch-delete-status;
     in-out property <int> selected-patch-index;
     in property <[string]> midi-display-values;
+    in property <int> midi-clock-value;
     in property <bool> polarity-is-flipped;
 
     callback audio-output-device-changed(string);
@@ -216,8 +246,11 @@ export component HeaderPanel inherits Panel {
             }
         }
 
-        MidiScroller {
-            output: midi-display-values;
+        HorizontalLayout {
+            MidiScroller {
+                output: midi-display-values;
+                clock-output: midi-clock-value >= Theme.bpm-minimum-display-value ? midi-clock-value : Theme.bpm-null-display-value;
+            }
         }
 
         HorizontalLayout {

@@ -37,6 +37,7 @@ export component AccidentalSynth inherits Window {
         right-channels: Theme.empty-dropdown-value
     };
     in property <MidiPort> midi-port-values;
+    in property <int> midi-clock-value;
     in property <[string]> patch-list;
     in property <[string]> user-patch-list;
     in-out property <int> selected-patch-index;
@@ -145,6 +146,7 @@ export component AccidentalSynth inherits Window {
 
                 audio-device-values: audio-device-values;
                 midi-port-values: midi-port-values;
+                midi-clock-value: midi-clock-value;
                 patch-list: patch-list;
                 user-patch-list: user-patch-list;
                 selected-patch-index: selected-patch-index;

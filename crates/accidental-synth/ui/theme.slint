@@ -64,10 +64,12 @@ export global Theme {
     out property <string> header-version-prefix: "v";
     out property <brush> header-panel-background: @radial-gradient(circle, #000000 0%, #101035 100%);
     out property <length> patch-list-width: 400px;
-    out property <length> midi-scroller-width: 230px;
+    out property <length> midi-scroller-width: 330px;
+    out property <length> midi-clock-width: 100px;
     out property <length> midi-scroller-height: 30px;
     out property <color> midi-scroller-background: #111111;
     out property <string> midi-scroller-title: "MIDI:";
+    out property <string> midi-clock-title: "BPM:";
     out property <length> midi-scroller-title-width: 40px;
     out property <length> midi-scroller-note-width: 30px;
     out property <length> midi-scroller-font-size: 16px;
@@ -255,4 +257,6 @@ export global Theme {
     out property <string> settings-patch-delete: "Delete";
     out property <string> settings-saved-status: "Saved!";
     out property <string> settings-deleted-status: "Deleted!";
+    out property <string> bpm-null-display-value: "Off";
+    out property <int> bpm-minimum-display-value: 20;
 }

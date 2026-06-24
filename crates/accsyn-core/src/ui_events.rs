@@ -3,6 +3,8 @@
 pub enum UIUpdates {
     /// Display a MIDI status message on screen.
     MidiScreen(String),
+    /// Display the MIDI clock BPM if on screen.
+    MidiClock(i32),
     /// Updated list of available MIDI input port names.
     MidiPortList(Vec<String>),
     /// Currently selected MIDI port index.
