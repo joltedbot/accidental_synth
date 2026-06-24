@@ -4,7 +4,7 @@
     "resonance": 0.15,
     "filter_poles": 3,
     "key_tracking_amount": 0.6859074,
-    "current_note_number": 65
+    "current_note_number": 77
   },
   "mixer": {
     "level": 0.7,
@@ -42,31 +42,31 @@
   },
   "lfos": [
     {
-      "center_value": 1.0,
       "frequency": 6.0,
       "synced_frequency": 0.5,
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
-      "phase": 0.0,
+      "center_value": 1.0,
       "range": 2.0,
-      "reset": false,
+      "phase": 0.0,
       "wave_shape": 0,
+      "reset": false,
       "gate_flag": false
     },
     {
-      "center_value": 0.0,
       "frequency": 1.6540729,
       "synced_frequency": 0.5,
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
-      "phase": 0.0,
+      "center_value": 0.0,
       "range": 0.0,
-      "reset": false,
+      "phase": 0.0,
       "wave_shape": 0,
+      "reset": false,
       "gate_flag": false
     }
   ],
@@ -83,23 +83,23 @@
     },
     {
       "attack_ms": 1,
-      "decay_ms": 295,
+      "decay_ms": 1069,
       "release_ms": 50,
-      "sustain_level": 0.0,
+      "sustain_level": 0.0765625,
       "amount": 0.6055889,
       "sustain_pedal": false,
       "is_inverted": false,
       "gate_flag": 0
     },
     {
-      "amount": 1,
       "attack_ms": 1,
       "decay_ms": 200,
-      "gate_flag": 0,
-      "is_inverted": false,
       "release_ms": 10,
-      "sustain_level": 0,
-      "sustain_pedal": false
+      "sustain_level": 0.0,
+      "amount": 1.0,
+      "sustain_pedal": false,
+      "is_inverted": false,
+      "gate_flag": 0
     }
   ],
   "oscillators": [
@@ -116,7 +116,7 @@
       "portamento_enabled": true,
       "portamento_time": 5,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     },
     {
       "fine_tune": 7,
@@ -131,7 +131,7 @@
       "portamento_enabled": true,
       "portamento_time": 5,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     },
     {
       "fine_tune": -11,
@@ -146,7 +146,7 @@
       "portamento_enabled": false,
       "portamento_time": 7,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     },
     {
       "fine_tune": 0,
@@ -161,7 +161,7 @@
       "portamento_enabled": false,
       "portamento_time": 7,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     }
   ],
   "effects": [

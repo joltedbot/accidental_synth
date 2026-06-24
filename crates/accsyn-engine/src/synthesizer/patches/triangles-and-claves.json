@@ -197,9 +197,9 @@
     },
     {
       "name": "Bit Shifter",
-      "is_enabled": true,
+      "is_enabled": false,
       "parameters": [
-        0.6700238,
+        1.0,
         0.0,
         0.0,
         0.0

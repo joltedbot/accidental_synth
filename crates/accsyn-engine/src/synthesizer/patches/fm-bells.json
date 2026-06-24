@@ -1,10 +1,10 @@
 {
   "filter": {
     "cutoff_frequency": 1048.1405,
-    "resonance": 0.26555753,
+    "resonance": 0.15523082,
     "filter_poles": 2,
     "key_tracking_amount": 0.5,
-    "current_note_number": 64
+    "current_note_number": 60
   },
   "mixer": {
     "level": 0.7,
@@ -42,64 +42,64 @@
   },
   "lfos": [
     {
-      "center_value": 1.0,
       "frequency": 0.01,
       "synced_frequency": 0.5,
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
-      "phase": 0.0,
+      "center_value": 1.0,
       "range": 2.0,
-      "reset": false,
+      "phase": 0.0,
       "wave_shape": 0,
+      "reset": false,
       "gate_flag": false
     },
     {
-      "center_value": 0.0,
       "frequency": 0.15,
       "synced_frequency": 0.5,
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
-      "phase": 0.0,
+      "center_value": 0.0,
       "range": 0.0,
-      "reset": false,
+      "phase": 0.0,
       "wave_shape": 1,
+      "reset": false,
       "gate_flag": false
     }
   ],
   "envelopes": [
     {
       "attack_ms": 1,
-      "decay_ms": 391,
-      "release_ms": 10,
-      "sustain_level": 0.4842014,
-      "amount": 1.0,
-      "sustain_pedal": true,
-      "is_inverted": false,
-      "gate_flag": 0
-    },
-    {
-      "attack_ms": 1,
-      "decay_ms": 162,
+      "decay_ms": 605,
       "release_ms": 10,
       "sustain_level": 0.0,
-      "amount": 0.3810096,
+      "amount": 1.0,
       "sustain_pedal": false,
       "is_inverted": false,
       "gate_flag": 0
     },
     {
-      "amount": 1,
+      "attack_ms": 1,
+      "decay_ms": 1009,
+      "release_ms": 10,
+      "sustain_level": 0.0,
+      "amount": 0.5326623,
+      "sustain_pedal": false,
+      "is_inverted": false,
+      "gate_flag": 0
+    },
+    {
       "attack_ms": 1,
       "decay_ms": 200,
-      "gate_flag": 0,
-      "is_inverted": false,
       "release_ms": 10,
-      "sustain_level": 0,
-      "sustain_pedal": false
+      "sustain_level": 0.0,
+      "amount": 1.0,
+      "sustain_pedal": false,
+      "is_inverted": false,
+      "gate_flag": 0
     }
   ],
   "oscillators": [
@@ -116,7 +116,7 @@
       "portamento_enabled": false,
       "portamento_time": 7,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     },
     {
       "fine_tune": 0,
@@ -131,7 +131,7 @@
       "portamento_enabled": false,
       "portamento_time": 7,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     },
     {
       "fine_tune": 0,
@@ -146,7 +146,7 @@
       "portamento_enabled": false,
       "portamento_time": 7,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     },
     {
       "fine_tune": 0,
@@ -161,7 +161,7 @@
       "portamento_enabled": false,
       "portamento_time": 7,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     }
   ],
   "effects": [
