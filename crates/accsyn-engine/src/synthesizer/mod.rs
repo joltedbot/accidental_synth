@@ -23,7 +23,9 @@ use crate::modules::filter::FilterParameters;
 use crate::modules::lfo::LfoParameters;
 use crate::modules::mixer::MixerInput;
 use crate::modules::oscillator::OscillatorParameters;
-use crate::synthesizer::constants::SYNTHESIZER_MESSAGE_SENDER_CAPACITY;
+use crate::synthesizer::constants::{
+    MIDI_CLOCK_OFF_BPM_VALUE, SYNTHESIZER_MESSAGE_SENDER_CAPACITY,
+};
 use crate::synthesizer::event_listener::start_update_event_listener;
 use crate::synthesizer::midi_messages::{
     process_midi_cc_values, process_midi_channel_pressure_message, process_midi_note_off_message,
@@ -286,7 +288,7 @@ impl Synthesizer {
         &mut self,
         midi_message_receiver: Receiver<MidiEvent>,
         ui_update_sender: Sender<UIUpdates>,
-        ui_update_receiver: Sender<SynthesizerUpdateEvents>,
+        synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
     ) {
         let mut current_note = self.current_note.clone();
         let mut module_parameters = self.module_parameters.clone();
@@ -325,18 +327,28 @@ impl Synthesizer {
                     MidiEvent::ProgramChange(program_number) => {
                         process_midi_program_change_message(
                             &ui_update_sender,
-                            &ui_update_receiver,
+                            &synthesizer_update_sender,
                             program_number,
                         );
                     }
                     MidiEvent::Stop => {
-                        
+                        log::trace!(target: "synthesizer", "Midi Transport Stop Event");
+                        module_parameters
+                            .clock
+                            .bpm
+                            .store(MIDI_CLOCK_OFF_BPM_VALUE, Relaxed);
+                        if let Err(e) = ui_update_sender
+                            .send(UIUpdates::MidiClock(i32::from(MIDI_CLOCK_OFF_BPM_VALUE)))
+                        {
+                            log::error!(target: "synthesizer", "Failed to send midi transport stop update to the \
+                                UI: {e}");
+                        }
                     }
                     MidiEvent::Clock => {
                         if clock.tick_is_32nd_note() {
                             log::trace!(target: "synthesizer", "Clock tick is 32nd note");
-                            if let Err(e) =
-                                ui_update_receiver.send(SynthesizerUpdateEvents::ThirtySecondNote)
+                            if let Err(e) = synthesizer_update_sender
+                                .send(SynthesizerUpdateEvents::ThirtySecondNote)
                             {
                                 log::error!(target: "synthesizer", "Failed to send midi clock tick 32nd note to \
                                 synthesizer: {e}");
@@ -347,9 +359,18 @@ impl Synthesizer {
                         process_midi_cc_values(cc_value, &mut module_parameters, &ui_update_sender);
                     }
                     MidiEvent::Reset => {
-                        // As this is a mono synth and there is no arpeggiator or sequencer a reset only needs to stop
-                        // the playing note
                         process_midi_note_off_message(&mut module_parameters);
+
+                        module_parameters
+                            .clock
+                            .bpm
+                            .store(MIDI_CLOCK_OFF_BPM_VALUE, Relaxed);
+                        if let Err(e) = ui_update_sender
+                            .send(UIUpdates::MidiClock(i32::from(MIDI_CLOCK_OFF_BPM_VALUE)))
+                        {
+                            log::error!(target: "synthesizer", "Failed to send midi transport stop update to the \
+                                UI: {e}");
+                        }
                     }
                 }
             }
