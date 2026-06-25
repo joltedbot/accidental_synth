@@ -1,13 +1,13 @@
 {
   "filter": {
-    "cutoff_frequency": 604.38306,
-    "resonance": 0.9,
+    "cutoff_frequency": 281.3619,
+    "resonance": 0.14163175,
     "filter_poles": 4,
-    "key_tracking_amount": 1.0,
-    "current_note_number": 0
+    "key_tracking_amount": 0.7167969,
+    "current_note_number": 65
   },
   "mixer": {
-    "level": 1.0002447,
+    "level": 0.43215558,
     "balance": 0.0,
     "is_muted": false,
     "quad_mixer_inputs": [
@@ -45,36 +45,36 @@
       "frequency": 10.000001,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 32,
+      "thirty_second_notes": 1024,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 1.0,
       "range": 2.0,
       "phase": 0.0,
       "wave_shape": 0,
-      "gate_flag": false,
-      "reset": false
+      "reset": false,
+      "gate_flag": false
     },
     {
       "frequency": 0.32885945,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 32,
+      "thirty_second_notes": 1024,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 0.0,
       "range": 0.0,
       "phase": 0.0,
       "wave_shape": 0,
-      "gate_flag": false,
-      "reset": false
+      "reset": false,
+      "gate_flag": false
     }
   ],
   "envelopes": [
     {
       "attack_ms": 0,
-      "decay_ms": 2048,
-      "release_ms": 244,
+      "decay_ms": 5000,
+      "release_ms": 173,
       "sustain_level": 0.0,
       "amount": 1.0,
       "sustain_pedal": false,
@@ -82,10 +82,10 @@
       "gate_flag": 0
     },
     {
-      "attack_ms": 200,
-      "decay_ms": 200,
-      "release_ms": 200,
-      "sustain_level": 0.8,
+      "attack_ms": 0,
+      "decay_ms": 0,
+      "release_ms": 0,
+      "sustain_level": 0.0,
       "amount": 0.0,
       "sustain_pedal": false,
       "is_inverted": false,
@@ -105,7 +105,7 @@
   "oscillators": [
     {
       "fine_tune": 0,
-      "course_tune": 7,
+      "course_tune": 0,
       "pitch_bend": 0,
       "shape_parameter1": 0.0,
       "shape_parameter2": 0.0,
@@ -150,7 +150,7 @@
     },
     {
       "fine_tune": 9,
-      "course_tune": -12,
+      "course_tune": -5,
       "pitch_bend": 0,
       "shape_parameter1": 0.0,
       "shape_parameter2": 0.0,
@@ -161,7 +161,7 @@
       "portamento_enabled": false,
       "portamento_time": 8,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0.0
+      "pitch_envelope_amount": 0.052139997
     }
   ],
   "effects": [
@@ -179,7 +179,7 @@
       "name": "Colour Compressor",
       "is_enabled": true,
       "parameters": [
-        0.16472487,
+        0.20290421,
         0.25069633,
         0.3917799,
         1.0
@@ -189,9 +189,9 @@
       "name": "Wave Folder",
       "is_enabled": false,
       "parameters": [
-        0.0,
-        0.0,
-        0.0,
+        0.7890285,
+        -1.0,
+        0.7019871,
         0.0
       ]
     },
@@ -199,19 +199,19 @@
       "name": "Bit Shifter",
       "is_enabled": true,
       "parameters": [
-        0.893767,
-        0.44670516,
+        0.920839,
+        0.31922555,
         0.0,
         0.0
       ]
     },
     {
       "name": "Clipper",
-      "is_enabled": false,
+      "is_enabled": true,
       "parameters": [
-        0.1798913,
+        0.22669837,
         0.0,
-        0.25565556,
+        0.31193954,
         0.0
       ]
     },
@@ -227,10 +227,10 @@
     },
     {
       "name": "Wave Rectifier",
-      "is_enabled": true,
+      "is_enabled": false,
       "parameters": [
         1.0,
-        0.5665591,
+        0.0,
         0.0,
         0.0
       ]
@@ -259,9 +259,9 @@
       "name": "Delay",
       "is_enabled": true,
       "parameters": [
-        0.70850885,
-        0.25460258,
-        0.42865148,
+        0.28974184,
+        0.22415082,
+        0.24653533,
         0.0
       ]
     }

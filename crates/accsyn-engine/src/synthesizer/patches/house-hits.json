@@ -4,7 +4,7 @@
     "resonance": 0.17490233,
     "filter_poles": 4,
     "key_tracking_amount": 0.5,
-    "current_note_number": 65
+    "current_note_number": 59
   },
   "mixer": {
     "level": 1.0002447,
@@ -42,31 +42,31 @@
   },
   "lfos": [
     {
-      "center_value": 1.0,
       "frequency": 10.0,
       "synced_frequency": 0.5,
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
-      "phase": 0.0,
+      "center_value": 1.0,
       "range": 2.0,
-      "reset": false,
+      "phase": 0.0,
       "wave_shape": 0,
+      "reset": false,
       "gate_flag": false
     },
     {
-      "center_value": 0.0,
       "frequency": 0.1,
       "synced_frequency": 0.5,
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
-      "phase": 0.0,
+      "center_value": 0.0,
       "range": 0.0,
-      "reset": false,
+      "phase": 0.0,
       "wave_shape": 0,
+      "reset": false,
       "gate_flag": false
     }
   ],
@@ -92,14 +92,14 @@
       "gate_flag": 0
     },
     {
-      "amount": 1,
       "attack_ms": 1,
       "decay_ms": 200,
-      "gate_flag": 0,
-      "is_inverted": false,
       "release_ms": 10,
-      "sustain_level": 0,
-      "sustain_pedal": false
+      "sustain_level": 0.0,
+      "amount": 1.0,
+      "sustain_pedal": false,
+      "is_inverted": false,
+      "gate_flag": 0
     }
   ],
   "oscillators": [
@@ -107,61 +107,61 @@
       "fine_tune": 9,
       "course_tune": 0,
       "pitch_bend": 0,
-      "shape_parameter1": 0.0,
-      "shape_parameter2": 0.0,
-      "wave_shape_index": 3,
+      "shape_parameter1": 0.1,
+      "shape_parameter2": 1.0,
+      "wave_shape_index": 6,
       "gate_flag": false,
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": false,
       "portamento_time": 7,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     },
     {
       "fine_tune": 7,
       "course_tune": 3,
       "pitch_bend": 0,
-      "shape_parameter1": 0.0,
-      "shape_parameter2": 0.0,
-      "wave_shape_index": 3,
+      "shape_parameter1": 0.1,
+      "shape_parameter2": 1.0,
+      "wave_shape_index": 6,
       "gate_flag": false,
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": false,
       "portamento_time": 7,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     },
     {
       "fine_tune": -7,
       "course_tune": 7,
       "pitch_bend": 0,
-      "shape_parameter1": 0.0,
-      "shape_parameter2": 0.0,
-      "wave_shape_index": 3,
+      "shape_parameter1": 0.1,
+      "shape_parameter2": 1.0,
+      "wave_shape_index": 6,
       "gate_flag": false,
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": false,
       "portamento_time": 7,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     },
     {
       "fine_tune": 7,
       "course_tune": 0,
       "pitch_bend": 0,
-      "shape_parameter1": 0.0,
-      "shape_parameter2": 0.0,
-      "wave_shape_index": 3,
+      "shape_parameter1": 0.1,
+      "shape_parameter2": 1.0,
+      "wave_shape_index": 6,
       "gate_flag": false,
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": false,
       "portamento_time": 7,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     }
   ],
   "effects": [
