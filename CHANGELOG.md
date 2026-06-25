@@ -14,6 +14,7 @@ This project has switched from Semantic Versioning to Calendar Versioning.
 - Display values for the Filter option panel controls
 - New factory presets
 - Integration tests verifying the engine starts up and generates sound on a MIDI gate-on command
+- MIDI Transport Stop messages reset the midi clock BPM detection to 0
 
 ### Fixed
 - The f64-to-f32 clamping helper was cutting off negative sample values
