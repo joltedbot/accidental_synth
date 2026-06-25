@@ -177,7 +177,7 @@
     },
     {
       "name": "Colour Compressor",
-      "is_enabled": true,
+      "is_enabled": false,
       "parameters": [
         0.1091712,
         0.2462636,

@@ -101,7 +101,6 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
         include_str!("patches/shred-auto-arp.json"),
     ),
     ("Singing Bowls*", include_str!("patches/singing-bowls.json")),
-    ("Slide Bass*", include_str!("patches/slide-bass.json")),
     (
         "Supersaw 5ths Repeater*",
         include_str!("patches/supersaw-5ths-repeater.json"),
