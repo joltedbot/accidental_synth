@@ -38,9 +38,7 @@ use self::sine::Sine;
 use self::square::Square;
 use self::supersaw::Supersaw;
 use self::triangle::Triangle;
-use crate::modules::oscillator::constants::{
-    DEFAULT_HARD_SYNC_ENABLED, DEFAULT_PORTAMENTO_ENABLED,
-};
+use crate::modules::oscillator::constants::{DEFAULT_HARD_SYNC_ENABLED, DEFAULT_PORTAMENTO_ENABLED, MAX_CLIP_BOOST};
 use accsyn_core::defaults::Defaults;
 use accsyn_core::math;
 use accsyn_core::math::{dbfs_to_f32_sample, f32s_are_equal};
@@ -407,8 +405,9 @@ impl Oscillator {
             return signal;
         }
 
+
         let boost = dbfs_to_f32_sample(f32::from(self.clipper_boost));
-        let boosted_signal = signal * (boost + (boost * self.aftertouch));
+        let boosted_signal = signal * (boost + (f32::from(MAX_CLIP_BOOST) * self.aftertouch));
         boosted_signal.clamp(-1.0, 1.0)
     }
 

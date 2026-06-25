@@ -13,6 +13,8 @@ pub enum MidiEvent {
     PitchBend(u16),
     /// Channel pressure (aftertouch) event (pressure value).
     ChannelPressure(u8),
+    /// Midi Transport Stop Message
+    Stop,
     /// Clock pulse event
     Clock,
     /// Reset event - Usually from a panic button

@@ -2,6 +2,38 @@
 
 This project has switched from Semantic Versioning to Calendar Versioning.
 
+## [Unreleased]
+
+### Added
+- MIDI clock sync for LFOs: LFO rates can lock to the incoming MIDI clock in 32nd-note intervals, phase-synced to the beat
+- MIDI clock BPM display in the application header
+- Key sync (MIDI note-on) feature for the LFOs, including MIDI CC control and UI updates
+- Voice blend control for the supersaw oscillator, plus a detune control in the UI
+- Blend control for the Bit Shifter, Wave Rectifier, and Compressor effects
+- Display values for the Oscillator panel controls
+- Display values for the Filter option panel controls
+- New factory presets
+- Integration tests verifying the engine starts up and generates sound on a MIDI gate-on command
+
+### Fixed
+- The f64-to-f32 clamping helper was cutting off negative sample values
+- Phase precision issue in the oscillators and LFOs at the slowest BPM and LFO intervals (processing switched from 32-bit to 64-bit)
+- Impossible default for the AM oscillator amount
+- Default values for the supersaw detune and voice blend
+- Wave-shape-specific oscillator parameters now receive proper defaults in the UI when the wave shape changes
+- Regression that hid the units on the oscillator coarse and fine tune control labels
+- Fine tune cents display value now updates correctly when a patch is loaded
+- Audio output device list no longer incorrectly includes input devices
+- Numerous Clippy pedantic casting warnings
+
+### Changed
+- Completed the migration from CPAL to coreaudio-rs, removing the unmaintained CPAL dependency; audio output now supports i8, i16, i24, i32, and f32 sample formats
+- MIDI system message handling updated to properly handle clock and reset messages
+- Increased the maximum patch file size used to filter out invalid JSON, allowing for formatting variation and headroom for new fields
+- Updated PATCHES.md to document the new patch format (clock and LFO sync fields)
+- Updated existing presets to incorporate the new defaults and key/clock sync fields
+- Updated dependencies
+
 ## [2026.05.10.1] - 2026-05-10
 
 ### Added

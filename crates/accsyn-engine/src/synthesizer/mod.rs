@@ -329,6 +329,9 @@ impl Synthesizer {
                             program_number,
                         );
                     }
+                    MidiEvent::Stop => {
+                        
+                    }
                     MidiEvent::Clock => {
                         if clock.tick_is_32nd_note() {
                             log::trace!(target: "synthesizer", "Clock tick is 32nd note");
