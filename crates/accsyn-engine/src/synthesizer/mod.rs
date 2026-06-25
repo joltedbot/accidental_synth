@@ -329,7 +329,7 @@ impl Synthesizer {
                             &ui_update_sender,
                             &synthesizer_update_sender,
                             program_number,
-                        );
+                        );g
                     }
                     MidiEvent::Stop => {
                         log::trace!(target: "synthesizer", "Midi Transport Stop Event");
