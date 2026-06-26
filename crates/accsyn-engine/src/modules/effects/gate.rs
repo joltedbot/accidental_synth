@@ -1,4 +1,4 @@
-use accsyn_core::defaults::MAX_SAMPLE_VALUE;
+use accsyn_core::defaults::Defaults;
 use accsyn_core::effects::{AudioEffect, EffectParameters};
 
 pub struct Gate {}
@@ -41,7 +41,8 @@ fn gate_sample(sample: f32, threshold: f32, pre_gain: f32, post_gain: f32) -> f3
         boosted_sample = 0.0;
     }
 
-    (boosted_sample * (1.0 + post_gain.abs())).clamp(-MAX_SAMPLE_VALUE, MAX_SAMPLE_VALUE)
+    (boosted_sample * (1.0 + post_gain.abs()))
+        .clamp(-Defaults::MAX_SAMPLE_VALUE, Defaults::MAX_SAMPLE_VALUE)
 }
 
 #[cfg(test)]

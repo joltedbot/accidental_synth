@@ -1,9 +1,10 @@
 use crate::modules::effects::constants::{
     AUTO_PAN_MAX_WIDTH, DEFAULT_LFO_WAVESHAPE_INDEX, EFFECTS_LFO_CENTER_VALUE,
 };
-use crate::modules::lfo::{DEFAULT_LFO_FREQUENCY, Lfo};
+use crate::modules::lfo::Lfo;
 use crate::synthesizer::midi_value_converters::exponential_curve_lfo_frequency_from_normal_value;
 use accsyn_core::casting::f32_to_u8_clamped;
+use accsyn_core::defaults::Defaults;
 use accsyn_core::effects::{AudioEffect, EffectParameters};
 use accsyn_core::math::f32s_are_equal;
 use std::f32::consts::PI;
@@ -28,7 +29,7 @@ impl AutoPan {
         lfo.set_center_value(EFFECTS_LFO_CENTER_VALUE);
 
         let lfo_parameters = LfoParameters {
-            frequency: DEFAULT_LFO_FREQUENCY,
+            frequency: Defaults::LFO_FREQUENCY,
             width: AUTO_PAN_MAX_WIDTH,
             waveshape_index: DEFAULT_LFO_WAVESHAPE_INDEX,
         };

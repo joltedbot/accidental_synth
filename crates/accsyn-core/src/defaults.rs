@@ -39,6 +39,8 @@ impl Defaults {
     pub const MAXIMUM_BALANCE_RANGE: f32 = 1.0;
     /// Minimum balance range for output and sub-oscillator mixers.
     pub const MINIMUM_BALANCE_RANGE: f32 = -1.0;
+    /// Center value for mixer balances
+    pub const BALANCE_CENTER_VALUE: f32 = 0.0;
     /// Default per-oscillator mute state.
     pub const QUAD_MIXER_IS_MUTED: bool = false;
 
@@ -56,30 +58,84 @@ impl Defaults {
     /// Maximum allowed pitch bend range in semitones.
     pub const MAXIMUM_PITCH_BEND_RANGE: u32 = 12;
 
-    /// The default range for LFOs
-    pub const DEFAULT_RANGE: f32 = 2.0;
-}
+    // Effects Constants
+    /// Default delay effect parameters: [time, feedback, mix, unused].
+    pub const DELAY_PARAMETERS: [f32; 4] = [0.5, 0.5, 0.5, 0.0];
+    /// Default autopan effect parameters: [rate, depth, unused, unused].
+    pub const AUTOPAN_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
+    /// Default tremolo effect parameters: [rate, depth, unused, unused].
+    pub const TREMOLO_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
+    /// Default Saturation effect parameters: [Amount, Cut, unused, unused].
+    pub const SATURATION_PARAMETERS: [f32; 4] = [0.0, 0.0, 1.0, 0.0];
+    /// Default compressor effect parameters: [threshold, ratio, unused, unused].
+    pub const COMPRESSOR_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
+    /// Default bitshifter effect parameters: [Full/Half Wave, blend, unused, unused].
+    pub const BITSHIFTER_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
+    /// Default rectifier effect parameters: [Full/Half Wave, blend, unused, unused].
+    pub const RECTIFIER_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
+    /// Default clipper effect parameters: [threshold, unused, unused, unused].
+    pub const CLIPPER_PARAMETERS: [f32; 4] = [1.0, 0.0, 0.0, 0.0];
+    /// Default gate effect parameters: [threshold, ratio, unused, unused].
+    pub const GATE_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
+    /// Default effect parameters when not otherwise specified.
+    pub const EFFECT_PARAMETERS: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
 
-/// Default delay effect parameters: [time, feedback, mix, unused].
-pub const DELAY_DEFAULT_PARAMETERS: [f32; 4] = [0.5, 0.5, 0.5, 0.0];
-/// Default autopan effect parameters: [rate, depth, unused, unused].
-pub const AUTOPAN_DEFAULT_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
-/// Default tremolo effect parameters: [rate, depth, unused, unused].
-pub const TREMOLO_DEFAULT_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
-/// Default Saturation effect parameters: [Amount, Cut, unused, unused].
-pub const SATURATION_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 0.0, 1.0, 0.0];
-/// Default compressor effect parameters: [threshold, ratio, unused, unused].
-pub const COMPRESSOR_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
-/// Default bitshifter effect parameters: [Full/Half Wave, blend, unused, unused].
-pub const BITSHIFTER_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
-/// Default rectifier effect parameters: [Full/Half Wave, blend, unused, unused].
-pub const RECTIFIER_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
-/// Default clipper effect parameters: [threshold, unused, unused, unused].
-pub const CLIPPER_DEFAULT_PARAMETERS: [f32; 4] = [1.0, 0.0, 0.0, 0.0];
-/// Default gate effect parameters: [threshold, ratio, unused, unused].
-pub const GATE_DEFAULT_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
-/// Default effect parameters when not otherwise specified.
-pub const DEFAULT_EFFECT_PARAMETERS: [f32; 4] = [0.0, 0.0, 0.0, 0.0];
+    // LFO Constants
+    /// The default range for LFOs
+    pub const LFO_RANGE: f32 = 2.0;
+    /// Center value for LFO ranges
+    pub const LFO_CENTER_VALUE: f32 = 0.0;
+    /// Maximum absolute sample value before clipping.
+    pub const MAX_SAMPLE_VALUE: f32 = 1.0;
+    /// Maximum oscillator fine-tune offset in cents.
+    pub const OSCILLATOR_FINE_TUNE_MAX_CENTS: i8 = 63;
+    /// Minimum oscillator fine-tune offset in cents.
+    pub const OSCILLATOR_FINE_TUNE_MIN_CENTS: i8 = -63;
+    /// Maximum oscillator coarse-tune interval in semitones.
+    pub const OSCILLATOR_COURSE_TUNE_MAX_INTERVAL: i8 = 12;
+    /// Minimum oscillator coarse-tune interval in semitones.
+    pub const OSCILLATOR_COURSE_TUNE_MIN_INTERVAL: i8 = -12;
+    /// Maximum oscillator pitch envelope amount.
+    pub const OSCILLATOR_MAX_PITCH_ENVELOPE_AMOUNT: f32 = 1.0;
+    /// Minimum oscillator pitch envelope amount.
+    pub const OSCILLATOR_MIN_PITCH_ENVELOPE_AMOUNT: f32 = -1.0;
+    /// Maximum filter cutoff frequency in Hz.
+    pub const MAX_FILTER_CUTOFF: f32 = 20000.0;
+    /// Minimum filter cutoff frequency in Hz.
+    pub const MIN_FILTER_CUTOFF: f32 = 0.0;
+    /// Minimum filter resonance (0.0–1.0).
+    pub const MIN_FILTER_RESONANCE: f32 = 0.0;
+    /// Maximum filter resonance (0.0–1.0).
+    pub const MAX_FILTER_RESONANCE: f32 = 0.90;
+    /// Minimum LFO frequency in Hz.
+    pub const MIN_LFO_FREQUENCY: f32 = 0.01;
+    /// Maximum LFO frequency in Hz.
+    pub const MAX_LFO_FREQUENCY: f32 = 20000.0;
+    /// Maximum LFO output range (peak-to-peak).
+    pub const MAX_LFO_RANGE: f32 = 2.0;
+    /// Minimum LFO output range (peak-to-peak).
+    pub const MIN_LFO_RANGE: f32 = 0.01;
+    /// Maximum LFO center value (bipolar offset).
+    pub const MAX_LFO_CENTER_VALUE: f32 = 1.0;
+    /// Minimum LFO center value (bipolar offset).
+    pub const MIN_LFO_CENTER_VALUE: f32 = -1.0;
+    /// Default LFO starting phase.
+    pub const LFO_PHASE: f32 = 0.0;
+    /// Default LFO frequency in Hz.
+    pub const LFO_FREQUENCY: f32 = 0.1;
+    /// Default LFO frequency in Hz when clock synced
+    pub const LFO_SYNCED_FREQUENCY: f32 = 0.5;
+    /// Default LFO sync interval in thirty-second notes.
+    pub const LFO_THIRTY_SECOND_NOTES: u16 = 0;
+    /// Default LFO clock sync state
+    pub const CLOCK_SYNCED_STATE: bool = false;
+    /// Default LFO key sync state
+    pub const KEY_SYNCED_STATE: bool = false;
+    /// Default LFO reset state
+    pub const LFO_RESET_STATE: bool = false;
+    /// Default LFO gate  state
+    pub const LFO_GATE_STATE: bool = false;
+}
 
 impl Defaults {
     /// MIDI note number to frequency (Hz) and note name lookup table.
@@ -214,26 +270,3 @@ impl Defaults {
         (12543.854, "G9"),
     ];
 }
-
-/// Maximum absolute sample value before clipping.
-pub const MAX_SAMPLE_VALUE: f32 = 1.0;
-/// Maximum oscillator fine-tune offset in cents.
-pub const OSCILLATOR_FINE_TUNE_MAX_CENTS: i8 = 63;
-/// Minimum oscillator fine-tune offset in cents.
-pub const OSCILLATOR_FINE_TUNE_MIN_CENTS: i8 = -63;
-/// Maximum oscillator coarse-tune interval in semitones.
-pub const OSCILLATOR_COURSE_TUNE_MAX_INTERVAL: i8 = 12;
-/// Minimum oscillator coarse-tune interval in semitones.
-pub const OSCILLATOR_COURSE_TUNE_MIN_INTERVAL: i8 = -12;
-/// Maximum oscillator pitch envelope amount.
-pub const OSCILLATOR_MAX_PITCH_ENVELOPE_AMOUNT: f32 = 1.0;
-/// Minimum oscillator pitch envelope amount.
-pub const OSCILLATOR_MIN_PITCH_ENVELOPE_AMOUNT: f32 = -1.0;
-/// Maximum filter cutoff frequency in Hz.
-pub const MAX_FILTER_CUTOFF: f32 = 20000.0;
-/// Minimum filter cutoff frequency in Hz.
-pub const MIN_FILTER_CUTOFF: f32 = 0.0;
-/// Minimum filter resonance (0.0–1.0).
-pub const MIN_FILTER_RESONANCE: f32 = 0.0;
-/// Maximum filter resonance (0.0–1.0).
-pub const MAX_FILTER_RESONANCE: f32 = 0.90;

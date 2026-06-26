@@ -28,12 +28,12 @@ sure you know what you're doing first and why you have to do this little dance.
 
 ## Features
 Current:
-- Four-oscillator mono synth voice with multiple waveforms (sine, saw, square, triangle, pulse, supersaw, FM, AM, Broken, noise)
+- Four-oscillator mono synth voice with multiple waveforms (sine, triangle, square, saw, pulse, ramp, supersaw, AM, FM, Broken, and noise); the supersaw offers detune and voice-blend controls
 - Resonant lowpass filter with key tracking, envelope, and LFO modulation
-- Three ADSR envelopes (amplitude, pitch, and filter) and two LFOs for modulation (pitch via the mod wheel and filter)
+- Three ADSR envelopes (amplitude, pitch, and filter) and two LFOs for modulation (pitch via the mod wheel and filter), each with optional MIDI-clock sync and key sync
 - Audio effects: saturation, compressor, wave folder, clipper, gate, rectifier, bit shifter, delay, auto pan, and tremolo 
 - Preset & user patch system: save, load, and delete user patches; factory patches loaded in the app
-- MIDI input: Note On/Off, Velocity, Pitch Bend, Control Change, Channel Pressure, Sustain Pedal, Program Change (see implementation chart in the 
+- MIDI input: Note On/Off, Velocity, Pitch Bend, Control Change, Channel Pressure, Sustain Pedal, Program Change, MIDI Clock (tempo sync with header BPM display) (see implementation chart in the 
   Wiki)
 - Virtual MIDI input device for DAW integration; omni mode or per-channel filtering
 - Hot-swappable MIDI and audio devices

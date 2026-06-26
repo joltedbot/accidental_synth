@@ -1,9 +1,9 @@
-# MIDI Implementation Chart v2.0
+# MIDI Implementation Chart v2.1
 
 **Manufacturer:** Dave White
 **Model:** Accidental Synthesizer (AccSyn)
-**Version:** 0.1.1
-**Date:** 2026-01-11
+**Version:** Development build (post-2026.05.10.1, CalVer)
+**Date:** 2026-06-25
 
 ---
 
@@ -28,7 +28,7 @@
 | Poly (Key) Aftertouch | No | No                |                                                                                                                                |
 | Pitch Bend | No | Yes               |                                                                                                                                |
 | Active Sensing | No | No                |                                                                                                                                |
-| System Reset | No | No                |                                                                                                                                |
+| System Reset | No | Yes               | Resets the MIDI clock detection BPM to 0 or Off                                                                                 |
 | Tune Request | No | No                |                                                                                                                                |
 | **Universal System Exclusive:** | |                   |                                                                                                                                |
 | Sample Dump Standard | No | No                |                                                                                                                                |
@@ -57,7 +57,7 @@
 | RPN 04 (Tuning Bank Select) | No | No                |                                                                                                                                |
 | RPN 05 (Modulation Depth Range) | No | No                |                                                                                                                                |
 | **2. MIDI Timing and Synchronization** | |                   |                                                                                                                                |
-| MIDI Clock | No | No                |                                                                                                                                |
+| MIDI Clock | No | Yes               | Tracks tempo for clock-synced LFOs and the header BPM display (32nd-note resolution)                                            |
 | Song Position Pointer | No | No                |                                                                                                                                |
 | Song Select | No | No                |                                                                                                                                |
 | Start | No | No                |                                                                                                                                |
@@ -228,7 +228,7 @@
 
 7. **Pitch Bend**: Pitch bend is recognized with a range configurable via CC #5 (Pitch Bend Range), specified in semitones.
 
-8. **LFO Control**: Two LFOs are available - one controlled by the mod wheel (CC #1) with parameters on CCs 102-107, and one for filter modulation with parameters on CCs 108-112.
+8. **LFO Control**: Two LFOs are available - one controlled by the mod wheel (CC #1) with parameters on CCs 102-107, and one for filter modulation with parameters on CCs 108-112. Both LFOs can be clock-synced (mod wheel LFO via CC #101, filter LFO via CC #113) and key-synced (filter LFO via CC #114, mod wheel LFO via CC #115). When clock sync is enabled, the LFO rate locks to the incoming MIDI clock in 32nd-note intervals and is reflected by the header BPM display.
 
 9. **Effects**: Built-in effects include wave folder, clipper, bit shifter, and rectifiers. Some effects parameters can be controlled via aftertouch and CCs.
 

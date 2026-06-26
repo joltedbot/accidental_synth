@@ -1,5 +1,4 @@
 use crate::modules::effects::EffectIndex;
-use crate::modules::lfo::DEFAULT_LFO_PHASE;
 use crate::modules::oscillator::constants::OSCILLATOR_WAVESHAPE_PARAMETER_DEFAULTS;
 use crate::synthesizer::ModuleParameters;
 use crate::synthesizer::clock::bpm_from_thirty_second_note_duration;
@@ -24,6 +23,7 @@ use crate::synthesizer::set_parameters::{
     set_pitch_bend_range, set_portamento_enabled, set_portamento_time, set_velocity_curve,
 };
 use accsyn_core::casting::i32_to_u8_clamped;
+use accsyn_core::defaults::Defaults;
 use accsyn_core::synth_events::{
     EnvelopeIndex, LFO_SYNC_INTERVAL_NAMES, LFOIndex, LfoSyncInterval, OscillatorIndex,
     SynthesizerUpdateEvents,
@@ -494,7 +494,7 @@ pub fn start_update_event_listener(
                         }
                     }
                     if let Err(e) =
-                        ui_update_sender.send(UIUpdates::LFOPhase(lfo_index, DEFAULT_LFO_PHASE))
+                        ui_update_sender.send(UIUpdates::LFOPhase(lfo_index, Defaults::LFO_PHASE))
                     {
                         log::error!(target: "synthesizer::event_listener", "Failed to send LFO phase reset to the UI: {e}");
                     }

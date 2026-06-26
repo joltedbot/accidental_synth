@@ -8,37 +8,6 @@ use std::default::Default;
 use std::sync::atomic::Ordering::Relaxed;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU16};
 
-/// Minimum LFO frequency in Hz.
-pub const MIN_LFO_FREQUENCY: f32 = 0.01;
-/// Maximum LFO frequency in Hz.
-pub const MAX_LFO_FREQUENCY: f32 = 20000.0;
-/// Maximum LFO output range (peak-to-peak).
-pub const MAX_LFO_RANGE: f32 = 2.0;
-/// Minimum LFO output range (peak-to-peak).
-pub const MIN_LFO_RANGE: f32 = 0.01;
-/// Maximum LFO center value (bipolar offset).
-pub const MAX_LFO_CENTER_VALUE: f32 = 1.0;
-/// Minimum LFO center value (bipolar offset).
-pub const MIN_LFO_CENTER_VALUE: f32 = -1.0;
-/// Default LFO starting phase.
-pub const DEFAULT_LFO_PHASE: f32 = 0.0;
-/// Default LFO frequency in Hz.
-pub const DEFAULT_LFO_FREQUENCY: f32 = 0.1;
-/// Default LFO frequency in Hz when clock synced
-pub const DEFAULT_LFO_SYNCED_FREQUENCY: f32 = 0.5;
-/// Default LFO sync interval in thirty-second notes.
-pub const DEFAULT_LFO_THIRTY_SECOND_NOTES: u16 = 0;
-/// Default LFO clock sync state
-pub const DEFAULT_CLOCK_SYNCED_STATE: bool = false;
-/// Default LFO key sync state
-pub const DEFAULT_KEY_SYNCED_STATE: bool = false;
-/// Default LFO reset state
-pub const DEFAULT_LFO_RESET_STATE: bool = false;
-/// Default LFO gate  state
-pub const DEFAULT_LFO_GATE_STATE: bool = false;
-
-const DEFAULT_CENTER_VALUE: f32 = 0.0;
-
 /// Shared atomic parameters for controlling an LFO from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LfoParameters {
@@ -90,18 +59,18 @@ impl LfoParameters {
 impl Default for LfoParameters {
     fn default() -> Self {
         Self {
-            frequency: Hertz::new(DEFAULT_LFO_FREQUENCY),
-            synced_frequency: Hertz::new(DEFAULT_LFO_SYNCED_FREQUENCY),
+            frequency: Hertz::new(Defaults::LFO_FREQUENCY),
+            synced_frequency: Hertz::new(Defaults::LFO_SYNCED_FREQUENCY),
             sync_triggered: AtomicBool::new(false),
-            thirty_second_notes: AtomicU16::new(DEFAULT_LFO_THIRTY_SECOND_NOTES),
-            clock_synced: AtomicBool::new(DEFAULT_CLOCK_SYNCED_STATE),
-            key_synced: AtomicBool::new(DEFAULT_KEY_SYNCED_STATE),
-            center_value: Balance::new(DEFAULT_CENTER_VALUE),
-            range: LfoRange::new(Defaults::DEFAULT_RANGE),
-            phase: NormalizedValue::new(DEFAULT_LFO_PHASE),
+            thirty_second_notes: AtomicU16::new(Defaults::LFO_THIRTY_SECOND_NOTES),
+            clock_synced: AtomicBool::new(Defaults::CLOCK_SYNCED_STATE),
+            key_synced: AtomicBool::new(Defaults::KEY_SYNCED_STATE),
+            center_value: Balance::new(Defaults::LFO_CENTER_VALUE),
+            range: LfoRange::new(Defaults::LFO_RANGE),
+            phase: NormalizedValue::new(Defaults::LFO_PHASE),
             wave_shape: AtomicU8::new(WaveShape::default() as u8),
-            reset: AtomicBool::new(DEFAULT_LFO_RESET_STATE),
-            gate_flag: AtomicBool::new(DEFAULT_LFO_GATE_STATE),
+            reset: AtomicBool::new(Defaults::LFO_RESET_STATE),
+            gate_flag: AtomicBool::new(Defaults::LFO_GATE_STATE),
         }
     }
 }
@@ -126,13 +95,13 @@ impl Lfo {
         let oscillator = Oscillator::new(sample_rate, WaveShape::Sine);
         Self {
             oscillator,
-            frequency: DEFAULT_LFO_FREQUENCY,
+            frequency: Defaults::LFO_FREQUENCY,
             sync_armed: false,
             clock_synced: false,
             key_synced: false,
-            center_value: DEFAULT_CENTER_VALUE,
-            range: Defaults::DEFAULT_RANGE,
-            phase: DEFAULT_LFO_PHASE,
+            center_value: Defaults::LFO_CENTER_VALUE,
+            range: Defaults::LFO_RANGE,
+            phase: Defaults::LFO_PHASE,
             wave_shape_index: WaveShape::Sine as u8,
         }
     }
@@ -197,7 +166,7 @@ impl Lfo {
 
     /// Sets the LFO frequency in Hz, clamped to the valid range.
     pub fn set_frequency(&mut self, frequency: f32) {
-        self.frequency = frequency.clamp(MIN_LFO_FREQUENCY, MAX_LFO_FREQUENCY);
+        self.frequency = frequency.clamp(Defaults::MIN_LFO_FREQUENCY, Defaults::MAX_LFO_FREQUENCY);
         self.oscillator.set_frequency(self.frequency);
     }
 
@@ -208,7 +177,10 @@ impl Lfo {
 
     /// Sets the LFO center value (DC offset), clamped to [-1, 1].
     pub fn set_center_value(&mut self, center_value: f32) {
-        self.center_value = center_value.clamp(MIN_LFO_CENTER_VALUE, MAX_LFO_CENTER_VALUE);
+        self.center_value = center_value.clamp(
+            Defaults::MIN_LFO_CENTER_VALUE,
+            Defaults::MAX_LFO_CENTER_VALUE,
+        );
     }
 
     /// Sets the LFO output range (peak-to-peak), clamped to valid bounds or zero.
@@ -217,7 +189,7 @@ impl Lfo {
             self.reset();
             0.0
         } else {
-            range.clamp(MIN_LFO_RANGE, MAX_LFO_RANGE)
+            range.clamp(Defaults::MIN_LFO_RANGE, Defaults::MAX_LFO_RANGE)
         }
     }
 
@@ -270,11 +242,11 @@ mod tests {
     #[test]
     fn test_set_frequency_clamps_to_minimum() {
         let mut lfo = Lfo::new(SAMPLE_RATE);
-        let below_min = MIN_LFO_FREQUENCY - 1.0;
+        let below_min = Defaults::MIN_LFO_FREQUENCY - 1.0;
 
         lfo.set_frequency(below_min);
         let actual = lfo.frequency;
-        let expected = MIN_LFO_FREQUENCY;
+        let expected = Defaults::MIN_LFO_FREQUENCY;
 
         assert!(f32s_are_equal(actual, expected));
     }
@@ -282,11 +254,11 @@ mod tests {
     #[test]
     fn test_set_frequency_clamps_to_maximum() {
         let mut lfo = Lfo::new(SAMPLE_RATE);
-        let above_max = MAX_LFO_FREQUENCY + 1.0;
+        let above_max = Defaults::MAX_LFO_FREQUENCY + 1.0;
 
         lfo.set_frequency(above_max);
         let actual = lfo.frequency;
-        let expected = MAX_LFO_FREQUENCY;
+        let expected = Defaults::MAX_LFO_FREQUENCY;
 
         assert!(f32s_are_equal(actual, expected));
     }
@@ -295,11 +267,11 @@ mod tests {
     #[test]
     fn test_set_center_value_clamps_to_minimum() {
         let mut lfo = Lfo::new(SAMPLE_RATE);
-        let below_min = MIN_LFO_CENTER_VALUE - 1.0;
+        let below_min = Defaults::MIN_LFO_CENTER_VALUE - 1.0;
 
         lfo.set_center_value(below_min);
         let actual = lfo.center_value;
-        let expected = MIN_LFO_CENTER_VALUE;
+        let expected = Defaults::MIN_LFO_CENTER_VALUE;
 
         assert!(f32s_are_equal(actual, expected));
     }
@@ -307,11 +279,11 @@ mod tests {
     #[test]
     fn test_set_center_value_clamps_to_maximum() {
         let mut lfo = Lfo::new(SAMPLE_RATE);
-        let above_max = MAX_LFO_CENTER_VALUE + 1.0;
+        let above_max = Defaults::MAX_LFO_CENTER_VALUE + 1.0;
 
         lfo.set_center_value(above_max);
         let actual = lfo.center_value;
-        let expected = MAX_LFO_CENTER_VALUE;
+        let expected = Defaults::MAX_LFO_CENTER_VALUE;
 
         assert!(f32s_are_equal(actual, expected));
     }
@@ -331,11 +303,11 @@ mod tests {
     #[test]
     fn test_set_range_clamps_to_minimum() {
         let mut lfo = Lfo::new(SAMPLE_RATE);
-        let below_min = MIN_LFO_RANGE - 0.1;
+        let below_min = Defaults::MIN_LFO_RANGE - 0.1;
 
         lfo.set_range(below_min);
         let actual = lfo.range;
-        let expected = MIN_LFO_RANGE;
+        let expected = Defaults::MIN_LFO_RANGE;
 
         assert!(f32s_are_equal(actual, expected));
     }
@@ -343,11 +315,11 @@ mod tests {
     #[test]
     fn test_set_range_clamps_to_maximum() {
         let mut lfo = Lfo::new(SAMPLE_RATE);
-        let above_max = MAX_LFO_RANGE + 1.0;
+        let above_max = Defaults::MAX_LFO_RANGE + 1.0;
 
         lfo.set_range(above_max);
         let actual = lfo.range;
-        let expected = MAX_LFO_RANGE;
+        let expected = Defaults::MAX_LFO_RANGE;
 
         assert!(f32s_are_equal(actual, expected));
     }
@@ -384,7 +356,7 @@ mod tests {
     #[test]
     fn test_set_phase_updates_when_changed() {
         let mut lfo = Lfo::new(SAMPLE_RATE);
-        let initial_phase = DEFAULT_LFO_PHASE;
+        let initial_phase = Defaults::LFO_PHASE;
         let new_phase = 1.5;
 
         assert!(f32s_are_equal(lfo.phase, initial_phase));

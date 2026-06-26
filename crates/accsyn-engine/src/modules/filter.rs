@@ -1,6 +1,6 @@
 // Derived from https://www.musicdsp.org/en/latest/Filters/253-perfect-lp4-filter.html
 
-use accsyn_core::defaults::MAX_FILTER_CUTOFF;
+use accsyn_core::defaults::Defaults;
 use accsyn_core::parameter_types::{FilterPoles, Hertz, NormalizedValue};
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::AtomicU8;
@@ -105,7 +105,7 @@ impl Filter {
         // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
         #[allow(clippy::cast_precision_loss)]
         let max_frequency =
-            (sample_rate as f32 * MAX_FILTER_PERCENT_OF_NYQUIST).min(MAX_FILTER_CUTOFF);
+            (sample_rate as f32 * MAX_FILTER_PERCENT_OF_NYQUIST).min(Defaults::MAX_FILTER_CUTOFF);
 
         let cutoff_coefficient = calculate_cutoff_coefficient(max_frequency, sample_rate);
         let gain_coefficient = calculate_gain_coefficient(cutoff_coefficient);

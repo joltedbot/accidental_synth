@@ -289,7 +289,7 @@ Both oscillators and LFOs use the same waveform index table:
 | 3     | Saw      | Rising sawtooth                                                                       |
 | 4     | Pulse    | Pulse with duty cycle control (shape_parameter1 controls duty cycle)                  |
 | 5     | Ramp     | Falling sawtooth ramp                                                                 |
-| 6     | Supersaw | Detuned sawtooth stack                                                                |
+| 6     | Supersaw | Detuned sawtooth stack (shape_parameter1: detune spread, shape_parameter2: voice blend) |
 | 7     | AM       | Amplitude modulation (shape_parameter1: AM amount, shape_parameter2: Ring Mod Amount) |
 | 8     | FM       | Frequency modulation (shape_parameter1: FM Amount, shape_parameter2: Ratio)           |
 | 9     | Broken   | Some kind of broken oscillator (shape_parameter1 control jank amount)                 |

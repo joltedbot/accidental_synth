@@ -14,7 +14,16 @@ impl NormalizedValue {
     #[must_use]
     pub fn new(normalized: f32) -> Self {
         Self {
-            value: AtomicU32::new(normalized.to_bits()),
+            value: AtomicU32::new(NormalizedValue::sanitize(normalized).to_bits()),
+        }
+    }
+
+    #[inline]
+    fn sanitize(value: f32) -> f32 {
+        if value.is_finite() {
+            value.clamp(0.0, 1.0)
+        } else {
+            0.0
         }
     }
 
@@ -27,7 +36,8 @@ impl NormalizedValue {
     /// Stores a new f32 value.
     #[inline]
     pub fn store(&self, normalized: f32) {
-        self.value.store(normalized.to_bits(), Ordering::Relaxed);
+        self.value
+            .store(Self::sanitize(normalized).to_bits(), Ordering::Relaxed);
     }
 }
 
@@ -64,7 +74,16 @@ impl Hertz {
     #[must_use]
     pub fn new(hz: f32) -> Self {
         Self {
-            value: AtomicU32::new(hz.to_bits()),
+            value: AtomicU32::new(Hertz::sanitize(hz).to_bits()),
+        }
+    }
+
+    #[inline]
+    fn sanitize(value: f32) -> f32 {
+        if value.is_finite() {
+            value.clamp(Defaults::MIN_FILTER_CUTOFF, Defaults::MAX_FILTER_CUTOFF)
+        } else {
+            0.0
         }
     }
 
@@ -77,7 +96,8 @@ impl Hertz {
     /// Stores a new frequency in Hz.
     #[inline]
     pub fn store(&self, hz: f32) {
-        self.value.store(hz.to_bits(), Ordering::Relaxed);
+        self.value
+            .store(Self::sanitize(hz).to_bits(), Ordering::Relaxed);
     }
 }
 
@@ -164,7 +184,16 @@ impl LfoRange {
     #[must_use]
     pub fn new(range: f32) -> Self {
         Self {
-            value: AtomicU32::new(range.to_bits()),
+            value: AtomicU32::new(LfoRange::sanitize(range).to_bits()),
+        }
+    }
+
+    #[inline]
+    fn sanitize(value: f32) -> f32 {
+        if value.is_finite() {
+            value.clamp(Defaults::MIN_LFO_RANGE, Defaults::MAX_LFO_RANGE)
+        } else {
+            Defaults::MIN_LFO_RANGE
         }
     }
 
@@ -177,14 +206,15 @@ impl LfoRange {
     /// Stores a new LFO range.
     #[inline]
     pub fn store(&self, range: f32) {
-        self.value.store(range.to_bits(), Ordering::Relaxed);
+        self.value
+            .store(Self::sanitize(range).to_bits(), Ordering::Relaxed);
     }
 }
 
 impl Default for LfoRange {
     fn default() -> Self {
         Self {
-            value: AtomicU32::new(Defaults::DEFAULT_RANGE.to_bits()),
+            value: AtomicU32::new(Defaults::LFO_RANGE.to_bits()),
         }
     }
 }
@@ -464,7 +494,19 @@ impl Balance {
     #[must_use]
     pub fn new(balance: f32) -> Self {
         Self {
-            value: AtomicU32::new(balance.to_bits()),
+            value: AtomicU32::new(Balance::sanitize(balance).to_bits()),
+        }
+    }
+
+    #[inline]
+    fn sanitize(value: f32) -> f32 {
+        if value.is_finite() {
+            value.clamp(
+                Defaults::MINIMUM_BALANCE_RANGE,
+                Defaults::MAXIMUM_BALANCE_RANGE,
+            )
+        } else {
+            Defaults::BALANCE_CENTER_VALUE
         }
     }
 
@@ -477,7 +519,8 @@ impl Balance {
     /// Stores a new balance value.
     #[inline]
     pub fn store(&self, balance: f32) {
-        self.value.store(balance.to_bits(), Ordering::Relaxed);
+        self.value
+            .store(Self::sanitize(balance).to_bits(), Ordering::Relaxed);
     }
 }
 

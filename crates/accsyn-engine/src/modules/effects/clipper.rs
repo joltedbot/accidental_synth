@@ -1,5 +1,5 @@
 use crate::synthesizer::midi_value_converters::normal_value_to_bool;
-use accsyn_core::defaults::MAX_SAMPLE_VALUE;
+use accsyn_core::defaults::Defaults;
 use accsyn_core::effects::{AudioEffect, EffectParameters};
 
 pub struct Clipper {}
@@ -14,7 +14,7 @@ impl Clipper {
 
 impl AudioEffect for Clipper {
     fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
-        if !effect.is_enabled || effect.parameters[0] == MAX_SAMPLE_VALUE {
+        if !effect.is_enabled || effect.parameters[0] == Defaults::MAX_SAMPLE_VALUE {
             return samples;
         }
 
@@ -38,7 +38,7 @@ impl AudioEffect for Clipper {
 }
 
 fn clip_sample(sample: f32, mut threshold: f32, pre_gain: f32, post_gain: f32, notch: bool) -> f32 {
-    threshold = threshold.min(MAX_SAMPLE_VALUE);
+    threshold = threshold.min(Defaults::MAX_SAMPLE_VALUE);
 
     let mut boosted_sample = sample * (1.0 + pre_gain.abs());
 
@@ -50,7 +50,8 @@ fn clip_sample(sample: f32, mut threshold: f32, pre_gain: f32, post_gain: f32, n
         }
     }
 
-    (boosted_sample * (1.0 + post_gain.abs())).clamp(-MAX_SAMPLE_VALUE, MAX_SAMPLE_VALUE)
+    (boosted_sample * (1.0 + post_gain.abs()))
+        .clamp(-Defaults::MAX_SAMPLE_VALUE, Defaults::MAX_SAMPLE_VALUE)
 }
 
 #[cfg(test)]

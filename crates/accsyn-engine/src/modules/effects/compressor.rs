@@ -5,7 +5,7 @@ use crate::modules::effects::constants::{
 use crate::synthesizer::midi_value_converters::{
     normal_value_to_f32_range, normal_value_to_unsigned_integer_range,
 };
-use accsyn_core::defaults::MAX_SAMPLE_VALUE;
+use accsyn_core::defaults::Defaults;
 use accsyn_core::effects::{AudioEffect, EffectParameters};
 
 pub struct Compressor {}
@@ -50,7 +50,7 @@ fn compress_sample(
     normalized_ratio: f32,
     makeup_gain: f32,
 ) -> f32 {
-    threshold = threshold.min(MAX_SAMPLE_VALUE);
+    threshold = threshold.min(Defaults::MAX_SAMPLE_VALUE);
 
     let gain_factor =
         normal_value_to_f32_range(makeup_gain, MIN_MAKEUP_GAIN_FACTOR, MAX_MAKEUP_GAIN_FACTOR);
@@ -96,7 +96,7 @@ mod tests {
     #[test]
     fn compress_sample_clamps_threshold_to_max_sample_value() {
         let sample = 0.5;
-        let threshold = MAX_SAMPLE_VALUE + 1.0; // Above max
+        let threshold = Defaults::MAX_SAMPLE_VALUE + 1.0; // Above max
         let normalized_ratio = 0.5;
         let makeup_gain = 0.5;
 

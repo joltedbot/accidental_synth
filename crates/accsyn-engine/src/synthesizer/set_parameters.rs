@@ -4,9 +4,7 @@ use crate::modules::envelope::{
     MIN_ATTACK_MILLISECONDS, MIN_DECAY_MILLISECONDS, MIN_RELEASE_MILLISECONDS,
 };
 use crate::modules::filter::FilterParameters;
-use crate::modules::lfo::{
-    DEFAULT_LFO_PHASE, LfoParameters, MAX_LFO_CENTER_VALUE, MIN_LFO_CENTER_VALUE,
-};
+use crate::modules::lfo::LfoParameters;
 use crate::modules::oscillator::OscillatorParameters;
 use crate::modules::oscillator::constants::{MAX_CLIP_BOOST, MIN_CLIP_BOOST};
 use crate::synthesizer::constants::{MAX_PITCH_BEND_RANGE, MIN_PITCH_BEND_RANGE};
@@ -18,12 +16,7 @@ use crate::synthesizer::midi_value_converters::{
     normal_value_to_wave_shape_index, velocity_curve_from_normal_value,
 };
 use crate::synthesizer::{KeyboardParameters, MixerParameters, ModuleParameters};
-use accsyn_core::defaults::{
-    MAX_FILTER_RESONANCE, MIN_FILTER_RESONANCE, OSCILLATOR_COURSE_TUNE_MAX_INTERVAL,
-    OSCILLATOR_COURSE_TUNE_MIN_INTERVAL, OSCILLATOR_FINE_TUNE_MAX_CENTS,
-    OSCILLATOR_FINE_TUNE_MIN_CENTS, OSCILLATOR_MAX_PITCH_ENVELOPE_AMOUNT,
-    OSCILLATOR_MIN_PITCH_ENVELOPE_AMOUNT,
-};
+use accsyn_core::defaults::Defaults;
 use accsyn_core::math::{
     EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES, EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
     EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES, EXPONENTIAL_PORTAMENTO_COEFFICIENT,
@@ -50,8 +43,11 @@ pub fn set_lfo_frequency(parameters: &LfoParameters, normal_value: f32) -> f32 {
 }
 
 pub fn set_lfo_center_value(parameters: &LfoParameters, normal_value: f32) {
-    let center_value =
-        normal_value_to_f32_range(normal_value, MIN_LFO_CENTER_VALUE, MAX_LFO_CENTER_VALUE);
+    let center_value = normal_value_to_f32_range(
+        normal_value,
+        Defaults::MIN_LFO_CENTER_VALUE,
+        Defaults::MAX_LFO_CENTER_VALUE,
+    );
     parameters.center_value.store(center_value);
 }
 
@@ -69,7 +65,7 @@ pub fn set_lfo_wave_shape(parameters: &LfoParameters, normal_value: f32) {
 }
 
 pub fn set_lfo_phase_reset(parameters: &LfoParameters) {
-    parameters.phase.store(DEFAULT_LFO_PHASE);
+    parameters.phase.store(Defaults::LFO_PHASE);
     parameters.reset.store(true, Relaxed);
 }
 
@@ -129,8 +125,11 @@ pub fn set_envelope_inverted(envelope_parameters: &EnvelopeParameters, normal_va
 }
 
 pub fn set_filter_resonance(filter_parameters: &FilterParameters, normal_value: f32) {
-    let resonance =
-        normal_value_to_f32_range(normal_value, MIN_FILTER_RESONANCE, MAX_FILTER_RESONANCE);
+    let resonance = normal_value_to_f32_range(
+        normal_value,
+        Defaults::MIN_FILTER_RESONANCE,
+        Defaults::MAX_FILTER_RESONANCE,
+    );
 
     filter_parameters.resonance.store(resonance);
 }
@@ -241,8 +240,8 @@ pub fn set_oscillator_pitch_envelope_amount(
 ) -> f32 {
     let amount = normal_value_to_f32_range(
         normal_value,
-        OSCILLATOR_MIN_PITCH_ENVELOPE_AMOUNT,
-        OSCILLATOR_MAX_PITCH_ENVELOPE_AMOUNT,
+        Defaults::OSCILLATOR_MIN_PITCH_ENVELOPE_AMOUNT,
+        Defaults::OSCILLATOR_MAX_PITCH_ENVELOPE_AMOUNT,
     );
 
     parameters.pitch_envelope_amount.store(amount);
@@ -295,8 +294,8 @@ pub fn set_oscillator_fine_tune(parameters: &OscillatorParameters, normal_value:
     #[allow(clippy::cast_possible_truncation)]
     let cents = normal_value_to_signed_integer_range(
         normal_value,
-        i32::from(OSCILLATOR_FINE_TUNE_MIN_CENTS),
-        i32::from(OSCILLATOR_FINE_TUNE_MAX_CENTS),
+        i32::from(Defaults::OSCILLATOR_FINE_TUNE_MIN_CENTS),
+        i32::from(Defaults::OSCILLATOR_FINE_TUNE_MAX_CENTS),
     ) as i8;
 
     parameters.fine_tune.store(cents);
@@ -308,8 +307,8 @@ pub fn set_oscillator_course_tune(parameters: &OscillatorParameters, normal_valu
     #[allow(clippy::cast_possible_truncation)]
     let interval = normal_value_to_signed_integer_range(
         normal_value,
-        i32::from(OSCILLATOR_COURSE_TUNE_MIN_INTERVAL),
-        i32::from(OSCILLATOR_COURSE_TUNE_MAX_INTERVAL),
+        i32::from(Defaults::OSCILLATOR_COURSE_TUNE_MIN_INTERVAL),
+        i32::from(Defaults::OSCILLATOR_COURSE_TUNE_MAX_INTERVAL),
     ) as i8;
 
     parameters.course_tune.store(interval);

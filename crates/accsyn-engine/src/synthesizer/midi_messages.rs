@@ -1,4 +1,3 @@
-use crate::modules::lfo::DEFAULT_LFO_PHASE;
 use crate::modules::oscillator::OscillatorParameters;
 use crate::synthesizer::midi_value_converters::{
     midi_value_to_bool, scaled_velocity_from_normal_value,
@@ -861,7 +860,7 @@ pub fn process_midi_cc_values(
             set_lfo_phase_reset(&module_parameters.lfos[LFOIndex::ModWheel as usize]);
             send_ui_update(
                 ui_update_sender,
-                UIUpdates::LFOPhase(LFOIndex::ModWheel as i32, DEFAULT_LFO_PHASE),
+                UIUpdates::LFOPhase(LFOIndex::ModWheel as i32, Defaults::LFO_PHASE),
             );
         }
         CC::FilterModLFOFrequency(value) => {
@@ -913,7 +912,7 @@ pub fn process_midi_cc_values(
 
             send_ui_update(
                 ui_update_sender,
-                UIUpdates::LFOPhase(LFOIndex::Filter as i32, DEFAULT_LFO_PHASE),
+                UIUpdates::LFOPhase(LFOIndex::Filter as i32, Defaults::LFO_PHASE),
             );
         }
         CC::FilterModLFOClockSync(value) => {

@@ -1,9 +1,4 @@
-use crate::defaults::{
-    AUTOPAN_DEFAULT_PARAMETERS, BITSHIFTER_DEFAULT_PARAMETERS, CLIPPER_DEFAULT_PARAMETERS,
-    COMPRESSOR_DEFAULT_PARAMETERS, DEFAULT_EFFECT_PARAMETERS, DELAY_DEFAULT_PARAMETERS,
-    GATE_DEFAULT_PARAMETERS, RECTIFIER_DEFAULT_PARAMETERS, SATURATION_DEFAULT_PARAMETERS,
-    TREMOLO_DEFAULT_PARAMETERS,
-};
+use crate::defaults::Defaults;
 use std::string::ToString;
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumCount, EnumIter, FromRepr};
@@ -84,70 +79,70 @@ impl EffectParameters {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
-                        parameters: DEFAULT_EFFECT_PARAMETERS.to_vec(),
+                        parameters: Defaults::EFFECT_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::Saturation => {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
-                        parameters: SATURATION_DEFAULT_PARAMETERS.to_vec(),
+                        parameters: Defaults::SATURATION_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::Clipper => {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
-                        parameters: CLIPPER_DEFAULT_PARAMETERS.to_vec(),
+                        parameters: Defaults::CLIPPER_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::Gate => {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
-                        parameters: GATE_DEFAULT_PARAMETERS.to_vec(),
+                        parameters: Defaults::GATE_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::Compressor => {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
-                        parameters: COMPRESSOR_DEFAULT_PARAMETERS.to_vec(),
+                        parameters: Defaults::COMPRESSOR_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::BitShifter => {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
-                        parameters: BITSHIFTER_DEFAULT_PARAMETERS.to_vec(),
+                        parameters: Defaults::BITSHIFTER_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::Rectifier => {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
-                        parameters: RECTIFIER_DEFAULT_PARAMETERS.to_vec(),
+                        parameters: Defaults::RECTIFIER_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::Delay => {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
-                        parameters: DELAY_DEFAULT_PARAMETERS.to_vec(),
+                        parameters: Defaults::DELAY_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::AutoPan => {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
-                        parameters: AUTOPAN_DEFAULT_PARAMETERS.to_vec(),
+                        parameters: Defaults::AUTOPAN_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::Tremolo => {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
-                        parameters: TREMOLO_DEFAULT_PARAMETERS.to_vec(),
+                        parameters: Defaults::TREMOLO_PARAMETERS.to_vec(),
                     });
                 }
             }

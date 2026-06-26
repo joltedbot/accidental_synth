@@ -1,11 +1,7 @@
 #![allow(dead_code)]
 
 use crate::ui::constants::{DEFAULT_FINE_TUNE_NORMAL_VALUE, MIDI_CHANNEL_LIST};
-use accsyn_core::defaults::{
-    Defaults, MAX_FILTER_RESONANCE, MIN_FILTER_RESONANCE, OSCILLATOR_FINE_TUNE_MAX_CENTS,
-    OSCILLATOR_FINE_TUNE_MIN_CENTS, OSCILLATOR_MAX_PITCH_ENVELOPE_AMOUNT,
-    OSCILLATOR_MIN_PITCH_ENVELOPE_AMOUNT,
-};
+use accsyn_core::defaults::Defaults;
 use accsyn_core::math::{
     EXPONENTIAL_ENVELOPE_CURVE_ATTACK_VALUES, EXPONENTIAL_ENVELOPE_CURVE_DECAY_VALUES,
     EXPONENTIAL_ENVELOPE_CURVE_RELEASE_VALUES, EXPONENTIAL_FILTER_COEFFICIENT,
@@ -20,9 +16,7 @@ use accsyn_engine::modules::envelope::{
     MIN_ATTACK_MILLISECONDS, MIN_DECAY_MILLISECONDS, MIN_RELEASE_MILLISECONDS,
 };
 use accsyn_engine::modules::filter::FilterParameters;
-use accsyn_engine::modules::lfo::{
-    DEFAULT_CLOCK_SYNCED_STATE, DEFAULT_KEY_SYNCED_STATE, DEFAULT_LFO_FREQUENCY, LfoParameters,
-};
+use accsyn_engine::modules::lfo::LfoParameters;
 use accsyn_engine::modules::oscillator::OscillatorParameters;
 use accsyn_engine::modules::oscillator::constants::{
     DEFAULT_HARD_SYNC_ENABLED, DEFAULT_KEY_SYNC_ENABLED, DEFAULT_POLARITY_FLIPPED,
@@ -121,8 +115,8 @@ impl UIOscillator {
             wave_shape_index: i32::from(parameters.wave_shape_index.load(Relaxed)),
             fine_tune: normalize_signed_integer_range(
                 i32::from(parameters.fine_tune.load()),
-                i32::from(OSCILLATOR_FINE_TUNE_MIN_CENTS),
-                i32::from(OSCILLATOR_FINE_TUNE_MAX_CENTS),
+                i32::from(Defaults::OSCILLATOR_FINE_TUNE_MIN_CENTS),
+                i32::from(Defaults::OSCILLATOR_FINE_TUNE_MAX_CENTS),
             ),
             course_tune: i32::from(parameters.course_tune.load()),
             clipper_boost: normalize_unsigned_integer_range(
@@ -134,8 +128,8 @@ impl UIOscillator {
             parameter2: parameters.shape_parameter2.load(),
             pitch_envelope_amount: normalize_float_range(
                 parameters.pitch_envelope_amount.load(),
-                OSCILLATOR_MIN_PITCH_ENVELOPE_AMOUNT,
-                OSCILLATOR_MAX_PITCH_ENVELOPE_AMOUNT,
+                Defaults::OSCILLATOR_MIN_PITCH_ENVELOPE_AMOUNT,
+                Defaults::OSCILLATOR_MAX_PITCH_ENVELOPE_AMOUNT,
             ),
         }
     }
@@ -157,8 +151,8 @@ impl UIFilterCutoff {
             cutoff,
             resonance: normalize_float_range(
                 parameters.resonance.load(),
-                MIN_FILTER_RESONANCE,
-                MAX_FILTER_RESONANCE,
+                Defaults::MIN_FILTER_RESONANCE,
+                Defaults::MAX_FILTER_RESONANCE,
             ),
         }
     }
@@ -200,10 +194,10 @@ pub struct UILfo {
 impl Default for UILfo {
     fn default() -> Self {
         Self {
-            frequency: DEFAULT_LFO_FREQUENCY,
+            frequency: Defaults::LFO_FREQUENCY,
             thirty_second_notes: LfoSyncInterval::default().display(),
-            clock_synced: DEFAULT_CLOCK_SYNCED_STATE,
-            key_synced: DEFAULT_KEY_SYNCED_STATE,
+            clock_synced: Defaults::CLOCK_SYNCED_STATE,
+            key_synced: Defaults::KEY_SYNCED_STATE,
             phase: 0.0,
             wave_shape_index: 0,
         }
