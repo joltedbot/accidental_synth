@@ -3,7 +3,6 @@ use crate::synthesizer::constants::{
     MAX_PATCH_FILE_SIZE, MAX_PATCH_NAME_LENGTH, SYSTEM_PATCH_INIT_PARAMETERS, SYSTEM_PATCHES,
 };
 use anyhow::{Result, anyhow};
-use serde_json::json;
 use std::fs::{DirEntry, read_to_string};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -44,6 +43,10 @@ pub enum PatchesError {
     /// Patch Index out of range.
     #[error("Patch name does not exit {0}")]
     PatchNameDoesNotExist(String),
+
+    /// Patch content could not be created from paramater
+    #[error("Patch content could not be created from live parameter {0}")]
+    PatchContentCouldNotBeCreated(String),
 }
 
 /// File system paths used for application data, patches, and presets storage.
@@ -161,7 +164,9 @@ impl Patches {
         name: &str,
         parameters: &ModuleParameters,
     ) -> Result<(), PatchesError> {
-        let content = create_patch_from_parameters(parameters);
+        let content = create_patch_from_parameters(parameters)
+            .map_err(|err| PatchesError::PatchContentCouldNotBeCreated(err.to_string()))?;
+
         let mut patch_file_path = self.paths.user_patches.clone();
         let sanitized_name = sanitize_name(name);
         patch_file_path.push(sanitized_name);
@@ -390,8 +395,10 @@ fn initialize_application_storage(paths: &mut Paths) -> Result<()> {
     Ok(())
 }
 
-fn create_patch_from_parameters(parameters: &ModuleParameters) -> String {
-    serde_json::to_string_pretty(&parameters).unwrap_or(json!(parameters).to_string())
+fn create_patch_from_parameters(
+    parameters: &ModuleParameters,
+) -> Result<String, serde_json::Error> {
+    serde_json::to_string_pretty(&parameters)
 }
 
 #[cfg(test)]

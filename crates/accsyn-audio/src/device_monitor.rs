@@ -14,10 +14,15 @@ use coreaudio::audio_unit::macos_helpers::{
 use crossbeam_channel::Sender;
 use std::ffi::c_void;
 use std::ptr;
+use std::sync::Arc;
 
 pub struct DeviceMonitor {
     device_update_sender: Sender<AudioDeviceUpdateEvents>,
     property_address: AudioObjectPropertyAddress,
+    // Strong ref kept alive for the whole listener lifetime so the heap
+    // allocation behind `client_data_ptr` cannot be freed while a CoreAudio
+    // callback may still be dereferencing it.
+    listener_sender: Option<Arc<Sender<AudioDeviceUpdateEvents>>>,
     client_data_ptr: Option<*mut c_void>,
 }
 
@@ -31,6 +36,7 @@ impl DeviceMonitor {
                 mScope: kAudioObjectPropertyScopeGlobal,
                 mElement: kAudioObjectPropertyElementMain,
             },
+            listener_sender: None,
             client_data_ptr: None,
         }
     }
@@ -41,9 +47,18 @@ impl DeviceMonitor {
             .device_update_sender
             .send(AudioDeviceUpdateEvents::OutputDeviceListChanged);
 
+        let arc = Arc::new(self.device_update_sender.clone());
+
+        // SAFETY: `Arc::into_raw` yields a stable heap pointer to the inner
+        // `Sender`. We hand this owned ref to CoreAudio as the client data and
+        // reclaim it in `stop()`. `listener_sender` below keeps an independent
+        // strong ref alive across `AudioObjectRemovePropertyListener`, so the
+        // allocation cannot be freed while a callback may still dereference the
+        // pointer — closing the use-after-free window (LOW-001).
         unsafe {
-            let boxed_device_update_sender = Box::new(self.device_update_sender.clone());
-            let client_data = Box::into_raw(boxed_device_update_sender).cast::<c_void>();
+            let client_data = Arc::into_raw(Arc::clone(&arc))
+                .cast::<c_void>()
+                .cast_mut();
 
             let status = AudioObjectAddPropertyListener(
                 kAudioObjectSystemObject,
@@ -53,10 +68,13 @@ impl DeviceMonitor {
             );
 
             if status != OSSSTATUS_NO_ERROR {
-                let _ = Box::from_raw(client_data.cast::<Sender<AudioDeviceUpdateEvents>>());
+                drop(Arc::from_raw(
+                    client_data.cast::<Sender<AudioDeviceUpdateEvents>>(),
+                ));
                 return Err(anyhow!("Failed to add property listener: {status}"));
             }
 
+            self.listener_sender = Some(arc);
             self.client_data_ptr = Some(client_data);
         }
 
@@ -73,14 +91,22 @@ impl DeviceMonitor {
                 self.client_data_ptr.unwrap_or(ptr::null_mut()),
             );
 
+            // SAFETY: reclaim the strong ref handed to CoreAudio in `run()`.
+            // The listener is now deregistered; `listener_sender` is released
+            // afterward so the struct's own ref keeps the allocation live for
+            // the duration of this call.
             if let Some(client_data) = self.client_data_ptr.take() {
-                let _ = Box::from_raw(client_data.cast::<Sender<AudioDeviceUpdateEvents>>());
+                drop(Arc::from_raw(
+                    client_data.cast::<Sender<AudioDeviceUpdateEvents>>(),
+                ));
             }
 
             if status != OSSSTATUS_NO_ERROR {
                 return Err(format!("Failed to remove property listener: {status}"));
             }
         }
+
+        self.listener_sender = None;
 
         Ok(())
     }

@@ -1,4 +1,5 @@
 use crate::modules::effects::EffectIndex;
+use crate::modules::oscillator::WaveShape;
 use crate::modules::oscillator::constants::OSCILLATOR_WAVESHAPE_PARAMETER_DEFAULTS;
 use crate::synthesizer::ModuleParameters;
 use crate::synthesizer::clock::bpm_from_thirty_second_note_duration;
@@ -34,6 +35,7 @@ use std::sync::atomic::Ordering::Relaxed;
 use std::sync::{Arc, Mutex, PoisonError};
 use std::thread;
 use std::time::Instant;
+use strum::EnumCount;
 
 #[allow(clippy::too_many_lines)]
 pub fn start_update_event_listener(
@@ -50,6 +52,11 @@ pub fn start_update_event_listener(
         while let Ok(event) = ui_update_receiver.recv() {
             match event {
                 SynthesizerUpdateEvents::WaveShapeIndex(oscillator_index, wave_shape_index) => {
+                    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+                    // COUNT is the number of enum variants in WaveShape which is fixed and can't exceed i32::MAX
+                    let clamped_wave_shape_index =
+                        wave_shape_index.clamp(0, (WaveShape::COUNT - 1) as i32);
+
                     match usize::try_from(oscillator_index) {
                         Ok(idx) if idx < module_parameters.oscillators.len() => {
                             module_parameters.oscillators[idx]
@@ -58,15 +65,16 @@ pub fn start_update_event_listener(
 
                             if let Err(e) = ui_update_sender.send(UIUpdates::OscillatorWaveShape(
                                 oscillator_index,
-                                wave_shape_index,
+                                clamped_wave_shape_index,
                             )) {
                                 log::error!(target: "synthesizer::event_listener", "Failed to send oscillator \
                                 Wave Shape Update to the UI: {e}");
                             }
+
                             #[allow(clippy::cast_sign_loss)]
-                            // Oscillator_index is always non-negative
+                            // WaveShape index is clamped to prevent negative values
                             let shape_parameter1 = OSCILLATOR_WAVESHAPE_PARAMETER_DEFAULTS
-                                [wave_shape_index as usize]
+                                [clamped_wave_shape_index as usize]
                                 .0;
                             module_parameters.oscillators[idx]
                                 .shape_parameter1
@@ -81,9 +89,9 @@ pub fn start_update_event_listener(
                             }
 
                             #[allow(clippy::cast_sign_loss)]
-                            // Oscillator_index is always non-negative
+                            // WaveShape index is clamped to prevent negative values
                             let shape_parameter2 = OSCILLATOR_WAVESHAPE_PARAMETER_DEFAULTS
-                                [wave_shape_index as usize]
+                                [clamped_wave_shape_index as usize]
                                 .1;
                             module_parameters.oscillators[idx]
                                 .shape_parameter2
