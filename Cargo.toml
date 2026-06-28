@@ -23,19 +23,19 @@ accsyn-audio = { path = "crates/accsyn-audio" }
 accsyn-midi = { path = "crates/accsyn-midi" }
 
 # External dependencies
-anyhow = "1.0.102"
+anyhow = "1.0.103"
 clap = { version = "4.6.1", features = ["derive"] }
 core-foundation = "0.10.1"
 coreaudio-sys = "0.2.18"
 coreaudio-rs = "0.14.2"
 crossbeam-channel = "0.5.15"
-env_logger = { version = "0.11.10", features = ["kv"] }
-log = { version = "0.4.32", features = ["kv"] }
+env_logger = { version = "0.11.11", features = ["kv"] }
+log = { version = "0.4.33", features = ["kv"] }
 midir = "0.11.0"
 rand = "0.10.1"
 rtrb = "0.3.4"
-slint = "1.16.1"
-slint-build = "1.16.1"
+slint = "1.17.0"
+slint-build = "1.17.0"
 thiserror = "2.0.18"
 strum = "0.28.0"
 strum_macros = "0.28.0"
@@ -43,7 +43,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
 sanitize-filename = "0.6.0"
 dirs = "6.0.0"
-vergen = { version = "10.0.0", features = ["build"] }
+vergen = { version = "10.0.1", features = ["build"] }
 
 [profile.release]
 debug = false

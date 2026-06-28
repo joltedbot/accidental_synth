@@ -24,7 +24,7 @@ vergen = { workspace = true }
 
 [build-dependencies]
 slint-build = { workspace = true }
-vergen = { version = "10.0.0", features = ["build"] }
+vergen = { version = "10.0.1", features = ["build"] }
 
 [package.metadata.cargo-machete]
 ignored = ["slint-build", "vergen"]
