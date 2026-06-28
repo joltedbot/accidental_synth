@@ -56,9 +56,7 @@ impl DeviceMonitor {
         // allocation cannot be freed while a callback may still dereference the
         // pointer — closing the use-after-free window (LOW-001).
         unsafe {
-            let client_data = Arc::into_raw(Arc::clone(&arc))
-                .cast::<c_void>()
-                .cast_mut();
+            let client_data = Arc::into_raw(Arc::clone(&arc)).cast::<c_void>().cast_mut();
 
             let status = AudioObjectAddPropertyListener(
                 kAudioObjectSystemObject,
