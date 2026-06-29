@@ -2,7 +2,7 @@
 
 This project has switched from Semantic Versioning to Calendar Versioning.
 
-## [Unreleased]
+## 2026.06.28.1
 
 ### Added
 - MIDI clock sync for LFOs: LFO rates can lock to the incoming MIDI clock in 32nd-note intervals, phase-synced to the beat
@@ -12,11 +12,15 @@ This project has switched from Semantic Versioning to Calendar Versioning.
 - Blend control for the Bit Shifter, Wave Rectifier, and Compressor effects
 - Display values for the Oscillator panel controls
 - Display values for the Filter option panel controls
-- New factory presets
+- New presets
 - Integration tests verifying the engine starts up and generates sound on a MIDI gate-on command
 - MIDI Transport Stop messages reset the midi clock BPM detection to 0
 
 ### Fixed
+- Security: f32 values deserialized from patch files are now validated and sanitized, preventing a malicious patch from passing `f32::INFINITY` to the filter cutoff and resonance
+- Security: potential use-after-free in the audio device stop function
+- Security: unhandled error in the patch generation function
+- Security: unchecked array access
 - The f64-to-f32 clamping helper was cutting off negative sample values
 - Phase precision issue in the oscillators and LFOs at the slowest BPM and LFO intervals (processing switched from 32-bit to 64-bit)
 - Impossible default for the AM oscillator amount
@@ -24,6 +28,7 @@ This project has switched from Semantic Versioning to Calendar Versioning.
 - Wave-shape-specific oscillator parameters now receive proper defaults in the UI when the wave shape changes
 - Regression that hid the units on the oscillator coarse and fine tune control labels
 - Fine tune cents display value now updates correctly when a patch is loaded
+- Aftertouch scaling so the boost is no longer weak when the base oscillator boost is set very low
 - Audio output device list no longer incorrectly includes input devices
 - Numerous Clippy pedantic casting warnings
 
@@ -81,7 +86,7 @@ This project has switched from Semantic Versioning to Calendar Versioning.
 - `UIEnvelope` decay field was incorrectly reading release constants, causing decay and release to show the same value after patch load
 - Wavefolder asymmetric mode: negative folding side never fired due to an incorrect parameter index check; asymmetric mode now applies independent positive and negative folding as intended
 - Wavefolder enable toggle was not correctly restoring the negative folding slider after being disabled and re-enabled
-- LFO default range and all factory preset LFO values corrected to valid normalized range
+- LFO default range and all preset LFO values corrected to valid normalized range
 - Several small formatting and naming fixes
 
 ### Changed
@@ -93,7 +98,7 @@ This project has switched from Semantic Versioning to Calendar Versioning.
 
 ### Added
 - Complete user patch system: save, load, delete, and list patches; user patches persist to `~/Library/Application Support/AccidentalSynthesizer/patches/`
-- Factory/system patches embedded at compile time and prefixed with `*` (e.g. `*1 - Init`) to distinguish them from user patches
+- System patches embedded at compile time and prefixed with `*` (e.g. `*1 - Init`) to distinguish them from user patches
 - Patch numbers for stable ordering via MIDI program change (sorted by modification date)
 - Type wrappers for module parameters enabling human-readable values in patch JSON files
 - File size validation for patch loading (patches limited to 5 KB)
