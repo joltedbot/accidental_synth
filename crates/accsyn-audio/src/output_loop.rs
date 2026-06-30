@@ -1,7 +1,6 @@
 use crate::sample_convert::SampleConvert;
 use crate::{AudioError, OutputChannels, OutputDevice, sample_format_from_supported_bit_depth};
 use accsyn_core::audio_events::OutputStreamParameters;
-use accsyn_core::defaults::Defaults;
 use anyhow::anyhow;
 use coreaudio::audio_unit::audio_format::LinearPcmFlags;
 use coreaudio::audio_unit::macos_helpers::{
@@ -30,6 +29,7 @@ where
 {
     move |args: render_callback::Args<data::Interleaved<T>>| {
         let left_channel_index = output_channels.left.load(Relaxed);
+
         let right_channel_index = output_channels.right.load(Relaxed);
 
         let mut samples = if let Ok(samples) = sample_buffer.read_chunk(args.num_frames * 2) {
@@ -43,12 +43,16 @@ where
         // Right channel check guards against -1 (disabled), the left channel is never negative
         #[allow(clippy::cast_sign_loss)]
         for frame in args.data.buffer.chunks_mut(number_of_channels as usize) {
-            frame[left_channel_index as usize] =
-                T::from_f32_sample(samples.next().unwrap_or_default());
-            let right_sample = samples.next().unwrap_or_default();
-            if right_channel_index != Defaults::OUTPUT_CHANNEL_DISABLED_VALUE {
-                frame[right_channel_index as usize] = T::from_f32_sample(right_sample);
-            }
+            frame.iter_mut().enumerate().for_each(|(index, slot)| {
+                // Index is generate by `enumerate` and can not be negative and it's size is bounded by the physical
+                // number of ports an audio interface can present which will not exceed i32::MAX
+                #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap, clippy::cast_sign_loss)]
+                if index as i32 == left_channel_index || index as i32 == right_channel_index {
+                    *slot = T::from_f32_sample(samples.next().unwrap_or_default());
+                } else {
+                    *slot = T::from_f32_sample(0.0);
+                }
+            });
         }
 
         Ok(())
