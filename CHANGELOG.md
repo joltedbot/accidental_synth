@@ -2,6 +2,13 @@
 
 This project has switched from Semantic Versioning to Calendar Versioning.
 
+## 2026.06.30.1
+
+### Fixed
+- Slint version rolled back from 1.17.0 to 1.16.1 because of a regression in how it renders combobox popups causing it to clip at the Window 
+  boundary
+- Fixed the noise that occurred when changing audio input channels while audio is playing due to samples still in the output frame
+
 ## 2026.06.28.1
 
 ### Added
