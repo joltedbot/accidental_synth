@@ -9,6 +9,7 @@ pub fn callback_filter_cutoff_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_filter_cutoff_changed(move |cutoff| {
+            log::trace!(target: "ui::filter", "callback_filter_cutoff_changed(): Sending SynthesizerUpdateEvents::FilterCutoffFrequency : {cutoff}");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::FilterCutoffFrequency(cutoff))
                 .expect(
@@ -25,6 +26,7 @@ pub fn callback_filter_resonance_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_filter_resonance_changed(move |value| {
+            log::trace!(target: "ui::filter", "callback_filter_resonance_changed(): Sending SynthesizerUpdateEvents::FilterResonance : {value}");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::FilterResonance(value))
                 .expect(
@@ -41,6 +43,7 @@ pub fn callback_filter_poles_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_filter_poles_changed(move |value| {
+            log::trace!(target: "ui::filter", "callback_filter_poles_changed(): Sending SynthesizerUpdateEvents::FilterPoleCount : {value}");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::FilterPoleCount(value))
                 .expect(
@@ -57,6 +60,7 @@ pub fn callback_filter_key_tracking_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_filter_key_tracking_changed(move |value| {
+            log::trace!(target: "ui::filter", "callback_filter_key_tracking_changed(): Sending SynthesizerUpdateEvents::FilterKeyTrackingAmount : {value}");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::FilterKeyTrackingAmount(value))
                 .expect(
@@ -73,6 +77,7 @@ pub fn callback_filter_envelope_amount_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_filter_envelope_amount_changed(move |value| {
+            log::trace!(target: "ui::filter", "callback_filter_envelope_amount_changed(): Sending SynthesizerUpdateEvents::FilterEnvelopeAmount : {value}");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::FilterEnvelopeAmount(value))
                 .expect(
@@ -89,6 +94,7 @@ pub fn callback_filter_lfo_amount_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_filter_lfo_amount_changed(move |value| {
+            log::trace!(target: "ui::filter", "callback_filter_lfo_amount_changed(): Sending SynthesizerUpdateEvents::FilterLfoAmount : {value}");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::FilterLfoAmount(value))
                 .expect(

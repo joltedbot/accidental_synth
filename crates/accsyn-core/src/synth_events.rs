@@ -4,6 +4,7 @@ use strum::EnumCount as LfoEnumCount;
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
 /// Parameter change events sent to the synthesizer from the UI and MIDI subsystems.
+#[derive(Debug)]
 pub enum SynthesizerUpdateEvents {
     /// Change oscillator waveform shape (oscillator index, shape index).
     WaveShapeIndex(i32, i32),

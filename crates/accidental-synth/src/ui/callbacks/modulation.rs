@@ -9,6 +9,7 @@ pub fn callback_envelope_attack_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_envelope_attack_changed(move |envelope_index, milliseconds| {
+            log::trace!(target: "ui::modulation", "callback_envelope_attack_changed(): Sending SynthesizerUpdateEvents::FilterEnvelopeAttack : ({envelope_index}, {milliseconds})");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::FilterEnvelopeAttack(
                     envelope_index,
@@ -28,6 +29,7 @@ pub fn callback_envelope_decay_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_envelope_decay_changed(move |envelope_index, milliseconds| {
+            log::trace!(target: "ui::modulation", "callback_envelope_decay_changed(): Sending SynthesizerUpdateEvents::FilterEnvelopeDecay : ({envelope_index}, {milliseconds})");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::FilterEnvelopeDecay(
                     envelope_index,
@@ -47,6 +49,7 @@ pub fn callback_envelope_sustain_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_envelope_sustain_changed(move |envelope_index, level| {
+            log::trace!(target: "ui::modulation", "callback_envelope_sustain_changed(): Sending SynthesizerUpdateEvents::FilterEnvelopeSustain : ({envelope_index}, {level})");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::FilterEnvelopeSustain(
                     envelope_index,
@@ -66,6 +69,7 @@ pub fn callback_envelope_release_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_envelope_release_changed(move |envelope_index, milliseconds| {
+            log::trace!(target: "ui::modulation", "callback_envelope_release_changed(): Sending SynthesizerUpdateEvents::FilterEnvelopeRelease : ({envelope_index}, {milliseconds})");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::FilterEnvelopeRelease(
                     envelope_index,
@@ -85,6 +89,7 @@ pub fn callback_envelope_invert_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_envelope_invert_changed(move |filter_index, is_inverted| {
+            log::trace!(target: "ui::modulation", "callback_envelope_invert_changed(): Sending SynthesizerUpdateEvents::FilterEnvelopeInvert : ({filter_index}, {is_inverted})");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::FilterEnvelopeInvert(
                     filter_index,
@@ -104,6 +109,7 @@ pub fn callback_lfo_frequency_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_lfo_frequency_changed(move |lfo_index, normal_value| {
+            log::trace!(target: "ui::modulation", "callback_lfo_frequency_changed(): Sending SynthesizerUpdateEvents::LfoFrequency : ({lfo_index}, {normal_value})");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::LfoFrequency(
                     lfo_index,
@@ -123,6 +129,7 @@ pub fn callback_lfo_shape_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_lfo_shape_changed(move |lfo_index, shape_index| {
+            log::trace!(target: "ui::modulation", "callback_lfo_shape_changed(): Sending SynthesizerUpdateEvents::LfoShapeIndex : ({lfo_index}, {shape_index})");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::LfoShapeIndex(
                     lfo_index,
@@ -142,6 +149,7 @@ pub fn callback_lfo_phase_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_lfo_phase_changed(move |lfo_index, phase| {
+            log::trace!(target: "ui::modulation", "callback_lfo_phase_changed(): Sending SynthesizerUpdateEvents::LfoPhase : ({lfo_index}, {phase})");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::LfoPhase(lfo_index, phase))
                 .expect(
@@ -158,6 +166,7 @@ pub fn callback_lfo_phase_reset(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_lfo_phase_reset(move |lfo_index| {
+            log::trace!(target: "ui::modulation", "callback_lfo_phase_reset(): Sending SynthesizerUpdateEvents::LfoPhaseReset : {lfo_index}");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::LfoPhaseReset(lfo_index))
                 .expect(
@@ -174,6 +183,7 @@ pub fn callback_lfo_clock_sync_enabled(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_lfo_clock_sync_enabled(move |lfo_index, is_enabled| {
+            log::trace!(target: "ui::modulation", "callback_lfo_clock_sync_enabled(): Sending SynthesizerUpdateEvents::LfoClockSyncEnabled : ({lfo_index}, {is_enabled})");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::LfoClockSyncEnabled(
                     lfo_index, is_enabled,
@@ -192,6 +202,7 @@ pub fn callback_lfo_key_sync_enabled(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_lfo_key_sync_enabled(move |lfo_index, is_enabled| {
+            log::trace!(target: "ui::modulation", "callback_lfo_key_sync_enabled(): Sending SynthesizerUpdateEvents::LfoKeySyncEnabled : ({lfo_index}, {is_enabled})");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::LfoKeySyncEnabled(
                     lfo_index, is_enabled,

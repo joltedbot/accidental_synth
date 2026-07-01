@@ -9,6 +9,7 @@ pub fn callback_effect_enable(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_effect_enabled(move |effect_index, is_enabled| {
+            log::trace!(target: "ui::effects", "callback_effect_enable(): Sending SynthesizerUpdateEvents::EffectEnabled : ({effect_index}, {is_enabled})");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::EffectEnabled(
                     effect_index,
@@ -28,6 +29,7 @@ pub fn callback_effect_parameter_changed(
 ) {
     if let Some(ui) = ui_weak.upgrade() {
         ui.on_effect_parameter_changed(move |effect_index, parameter_index, value| {
+            log::trace!(target: "ui::effects", "callback_effect_parameter_changed(): Sending SynthesizerUpdateEvents::EffectParameterValues : ({effect_index}, {parameter_index}, {value})");
             synthesizer_update_sender
                 .send(SynthesizerUpdateEvents::EffectParameterValues(
                     effect_index,

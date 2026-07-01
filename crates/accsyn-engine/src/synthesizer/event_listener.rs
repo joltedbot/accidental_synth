@@ -50,6 +50,8 @@ pub fn start_update_event_listener(
         log::debug!(target: "synthesizer::events", "start_update_event_listener(): spawned thread to receive UI events");
 
         while let Ok(event) = ui_update_receiver.recv() {
+            log::trace!(target: "synthesizer::events", "start_update_event_listener(): {event:?}");
+
             match event {
                 SynthesizerUpdateEvents::WaveShapeIndex(oscillator_index, wave_shape_index) => {
                     #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
