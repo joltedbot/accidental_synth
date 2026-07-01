@@ -8,6 +8,7 @@ This project has switched from Semantic Versioning to Calendar Versioning.
 - Slint version rolled back from 1.17.0 to 1.16.1 because of a regression in how it renders combobox popups causing it to clip at the Window 
   boundary
 - Fixed the noise that occurred when changing audio input channels while audio is playing due to samples still in the output frame
+- Fixed a race condition in the midi crate that was causing stuck notes in some situation with multiple midi devices being played in the same midi network at the same time
 
 ## 2026.06.28.1
 
