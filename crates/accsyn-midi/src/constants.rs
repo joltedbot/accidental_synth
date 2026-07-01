@@ -16,6 +16,8 @@ pub const DEVICE_LIST_POLLING_INTERVAL: u64 = 2000;
 pub const MESSAGE_TYPE_IGNORE_LIST: Ignore = Ignore::Sysex;
 /// Bitmask to extract the MIDI channel from a status byte.
 pub const MESSAGE_STATUS_BYTE_CHANNEL_MASK: u8 = 0x0F;
+/// MIDI Status byte for clock messages
+pub const MIDI_CLOCK_BYTE: u8 = 0xF8;
 /// Byte index of the status byte within a MIDI message.
 pub const MESSAGE_STATUS_BYTE_INDEX: usize = 0;
 /// Bitmask to extract the message type from a status byte.

@@ -46,7 +46,11 @@ where
             frame.iter_mut().enumerate().for_each(|(index, slot)| {
                 // Index is generate by `enumerate` and can not be negative and it's size is bounded by the physical
                 // number of ports an audio interface can present which will not exceed i32::MAX
-                #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap, clippy::cast_sign_loss)]
+                #[allow(
+                    clippy::cast_possible_truncation,
+                    clippy::cast_possible_wrap,
+                    clippy::cast_sign_loss
+                )]
                 if index as i32 == left_channel_index || index as i32 == right_channel_index {
                     *slot = T::from_f32_sample(samples.next().unwrap_or_default());
                 } else {

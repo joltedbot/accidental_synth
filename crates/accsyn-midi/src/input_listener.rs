@@ -1,7 +1,7 @@
 use crate::constants::{
     CC_MESSAGE_NUMBER_BYTE_INDEX, CC_MESSAGE_VALUE_BYTE_INDEX, CHANNEL_PRESSURE_VALUE_BYTE_INDEX,
     MESSAGE_STATUS_BYTE_CHANNEL_MASK, MESSAGE_STATUS_BYTE_INDEX, MESSAGE_STATUS_BYTE_TYPE_MASK,
-    MESSAGE_TYPE_IGNORE_LIST, MIDI_INPUT_CLIENT_NAME, MIDI_INPUT_CONNECTION_NAME,
+    MESSAGE_TYPE_IGNORE_LIST, MIDI_CLOCK_BYTE, MIDI_INPUT_CLIENT_NAME, MIDI_INPUT_CONNECTION_NAME,
     NOTE_MESSAGE_NUMBER_BYTE_INDEX, NOTE_MESSAGE_VELOCITY_BYTE_INDEX,
     PITCH_BEND_MESSAGE_LSB_BYTE_INDEX, PITCH_BEND_MESSAGE_MSB_BYTE_INDEX,
     PROGRAM_CHANGE_VALUE_BYTE_INDEX, RAW_CHANNEL_TO_USER_READABLE_CHANNEL_OFFSET,
@@ -48,17 +48,19 @@ pub(crate) fn process_midi_message(
     if message.is_empty() {
         return;
     }
+
     let message_channel = channel_from_status_byte(message[MESSAGE_STATUS_BYTE_INDEX]);
+
+    if message[0] != MIDI_CLOCK_BYTE
+        && !message_channel_matches_current_channel(message_channel, current_channel_arc)
+    {
+        log::trace!(target: "midi::input", "Dropping message {message:?} for non-matching channel {message_channel}");
+        return;
+    }
+
     let Some(event) = event_from_message_status(message, current_note_arc) else {
         return;
     };
-
-    if event != MidiEvent::Clock
-        && !message_channel_matches_current_channel(message_channel, current_channel_arc)
-    {
-        log::trace!(target: "midi::input", "Dropping message for non-matching channel");
-        return;
-    }
 
     if let Err(err) = midi_message_sender.send(event) {
         log::error!(
@@ -75,11 +77,9 @@ fn message_channel_matches_current_channel(
     let current_channel = current_channel_arc
         .lock()
         .unwrap_or_else(PoisonError::into_inner);
-
     if current_channel.is_none() {
         return true;
     }
-
     if let Some(channel) = *current_channel
         && channel == message_channel
     {
@@ -131,6 +131,7 @@ fn process_pitch_bend_message(message: &[u8]) -> Option<MidiEvent> {
 fn process_cc_message(message: &[u8]) -> Option<MidiEvent> {
     let cc_number = *message.get(CC_MESSAGE_NUMBER_BYTE_INDEX)?;
     let cc_value = *message.get(CC_MESSAGE_VALUE_BYTE_INDEX)?;
+    log::trace!(target: "midi::input", "CC Message number {cc_number} value {cc_value} received");
     control_change::get_supported_cc_from_cc_number(cc_number, cc_value)
         .map(MidiEvent::ControlChange)
 }
@@ -140,6 +141,8 @@ fn process_note_off_message(
     current_note_arc: &Arc<Mutex<Option<u8>>>,
 ) -> Option<MidiEvent> {
     let midi_note = *message.get(NOTE_MESSAGE_NUMBER_BYTE_INDEX)?;
+    log::trace!(target: "midi::input", "Note Off Message {midi_note:?} received");
+
     let mut current_note = current_note_arc
         .lock()
         .unwrap_or_else(PoisonError::into_inner);
@@ -158,6 +161,8 @@ fn process_note_on_message(
 ) -> Option<MidiEvent> {
     let midi_note = *message.get(NOTE_MESSAGE_NUMBER_BYTE_INDEX)?;
     let midi_velocity = *message.get(NOTE_MESSAGE_VELOCITY_BYTE_INDEX)?;
+
+    log::trace!(target: "midi::input", "Note On Message {midi_note:?} Velocity {midi_velocity} received");
 
     let mut current_note = current_note_arc
         .lock()
