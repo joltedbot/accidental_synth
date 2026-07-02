@@ -231,6 +231,8 @@ export component MixerSection inherits VerticalLayout {
 
             VerticalSpacer { }
 
+            VerticalSpacer { }
+
             oscillator-mixer := OscillatorMixer {
                 oscillator-mixer-values: oscillator-mixer-values;
                 osc-mixer-balance-update(oscillator, balance) => {
@@ -261,68 +263,59 @@ export component OscillatorSection inherits VerticalLayout {
     alignment: start;
 
     HorizontalLayout {
-        alignment: start;
-        HorizontalLayout {
+        padding: Theme.global-panel-padding;
+        spacing: Theme.global-panel-spacing;
+        alignment: space-evenly;
+
+        portamento-section := VerticalLayout {
             padding: Theme.global-panel-padding;
             spacing: Theme.global-panel-spacing;
-            alignment: start;
+            alignment: space-around;
 
-            portamento-section := VerticalLayout {
-                padding: Theme.global-panel-padding;
-                spacing: Theme.global-panel-spacing;
-                alignment: space-around;
-
-                ToggleSwitch {
-                    checked: global-option-values.portamento-is-enabled;
-                    label: Theme.osc-options-portamento-label;
-                    toggle_switch_updated(is-enabled) => {
-                        portamento-enabled(is-enabled);
-                    }
-                }
-
-                HorizontalParameterSlider {
-                    label: Theme.osc-options-portamento-time-label;
-                    value: global-option-values.portamento-time;
-                    horizontal-parameter-slider-changed(milliseconds) => {
-                        portamento-time-changed(milliseconds);
-                    }
+            ToggleSwitch {
+                checked: global-option-values.portamento-is-enabled;
+                label: Theme.osc-options-portamento-label;
+                toggle_switch_updated(is-enabled) => {
+                    portamento-enabled(is-enabled);
                 }
             }
 
-            VerticalSpacer {
-                height: 110px;
-                left-padding: 5px;
-                right-padding: 5px;
+            HorizontalParameterSlider {
+                label: Theme.osc-options-portamento-time-label;
+                value: global-option-values.portamento-time;
+                horizontal-parameter-slider-changed(milliseconds) => {
+                    portamento-time-changed(milliseconds);
+                }
+            }
+        }
+
+        VerticalSpacer {
+            height: 125px;
+            left-padding: 15px;
+            right-padding: 15px;
+        }
+
+        pitch-velocit-section := VerticalLayout {
+            padding: Theme.global-panel-padding;
+            spacing: Theme.global-panel-spacing;
+            alignment: space-around;
+
+            portomento := IntSpinBox {
+                label: Theme.osc-options-pitch-bend-range;
+                value: global-option-values.pitch-bend-range;
+                step: 1;
+                minimum: Constant.PITCH_BEND_MINIMUM;
+                maximum: Constant.PITCH_BEND_MAXIMUM;
+                spinbox-changed(range) => {
+                    pitch-bend-range-changed(range);
+                }
             }
 
-            HorizontalLayout {
-                padding: Theme.global-panel-padding;
-                spacing: Theme.global-panel-spacing;
-                alignment: center;
-
-                VerticalLayout {
-                    alignment: space-between;
-
-                    IntSpinBox {
-                        label: Theme.osc-options-pitch-bend-range;
-                        value: global-option-values.pitch-bend-range;
-                        step: 1;
-                        minimum: Constant.PITCH_BEND_MINIMUM;
-                        maximum: Constant.PITCH_BEND_MAXIMUM;
-                        width: 110px;
-                        spinbox-changed(range) => {
-                            pitch-bend-range-changed(range);
-                        }
-                    }
-
-                    CenteredParameterSlider {
-                        label: Theme.osc-options-velocity-curve;
-                        value: global-option-values.velocity-curve-slope;
-                        width: 110px;
-                        centered-parameter-slider-changed(curve) => {
-                            velocity-curve-changed(curve);
-                        }
-                    }
+            CenteredParameterSlider {
+                label: Theme.osc-options-velocity-curve;
+                value: global-option-values.velocity-curve-slope;
+                centered-parameter-slider-changed(curve) => {
+                    velocity-curve-changed(curve);
                 }
             }
         }
@@ -521,7 +514,7 @@ export component GlobalPanel inherits Panel {
         VerticalLayout {
             alignment: start;
             HorizontalLayout {
-                alignment: start;
+                alignment: space-evenly;
                 amp-section := AmpEnvelopeSection {
                     amp-envelope-values: amp-envelope-values;
                     envelope-attack-changed(milliseconds) => {
@@ -593,13 +586,13 @@ export component GlobalPanel inherits Panel {
                     }
                 }
 
-                VerticalSpacer { }
+                // VerticalSpacer { }
             }
 
             HorizontalSpacer { }
 
             HorizontalLayout {
-                alignment: start;
+                alignment: space-evenly;
 
                 osc-section := OscillatorSection {
                     global-option-values: global-options-values;
@@ -654,7 +647,7 @@ export component GlobalPanel inherits Panel {
                     }
                 }
 
-                VerticalSpacer { }
+                //  VerticalSpacer { }
             }
         }
     }
