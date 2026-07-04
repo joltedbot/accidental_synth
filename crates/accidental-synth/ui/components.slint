@@ -761,6 +761,7 @@ export component FixedCenterLFOSection inherits VerticalLayout {
     property <float> lfo-frequency-rounded: lfo-frequency-display < 1 ? floor(lfo-frequency-display * 100) / 100.0 : floor(lfo-frequency-display);
     property <bool> clock-sync-is-checked: false;
     property <bool> key-sync-is-checked: false;
+    property <int> gen: PatchState.generation;
 
     callback lfo-frequency-changed(float);
     callback lfo-shape-changed(int);
@@ -773,6 +774,10 @@ export component FixedCenterLFOSection inherits VerticalLayout {
     alignment: start;
     padding: Theme.lfo-widget-padding;
     spacing: Theme.lfo-widget-spacing;
+
+    changed gen => {
+        clock-sync-is-checked = lfo-values.clock-synced;
+    }
 
     VerticalLayout {
         alignment: start;
