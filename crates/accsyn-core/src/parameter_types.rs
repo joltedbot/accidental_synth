@@ -62,6 +62,66 @@ impl<'de> Deserialize<'de> for NormalizedValue {
     }
 }
 
+/// Thread-safe bi-polar normalized float parameter (-1.0–1.0) stored as atomic bits.
+#[derive(Debug)]
+pub struct BiPolarNormalizedValue {
+    value: AtomicU32,
+}
+
+impl BiPolarNormalizedValue {
+    /// Creates a new normalized value from an f32.
+    #[inline]
+    #[must_use]
+    pub fn new(normalized: f32) -> Self {
+        Self {
+            value: AtomicU32::new(BiPolarNormalizedValue::sanitize(normalized).to_bits()),
+        }
+    }
+
+    #[inline]
+    fn sanitize(value: f32) -> f32 {
+        if value.is_finite() {
+            value.clamp(-1.0, 1.0)
+        } else {
+            0.0
+        }
+    }
+
+    /// Loads the current value as an f32.
+    #[inline]
+    pub fn load(&self) -> f32 {
+        f32::from_bits(self.value.load(Ordering::Relaxed))
+    }
+
+    /// Stores a new f32 value.
+    #[inline]
+    pub fn store(&self, normalized: f32) {
+        self.value
+            .store(Self::sanitize(normalized).to_bits(), Ordering::Relaxed);
+    }
+}
+
+impl Default for BiPolarNormalizedValue {
+    fn default() -> Self {
+        Self {
+            value: AtomicU32::new(0.0_f32.to_bits()),
+        }
+    }
+}
+
+impl Serialize for BiPolarNormalizedValue {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_f32(self.load())
+    }
+}
+
+impl<'de> Deserialize<'de> for BiPolarNormalizedValue {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = f32::deserialize(deserializer)?;
+        Ok(Self::new(value))
+    }
+}
+
 /// Thread-safe frequency parameter in Hz stored as atomic bits.
 #[derive(Debug)]
 pub struct Hertz {

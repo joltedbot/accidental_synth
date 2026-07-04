@@ -47,9 +47,7 @@ use crate::modules::oscillator::constants::{
 use accsyn_core::defaults::Defaults;
 use accsyn_core::math;
 use accsyn_core::math::{dbfs_to_f32_sample, f32s_are_equal};
-use accsyn_core::parameter_types::{
-    Cents, NormalizedValue, PitchBend, PortamentoBuffers, Semitones,
-};
+use accsyn_core::parameter_types::{BiPolarNormalizedValue, Cents, NormalizedValue, PitchBend, PortamentoBuffers, Semitones};
 use generate_wave_trait::GenerateWave;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -141,7 +139,7 @@ pub struct OscillatorParameters {
     /// Clipper boost amount in dB for signal saturation.
     pub clipper_boost: AtomicU8,
     /// Pitch Envelope Amount
-    pub pitch_envelope_amount: NormalizedValue,
+    pub pitch_envelope_amount: BiPolarNormalizedValue,
 }
 
 impl OscillatorParameters {
@@ -188,7 +186,7 @@ impl Default for OscillatorParameters {
             portamento_enabled: AtomicBool::new(DEFAULT_PORTAMENTO_ENABLED),
             portamento_time: PortamentoBuffers::new(DEFAULT_PORTAMENTO_TIME_IN_BUFFERS),
             clipper_boost: AtomicU8::new(0),
-            pitch_envelope_amount: NormalizedValue::default(),
+            pitch_envelope_amount: BiPolarNormalizedValue::default(),
         }
     }
 }
