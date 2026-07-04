@@ -22,6 +22,8 @@ pub mod square;
 pub mod supersaw;
 /// Triangle wave oscillator.
 pub mod triangle;
+/// Phase modulation oscillator
+pub mod pm;
 
 use self::am::AM;
 use self::broken::Broken;
@@ -30,6 +32,7 @@ use self::constants::{
     MAX_MIDI_NOTE_NUMBER, MAX_NOTE_FREQUENCY, MIN_MIDI_NOTE_NUMBER, MIN_NOTE_FREQUENCY,
 };
 use self::fm::FM;
+use self::pm::PM;
 use self::noise::Noise;
 use self::pulse::Pulse;
 use self::ramp::Ramp;
@@ -82,6 +85,8 @@ pub enum WaveShape {
     AM,
     /// Frequency modulation synthesis.
     FM,
+    /// Phase modulation synthesis.
+    PM,
     /// Honestly, I have no idea what this is
     Broken,
     /// White noise.
@@ -557,6 +562,7 @@ fn get_wave_generator_from_wave_shape(
         WaveShape::Supersaw => Box::new(Supersaw::new(sample_rate)),
         WaveShape::AM => Box::new(AM::new(sample_rate)),
         WaveShape::FM => Box::new(FM::new(sample_rate)),
+        WaveShape::PM => Box::new(PM::new(sample_rate)),
         WaveShape::Broken => Box::new(Broken::new(sample_rate)),
         WaveShape::Noise => Box::new(Noise::new()),
     }

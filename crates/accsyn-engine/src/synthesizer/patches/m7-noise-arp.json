@@ -217,7 +217,7 @@
       "portamento_time": 8,
       "shape_parameter1": 0.67642665,
       "shape_parameter2": 0.0,
-      "wave_shape_index": 9,
+      "wave_shape_index": 10,
       "pitch_envelope_amount": 0.0
     },
     {
@@ -232,7 +232,7 @@
       "portamento_time": 8,
       "shape_parameter1": 0.6732507,
       "shape_parameter2": 0.0,
-      "wave_shape_index": 9,
+      "wave_shape_index": 10,
       "pitch_envelope_amount": 0.0
     },
     {
@@ -247,7 +247,7 @@
       "portamento_time": 8,
       "shape_parameter1": 0.6055537,
       "shape_parameter2": 0.0,
-      "wave_shape_index": 9,
+      "wave_shape_index": 10,
       "pitch_envelope_amount": 0.0
     },
     {
@@ -262,7 +262,7 @@
       "portamento_time": 8,
       "shape_parameter1": 0.60100204,
       "shape_parameter2": 0.0,
-      "wave_shape_index": 9,
+      "wave_shape_index": 10,
       "pitch_envelope_amount": 0.0
     }
   ],

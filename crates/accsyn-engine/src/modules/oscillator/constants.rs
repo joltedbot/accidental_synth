@@ -51,7 +51,7 @@ pub const DEFAULT_PORTAMENTO_TIME_IN_BUFFERS: u16 = 7;
 pub const DEFAULT_PORTAMENTO_ENABLED: bool = false;
 
 /// Oscillator `WaveShape` Specific Parameter Defaults
-pub const OSCILLATOR_WAVESHAPE_PARAMETER_DEFAULTS: [(f32, f32); 11] = [
+pub const OSCILLATOR_WAVESHAPE_PARAMETER_DEFAULTS: [(f32, f32); 12] = [
     (0.0, 0.0), // Sine
     (0.0, 0.0), // Triangle
     (0.0, 0.0), // Square
@@ -61,6 +61,7 @@ pub const OSCILLATOR_WAVESHAPE_PARAMETER_DEFAULTS: [(f32, f32); 11] = [
     (0.1, 1.0), // SuperSaw
     (0.0, 0.0), // AM
     (0.0, 0.0), // FM
+    (0.5, 0.0),  // PM
     (0.5, 0.0), // Broken
     (0.0, 0.0), // Noise
 ];
