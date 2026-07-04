@@ -6,7 +6,7 @@ use crate::modules::oscillator::sine::Sine;
 
 const SHAPE: WaveShape = WaveShape::PM;
 const DEFAULT_CARRIER_PHASE: f64 = 0.0;
-const DEFAULT_MODULATION_AMOUNT: f64 = 0.5;
+const DEFAULT_MODULATION_AMOUNT: f64 = 0.229;
 const DEFAULT_MODULATION_INDEX: f64 = 16.0;
 const PM_INDEX_CURVE_POWER_COEFFICIENT: f64 = 2.125;
 
@@ -52,11 +52,12 @@ impl PM {
 
 impl GenerateWave for PM {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
+        let new_frequency = tone_frequency * modulation.unwrap_or(1.0);
         let modulator = self
             .modulator
-            .next_sample(tone_frequency, modulation);
+            .next_sample(tone_frequency, None);
 
-        f64_to_f32_clamped(self.single_sine_sample(tone_frequency, f64::from(modulator)))
+        f64_to_f32_clamped(self.single_sine_sample(new_frequency, f64::from(modulator)))
     }
 
     fn set_shape_parameter1(&mut self, parameter: f32) {
