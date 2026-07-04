@@ -181,7 +181,7 @@
 | 97        | Data Decrement                                    | N                 | N                |                      |
 | 98        | Non-Registered Parameter Number (LSB)             | N                 | N                |                      |
 | 99        | Non-Registered Parameter Number (MSB)             | N                 | N                |                      |
-| 100       | Registered Parameter Number (LSB)                 | N                 | N                |                      |
+| 100       | Mod Wheel LFO Key Sync Enabled                    | N                 | Y                |                      |
 | 101       | Mod Wheel Clock Sync Enabled                      | N                 | Y                |                      |
 | 102       | Mod Wheel LFO Frequency                           | N                 | Y                |                      |
 | 103       | Mod Wheel LFO Center Value                        | N                 | Y                |                      |
@@ -193,10 +193,10 @@
 | 109       | Filter Mod LFO Amount                             | N                 | Y                |                      |
 | 110       | Filter Mod LFO Wave Shape                         | N                 | Y                |                      |
 | 111       | Filter Mod LFO Phase                              | N                 | Y                |                      |
-| 112       | Filter Mod LFO Reset                              | N                 | Y                |                      |
+| 112       | Filter Mod LFO ResC11et                           | N                 | Y                |                      |
 | 113       | Filter Mod LFO Clock Sync Enabled                 | N                 | Y                |                      |
 | 114       | Filter Mod LFO Key Sync Enabled                   | N                 | Y                |                      |
-| 115       | Mod Wheel LFO Key Sync Enabled                    | N                 | Y                |                      |
+| 115       |                                                   | N                 | N                |                      |
 | 116       |                                                   | N                 | N                |                      |
 | 117       |                                                   | N                 | N                |                      |
 | 118       |                                                   | N                 | N                |                      |
