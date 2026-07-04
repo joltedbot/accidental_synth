@@ -98,6 +98,8 @@ export component OscControlsPanel inherits Panel {
 
     changed oscillator => {
         set_parameters_from_wave_shape(Constant.OSC_WAVE_SHAPES[oscillator.wave-shape-index]);
+        param1-live = oscillator.parameter1;
+        param2-live = oscillator.parameter2;
     }
 
     changed patch_generation => {
