@@ -61,7 +61,7 @@ pub const OSCILLATOR_WAVESHAPE_PARAMETER_DEFAULTS: [(f32, f32); 12] = [
     (0.1, 1.0), // SuperSaw
     (0.0, 0.0), // AM
     (0.0, 0.0), // FM
-    (0.5, 1.0),  // PM
+    (0.5, 1.0), // PM
     (0.5, 0.0), // Broken
     (0.0, 0.0), // Noise
 ];

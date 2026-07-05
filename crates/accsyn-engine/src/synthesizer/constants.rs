@@ -83,7 +83,10 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
         "Major 6 Bounce*",
         include_str!("patches/major-6-bounce.json"),
     ),
-    ("Phase Mod Bass Pulse*", include_str!("patches/phase-mod-bass-pulse.json")),
+    (
+        "Phase Mod Bass Pulse*",
+        include_str!("patches/phase-mod-bass-pulse.json"),
+    ),
     ("Plucky Bass*", include_str!("patches/plucky-bass.json")),
     ("Plucky Keys*", include_str!("patches/plucky-keys.json")),
     ("Power Chords*", include_str!("patches/power-chords.json")),

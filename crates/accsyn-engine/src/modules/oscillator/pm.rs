@@ -1,8 +1,8 @@
-use accsyn_core::casting::f64_to_f32_clamped;
-use crate::modules::oscillator::constants::RADS_PER_CYCLE;
 use super::WaveShape;
+use crate::modules::oscillator::constants::RADS_PER_CYCLE;
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use crate::modules::oscillator::sine::Sine;
+use accsyn_core::casting::f64_to_f32_clamped;
 
 const SHAPE: WaveShape = WaveShape::PM;
 const DEFAULT_CARRIER_PHASE: f64 = 0.0;
@@ -17,7 +17,7 @@ pub struct PM {
     modulation_amount: f64,
     carrier_phase: f64,
     phase_coefficient: f64,
-    modulator_index: f64
+    modulator_index: f64,
 }
 
 impl PM {
@@ -44,7 +44,11 @@ impl PM {
         if self.carrier_phase >= RADS_PER_CYCLE {
             self.carrier_phase -= RADS_PER_CYCLE;
         }
-        let offset_rads = self.modulator_index * self.modulation_amount.powf(PM_INDEX_CURVE_POWER_COEFFICIENT) * modulator;
+        let offset_rads = self.modulator_index
+            * self
+                .modulation_amount
+                .powf(PM_INDEX_CURVE_POWER_COEFFICIENT)
+            * modulator;
 
         (self.carrier_phase + offset_rads).sin()
     }
@@ -53,9 +57,7 @@ impl PM {
 impl GenerateWave for PM {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         let new_frequency = tone_frequency * modulation.unwrap_or(1.0);
-        let modulator = self
-            .modulator
-            .next_sample(tone_frequency, None);
+        let modulator = self.modulator.next_sample(tone_frequency, None);
 
         f64_to_f32_clamped(self.single_sine_sample(new_frequency, f64::from(modulator)))
     }

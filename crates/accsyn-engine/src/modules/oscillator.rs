@@ -8,6 +8,8 @@ pub mod fm;
 mod generate_wave_trait;
 /// White noise generator.
 pub mod noise;
+/// Phase modulation oscillator
+pub mod pm;
 /// Pulse wave oscillator with variable pulse width.
 pub mod pulse;
 /// Ramp (reverse sawtooth) wave oscillator.
@@ -22,8 +24,6 @@ pub mod square;
 pub mod supersaw;
 /// Triangle wave oscillator.
 pub mod triangle;
-/// Phase modulation oscillator
-pub mod pm;
 
 use self::am::AM;
 use self::broken::Broken;
@@ -32,8 +32,8 @@ use self::constants::{
     MAX_MIDI_NOTE_NUMBER, MAX_NOTE_FREQUENCY, MIN_MIDI_NOTE_NUMBER, MIN_NOTE_FREQUENCY,
 };
 use self::fm::FM;
-use self::pm::PM;
 use self::noise::Noise;
+use self::pm::PM;
 use self::pulse::Pulse;
 use self::ramp::Ramp;
 use self::saw::Saw;
@@ -47,7 +47,9 @@ use crate::modules::oscillator::constants::{
 use accsyn_core::defaults::Defaults;
 use accsyn_core::math;
 use accsyn_core::math::{dbfs_to_f32_sample, f32s_are_equal};
-use accsyn_core::parameter_types::{BiPolarNormalizedValue, Cents, NormalizedValue, PitchBend, PortamentoBuffers, Semitones};
+use accsyn_core::parameter_types::{
+    BiPolarNormalizedValue, Cents, NormalizedValue, PitchBend, PortamentoBuffers, Semitones,
+};
 use generate_wave_trait::GenerateWave;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
