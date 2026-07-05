@@ -325,3 +325,25 @@ fn adversarial_patch_produces_finite_audio_burst() {
         "adversarial-patch",
     );
 }
+
+/// A `ModuleParameters` JSON snapshot frozen as of 2026-07-04, standing in for a patch a user
+/// saved with an older version of the app. Deliberately NOT kept in sync with the currently
+/// shipped factory patches — the whole point of this fixture is that nobody thinks to update it
+/// when adding a new field, the same way nobody can update every patch a user has already saved
+/// to disk. If this test starts failing after adding a field to `ModuleParameters` or any nested
+/// struct, do not edit this fixture: add `#[serde(default)]` to the new field instead, so
+/// previously-saved user patches keep loading.
+const SCHEMA_SNAPSHOT_JSON: &str = include_str!("fixtures/schema-snapshot.json");
+
+#[test]
+fn frozen_schema_snapshot_still_deserializes() {
+    let result = serde_json::from_str::<ModuleParameters>(SCHEMA_SNAPSHOT_JSON);
+    assert!(
+        result.is_ok(),
+        "frozen schema snapshot failed to deserialize: {:?}. This means a field was added to \
+         ModuleParameters (or a nested struct) without #[serde(default)], which will also break \
+         every previously-saved user patch that predates the new field. Add #[serde(default)] \
+         to the new field rather than editing this fixture.",
+        result.err()
+    );
+}
