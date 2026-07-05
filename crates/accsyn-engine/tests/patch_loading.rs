@@ -1,11 +1,15 @@
 use accsyn_core::parameter_types::Hertz;
 use accsyn_engine::modules::effects::AudioEffectParameters;
-use accsyn_engine::modules::envelope::MAX_ATTACK_MILLISECONDS;
-use accsyn_engine::modules::oscillator::WaveShape;
+use accsyn_engine::modules::envelope::{Envelope, EnvelopeParameters, MAX_ATTACK_MILLISECONDS};
+use accsyn_engine::modules::oscillator::{Oscillator, OscillatorParameters, WaveShape};
 use accsyn_engine::synthesizer::ModuleParameters;
 use accsyn_engine::synthesizer::patches::system_patches;
 use std::sync::atomic::Ordering::Relaxed;
 use std::time::Duration;
+
+const BURST_SAMPLE_RATE: u32 = 48_000;
+const BURST_SAMPLE_COUNT: usize = 500;
+const BURST_MIDI_NOTE: u8 = 69; // A4, arbitrary fixed note for reproducibility
 
 /// Applies `preset` onto a freshly defaulted `ModuleParameters` the same way
 /// `set_module_parameters_from_preset` does in production, using each module's public
@@ -259,4 +263,65 @@ fn programmatic_nan_and_infinity_are_sanitized_through_assign_from() {
     assert!(live.oscillators[0].shape_parameter1.load().is_finite());
     assert!(live.filter.cutoff_frequency.load().is_finite());
     assert!(live.lfos[0].center_value.load().is_finite());
+}
+
+/// Drives an oscillator/envelope pair built from loaded patch parameters for a short burst and
+/// asserts every sample stays finite. Module-level, matching `dsp_chain.rs`'s existing pattern —
+/// no `Synthesizer`/audio-thread needed to catch a `NaN`/`Infinity` reaching actual DSP output,
+/// as opposed to just reaching a stored parameter (which the tests above already cover).
+fn assert_short_audio_burst_is_finite(
+    oscillator_parameters: &OscillatorParameters,
+    envelope_parameters: &EnvelopeParameters,
+    patch_name: &str,
+) {
+    let mut oscillator = Oscillator::new(BURST_SAMPLE_RATE, WaveShape::default());
+    oscillator.set_parameters(oscillator_parameters);
+    oscillator.tune(BURST_MIDI_NOTE);
+
+    let mut envelope = Envelope::new(BURST_SAMPLE_RATE);
+    envelope.set_parameters(envelope_parameters);
+    envelope_parameters.gate_flag.store(1, Relaxed); // MidiGateEvent::GateOn
+
+    for sample_index in 0..BURST_SAMPLE_COUNT {
+        envelope.check_gate(&envelope_parameters.gate_flag);
+        let env_val = envelope.generate();
+        let osc_sample = oscillator.generate(None, None);
+        assert!(
+            env_val.is_finite(),
+            "{patch_name}: envelope sample {sample_index} is not finite ({env_val})"
+        );
+        assert!(
+            osc_sample.is_finite(),
+            "{patch_name}: oscillator sample {sample_index} is not finite ({osc_sample})"
+        );
+    }
+}
+
+/// Burst-tests oscillator 0 / envelope 0 from the first factory patch. Complements the
+/// storage-level finite checks above by confirming the loaded values also produce finite
+/// samples once actually run through the DSP modules that consume them.
+#[test]
+fn first_factory_patch_produces_finite_audio_burst() {
+    let (name, content) = system_patches()[0];
+    let preset: ModuleParameters = serde_json::from_str(content)
+        .unwrap_or_else(|err| panic!("factory patch '{name}' failed to deserialize: {err}"));
+    let live = apply_preset(&preset);
+
+    assert_short_audio_burst_is_finite(&live.oscillators[0], &live.envelopes[0], name);
+}
+
+/// Burst-tests oscillator 0 / envelope 0 from the adversarial fixture — the same slots that
+/// carry the out-of-range wave shape index and the (now-clamped) out-of-range attack time —
+/// confirming they produce finite audio, not just finite stored values.
+#[test]
+fn adversarial_patch_produces_finite_audio_burst() {
+    let preset: ModuleParameters = serde_json::from_str(ADVERSARIAL_PATCH_JSON)
+        .expect("adversarial fixture patch failed to deserialize");
+    let live = apply_preset(&preset);
+
+    assert_short_audio_burst_is_finite(
+        &live.oscillators[0],
+        &live.envelopes[0],
+        "adversarial-patch",
+    );
 }
