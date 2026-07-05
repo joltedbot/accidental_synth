@@ -478,10 +478,7 @@ fn vec_to_model_rc_int(input_values: &Vec<i32>) -> ModelRc<i32> {
 }
 
 fn version() -> SharedString {
-    const BUILD_DATE: &str = env!("VERGEN_BUILD_DATE");
-    const BUILD_NUMBER: &str = env!("BUILD_NUMBER");
-    let date = BUILD_DATE.replace('-', ".");
-    SharedString::from(format!("{date}.{BUILD_NUMBER}"))
+    SharedString::from(env!("APP_VERSION"))
 }
 
 #[cfg(test)]

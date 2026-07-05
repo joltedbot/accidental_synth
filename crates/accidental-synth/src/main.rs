@@ -20,12 +20,13 @@ use clap::Parser;
 slint::include_modules!();
 
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(version = env!("APP_VERSION"), about, long_about = None)]
 pub struct Arguments {}
 
 fn main() {
-    let application = AccidentalSynth::new().expect("Could not initialize the UI framework.");
     let _ = Arguments::parse();
+
+    let application = AccidentalSynth::new().expect("Could not initialize the UI framework.");
 
     env_logger::init();
     log::info!(target: "main", "Starting Accidental Synthesizer");
