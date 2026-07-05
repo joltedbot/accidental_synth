@@ -18,8 +18,14 @@ const BURST_MIDI_NOTE: u8 = 69; // A4, arbitrary fixed note for reproducibility
 ///
 /// `ModuleParameters::default()` gives an empty `effects` Vec (unlike a running `Synthesizer`,
 /// whose live parameters are always sized from the init patch first) — it's resized here to
-/// match `preset.effects` so the assign_from loop below actually copies every effect rather
+/// match `preset.effects` so the `assign_from` loop below actually copies every effect rather
 /// than silently iterating zero elements.
+///
+/// This duplicates `set_module_parameters_from_preset` rather than calling it because that
+/// function lives in a private module and isn't reachable from this external test crate.
+/// **If a new module is ever added to `ModuleParameters`, update both this function and
+/// `set_module_parameters_from_preset` together** — nothing else will catch the two silently
+/// drifting apart.
 fn apply_preset(preset: &ModuleParameters) -> ModuleParameters {
     let live = ModuleParameters {
         effects: preset
@@ -165,29 +171,35 @@ fn all_factory_patches_load_without_panicking_and_produce_finite_values() {
     }
 }
 
-/// A hand-authored patch combining three out-of-range values in one file: an envelope attack
+/// A hand-authored patch combining four out-of-range values in one file: an envelope attack
 /// time far beyond `MAX_ATTACK_MILLISECONDS`, an LFO with `clock_synced: true` and
 /// `thirty_second_notes: 0` (a division-by-zero input to the clock-sync frequency calculation
-/// in `event_listener.rs`), and an oscillator `wave_shape_index` far beyond the last valid
-/// `WaveShape` variant. None of these come from a real factory patch — this fixture exists to
-/// exercise combinations the shipped patches don't.
+/// in `event_listener.rs`), an oscillator `wave_shape_index` far beyond the last valid
+/// `WaveShape` variant, and that same oscillator with `portamento_enabled: true` and
+/// `portamento_time: 0` (a division-by-zero input to `recalculate_portamento_increment`). None
+/// of these come from a real factory patch — this fixture exists to exercise combinations the
+/// shipped patches don't.
 const ADVERSARIAL_PATCH_JSON: &str = include_str!("fixtures/adversarial-patch.json");
+
+/// Deserializes and applies the adversarial fixture. Shared by every
+/// `adversarial_patch_*` test below to avoid repeating the same three lines.
+fn load_adversarial_patch() -> ModuleParameters {
+    let preset: ModuleParameters = serde_json::from_str(ADVERSARIAL_PATCH_JSON)
+        .expect("adversarial fixture patch failed to deserialize");
+    apply_preset(&preset)
+}
 
 #[test]
 fn adversarial_patch_loads_without_panicking_and_produces_finite_values() {
-    let preset: ModuleParameters = serde_json::from_str(ADVERSARIAL_PATCH_JSON)
-        .expect("adversarial fixture patch failed to deserialize");
-    let live = apply_preset(&preset);
+    let live = load_adversarial_patch();
     assert_all_f32_fields_finite(&live, "adversarial-patch");
 }
 
 /// The out-of-range envelope attack time in the adversarial fixture is clamped by
-/// `EnvelopeParameters::assign_from` (see Stage 2 fix), not passed through raw.
+/// `EnvelopeParameters::assign_from`, not passed through raw.
 #[test]
 fn adversarial_patch_attack_ms_is_clamped_on_load() {
-    let preset: ModuleParameters = serde_json::from_str(ADVERSARIAL_PATCH_JSON)
-        .expect("adversarial fixture patch failed to deserialize");
-    let live = apply_preset(&preset);
+    let live = load_adversarial_patch();
 
     assert_eq!(live.envelopes[0].attack_ms.load(), MAX_ATTACK_MILLISECONDS);
 }
@@ -198,9 +210,7 @@ fn adversarial_patch_attack_ms_is_clamped_on_load() {
 /// the `WaveShape::COUNT` clamp bug (see AGENTS.md) non-fatal, pinned here against regression.
 #[test]
 fn adversarial_patch_out_of_range_wave_shape_index_falls_back_to_default() {
-    let preset: ModuleParameters = serde_json::from_str(ADVERSARIAL_PATCH_JSON)
-        .expect("adversarial fixture patch failed to deserialize");
-    let live = apply_preset(&preset);
+    let live = load_adversarial_patch();
 
     let stored_index = live.oscillators[0].wave_shape_index.load(Relaxed);
     assert_eq!(
@@ -220,9 +230,7 @@ fn adversarial_patch_out_of_range_wave_shape_index_falls_back_to_default() {
 /// propagating into the audio path.
 #[test]
 fn adversarial_patch_thirty_second_notes_zero_does_not_produce_non_finite_synced_frequency() {
-    let preset: ModuleParameters = serde_json::from_str(ADVERSARIAL_PATCH_JSON)
-        .expect("adversarial fixture patch failed to deserialize");
-    let live = apply_preset(&preset);
+    let live = load_adversarial_patch();
 
     let thirty_second_notes = live.lfos[1].thirty_second_notes.load(Relaxed);
     assert_eq!(
@@ -243,6 +251,39 @@ fn adversarial_patch_thirty_second_notes_zero_does_not_produce_non_finite_synced
     assert!(
         sanitized.load().is_finite(),
         "Hertz::new must sanitize non-finite input rather than storing it"
+    );
+}
+
+/// The adversarial fixture's first oscillator has `portamento_enabled: true` and
+/// `portamento_time: 0` — the same masked-divide-by-zero shape as `thirty_second_notes: 0`
+/// above, but for `recalculate_portamento_increment`'s
+/// `.../ f32::from(self.portamento.time)`. The fix is at the `PortamentoBuffers` type boundary
+/// (floors to 1 on both `new()`/`store()`), so the raw `0` never survives deserialization. This
+/// test confirms that, then drives an actual gate-on + retune sequence — the only way
+/// `recalculate_increment` fires — to prove the resulting audio sample is finite too, not just
+/// the stored value.
+#[test]
+fn adversarial_patch_portamento_time_zero_does_not_produce_non_finite_audio() {
+    let live = load_adversarial_patch();
+
+    assert_eq!(
+        live.oscillators[0].portamento_time.load(),
+        1,
+        "portamento_time: 0 in the fixture should be floored to 1, not stored raw"
+    );
+
+    let mut oscillator = Oscillator::new(BURST_SAMPLE_RATE, WaveShape::default());
+    oscillator.set_parameters(&live.oscillators[0]);
+    oscillator.tune(60);
+
+    live.oscillators[0].gate_flag.store(true, Relaxed);
+    oscillator.set_parameters(&live.oscillators[0]); // primes recalculate_increment via gate-on
+    oscillator.tune(72); // retune while portamento is enabled: exercises recalculate_portamento_increment
+
+    let sample = oscillator.generate(None, None);
+    assert!(
+        sample.is_finite(),
+        "oscillator sample after a portamento retune is not finite ({sample})"
     );
 }
 
@@ -315,9 +356,7 @@ fn first_factory_patch_produces_finite_audio_burst() {
 /// confirming they produce finite audio, not just finite stored values.
 #[test]
 fn adversarial_patch_produces_finite_audio_burst() {
-    let preset: ModuleParameters = serde_json::from_str(ADVERSARIAL_PATCH_JSON)
-        .expect("adversarial fixture patch failed to deserialize");
-    let live = apply_preset(&preset);
+    let live = load_adversarial_patch();
 
     assert_short_audio_burst_is_finite(
         &live.oscillators[0],

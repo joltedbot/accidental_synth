@@ -113,8 +113,8 @@
       "gate_flag": false,
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
-      "portamento_enabled": false,
-      "portamento_time": 7,
+      "portamento_enabled": true,
+      "portamento_time": 0,
       "clipper_boost": 0,
       "pitch_envelope_amount": 0.0
     },
