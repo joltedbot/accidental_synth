@@ -58,10 +58,30 @@ pub struct EnvelopeParameters {
 
 impl EnvelopeParameters {
     /// Replace all the values in this `EnvelopeParameters` with the values from the provided `EnvelopeParameters`.
+    ///
+    /// Attack/decay/release times are clamped to their `MIN_/MAX_*_MILLISECONDS` range here,
+    /// same as the UI-driven `set_envelope_*_time` path — a patch loaded from JSON bypasses that
+    /// path entirely, so without this clamp an out-of-range value in a patch file would be
+    /// stored and used as-is.
     pub fn assign_from(&self, parameters: &EnvelopeParameters) {
-        self.attack_ms.store(parameters.attack_ms.load());
-        self.decay_ms.store(parameters.decay_ms.load());
-        self.release_ms.store(parameters.release_ms.load());
+        self.attack_ms.store(
+            parameters
+                .attack_ms
+                .load()
+                .clamp(MIN_ATTACK_MILLISECONDS, MAX_ATTACK_MILLISECONDS),
+        );
+        self.decay_ms.store(
+            parameters
+                .decay_ms
+                .load()
+                .clamp(MIN_DECAY_MILLISECONDS, MAX_DECAY_MILLISECONDS),
+        );
+        self.release_ms.store(
+            parameters
+                .release_ms
+                .load()
+                .clamp(MIN_RELEASE_MILLISECONDS, MAX_RELEASE_MILLISECONDS),
+        );
         self.sustain_level.store(parameters.sustain_level.load());
         self.amount.store(parameters.amount.load());
         self.sustain_pedal
@@ -869,5 +889,61 @@ mod tests {
         // Transition back to the Off stage
         assert_eq!(envelope.stage, Stage::Off);
         assert!(f32s_are_equal(envelope.level, ENVELOPE_MIN_LEVEL));
+    }
+
+    #[test]
+    fn assign_from_clamps_out_of_range_attack_ms() {
+        let live = EnvelopeParameters::default();
+        let preset = EnvelopeParameters::default();
+        preset.attack_ms.store(u32::MAX);
+
+        live.assign_from(&preset);
+
+        assert_eq!(live.attack_ms.load(), MAX_ATTACK_MILLISECONDS);
+    }
+
+    #[test]
+    fn assign_from_clamps_below_range_attack_ms() {
+        let live = EnvelopeParameters::default();
+        let preset = EnvelopeParameters::default();
+        preset.attack_ms.store(0);
+
+        live.assign_from(&preset);
+
+        assert_eq!(live.attack_ms.load(), MIN_ATTACK_MILLISECONDS);
+    }
+
+    #[test]
+    fn assign_from_clamps_out_of_range_decay_ms() {
+        let live = EnvelopeParameters::default();
+        let preset = EnvelopeParameters::default();
+        preset.decay_ms.store(u32::MAX);
+
+        live.assign_from(&preset);
+
+        assert_eq!(live.decay_ms.load(), MAX_DECAY_MILLISECONDS);
+    }
+
+    #[test]
+    fn assign_from_clamps_out_of_range_release_ms() {
+        let live = EnvelopeParameters::default();
+        let preset = EnvelopeParameters::default();
+        preset.release_ms.store(u32::MAX);
+
+        live.assign_from(&preset);
+
+        assert_eq!(live.release_ms.load(), MAX_RELEASE_MILLISECONDS);
+    }
+
+    #[test]
+    fn assign_from_preserves_in_range_attack_ms() {
+        let live = EnvelopeParameters::default();
+        let preset = EnvelopeParameters::default();
+        let in_range_attack_ms = 250;
+        preset.attack_ms.store(in_range_attack_ms);
+
+        live.assign_from(&preset);
+
+        assert_eq!(live.attack_ms.load(), in_range_attack_ms);
     }
 }
