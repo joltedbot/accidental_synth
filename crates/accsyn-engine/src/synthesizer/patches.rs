@@ -217,6 +217,14 @@ impl Patches {
     }
 }
 
+/// Returns the embedded factory/system patches as `(name, content)` pairs, independent of any
+/// user-installed patches on disk. Exposed so tests can exercise the patch-load path without
+/// depending on the real user patches directory on the machine running the test.
+#[must_use]
+pub fn system_patches() -> &'static [(&'static str, &'static str)] {
+    SYSTEM_PATCHES
+}
+
 /// Loads a preset from the system preset patches by preset index. See `SYSTEM_PATCHES` for the index values
 ///
 /// # Errors
