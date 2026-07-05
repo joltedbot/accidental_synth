@@ -617,8 +617,15 @@ impl PortamentoBuffers {
     #[must_use]
     pub fn new(buffers: u16) -> Self {
         Self {
-            value: AtomicU16::new(buffers),
+            value: AtomicU16::new(Self::sanitize(buffers)),
         }
+    }
+
+    /// A portamento time of 0 buffers is used as a divisor when computing the per-buffer pitch
+    /// increment (`recalculate_portamento_increment`), so 0 is maxed to 1 here to prevent divide by zero
+    #[inline]
+    fn sanitize(buffers: u16) -> u16 {
+        buffers.max(1)
     }
 
     /// Loads the current buffer count.
@@ -630,14 +637,14 @@ impl PortamentoBuffers {
     /// Stores a new buffer count.
     #[inline]
     pub fn store(&self, buffers: u16) {
-        self.value.store(buffers, Ordering::Relaxed);
+        self.value.store(Self::sanitize(buffers), Ordering::Relaxed);
     }
 }
 
 impl Default for PortamentoBuffers {
     fn default() -> Self {
         Self {
-            value: AtomicU16::new(0),
+            value: AtomicU16::new(Self::sanitize(0)),
         }
     }
 }
@@ -652,5 +659,33 @@ impl<'de> Deserialize<'de> for PortamentoBuffers {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let buffers = u16::deserialize(deserializer)?;
         Ok(Self::new(buffers))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn portamento_buffers_new_floors_zero_to_one() {
+        assert_eq!(PortamentoBuffers::new(0).load(), 1);
+    }
+
+    #[test]
+    fn portamento_buffers_store_floors_zero_to_one() {
+        let buffers = PortamentoBuffers::new(7);
+        buffers.store(0);
+        assert_eq!(buffers.load(), 1);
+    }
+
+    #[test]
+    fn portamento_buffers_preserves_in_range_value() {
+        let buffers = PortamentoBuffers::new(42);
+        assert_eq!(buffers.load(), 42);
+    }
+
+    #[test]
+    fn portamento_buffers_default_upholds_the_floor_invariant() {
+        assert_eq!(PortamentoBuffers::default().load(), 1);
     }
 }
