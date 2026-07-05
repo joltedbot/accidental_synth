@@ -2,6 +2,24 @@
 
 This project has switched from Semantic Versioning to Calendar Versioning.
 
+## 2026.07.04.1
+
+### Added
+- New `PM` Phase Modulation Oscillator 
+- New `Phase Mod Bass Pulse` preset
+
+### Fixed
+- Negative pitch envelope values work again resolving a regression introduced in a previous update 
+- LFO frequency display values now correctly show clock divisions rather than frequency when loading a patch with clock sync enabled
+- Oscillator parameter display values now update properly when the wave shape is changed
+
+### Changed
+- Updated dependencies
+- Updated the README screenshots to represent the current UI state
+- Updated the CC number of the Mod Wheel LFO Key Sync from 115 to 110 so that it was next to the other ModWheel CC numbers
+- Tweaked the global panel layout in the UI to take up the ugly extra space
+- Added additional missing logging in various files to provide more debug and tracing coverage
+
 ## 2026.06.30.1
 
 ### Fixed
