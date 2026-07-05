@@ -32,7 +32,7 @@ crossbeam-channel = "0.5.15"
 env_logger = { version = "0.11.11", features = ["kv"] }
 log = { version = "0.4.33", features = ["kv"] }
 midir = "0.11.0"
-rand = "0.10.1"
+rand = "0.10.2"
 rtrb = "0.3.4"
 slint = "=1.16.1"
 slint-build = "=1.16.1"
