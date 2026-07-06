@@ -18,6 +18,7 @@ import {
     Clipper,
     Gate,
     Rectifier,
+    Chorus,
     AutoPan,
     Tremolo,
     Delay,
@@ -167,24 +168,24 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
+                        Chorus {
+                            effect-index: 7;
+                            effect_values: effects_values[self.effect-index];
+
+                            effect_enabled(effect-index, is_enabled) => {
+                                effect_enabled(effect-index, is_enabled);
+                            }
+                            effect_parameter_changed(effect_index, parameter_index, value) => {
+                                effect_parameter_changed(effect_index, parameter_index, value);
+                            }
+                        }
+
+                                        VerticalSpacer {
+                                            left-padding: 0px;
+                                            right-padding: 0px;
+                                        }
+
                 AutoPan {
-                    effect-index: 7;
-                    effect_values: effects_values[self.effect-index];
-
-                    effect_enabled(effect-index, is_enabled) => {
-                        effect_enabled(effect-index, is_enabled);
-                    }
-                    effect_parameter_changed(effect_index, parameter_index, value) => {
-                        effect_parameter_changed(effect_index, parameter_index, value);
-                    }
-                }
-
-                VerticalSpacer {
-                    left-padding: 0px;
-                    right-padding: 0px;
-                }
-
-                Tremolo {
                     effect-index: 8;
                     effect_values: effects_values[self.effect-index];
 
@@ -201,7 +202,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Delay {
+                Tremolo {
                     effect-index: 9;
                     effect_values: effects_values[self.effect-index];
 
@@ -217,9 +218,30 @@ export component EffectsPanel inherits Panel {
                     left-padding: 0px;
                     right-padding: 0px;
                 }
+
+
             }
 
             HorizontalSpacer { }
+        }
+
+        row3 := HorizontalLayout {
+                Delay {
+                    effect-index: 10;
+                    effect_values: effects_values[self.effect-index];
+
+                    effect_enabled(effect-index, is_enabled) => {
+                        effect_enabled(effect-index, is_enabled);
+                    }
+                    effect_parameter_changed(effect_index, parameter_index, value) => {
+                        effect_parameter_changed(effect_index, parameter_index, value);
+                    }
+                }
+
+                VerticalSpacer {
+                    left-padding: 0px;
+                    right-padding: 0px;
+                }
         }
     }
 }

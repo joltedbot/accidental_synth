@@ -21,6 +21,7 @@ mod rectifier;
 mod saturation;
 mod tremolo;
 mod wavefolder;
+mod chorus;
 
 /// Shared atomic parameters for controlling a single audio effect from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
@@ -81,10 +82,11 @@ impl Effects {
         let delay = Box::new(delay::Delay::new());
         let autopan = Box::new(autopan::AutoPan::new(sample_rate));
         let tremolo = Box::new(tremolo::Tremolo::new(sample_rate));
+        let chorus = Box::new(chorus::Chorus::new(sample_rate));
 
         Self {
             effects: vec![
-                saturation, compressor, wavefolder, bitshifter, clipper, gate, rectifier, autopan,
+                saturation, compressor, wavefolder, bitshifter, clipper, gate, rectifier, chorus, autopan,
                 tremolo, delay,
             ],
             parameters: EffectParameters::default_all(),
@@ -124,12 +126,12 @@ fn extract_parameters(source: &AudioEffectParameters) -> EffectParameters {
 }
 
 fn dry_wet_blend(
-    samples: (f32, f32),
-    rectified_samples: (f32, f32),
+    dry_samples: (f32, f32),
+    wet_samples: (f32, f32),
     blend_amount: f32,
 ) -> (f32, f32) {
-    let left_sample = samples.0 * (1.0 - blend_amount) + rectified_samples.0 * blend_amount;
-    let right_sample = samples.1 * (1.0 - blend_amount) + rectified_samples.1 * blend_amount;
+    let left_sample = dry_samples.0 * (1.0 - blend_amount) + wet_samples.0 * blend_amount;
+    let right_sample = dry_samples.1 * (1.0 - blend_amount) + wet_samples.1 * blend_amount;
     (left_sample, right_sample)
 }
 

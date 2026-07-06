@@ -59,8 +59,10 @@ impl Defaults {
     pub const MAXIMUM_PITCH_BEND_RANGE: u32 = 12;
 
     // Effects Constants
-    /// Default delay effect parameters: [time, feedback, mix, unused].
+    /// Default delay effect parameters: [amount, time, feedback, unused].
     pub const DELAY_PARAMETERS: [f32; 4] = [0.5, 0.5, 0.5, 0.0];
+    /// Default chorus effect parameters: [depth, rate, feedback, blend].
+    pub const CHORUS_PARAMETERS: [f32; 4] = [0.5, 0.5, 0.0, 1.0];
     /// Default autopan effect parameters: [rate, depth, unused, unused].
     pub const AUTOPAN_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
     /// Default tremolo effect parameters: [rate, depth, unused, unused].

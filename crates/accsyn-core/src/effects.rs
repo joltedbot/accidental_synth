@@ -37,6 +37,9 @@ pub enum EffectIndex {
     /// Full-wave rectifier distortion effect.
     #[strum(to_string = "Wave Rectifier")]
     Rectifier,
+    /// Stereo Chorus effect.
+    #[strum(to_string = "Chorus")]
+    Chorus,
     /// Automatic stereo panning effect.
     #[strum(to_string = "Auto-Pan")]
     AutoPan,
@@ -124,7 +127,7 @@ impl EffectParameters {
                         parameters: Defaults::RECTIFIER_PARAMETERS.to_vec(),
                     });
                 }
-                EffectIndex::Delay => {
+                EffectIndex::Chorus => {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
@@ -143,6 +146,13 @@ impl EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
                         parameters: Defaults::TREMOLO_PARAMETERS.to_vec(),
+                    });
+                }
+                EffectIndex::Delay => {
+                    effect_parameters.push(EffectParameters {
+                        name: effect.to_string(),
+                        is_enabled: false,
+                        parameters: Defaults::DELAY_PARAMETERS.to_vec(),
                     });
                 }
             }
