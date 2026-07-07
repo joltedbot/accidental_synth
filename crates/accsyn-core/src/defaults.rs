@@ -62,7 +62,7 @@ impl Defaults {
     /// Default delay effect parameters: [amount, time, feedback, unused].
     pub const DELAY_PARAMETERS: [f32; 4] = [0.5, 0.5, 0.5, 0.0];
     /// Default chorus effect parameters: [depth, rate, feedback, blend].
-    pub const CHORUS_PARAMETERS: [f32; 4] = [0.5, 0.5, 0.0, 1.0];
+    pub const CHORUS_PARAMETERS: [f32; 4] = [1.0, 0.3, 0.0, 0.3];
     /// Default autopan effect parameters: [rate, depth, unused, unused].
     pub const AUTOPAN_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
     /// Default tremolo effect parameters: [rate, depth, unused, unused].
@@ -137,6 +137,8 @@ impl Defaults {
     pub const LFO_RESET_STATE: bool = false;
     /// Default LFO gate  state
     pub const LFO_GATE_STATE: bool = false;
+    /// The level correction factor when adding 2 samples. 0.707 is RMS of a sine wave
+    pub const SAMPLE_MIXING_LEVEL_CORRECTION_FACTOR: f32 = 0.707;
 }
 
 impl Defaults {

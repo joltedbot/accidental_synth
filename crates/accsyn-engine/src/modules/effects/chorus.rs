@@ -1,3 +1,4 @@
+use crate::modules::effects;
 use crate::modules::effects::constants::{
     CHORUS_DEFAULT_DELAY_MILLISECONDS, CHORUS_DEFAULT_LFO_RANGE, CHORUS_FEEDBACK_SCALE_FACTOR,
     CHORUS_LFO_CENTER_VALUE, CHORUS_LFO_FREQUENCY_COEFFICIENT, CHORUS_LFO_FREQUENCY_SCALE_FACTOR,
@@ -7,6 +8,7 @@ use crate::modules::effects::constants::{
 use crate::modules::effects::dry_wet_blend;
 use crate::modules::lfo::Lfo;
 use accsyn_core::casting::f32_to_usize_clamped;
+use accsyn_core::defaults::Defaults;
 use accsyn_core::effects::{AudioEffect, EffectParameters};
 use accsyn_core::math::{exponential_curve_from_normal_value_and_coefficient, f32s_are_equal};
 
@@ -29,7 +31,7 @@ impl Chorus {
     pub fn new(sample_rate: u32) -> Self {
         log::debug!(target: "synthesizer::effects::chorus", "Constructing Delay Effect Module");
 
-        let buffer = vec![(0.0, 0.0); MAX_CHORUS_DELAY_SAMPLES as usize];
+        let buffer = vec![(0.0, 0.0); f32_to_usize_clamped(MAX_CHORUS_DELAY_SAMPLES)];
 
         let mut lfo1 = Lfo::new(sample_rate);
         lfo1.set_center_value(CHORUS_LFO_CENTER_VALUE);
@@ -70,26 +72,22 @@ impl Chorus {
         self.lfo2.set_phase(CHORUS_LFO2_PHASE);
     }
 
-    fn interpolate_samples(
-        buffer_samples_a: (f32, f32),
-        buffer_samples_b: (f32, f32),
-        fractional_index: f32,
+    fn delayed_sample_from_buffer(
+        &mut self,
+        buffer_len: usize,
+        samples_count: f32,
+        new_samples_count: usize,
     ) -> (f32, f32) {
+        let read_index = (self.write_index + buffer_len - new_samples_count) & (buffer_len - 1);
+        let read_index_next = (read_index + buffer_len - 1) & (buffer_len - 1);
+        let buffer_samples = self.buffer[read_index];
+        let buffer_samples_next = self.buffer[read_index_next];
 
-        let mut interpolated_left =
-            buffer_samples_a.0 * (1.0 - fractional_index) + buffer_samples_b.0 * fractional_index;
-        let mut interpolated_right =
-            buffer_samples_a.1 * (1.0 - fractional_index) + buffer_samples_b.1 * fractional_index;
-
-        if interpolated_left.is_nan() || interpolated_right.is_nan() {
-            interpolated_left = buffer_samples_a.0;
-            interpolated_right = buffer_samples_a.1;
-        }
-
-        if interpolated_left.is_infinite() || interpolated_right.is_infinite() {
-            interpolated_left = buffer_samples_a.0;
-            interpolated_right = buffer_samples_a.1;
-        }
+        // new_samples_count is bounded by MAX_DELAY_SAMPLES (a small constant), within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
+        let fractional_index1 = samples_count - new_samples_count as f32;
+        let (interpolated_left, interpolated_right) =
+            effects::interpolate_samples(buffer_samples, buffer_samples_next, fractional_index1);
         (interpolated_left, interpolated_right)
     }
 }
@@ -132,68 +130,43 @@ impl AudioEffect for Chorus {
             );
         }
 
+        // Chorus Voice 1
         let delay_offset1 = self.lfo1.generate(None);
-
-        // Delay sample count is bounded by MAX_DELAY_SAMPLES, within f32 precision (2²³ = 8_388_608)
-        #[allow(clippy::cast_precision_loss)]
         let target_delay1 = self.delay_center_value + (self.delay_center_value * delay_offset1);
-        let target_samples = (target_delay1 - self.samples_count_1) * DELAY_SMOOTHING_FACTOR;
-        self.samples_count_1 += target_samples;
+        let target_samples1 = (target_delay1 - self.samples_count_1) * DELAY_SMOOTHING_FACTOR;
+        self.samples_count_1 += target_samples1;
+        let new_samples_count1 = f32_to_usize_clamped(self.samples_count_1.floor());
+        let chorused_samples1 =
+            self.delayed_sample_from_buffer(buffer_len, self.samples_count_1, new_samples_count1);
 
-        let whole_sample_count1 = f32_to_usize_clamped(self.samples_count_1.floor());
-        let read_index1 = (self.write_index + buffer_len - whole_sample_count1) & (buffer_len - 1);
-        let read_index_next1 = (read_index1 + buffer_len - 1) & (buffer_len - 1);
-
-        let buffer_samples_1 = self.buffer[read_index1];
-        let buffer_samples_next_1 = self.buffer[read_index_next1];
-
-        // chorus_samples is bounded by MAX_DELAY_SAMPLES (a small constant), within f32 precision (2²³ = 8_388_608)
-        #[allow(clippy::cast_precision_loss)]
-        let fractional_index1 = self.samples_count_1 - whole_sample_count1 as f32;
-        let (interpolated_left1, interpolated_right1) =
-            Self::interpolate_samples(buffer_samples_1, buffer_samples_next_1, fractional_index1);
-        let chorused_samples1 = (interpolated_left1, interpolated_right1);
-
-        // *
-
+        // Chorus Voice 2
         let delay_offset2 = self.lfo2.generate(None);
-        // Delay sample count is bounded by MAX_DELAY_SAMPLES, within f32 precision (2²³ = 8_388_608)
-        #[allow(clippy::cast_precision_loss)]
         let target_delay2 = self.delay_center_value + (self.delay_center_value * delay_offset2);
-
-        self.samples_count_2 += (target_delay2 - self.samples_count_2) * DELAY_SMOOTHING_FACTOR;
-        let new_sample_count2 = f32_to_usize_clamped(self.samples_count_2.floor());
-
-        let read_index2 = (self.write_index + buffer_len - new_sample_count2) & (buffer_len - 1);
-        let read_index_next2 = (read_index2 + buffer_len - 1) & (buffer_len - 1);
-
-        let buffer_samples_2 = self.buffer[read_index2];
-        let buffer_samples_next_2 = self.buffer[read_index_next2];
-
-        // chorus_samples is bounded by MAX_DELAY_SAMPLES (a small constant), within f32 precision (2²³ = 8_388_608)
-        #[allow(clippy::cast_precision_loss)]
-        let fractional_index2 = self.samples_count_2 - new_sample_count2 as f32;
-        let (interpolated_left2, interpolated_right2) =
-            Self::interpolate_samples(buffer_samples_2, buffer_samples_next_2, fractional_index2);
-        let chorused_samples2 = (interpolated_left2, interpolated_right2);
+        let target_samples2 = (target_delay2 - self.samples_count_2) * DELAY_SMOOTHING_FACTOR;
+        self.samples_count_2 += target_samples2;
+        let new_samples_count2 = f32_to_usize_clamped(self.samples_count_2.floor());
+        let chorused_samples2 =
+            self.delayed_sample_from_buffer(buffer_len, self.samples_count_2, new_samples_count2);
 
         self.buffer[self.write_index] = (
             samples.0
                 + f32::midpoint(
-                    (chorused_samples1.0 * feedback),
-                    (chorused_samples2.0 * feedback),
+                    chorused_samples1.0 * feedback,
+                    chorused_samples2.0 * feedback,
                 ),
             samples.1
                 + f32::midpoint(
-                    (chorused_samples1.1 * feedback),
-                    (chorused_samples2.1 * feedback),
+                    chorused_samples1.1 * feedback,
+                    chorused_samples2.1 * feedback,
                 ),
         );
         self.write_index = (self.write_index + 1) & (buffer_len - 1);
 
         let chorused_samples = (
-            f32::midpoint(chorused_samples1.0, chorused_samples2.0),
-            f32::midpoint(chorused_samples1.1, chorused_samples2.1),
+            (chorused_samples1.0 + chorused_samples2.0)
+                * Defaults::SAMPLE_MIXING_LEVEL_CORRECTION_FACTOR,
+            (chorused_samples1.1 + chorused_samples2.1)
+                * Defaults::SAMPLE_MIXING_LEVEL_CORRECTION_FACTOR,
         );
 
         dry_wet_blend(samples, chorused_samples, blend)

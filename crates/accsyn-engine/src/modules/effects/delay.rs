@@ -1,3 +1,4 @@
+use crate::modules::effects;
 use crate::modules::effects::constants::{
     DELAY_SMOOTHING_FACTOR, MAX_DELAY_SAMPLES, MIN_DELAY_SAMPLES,
 };
@@ -12,7 +13,7 @@ pub struct Delay {
     buffer: Vec<(f32, f32)>,
     write_index: usize,
     is_enabled: bool,
-    current_delay_samples: f32,
+    number_of_delay_samples: f32,
 }
 
 impl Delay {
@@ -29,7 +30,7 @@ impl Delay {
             buffer,
             write_index: 0,
             is_enabled: false,
-            current_delay_samples,
+            number_of_delay_samples: current_delay_samples,
         }
     }
 
@@ -39,7 +40,25 @@ impl Delay {
         // MIN_DELAY_SAMPLES is a small constant (delay samples count), within f32 precision (2²³ = 8_388_608)
         #[allow(clippy::cast_precision_loss)]
         let current_delay_samples = MIN_DELAY_SAMPLES as f32;
-        self.current_delay_samples = current_delay_samples;
+        self.number_of_delay_samples = current_delay_samples;
+    }
+
+    fn delayed_samples_from_buffer(
+        &mut self,
+        buffer_len: usize,
+        samples_count: f32,
+        new_samples_count: usize,
+    ) -> (f32, f32) {
+        // chorus_samples is bounded by MAX_DELAY_SAMPLES (a small constant), within f32 precision (2²³ = 8_388_608)
+        #[allow(clippy::cast_precision_loss)]
+        let fractional_index1 = samples_count - new_samples_count as f32;
+        let read_index = (self.write_index + buffer_len - new_samples_count) & (buffer_len - 1);
+        let read_index_next = (read_index + buffer_len - 1) & (buffer_len - 1);
+        let buffer_samples = self.buffer[read_index];
+        let buffer_samples_next = self.buffer[read_index_next];
+        let (interpolated_left, interpolated_right) =
+            effects::interpolate_samples(buffer_samples, buffer_samples_next, fractional_index1);
+        (interpolated_left, interpolated_right)
     }
 }
 
@@ -65,36 +84,15 @@ impl AudioEffect for Delay {
             MAX_DELAY_SAMPLES,
         ) as f32;
 
-        self.current_delay_samples +=
-            (target_delay - self.current_delay_samples) * DELAY_SMOOTHING_FACTOR;
-        let delay_samples = f32_to_usize_clamped(self.current_delay_samples.floor());
-        // delay_samples is bounded by MAX_DELAY_SAMPLES (a small constant), within f32 precision (2²³ = 8_388_608)
-        #[allow(clippy::cast_precision_loss)]
-        let fractional_index = self.current_delay_samples - delay_samples as f32;
-
         let buffer_len = self.buffer.len();
-
-        let read_index = (self.write_index + buffer_len - delay_samples) & (buffer_len - 1);
-        let read_index_next = (read_index + buffer_len - 1) & (buffer_len - 1);
-
-        let buffer_samples_a = self.buffer[read_index];
-        let buffer_samples_b = self.buffer[read_index_next];
-
-        let mut interpolated_left =
-            buffer_samples_a.0 * (1.0 - fractional_index) + buffer_samples_b.0 * fractional_index;
-        let mut interpolated_right =
-            buffer_samples_a.1 * (1.0 - fractional_index) + buffer_samples_b.1 * fractional_index;
-
-        if interpolated_left.is_nan() || interpolated_right.is_nan() {
-            interpolated_left = buffer_samples_a.0;
-            interpolated_right = buffer_samples_a.1;
-        }
-
-        if interpolated_left.is_infinite() || interpolated_right.is_infinite() {
-            interpolated_left = buffer_samples_a.0;
-            interpolated_right = buffer_samples_a.1;
-        }
-
+        self.number_of_delay_samples +=
+            (target_delay - self.number_of_delay_samples) * DELAY_SMOOTHING_FACTOR;
+        let delay_samples = f32_to_usize_clamped(self.number_of_delay_samples.floor());
+        let (interpolated_left, interpolated_right) = self.delayed_samples_from_buffer(
+            buffer_len,
+            self.number_of_delay_samples,
+            delay_samples,
+        );
         let delayed_samples = (interpolated_left * feedback, interpolated_right * feedback);
 
         self.buffer[self.write_index] =

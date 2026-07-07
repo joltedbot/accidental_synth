@@ -168,22 +168,22 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                        Chorus {
-                            effect-index: 7;
-                            effect_values: effects_values[self.effect-index];
+                Chorus {
+                    effect-index: 7;
+                    effect_values: effects_values[self.effect-index];
 
-                            effect_enabled(effect-index, is_enabled) => {
-                                effect_enabled(effect-index, is_enabled);
-                            }
-                            effect_parameter_changed(effect_index, parameter_index, value) => {
-                                effect_parameter_changed(effect_index, parameter_index, value);
-                            }
-                        }
+                    effect_enabled(effect-index, is_enabled) => {
+                        effect_enabled(effect-index, is_enabled);
+                    }
+                    effect_parameter_changed(effect_index, parameter_index, value) => {
+                        effect_parameter_changed(effect_index, parameter_index, value);
+                    }
+                }
 
-                                        VerticalSpacer {
-                                            left-padding: 0px;
-                                            right-padding: 0px;
-                                        }
+                VerticalSpacer {
+                    left-padding: 0px;
+                    right-padding: 0px;
+                }
 
                 AutoPan {
                     effect-index: 8;
@@ -218,30 +218,28 @@ export component EffectsPanel inherits Panel {
                     left-padding: 0px;
                     right-padding: 0px;
                 }
-
-
             }
 
             HorizontalSpacer { }
         }
 
         row3 := HorizontalLayout {
-                Delay {
-                    effect-index: 10;
-                    effect_values: effects_values[self.effect-index];
+            Delay {
+                effect-index: 10;
+                effect_values: effects_values[self.effect-index];
 
-                    effect_enabled(effect-index, is_enabled) => {
-                        effect_enabled(effect-index, is_enabled);
-                    }
-                    effect_parameter_changed(effect_index, parameter_index, value) => {
-                        effect_parameter_changed(effect_index, parameter_index, value);
-                    }
+                effect_enabled(effect-index, is_enabled) => {
+                    effect_enabled(effect-index, is_enabled);
                 }
+                effect_parameter_changed(effect_index, parameter_index, value) => {
+                    effect_parameter_changed(effect_index, parameter_index, value);
+                }
+            }
 
-                VerticalSpacer {
-                    left-padding: 0px;
-                    right-padding: 0px;
-                }
+            VerticalSpacer {
+                left-padding: 0px;
+                right-padding: 0px;
+            }
         }
     }
 }

@@ -131,7 +131,7 @@ impl EffectParameters {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
-                        parameters: Defaults::DELAY_PARAMETERS.to_vec(),
+                        parameters: Defaults::CHORUS_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::AutoPan => {

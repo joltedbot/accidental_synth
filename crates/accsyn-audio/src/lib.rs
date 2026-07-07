@@ -1,4 +1,4 @@
-//! CPAL-based audio output with hot-swappable device support for the `AccSyn` synthesizer.
+//! `CoreAudio` audio output based on `coreaudio-rs` with hot-swappable device support for the `AccSyn` synthesizer.
 //!
 //! Manages audio output streams, device monitoring via `CoreAudio`, and
 //! sample delivery from the synthesis engine to the audio hardware.
@@ -36,7 +36,7 @@ use std::thread;
 use std::time::Duration;
 use thiserror::Error;
 
-/// A named audio output device with its CPAL handle and list index.
+/// A named audio output device with its `CoreAudio` handle and list index.
 #[derive(Clone)]
 pub struct OutputDevice {
     /// Human-readable device name.

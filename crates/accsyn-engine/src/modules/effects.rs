@@ -12,6 +12,7 @@ use std::sync::atomic::Ordering::Relaxed;
 
 mod autopan;
 mod bitshifter;
+mod chorus;
 mod clipper;
 mod compressor;
 mod constants;
@@ -21,7 +22,6 @@ mod rectifier;
 mod saturation;
 mod tremolo;
 mod wavefolder;
-mod chorus;
 
 /// Shared atomic parameters for controlling a single audio effect from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
@@ -86,8 +86,8 @@ impl Effects {
 
         Self {
             effects: vec![
-                saturation, compressor, wavefolder, bitshifter, clipper, gate, rectifier, chorus, autopan,
-                tremolo, delay,
+                saturation, compressor, wavefolder, bitshifter, clipper, gate, rectifier, chorus,
+                autopan, tremolo, delay,
             ],
             parameters: EffectParameters::default_all(),
         }
@@ -133,6 +133,28 @@ fn dry_wet_blend(
     let left_sample = dry_samples.0 * (1.0 - blend_amount) + wet_samples.0 * blend_amount;
     let right_sample = dry_samples.1 * (1.0 - blend_amount) + wet_samples.1 * blend_amount;
     (left_sample, right_sample)
+}
+
+fn interpolate_samples(
+    buffer_samples_a: (f32, f32),
+    buffer_samples_b: (f32, f32),
+    fractional_index: f32,
+) -> (f32, f32) {
+    let mut interpolated_left =
+        buffer_samples_a.0 * (1.0 - fractional_index) + buffer_samples_b.0 * fractional_index;
+    let mut interpolated_right =
+        buffer_samples_a.1 * (1.0 - fractional_index) + buffer_samples_b.1 * fractional_index;
+
+    if interpolated_left.is_nan() || interpolated_right.is_nan() {
+        interpolated_left = buffer_samples_a.0;
+        interpolated_right = buffer_samples_a.1;
+    }
+
+    if interpolated_left.is_infinite() || interpolated_right.is_infinite() {
+        interpolated_left = buffer_samples_a.0;
+        interpolated_right = buffer_samples_a.1;
+    }
+    (interpolated_left, interpolated_right)
 }
 
 #[cfg(test)]
