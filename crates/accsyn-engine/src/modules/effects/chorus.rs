@@ -2,7 +2,7 @@ use crate::modules::effects;
 use crate::modules::effects::constants::{
     CHORUS_DEFAULT_DELAY_MILLISECONDS, CHORUS_DEFAULT_LFO_RANGE, CHORUS_FEEDBACK_SCALE_FACTOR,
     CHORUS_LFO_CENTER_VALUE, CHORUS_LFO_FREQUENCY_COEFFICIENT, CHORUS_LFO_FREQUENCY_SCALE_FACTOR,
-    CHORUS_LFO2_PHASE, DELAY_SMOOTHING_FACTOR, MAX_CHORUS_DELAY_SAMPLES, MAX_DELAY_SAMPLES,
+    CHORUS_LFO2_PHASE, DELAY_SMOOTHING_FACTOR, MAX_CHORUS_DELAY_SAMPLES,
     MIN_DELAY_SAMPLES,
 };
 use crate::modules::effects::dry_wet_blend;
@@ -13,7 +13,7 @@ use accsyn_core::effects::{AudioEffect, EffectParameters};
 use accsyn_core::math::{exponential_curve_from_normal_value_and_coefficient, f32s_are_equal};
 
 // Ensure MAX_DELAY_SAMPLES is a power of 2 to guarantee the bitwise wrapping logic is safe
-const _: () = assert!(MAX_DELAY_SAMPLES.is_power_of_two());
+const _: () = assert!(MAX_CHORUS_DELAY_SAMPLES.is_power_of_two());
 
 pub struct Chorus {
     buffer: Vec<(f32, f32)>,
@@ -31,7 +31,7 @@ impl Chorus {
     pub fn new(sample_rate: u32) -> Self {
         log::debug!(target: "synthesizer::effects::chorus", "Constructing Delay Effect Module");
 
-        let buffer = vec![(0.0, 0.0); f32_to_usize_clamped(MAX_CHORUS_DELAY_SAMPLES)];
+        let buffer = vec![(0.0, 0.0); MAX_CHORUS_DELAY_SAMPLES as usize];
 
         let mut lfo1 = Lfo::new(sample_rate);
         lfo1.set_center_value(CHORUS_LFO_CENTER_VALUE);
@@ -207,7 +207,7 @@ mod tests {
         let input = (0.5, 0.5);
 
         // Buffer starts pre-allocated
-        assert_eq!(chorus.buffer.len(), MAX_DELAY_SAMPLES as usize);
+        assert_eq!(chorus.buffer.len(), MAX_CHORUS_DELAY_SAMPLES as usize);
         assert_eq!(chorus.write_index, 0);
 
         // Process first sample
