@@ -399,4 +399,98 @@ mod tests {
             result.1
         );
     }
+
+    #[test]
+    fn interpolate_samples_blends_at_fractional_index() {
+        let buffer_samples_a = (0.0, 1.0);
+        let buffer_samples_b = (1.0, 0.0);
+
+        let result_quarter = interpolate_samples(buffer_samples_a, buffer_samples_b, 0.25);
+        let result_half = interpolate_samples(buffer_samples_a, buffer_samples_b, 0.5);
+        let result_three_quarter = interpolate_samples(buffer_samples_a, buffer_samples_b, 0.75);
+
+        let expected_quarter = (0.25, 0.75);
+        assert!(
+            f32s_are_equal(result_quarter.0, expected_quarter.0),
+            "Expected {}, got {:?}",
+            expected_quarter.0,
+            result_quarter.0
+        );
+        assert!(
+            f32s_are_equal(result_quarter.1, expected_quarter.1),
+            "Expected {}, got {:?}",
+            expected_quarter.1,
+            result_quarter.1
+        );
+        let expected_half = (0.5, 0.5);
+        assert!(
+            f32s_are_equal(result_half.0, expected_half.0),
+            "Expected {}, got {:?}",
+            expected_half.0,
+            result_half.0
+        );
+        assert!(
+            f32s_are_equal(result_half.1, expected_half.1),
+            "Expected {}, got {:?}",
+            expected_half.1,
+            result_half.1
+        );
+        let expected_three_quarter = (0.75, 0.25);
+        assert!(
+            f32s_are_equal(result_three_quarter.0, expected_three_quarter.0),
+            "Expected {}, got {:?}",
+            expected_three_quarter.0,
+            result_three_quarter.0
+        );
+        assert!(
+            f32s_are_equal(result_three_quarter.1, expected_three_quarter.1),
+            "Expected {}, got {:?}",
+            expected_three_quarter.1,
+            result_three_quarter.1
+        );
+    }
+
+    #[test]
+    fn interpolate_samples_returns_first_sample_at_zero_fractional_index() {
+        let buffer_samples_a = (0.3, -0.6);
+        let buffer_samples_b = (0.9, 0.2);
+
+        let result = interpolate_samples(buffer_samples_a, buffer_samples_b, 0.0);
+
+        assert!(f32s_are_equal(result.0, buffer_samples_a.0));
+        assert!(f32s_are_equal(result.1, buffer_samples_a.1));
+    }
+
+    #[test]
+    fn interpolate_samples_returns_second_sample_at_one_fractional_index() {
+        let buffer_samples_a = (0.3, -0.6);
+        let buffer_samples_b = (0.9, 0.2);
+
+        let result = interpolate_samples(buffer_samples_a, buffer_samples_b, 1.0);
+
+        assert!(f32s_are_equal(result.0, buffer_samples_b.0));
+        assert!(f32s_are_equal(result.1, buffer_samples_b.1));
+    }
+
+    #[test]
+    fn interpolate_samples_falls_back_to_first_sample_when_result_would_be_nan() {
+        let buffer_samples_a = (0.3, -0.6);
+        let buffer_samples_b = (f32::NAN, f32::NAN);
+
+        let result = interpolate_samples(buffer_samples_a, buffer_samples_b, 0.5);
+
+        assert!(f32s_are_equal(result.0, buffer_samples_a.0));
+        assert!(f32s_are_equal(result.1, buffer_samples_a.1));
+    }
+
+    #[test]
+    fn interpolate_samples_falls_back_to_first_sample_when_result_would_be_infinite() {
+        let buffer_samples_a = (0.3, -0.6);
+        let buffer_samples_b = (f32::INFINITY, f32::NEG_INFINITY);
+
+        let result = interpolate_samples(buffer_samples_a, buffer_samples_b, 0.5);
+
+        assert!(f32s_are_equal(result.0, buffer_samples_a.0));
+        assert!(f32s_are_equal(result.1, buffer_samples_a.1));
+    }
 }

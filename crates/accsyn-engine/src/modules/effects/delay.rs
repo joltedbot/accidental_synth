@@ -219,4 +219,91 @@ mod tests {
         assert!(f32s_are_equal(result.0, 0.8));
         assert!(f32s_are_equal(result.1, -0.6));
     }
+
+    #[test]
+    fn delayed_samples_from_buffer_interpolates_seeded_buffer_values() {
+        let mut delay = Delay::new();
+        delay.write_index = 5;
+        let buffer_len = delay.buffer.len();
+        // read_index = (5 + buffer_len - 3) & (buffer_len - 1) == 2, read_index_next == 1
+        delay.buffer[2] = (0.4, -0.2);
+        delay.buffer[1] = (0.8, -0.6);
+
+        let result = delay.delayed_samples_from_buffer(buffer_len, 3.25, 3);
+
+        let expected = (0.5, -0.3);
+        assert!(
+            f32s_are_equal(result.0, expected.0),
+            "Expected {}, got {}",
+            expected.0,
+            result.0
+        );
+        assert!(
+            f32s_are_equal(result.1, expected.1),
+            "Expected {}, got {}",
+            expected.1,
+            result.1
+        );
+    }
+
+    #[test]
+    fn delayed_samples_from_buffer_wraps_read_index_to_end_of_buffer() {
+        let mut delay = Delay::new();
+        delay.write_index = 0;
+        let buffer_len = delay.buffer.len();
+        // read_index = (0 + buffer_len - 1) & (buffer_len - 1) == buffer_len - 1, read_index_next == buffer_len - 2
+        delay.buffer[buffer_len - 1] = (0.9, -0.1);
+        delay.buffer[buffer_len - 2] = (0.1, 0.9);
+
+        let result = delay.delayed_samples_from_buffer(buffer_len, 1.5, 1);
+
+        let expected = (0.5, 0.4);
+        assert!(
+            f32s_are_equal(result.0, expected.0),
+            "Expected {}, got {}",
+            expected.0,
+            result.0
+        );
+        assert!(
+            f32s_are_equal(result.1, expected.1),
+            "Expected {}, got {}",
+            expected.1,
+            result.1
+        );
+    }
+
+    #[test]
+    fn delay_process_samples_outputs_impulse_after_delay_time_elapses() {
+        let mut delay = Delay::new();
+        // amount=1.0, position=0.0 (-> MIN_DELAY_SAMPLES), feedback=1.0
+        let effect = EffectParameters {
+            name: String::new(),
+            is_enabled: true,
+            parameters: vec![1.0, 0.0, 1.0, 0.0],
+        };
+        let impulse = (0.9, -0.9);
+        let silence = (0.0, 0.0);
+
+        let first_output = delay.process_samples(impulse, &effect);
+        assert!(f32s_are_equal(first_output.0, impulse.0));
+        assert!(f32s_are_equal(first_output.1, impulse.1));
+
+        let mut last_output = (0.0, 0.0);
+        for _ in 0..MIN_DELAY_SAMPLES {
+            last_output = delay.process_samples(silence, &effect);
+        }
+
+        assert!(
+            f32s_are_equal(last_output.0, impulse.0),
+            "Expected delayed impulse {}, got {}",
+            impulse.0,
+            last_output.0
+        );
+        assert!(
+            f32s_are_equal(last_output.1, impulse.1),
+            "Expected delayed impulse {}, got {}",
+            impulse.1,
+            last_output.1
+        );
+    }
 }

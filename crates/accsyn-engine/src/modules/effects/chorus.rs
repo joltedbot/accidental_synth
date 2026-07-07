@@ -3,7 +3,6 @@ use crate::modules::effects::constants::{
     CHORUS_DEFAULT_DELAY_MILLISECONDS, CHORUS_DEFAULT_LFO_RANGE, CHORUS_FEEDBACK_SCALE_FACTOR,
     CHORUS_LFO_CENTER_VALUE, CHORUS_LFO_FREQUENCY_COEFFICIENT, CHORUS_LFO_FREQUENCY_SCALE_FACTOR,
     CHORUS_LFO2_PHASE, DELAY_SMOOTHING_FACTOR, MAX_CHORUS_DELAY_SAMPLES,
-    MIN_DELAY_SAMPLES,
 };
 use crate::modules::effects::dry_wet_blend;
 use crate::modules::lfo::Lfo;
@@ -22,6 +21,7 @@ pub struct Chorus {
     samples_count_1: f32,
     samples_count_2: f32,
     delay_center_value: f32,
+    sample_rate: f32,
     lfo1: Lfo,
     lfo2: Lfo,
     rate: f32,
@@ -40,12 +40,12 @@ impl Chorus {
         let mut lfo2 = Lfo::new(sample_rate);
         lfo2.set_center_value(CHORUS_LFO_CENTER_VALUE);
         lfo2.set_range(CHORUS_DEFAULT_LFO_RANGE);
-        lfo2.set_range(CHORUS_LFO2_PHASE);
+        lfo2.set_phase(CHORUS_LFO2_PHASE);
 
-        // CHORUS_DEFAULT_DELAY_MILLISECONDS is a small positive integer < 100 so it fits easily within the f32 mantissa
+        // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
         #[allow(clippy::cast_precision_loss)]
-        let delay_center_value =
-            ((CHORUS_DEFAULT_DELAY_MILLISECONDS as f32 / 1000.0) * sample_rate as f32).round();
+        let sample_rate = sample_rate as f32;
+        let delay_center_value = delay_center_value(sample_rate);
 
         Self {
             buffer,
@@ -54,6 +54,7 @@ impl Chorus {
             delay_center_value,
             samples_count_1: delay_center_value,
             samples_count_2: delay_center_value,
+            sample_rate,
             lfo1,
             lfo2,
             rate: 0.0,
@@ -63,9 +64,7 @@ impl Chorus {
     fn reset(&mut self) {
         self.buffer.fill((0.0, 0.0));
         self.write_index = 0;
-        // MIN_DELAY_SAMPLES is a small constant (chorus samples count), within f32 precision (2²³ = 8_388_608)
-        #[allow(clippy::cast_precision_loss)]
-        let current_chorus_samples = MIN_DELAY_SAMPLES as f32;
+        let current_chorus_samples = delay_center_value(self.sample_rate);
         self.samples_count_1 = current_chorus_samples;
         self.samples_count_2 = current_chorus_samples;
         self.lfo1.set_phase(0.0);
@@ -171,6 +170,10 @@ impl AudioEffect for Chorus {
 
         dry_wet_blend(samples, chorused_samples, blend)
     }
+}
+
+fn delay_center_value(sample_rate: f32) -> f32 {
+    ((CHORUS_DEFAULT_DELAY_MILLISECONDS / 1000.0) * sample_rate).round()
 }
 
 #[cfg(test)]
@@ -290,5 +293,127 @@ mod tests {
 
         assert!(f32s_are_equal(result.0, 0.8));
         assert!(f32s_are_equal(result.1, -0.6));
+    }
+
+    #[test]
+    fn delayed_sample_from_buffer_interpolates_seeded_buffer_values() {
+        let mut chorus = Chorus::new(48_000);
+        chorus.write_index = 5;
+        let buffer_len = chorus.buffer.len();
+        // read_index = (5 + buffer_len - 3) & (buffer_len - 1) == 2, read_index_next == 1
+        chorus.buffer[2] = (0.4, -0.2);
+        chorus.buffer[1] = (0.8, -0.6);
+
+        let result = chorus.delayed_sample_from_buffer(buffer_len, 3.25, 3);
+
+        let expected = (0.5, -0.3);
+        assert!(
+            f32s_are_equal(result.0, expected.0),
+            "Expected {}, got {}",
+            expected.0,
+            result.0
+        );
+        assert!(
+            f32s_are_equal(result.1, expected.1),
+            "Expected {}, got {}",
+            expected.1,
+            result.1
+        );
+    }
+
+    #[test]
+    fn delay_center_value_computes_samples_for_sample_rate() {
+        let expected_48k = 960.0;
+        let result_48k = delay_center_value(48_000.0);
+        assert!(
+            f32s_are_equal(result_48k, expected_48k),
+            "Expected {expected_48k}, got {result_48k}"
+        );
+
+        let expected_44k = 882.0;
+        let result_44k = delay_center_value(44_100.0);
+        assert!(
+            f32s_are_equal(result_44k, expected_44k),
+            "Expected {expected_44k}, got {result_44k}"
+        );
+    }
+
+    #[test]
+    fn chorus_process_samples_lfo_voices_diverge_due_to_phase_offset() {
+        let mut chorus = Chorus::new(48_000);
+        let effect = EffectParameters {
+            name: String::new(),
+            is_enabled: true,
+            parameters: vec![1.0, 0.8, 0.0, 1.0],
+        };
+
+        for _ in 0..100 {
+            chorus.process_samples((0.0, 0.0), &effect);
+        }
+
+        assert!(
+            !f32s_are_equal(chorus.samples_count_1, chorus.samples_count_2),
+            "Expected chorus voices to diverge due to lfo2's phase offset, but both were {}",
+            chorus.samples_count_1
+        );
+    }
+
+    #[test]
+    fn chorus_reset_restores_delay_center_value_not_min_delay_samples() {
+        let mut chorus = Chorus::new(48_000);
+        let delay_center_value = chorus.delay_center_value;
+
+        let enabled_effect = EffectParameters {
+            name: String::new(),
+            is_enabled: true,
+            parameters: vec![1.0, 0.8, 0.0, 1.0],
+        };
+        for _ in 0..500 {
+            chorus.process_samples((0.3, -0.3), &enabled_effect);
+        }
+        // Confirm the voices actually drifted away from delay_center_value before disabling
+        assert!(!f32s_are_equal(chorus.samples_count_1, delay_center_value));
+
+        let disabled_effect = EffectParameters {
+            name: String::new(),
+            is_enabled: false,
+            parameters: vec![1.0, 0.8, 0.0, 1.0],
+        };
+        chorus.process_samples((0.0, 0.0), &disabled_effect);
+
+        assert!(
+            f32s_are_equal(chorus.samples_count_1, delay_center_value),
+            "Expected {}, got {}",
+            delay_center_value,
+            chorus.samples_count_1
+        );
+        assert!(
+            f32s_are_equal(chorus.samples_count_2, delay_center_value),
+            "Expected {}, got {}",
+            delay_center_value,
+            chorus.samples_count_2
+        );
+    }
+
+    #[test]
+    fn chorus_process_samples_tracks_rate_changes() {
+        let mut chorus = Chorus::new(48_000);
+        let mut effect = EffectParameters {
+            name: String::new(),
+            is_enabled: true,
+            parameters: vec![0.5, 0.2, 0.0, 0.0],
+        };
+
+        chorus.process_samples((0.0, 0.0), &effect);
+        assert!(f32s_are_equal(chorus.rate, 0.2));
+
+        effect.parameters[1] = 0.9;
+        chorus.process_samples((0.0, 0.0), &effect);
+        assert!(f32s_are_equal(chorus.rate, 0.9));
+
+        // Processing again with an unchanged rate should leave the tracked rate as-is
+        let previous_rate = chorus.rate;
+        chorus.process_samples((0.0, 0.0), &effect);
+        assert!(f32s_are_equal(chorus.rate, previous_rate));
     }
 }
