@@ -236,6 +236,16 @@
       ]
     },
     {
+      "name": "Chorus",
+      "is_enabled": false,
+      "parameters": [
+        1.0,
+        0.2,
+        0.0,
+        0.3
+      ]
+    },
+    {
       "name": "Auto-Pan",
       "is_enabled": false,
       "parameters": [
