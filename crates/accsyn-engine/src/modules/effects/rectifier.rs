@@ -20,7 +20,7 @@ impl AudioEffect for Rectifier {
 
         let rectified_samples = rectify(samples, normal_value_to_bool(effect.parameters[0]));
         let blend_amount = effect.parameters[1];
-        effects::dry_wet_blend(samples, rectified_samples, blend_amount)
+        effects::wet_dry_blend(samples, rectified_samples, blend_amount)
     }
 }
 

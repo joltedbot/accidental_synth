@@ -4,7 +4,7 @@ use crate::modules::effects::constants::{
     CHORUS_LFO_CENTER_VALUE, CHORUS_LFO_FREQUENCY_COEFFICIENT, CHORUS_LFO_FREQUENCY_SCALE_FACTOR,
     CHORUS_LFO2_PHASE, DELAY_SMOOTHING_FACTOR, MAX_CHORUS_DELAY_SAMPLES,
 };
-use crate::modules::effects::dry_wet_blend;
+use crate::modules::effects::wet_dry_blend;
 use crate::modules::lfo::Lfo;
 use accsyn_core::casting::f32_to_usize_clamped;
 use accsyn_core::defaults::Defaults;
@@ -14,16 +14,21 @@ use accsyn_core::math::{exponential_curve_from_normal_value_and_coefficient, f32
 // Ensure MAX_DELAY_SAMPLES is a power of 2 to guarantee the bitwise wrapping logic is safe
 const _: () = assert!(MAX_CHORUS_DELAY_SAMPLES.is_power_of_two());
 
+enum Side {
+    Left,
+    Right,
+}
+
 pub struct Chorus {
     buffer: Vec<(f32, f32)>,
     write_index: usize,
     is_enabled: bool,
-    samples_count_1: f32,
-    samples_count_2: f32,
+    samples_count_left: f32,
+    samples_count_right: f32,
     delay_center_value: f32,
     sample_rate: f32,
-    lfo1: Lfo,
-    lfo2: Lfo,
+    lfo_left: Lfo,
+    lfo_right: Lfo,
     rate: f32,
 }
 
@@ -33,14 +38,14 @@ impl Chorus {
 
         let buffer = vec![(0.0, 0.0); MAX_CHORUS_DELAY_SAMPLES as usize];
 
-        let mut lfo1 = Lfo::new(sample_rate);
-        lfo1.set_center_value(CHORUS_LFO_CENTER_VALUE);
-        lfo1.set_range(CHORUS_DEFAULT_LFO_RANGE);
+        let mut lfo_left = Lfo::new(sample_rate);
+        lfo_left.set_center_value(CHORUS_LFO_CENTER_VALUE);
+        lfo_left.set_range(CHORUS_DEFAULT_LFO_RANGE);
 
-        let mut lfo2 = Lfo::new(sample_rate);
-        lfo2.set_center_value(CHORUS_LFO_CENTER_VALUE);
-        lfo2.set_range(CHORUS_DEFAULT_LFO_RANGE);
-        lfo2.set_phase(CHORUS_LFO2_PHASE);
+        let mut lfo_right = Lfo::new(sample_rate);
+        lfo_right.set_center_value(CHORUS_LFO_CENTER_VALUE);
+        lfo_right.set_range(CHORUS_DEFAULT_LFO_RANGE);
+        lfo_right.set_phase(CHORUS_LFO2_PHASE);
 
         // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
         #[allow(clippy::cast_precision_loss)]
@@ -52,11 +57,11 @@ impl Chorus {
             write_index: 0,
             is_enabled: false,
             delay_center_value,
-            samples_count_1: delay_center_value,
-            samples_count_2: delay_center_value,
+            samples_count_left: delay_center_value,
+            samples_count_right: delay_center_value,
             sample_rate,
-            lfo1,
-            lfo2,
+            lfo_left,
+            lfo_right,
             rate: 0.0,
         }
     }
@@ -65,18 +70,19 @@ impl Chorus {
         self.buffer.fill((0.0, 0.0));
         self.write_index = 0;
         let current_chorus_samples = delay_center_value(self.sample_rate);
-        self.samples_count_1 = current_chorus_samples;
-        self.samples_count_2 = current_chorus_samples;
-        self.lfo1.set_phase(0.0);
-        self.lfo2.set_phase(CHORUS_LFO2_PHASE);
+        self.samples_count_left = current_chorus_samples;
+        self.samples_count_right = current_chorus_samples;
+        self.lfo_left.set_phase(0.0);
+        self.lfo_right.set_phase(CHORUS_LFO2_PHASE);
     }
 
     fn delayed_sample_from_buffer(
-        &mut self,
+        &self,
         buffer_len: usize,
-        samples_count: f32,
+        current_samples_count: f32,
         new_samples_count: usize,
-    ) -> (f32, f32) {
+        side: Side,
+    ) -> f32 {
         let read_index = (self.write_index + buffer_len - new_samples_count) & (buffer_len - 1);
         let read_index_next = (read_index + buffer_len - 1) & (buffer_len - 1);
         let buffer_samples = self.buffer[read_index];
@@ -84,10 +90,19 @@ impl Chorus {
 
         // new_samples_count is bounded by MAX_DELAY_SAMPLES (a small constant), within f32 precision (2²³ = 8_388_608)
         #[allow(clippy::cast_precision_loss)]
-        let fractional_index1 = samples_count - new_samples_count as f32;
-        let (interpolated_left, interpolated_right) =
-            effects::interpolate_samples(buffer_samples, buffer_samples_next, fractional_index1);
-        (interpolated_left, interpolated_right)
+        let fractional_index = current_samples_count - new_samples_count as f32;
+        match side {
+            Side::Left => effects::interpolate_single_sample(
+                buffer_samples.0,
+                buffer_samples_next.0,
+                fractional_index,
+            ),
+            Side::Right => effects::interpolate_single_sample(
+                buffer_samples.1,
+                buffer_samples_next.1,
+                fractional_index,
+            ),
+        }
     }
 }
 
@@ -95,13 +110,15 @@ impl AudioEffect for Chorus {
     fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
         if self.is_enabled && !effect.is_enabled {
             self.reset();
+            self.is_enabled = false;
+            return samples;
+        }
+
+        if !effect.is_enabled {
+            return samples;
         }
 
         self.is_enabled = effect.is_enabled;
-
-        if !self.is_enabled {
-            return samples;
-        }
 
         let buffer_len = self.buffer.len();
         let depth = effect.parameters[0] * CHORUS_DEFAULT_LFO_RANGE;
@@ -109,66 +126,63 @@ impl AudioEffect for Chorus {
         let feedback = effect.parameters[2] * CHORUS_FEEDBACK_SCALE_FACTOR;
         let blend = effect.parameters[3];
 
-        self.lfo1.set_range(depth);
-        self.lfo2.set_range(depth);
+        self.lfo_left.set_range(depth);
+        self.lfo_right.set_range(depth);
 
         if !f32s_are_equal(rate, self.rate) {
             self.rate = rate;
-            self.lfo1.set_frequency(
-                exponential_curve_from_normal_value_and_coefficient(
-                    rate,
-                    CHORUS_LFO_FREQUENCY_COEFFICIENT,
-                ) / CHORUS_LFO_FREQUENCY_SCALE_FACTOR,
-            );
+            let exponential_frequency = exponential_curve_from_normal_value_and_coefficient(
+                rate,
+                CHORUS_LFO_FREQUENCY_COEFFICIENT,
+            ) / CHORUS_LFO_FREQUENCY_SCALE_FACTOR;
 
-            self.lfo2.set_frequency(
-                exponential_curve_from_normal_value_and_coefficient(
-                    rate,
-                    CHORUS_LFO_FREQUENCY_COEFFICIENT,
-                ) / CHORUS_LFO_FREQUENCY_SCALE_FACTOR,
-            );
+            self.lfo_left.set_frequency(exponential_frequency);
+            self.lfo_right.set_frequency(exponential_frequency);
         }
 
-        // Chorus Voice 1
-        let delay_offset1 = self.lfo1.generate(None);
-        let target_delay1 = self.delay_center_value + (self.delay_center_value * delay_offset1);
-        let target_samples1 = (target_delay1 - self.samples_count_1) * DELAY_SMOOTHING_FACTOR;
-        self.samples_count_1 += target_samples1;
-        let new_samples_count1 = f32_to_usize_clamped(self.samples_count_1.floor());
-        let chorused_samples1 =
-            self.delayed_sample_from_buffer(buffer_len, self.samples_count_1, new_samples_count1);
+        // Chorus Voice L
+        let delay_offset_left = self.lfo_left.generate(None);
+        let target_delay_left =
+            self.delay_center_value + (self.delay_center_value * delay_offset_left);
+        let target_delay_samples_left =
+            (target_delay_left - self.samples_count_left) * DELAY_SMOOTHING_FACTOR;
+        self.samples_count_left += target_delay_samples_left;
+        let new_samples_count_left = f32_to_usize_clamped(self.samples_count_left.floor());
+        let chorused_samples_left = self.delayed_sample_from_buffer(
+            buffer_len,
+            self.samples_count_left,
+            new_samples_count_left,
+            Side::Left,
+        );
 
-        // Chorus Voice 2
-        let delay_offset2 = self.lfo2.generate(None);
-        let target_delay2 = self.delay_center_value + (self.delay_center_value * delay_offset2);
-        let target_samples2 = (target_delay2 - self.samples_count_2) * DELAY_SMOOTHING_FACTOR;
-        self.samples_count_2 += target_samples2;
-        let new_samples_count2 = f32_to_usize_clamped(self.samples_count_2.floor());
-        let chorused_samples2 =
-            self.delayed_sample_from_buffer(buffer_len, self.samples_count_2, new_samples_count2);
+        // Chorus Voice R
+        let delay_offset_right = self.lfo_right.generate(None);
+        let target_delay_right =
+            self.delay_center_value + (self.delay_center_value * delay_offset_right);
+        let target_delay_samples_right =
+            (target_delay_right - self.samples_count_right) * DELAY_SMOOTHING_FACTOR;
+        self.samples_count_right += target_delay_samples_right;
+        let new_samples_count_right = f32_to_usize_clamped(self.samples_count_right.floor());
+        let chorused_samples_right = self.delayed_sample_from_buffer(
+            buffer_len,
+            self.samples_count_right,
+            new_samples_count_right,
+            Side::Right,
+        );
 
         self.buffer[self.write_index] = (
             samples.0
-                + f32::midpoint(
-                    chorused_samples1.0 * feedback,
-                    chorused_samples2.0 * feedback,
-                ),
+                + (chorused_samples_left * feedback)
+                    * Defaults::SAMPLE_MIXING_LEVEL_CORRECTION_FACTOR,
             samples.1
-                + f32::midpoint(
-                    chorused_samples1.1 * feedback,
-                    chorused_samples2.1 * feedback,
-                ),
+                + (chorused_samples_right * feedback)
+                    * Defaults::SAMPLE_MIXING_LEVEL_CORRECTION_FACTOR,
         );
+
         self.write_index = (self.write_index + 1) & (buffer_len - 1);
 
-        let chorused_samples = (
-            (chorused_samples1.0 + chorused_samples2.0)
-                * Defaults::SAMPLE_MIXING_LEVEL_CORRECTION_FACTOR,
-            (chorused_samples1.1 + chorused_samples2.1)
-                * Defaults::SAMPLE_MIXING_LEVEL_CORRECTION_FACTOR,
-        );
-
-        dry_wet_blend(samples, chorused_samples, blend)
+        let chorused_samples = (chorused_samples_left, chorused_samples_right);
+        wet_dry_blend(samples, chorused_samples, blend)
     }
 }
 
@@ -304,20 +318,21 @@ mod tests {
         chorus.buffer[2] = (0.4, -0.2);
         chorus.buffer[1] = (0.8, -0.6);
 
-        let result = chorus.delayed_sample_from_buffer(buffer_len, 3.25, 3);
+        let result_left = chorus.delayed_sample_from_buffer(buffer_len, 3.25, 3, Side::Left);
+        let result_right = chorus.delayed_sample_from_buffer(buffer_len, 3.25, 3, Side::Right);
 
         let expected = (0.5, -0.3);
         assert!(
-            f32s_are_equal(result.0, expected.0),
+            f32s_are_equal(result_left, expected.0),
             "Expected {}, got {}",
             expected.0,
-            result.0
+            result_left
         );
         assert!(
-            f32s_are_equal(result.1, expected.1),
+            f32s_are_equal(result_right, expected.1),
             "Expected {}, got {}",
             expected.1,
-            result.1
+            result_right
         );
     }
 
@@ -352,9 +367,9 @@ mod tests {
         }
 
         assert!(
-            !f32s_are_equal(chorus.samples_count_1, chorus.samples_count_2),
+            !f32s_are_equal(chorus.samples_count_left, chorus.samples_count_right),
             "Expected chorus voices to diverge due to lfo2's phase offset, but both were {}",
-            chorus.samples_count_1
+            chorus.samples_count_left
         );
     }
 
@@ -372,7 +387,10 @@ mod tests {
             chorus.process_samples((0.3, -0.3), &enabled_effect);
         }
         // Confirm the voices actually drifted away from delay_center_value before disabling
-        assert!(!f32s_are_equal(chorus.samples_count_1, delay_center_value));
+        assert!(!f32s_are_equal(
+            chorus.samples_count_left,
+            delay_center_value
+        ));
 
         let disabled_effect = EffectParameters {
             name: String::new(),
@@ -382,16 +400,16 @@ mod tests {
         chorus.process_samples((0.0, 0.0), &disabled_effect);
 
         assert!(
-            f32s_are_equal(chorus.samples_count_1, delay_center_value),
+            f32s_are_equal(chorus.samples_count_left, delay_center_value),
             "Expected {}, got {}",
             delay_center_value,
-            chorus.samples_count_1
+            chorus.samples_count_left
         );
         assert!(
-            f32s_are_equal(chorus.samples_count_2, delay_center_value),
+            f32s_are_equal(chorus.samples_count_right, delay_center_value),
             "Expected {}, got {}",
             delay_center_value,
-            chorus.samples_count_2
+            chorus.samples_count_right
         );
     }
 

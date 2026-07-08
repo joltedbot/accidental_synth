@@ -27,7 +27,7 @@ impl AudioEffect for BitShifter {
 
         let bit_shifted_samples = (shift_sample(samples.0, bits), shift_sample(samples.1, bits));
         let blend_amount = effect.parameters[1];
-        effects::dry_wet_blend(samples, bit_shifted_samples, blend_amount)
+        effects::wet_dry_blend(samples, bit_shifted_samples, blend_amount)
     }
 }
 

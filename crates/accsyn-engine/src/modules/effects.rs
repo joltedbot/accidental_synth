@@ -7,6 +7,7 @@ pub use accsyn_core::effects::EffectIndex;
 use accsyn_core::effects::{AudioEffect, EffectParameters, PARAMETERS_PER_EFFECT};
 use accsyn_core::parameter_types::NormalizedValue;
 use serde::{Deserialize, Serialize};
+use std::f32::consts::FRAC_PI_2;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
 
@@ -125,13 +126,18 @@ fn extract_parameters(source: &AudioEffectParameters) -> EffectParameters {
     }
 }
 
-fn dry_wet_blend(
+fn wet_dry_blend(
     dry_samples: (f32, f32),
     wet_samples: (f32, f32),
     blend_amount: f32,
 ) -> (f32, f32) {
-    let left_sample = dry_samples.0 * (1.0 - blend_amount) + wet_samples.0 * blend_amount;
-    let right_sample = dry_samples.1 * (1.0 - blend_amount) + wet_samples.1 * blend_amount;
+    let angle = blend_amount * FRAC_PI_2; // 0 → π/2
+    let dry_gain = angle.cos();
+    let wet_gain = angle.sin();
+
+    let left_sample = dry_samples.0 * dry_gain + wet_samples.0 * wet_gain;
+    let right_sample = dry_samples.1 * dry_gain + wet_samples.1 * wet_gain;
+
     (left_sample, right_sample)
 }
 
@@ -155,6 +161,25 @@ fn interpolate_samples(
         interpolated_right = buffer_samples_a.1;
     }
     (interpolated_left, interpolated_right)
+}
+
+fn interpolate_single_sample(
+    buffer_samples_a: f32,
+    buffer_samples_b: f32,
+    fractional_index: f32,
+) -> f32 {
+    let interpolated_sample =
+        buffer_samples_a * (1.0 - fractional_index) + buffer_samples_b * fractional_index;
+
+    if interpolated_sample.is_nan() {
+        return buffer_samples_a;
+    }
+
+    if interpolated_sample.is_infinite() {
+        return buffer_samples_a;
+    }
+
+    interpolated_sample
 }
 
 #[cfg(test)]
@@ -336,9 +361,9 @@ mod tests {
         let samples = (0.1234, -0.9876);
         let rectified_samples = (1.0, -1.0);
         let blend_amount = 0.75;
-        let expected_values = (0.78085, -0.9969);
+        let expected_values = (0.971103, -1.301818);
 
-        let result = dry_wet_blend(samples, rectified_samples, blend_amount);
+        let result = wet_dry_blend(samples, rectified_samples, blend_amount);
 
         assert!(
             f32s_are_equal(result.0, expected_values.0),
@@ -361,7 +386,7 @@ mod tests {
         let blend_amount = 1.0;
         let expected_values = (-1.0, 1.0);
 
-        let result = dry_wet_blend(samples, rectified_samples, blend_amount);
+        let result = wet_dry_blend(samples, rectified_samples, blend_amount);
 
         assert!(
             f32s_are_equal(result.0, expected_values.0),
@@ -384,7 +409,7 @@ mod tests {
         let blend_amount = 0.0;
         let expected_values = (1.0, -1.0);
 
-        let result = dry_wet_blend(samples, rectified_samples, blend_amount);
+        let result = wet_dry_blend(samples, rectified_samples, blend_amount);
 
         assert!(
             f32s_are_equal(result.0, expected_values.0),

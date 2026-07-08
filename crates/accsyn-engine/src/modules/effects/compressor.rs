@@ -40,7 +40,7 @@ impl AudioEffect for Compressor {
         );
 
         let blend_amount = effect.parameters[3];
-        effects::dry_wet_blend(samples, compressed_samples, blend_amount)
+        effects::wet_dry_blend(samples, compressed_samples, blend_amount)
     }
 }
 
