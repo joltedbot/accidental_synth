@@ -17,20 +17,21 @@ const BURST_MIDI_NOTE: u8 = 69; // A4, arbitrary fixed note for reproducibility
 /// assigns it either, since clock/bpm is live MIDI-clock state, not a per-patch value.
 ///
 /// `ModuleParameters::default()` gives an empty `effects` Vec (unlike a running `Synthesizer`,
-/// whose live parameters are always sized from the init patch first) — it's resized here to
-/// match `preset.effects` so the `assign_from` loop below actually copies every effect rather
-/// than silently iterating zero elements.
+/// whose live parameters are always sized from the init patch first) — `live_effect_count`
+/// controls how many default-initialized effect slots `live` starts with, so the `assign_from`
+/// loop below actually copies every effect rather than silently iterating zero elements. Callers
+/// applying a patch to itself pass `preset.effects.len()`; callers simulating an older, smaller
+/// patch loading into the current (larger) effects chain pass the current chain's length instead
+/// — mirroring how a real `Synthesizer`'s live `effects` is already sized before a preset loads.
 ///
 /// This duplicates `set_module_parameters_from_preset` rather than calling it because that
 /// function lives in a private module and isn't reachable from this external test crate.
 /// **If a new module is ever added to `ModuleParameters`, update both this function and
 /// `set_module_parameters_from_preset` together** — nothing else will catch the two silently
 /// drifting apart.
-fn apply_preset(preset: &ModuleParameters) -> ModuleParameters {
+fn apply_preset(preset: &ModuleParameters, live_effect_count: usize) -> ModuleParameters {
     let live = ModuleParameters {
-        effects: preset
-            .effects
-            .iter()
+        effects: (0..live_effect_count)
             .map(|_| AudioEffectParameters::default())
             .collect(),
         ..Default::default()
@@ -166,7 +167,7 @@ fn all_factory_patches_load_without_panicking_and_produce_finite_values() {
     for (name, content) in system_patches() {
         let preset: ModuleParameters = serde_json::from_str(content)
             .unwrap_or_else(|err| panic!("factory patch '{name}' failed to deserialize: {err}"));
-        let live = apply_preset(&preset);
+        let live = apply_preset(&preset, preset.effects.len());
         assert_all_f32_fields_finite(&live, name);
     }
 }
@@ -186,7 +187,7 @@ const ADVERSARIAL_PATCH_JSON: &str = include_str!("fixtures/adversarial-patch.js
 fn load_adversarial_patch() -> ModuleParameters {
     let preset: ModuleParameters = serde_json::from_str(ADVERSARIAL_PATCH_JSON)
         .expect("adversarial fixture patch failed to deserialize");
-    apply_preset(&preset)
+    apply_preset(&preset, preset.effects.len())
 }
 
 #[test]
@@ -299,7 +300,7 @@ fn programmatic_nan_and_infinity_are_sanitized_through_assign_from() {
     preset.filter.cutoff_frequency.store(f32::INFINITY);
     preset.lfos[0].center_value.store(f32::NEG_INFINITY);
 
-    let live = apply_preset(&preset);
+    let live = apply_preset(&preset, preset.effects.len());
 
     assert!(live.oscillators[0].shape_parameter1.load().is_finite());
     assert!(live.filter.cutoff_frequency.load().is_finite());
@@ -346,7 +347,7 @@ fn first_factory_patch_produces_finite_audio_burst() {
     let (name, content) = system_patches()[0];
     let preset: ModuleParameters = serde_json::from_str(content)
         .unwrap_or_else(|err| panic!("factory patch '{name}' failed to deserialize: {err}"));
-    let live = apply_preset(&preset);
+    let live = apply_preset(&preset, preset.effects.len());
 
     assert_short_audio_burst_is_finite(&live.oscillators[0], &live.envelopes[0], name);
 }
@@ -384,5 +385,36 @@ fn frozen_schema_snapshot_still_deserializes() {
          every previously-saved user patch that predates the new field. Add #[serde(default)] \
          to the new field rather than editing this fixture.",
         result.err()
+    );
+}
+
+/// The snapshot above only proves the *shape* still deserializes — it says nothing about
+/// whether an old patch with fewer effects than the current chain (e.g. one predating the Chorus
+/// effect) is actually safe to load and play. That safety comes from a guard in production's
+/// `set_module_parameters_from_preset` (`if index < preset.effects.len()`), which isn't reachable
+/// from this external test crate — this test reproduces the same guard via `apply_preset`, sized
+/// to the *current* factory patch's effect count rather than the snapshot's own (smaller) count,
+/// and drives real audio generation to prove nothing panics or goes non-finite.
+#[test]
+fn frozen_schema_snapshot_loads_safely_into_current_effects_chain() {
+    let (_, current_content) = system_patches()[0];
+    let current: ModuleParameters =
+        serde_json::from_str(current_content).expect("current factory patch should deserialize");
+
+    let preset: ModuleParameters = serde_json::from_str(SCHEMA_SNAPSHOT_JSON)
+        .expect("frozen schema snapshot should deserialize");
+    assert!(
+        preset.effects.len() < current.effects.len(),
+        "fixture is expected to predate at least one currently shipped effect (e.g. Chorus) — \
+         if this now fails, update this assertion (not the fixture) to reflect why the counts \
+         converged"
+    );
+
+    let live = apply_preset(&preset, current.effects.len());
+
+    assert_short_audio_burst_is_finite(
+        &live.oscillators[0],
+        &live.envelopes[0],
+        "frozen-schema-snapshot",
     );
 }
