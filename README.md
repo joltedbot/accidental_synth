@@ -28,7 +28,7 @@ sure you know what you're doing first and why you have to do this little dance.
 
 ## Features
 Current:
-- Four-oscillator mono synth voice with multiple waveforms (sine, triangle, square, saw, pulse, ramp, supersaw, AM, FM, Broken, and noise); the supersaw offers detune and voice-blend controls
+- Four-oscillator mono synth voice with multiple waveforms (sine, triangle, square, saw, pulse, ramp, supersaw, AM, FM, PM, Broken, and noise); the supersaw offers detune and voice-blend controls
 - Resonant lowpass filter with key tracking, envelope, and LFO modulation
 - Three ADSR envelopes (amplitude, pitch, and filter) and two LFOs for modulation (pitch via the mod wheel and filter), each with optional MIDI-clock sync and key sync
 - Audio effects: saturation, compressor, wave folder, clipper, gate, rectifier, chorus, bit shifter, delay, auto pan, and tremolo 

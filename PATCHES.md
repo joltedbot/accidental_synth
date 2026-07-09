@@ -34,7 +34,7 @@ Array of 4 oscillator objects, in order: Sub, Osc 1, Osc 2, Osc 3.
 
 | Field                | Type    | Range      | Description                                                     |
 |----------------------|---------|------------|-----------------------------------------------------------------|
-| `wave_shape_index`   | integer | 0-9        | Waveform shape (see Waveforms table)                            |
+| `wave_shape_index`   | integer | 0-11       | Waveform shape (see Waveforms table)                            |
 | `course_tune`        | integer | -12 to +12 | Coarse pitch in semitones                                       |
 | `fine_tune`          | integer | -63 to +63 | Fine pitch in cents                                             |
 | `clipper_boost`      | integer | 0-30       | Clipper output boost in dB                                      |
@@ -132,7 +132,7 @@ Low-frequency oscillators provide modulation sources for other parameters.
 
 | Field                | Type    | Range        | Description                                                                             |
 |----------------------|---------|--------------|-----------------------------------------------------------------------------------------|
-| `wave_shape`         | integer | 0-9          | Waveform shape (see Waveforms table)                                                    |
+| `wave_shape`         | integer | 0-11         | Waveform shape (see Waveforms table)                                                    |
 | `frequency`          | number  | 0.01-20000.0 | Oscillation frequency in Hz (used when `clock_synced` is false)                         |
 | `synced_frequency`   | number  |              | Calculated frequency in Hz derived from BPM and `thirty_second_notes` (auto-updated)   |
 | `clock_synced`       | boolean |              | When true, LFO rate is locked to MIDI clock using `thirty_second_notes`                 |
@@ -241,7 +241,7 @@ Single clock object controlling the internal tempo used for clock-synced LFOs.
 
 ## Effects
 
-Array of 10 effect objects in fixed order. Each effect has:
+Array of 11 effect objects in fixed order. Each effect has:
 
 | Field        | Type       | Range   | Description                                 |
 |--------------|------------|---------|---------------------------------------------|
@@ -254,15 +254,16 @@ Effects are processed in this order:
 | Index | Name                     | Param 0                                             | Param 1                | Param 2                                    | Param 3      |
 |-------|--------------------------|-----------------------------------------------------|------------------------|--------------------------------------------|--------------|
 | 0     | Saturation               | type                                                | drive amount           | post drive level cut                       | unused       |
-| 1     | Colour Compressor        | threshold                                           | ratio                  | makeup gain                                | unused       |
+| 1     | Colour Compressor        | threshold                                           | ratio                  | makeup gain                                | blend        |
 | 2     | Wave Folder              | amount (in asymmetric mode: positive sample amount) | asymmetric mode toggle | in asymmetric mode: negative sample amount | unused       |
-| 3     | Bit Shifter              | bits (1-16 normalized)                              | unused                 | unused                                     | unused       |
+| 3     | Bit Shifter              | bits (1-16 normalized)                              | blend                  | unused                                     | unused       |
 | 4     | Clipper                  | threshold                                           | pre-clip boost         | post-clip boost                            | notch toggle |
 | 5     | Gate Clipping            | threshold                                           | pre-gate level cut     | post-gate makeup gain                      | unused       |
-| 6     | Wave Rectifier | half wave mode toggle                               | unused                 | unused                                     | unused       |
-| 7     | Auto-Pan                 | rate                                                | width                  | wave shape                                 | unused       |
-| 8     | Tremolo                  | rate                                                | depth                  | wave shape                                 | unused       |
-| 9     | Delay                    | delay level                                         | time                   | feedback                                   | unused       |
+| 6     | Wave Rectifier | full wave mode toggle (0 = half wave)               | blend                  | unused                                     | unused       |
+| 7     | Chorus                   | depth                                               | rate                   | feedback                                   | blend        |
+| 8     | Auto-Pan                 | rate                                                | width                  | wave shape                                 | unused       |
+| 9     | Tremolo                  | rate                                                | depth                  | wave shape                                 | unused       |
+| 10    | Delay                    | delay level                                         | time                   | feedback                                   | unused       |
 
 All parameters use the range 0.0 to 1.0, including "unused" fields which should be set to 0.
 Toggle parameters are 0.0 for Off and > 0.0 for On; 1.0 is the preferred On value.
@@ -292,8 +293,9 @@ Both oscillators and LFOs use the same waveform index table:
 | 6     | Supersaw | Detuned sawtooth stack (shape_parameter1: detune spread, shape_parameter2: voice blend) |
 | 7     | AM       | Amplitude modulation (shape_parameter1: AM amount, shape_parameter2: Ring Mod Amount) |
 | 8     | FM       | Frequency modulation (shape_parameter1: FM Amount, shape_parameter2: Ratio)           |
-| 9     | Broken   | Some kind of broken oscillator (shape_parameter1 control jank amount)                 |
-| 10    | Noise    | White noise                                                                           |
+| 9     | PM       | Phase modulation (shape_parameter1/2 control depth)                                   |
+| 10    | Broken   | Some kind of broken oscillator (shape_parameter1 control jank amount)                 |
+| 11    | Noise    | White noise                                                                           |
 
 ## Notes for Manual Patch Editing
 
@@ -521,6 +523,7 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
     { "name": "Clipper",                 "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Gate Clipping",           "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Wave Rectifier","is_enabled": false, "parameters": [0, 0, 0, 0] },
+    { "name": "Chorus",                  "is_enabled": false, "parameters": [1.0, 0.2, 0.0, 0.3] },
     { "name": "Auto-Pan",                "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Tremolo",                 "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Delay",                   "is_enabled": false, "parameters": [0, 0, 0, 0] }
