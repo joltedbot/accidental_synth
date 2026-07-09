@@ -55,12 +55,15 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
 use std::sync::atomic::{AtomicBool, AtomicU8};
+use strum::EnumCount as StrumEnumCount;
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
 /// Index of the first available wave shape variant.
 pub const FIRST_WAVE_SHAPE_INDEX: u32 = 0;
-/// Index of the last available wave shape variant.
-pub const LAST_WAVE_SHAPE_INDEX: u32 = 9;
+/// Index of the last wave shape variant use as opposed to COUNT when indexing the wave shapes
+// COUNT is capped by the number of possible wave shapes which will always less than u32::MAX
+#[allow(clippy::cast_possible_truncation)]
+pub const LAST_WAVE_SHAPE_INDEX: u32 = (WaveShape::COUNT - 1) as u32;
 
 /// Available waveform shapes for oscillator generation.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, EnumCount, EnumIter, FromRepr)]
