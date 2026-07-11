@@ -8,6 +8,7 @@ stages:
 - security
 - semgrep
 - sonar
+- deploy
 
 sast:
   stage: test
@@ -35,4 +36,17 @@ sonarcloud:
     SONAR_HOST_URL: "$SONAR_HOST_URL"
     SONAR_TOKEN: "$SONAR_TOKEN"
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
-    GIT_DEPTH: "0" 
+    GIT_DEPTH: "0"
+
+pages:
+  stage: deploy
+  image: rust:latest
+  script:
+    - cargo install mdbook
+    - mdbook build docs
+    - mv docs/book public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
