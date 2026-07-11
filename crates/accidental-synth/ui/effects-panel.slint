@@ -224,6 +224,9 @@ export component EffectsPanel inherits Panel {
         }
 
         row3 := HorizontalLayout {
+            padding: Theme.effect-box-padding;
+            spacing: Theme.effect-box-spacing;
+
             Delay {
                 effect-index: 10;
                 effect_values: effects_values[self.effect-index];
