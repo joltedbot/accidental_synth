@@ -46,7 +46,7 @@ Array of 4 oscillator objects, in order: Sub, Osc 1, Osc 2, Osc 3.
 | `hard_sync_enabled`  | boolean |            | Enable hard sync to master oscillator                           |
 | `key_sync_enabled`   | boolean |            | Reset phase on each note                                        |
 | `gate_flag`              | boolean |          | [Performance state](#performance-state-fields) - leave as false |
-| `pitch_envelope_amount`  | number  | 0.0-1.0  | Depth of pitch envelope modulation                              |
+| `pitch_envelope_amount`  | number  | -1.0 to 1.0  | Depth of pitch envelope modulation                              |
 
 ### Example Oscillator
 
@@ -140,7 +140,7 @@ Low-frequency oscillators provide modulation sources for other parameters.
 | `sync_triggered`     | boolean |              | When true, LFO phase resets at the next 32nd-note boundary to lock to the beat         |
 | `key_synced`         | boolean |              | When true, LFO phase resets on MIDI note-on. If `clock_synced` is also true, the reset waits for the next 32nd-note trigger after the key press so the LFO stays on beat |
 | `center_value`       | number  | -1.0 to 1.0  | Center point of modulation range                                                        |
-| `range`              | number  | 0.0-2.0      | Modulation depth (0 disables modulation)                                                |
+| `range`              | number  | 0.01-2.0      | Modulation depth (values near 0.01 are effectively no modulation)                                                |
 | `phase`              | number  | 0.0-1.0      | Starting phase (0.0 to 1.0 wraps one cycle)                                            |
 | `reset`              | boolean |              | Reset phase to 0 on note-on                                                             |
 | `gate_flag`          | boolean |              | [Performance state](#performance-state-fields) - leave as false                         |
