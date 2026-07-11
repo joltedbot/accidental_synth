@@ -138,7 +138,9 @@ impl Defaults {
     /// Default LFO gate  state
     pub const LFO_GATE_STATE: bool = false;
     /// The level correction factor when adding 2 samples. 0.707 is RMS of a sine wave
-    pub const SAMPLE_MIXING_LEVEL_CORRECTION_FACTOR: f32 = 0.707;
+    pub const APPROXIMATE_RMS_TWO_SAMPLES: f32 = 0.707;
+    /// The level correction factor when adding 3 samples. 0.577
+    pub const APPROXIMATE_RMS_THREE_SAMPLES: f32 = 0.577;
 }
 
 impl Defaults {

@@ -2,7 +2,7 @@ use crate::modules::effects;
 use crate::modules::effects::constants::{
     CHORUS_DEFAULT_DELAY_MILLISECONDS, CHORUS_DEFAULT_LFO_RANGE, CHORUS_FEEDBACK_SCALE_FACTOR,
     CHORUS_LFO_CENTER_VALUE, CHORUS_LFO_FREQUENCY_COEFFICIENT, CHORUS_LFO_FREQUENCY_SCALE_FACTOR,
-    CHORUS_LFO2_PHASE, DELAY_SMOOTHING_FACTOR, MAX_CHORUS_DELAY_SAMPLES,
+    CHORUS_LFO1_PHASE, CHORUS_LFO2_PHASE, DELAY_SMOOTHING_FACTOR, MAX_CHORUS_DELAY_SAMPLES,
 };
 use crate::modules::effects::wet_dry_blend;
 use crate::modules::lfo::Lfo;
@@ -14,8 +14,10 @@ use accsyn_core::math::{exponential_curve_from_normal_value_and_coefficient, f32
 // Ensure MAX_DELAY_SAMPLES is a power of 2 to guarantee the bitwise wrapping logic is safe
 const _: () = assert!(MAX_CHORUS_DELAY_SAMPLES.is_power_of_two());
 
-enum Side {
+#[derive(Debug, Clone, Copy)]
+enum Voice {
     Left,
+    Center,
     Right,
 }
 
@@ -24,10 +26,12 @@ pub struct Chorus {
     write_index: usize,
     is_enabled: bool,
     samples_count_left: f32,
+    samples_count_center: f32,
     samples_count_right: f32,
     delay_center_value: f32,
     sample_rate: f32,
     lfo_left: Lfo,
+    lfo_center: Lfo,
     lfo_right: Lfo,
     rate: f32,
 }
@@ -41,6 +45,11 @@ impl Chorus {
         let mut lfo_left = Lfo::new(sample_rate);
         lfo_left.set_center_value(CHORUS_LFO_CENTER_VALUE);
         lfo_left.set_range(CHORUS_DEFAULT_LFO_RANGE);
+        lfo_left.set_phase(CHORUS_LFO1_PHASE);
+
+        let mut lfo_center = Lfo::new(sample_rate);
+        lfo_center.set_center_value(CHORUS_LFO_CENTER_VALUE);
+        lfo_center.set_range(CHORUS_DEFAULT_LFO_RANGE);
 
         let mut lfo_right = Lfo::new(sample_rate);
         lfo_right.set_center_value(CHORUS_LFO_CENTER_VALUE);
@@ -58,9 +67,11 @@ impl Chorus {
             is_enabled: false,
             delay_center_value,
             samples_count_left: delay_center_value,
+            samples_count_center: delay_center_value,
             samples_count_right: delay_center_value,
             sample_rate,
             lfo_left,
+            lfo_center,
             lfo_right,
             rate: 0.0,
         }
@@ -71,8 +82,10 @@ impl Chorus {
         self.write_index = 0;
         let current_chorus_samples = delay_center_value(self.sample_rate);
         self.samples_count_left = current_chorus_samples;
+        self.samples_count_center = current_chorus_samples;
         self.samples_count_right = current_chorus_samples;
-        self.lfo_left.set_phase(0.0);
+        self.lfo_left.set_phase(CHORUS_LFO1_PHASE);
+        self.lfo_center.set_phase(0.0);
         self.lfo_right.set_phase(CHORUS_LFO2_PHASE);
     }
 
@@ -81,7 +94,7 @@ impl Chorus {
         buffer_len: usize,
         current_samples_count: f32,
         new_samples_count: usize,
-        side: Side,
+        voice: Voice,
     ) -> f32 {
         let read_index = (self.write_index + buffer_len - new_samples_count) & (buffer_len - 1);
         let read_index_next = (read_index + buffer_len - 1) & (buffer_len - 1);
@@ -91,13 +104,18 @@ impl Chorus {
         // new_samples_count is bounded by MAX_DELAY_SAMPLES (a small constant), within f32 precision (2²³ = 8_388_608)
         #[allow(clippy::cast_precision_loss)]
         let fractional_index = current_samples_count - new_samples_count as f32;
-        match side {
-            Side::Left => effects::interpolate_single_sample(
+        match voice {
+            Voice::Left => effects::interpolate_single_sample(
                 buffer_samples.0,
                 buffer_samples_next.0,
                 fractional_index,
             ),
-            Side::Right => effects::interpolate_single_sample(
+            Voice::Center => effects::interpolate_single_sample(
+                rms_of_sum(buffer_samples.0, buffer_samples.1),
+                rms_of_sum(buffer_samples_next.0, buffer_samples_next.1),
+                fractional_index,
+            ),
+            Voice::Right => effects::interpolate_single_sample(
                 buffer_samples.1,
                 buffer_samples_next.1,
                 fractional_index,
@@ -127,6 +145,7 @@ impl AudioEffect for Chorus {
         let blend = effect.parameters[3];
 
         self.lfo_left.set_range(depth);
+        self.lfo_center.set_range(depth);
         self.lfo_right.set_range(depth);
 
         if !f32s_are_equal(rate, self.rate) {
@@ -137,6 +156,7 @@ impl AudioEffect for Chorus {
             ) / CHORUS_LFO_FREQUENCY_SCALE_FACTOR;
 
             self.lfo_left.set_frequency(exponential_frequency);
+            self.lfo_center.set_frequency(exponential_frequency);
             self.lfo_right.set_frequency(exponential_frequency);
         }
 
@@ -152,7 +172,22 @@ impl AudioEffect for Chorus {
             buffer_len,
             self.samples_count_left,
             new_samples_count_left,
-            Side::Left,
+            Voice::Left,
+        );
+
+        // Chorus Voice C
+        let delay_offset_center = self.lfo_center.generate(None);
+        let target_delay_center =
+            self.delay_center_value + (self.delay_center_value * delay_offset_center);
+        let target_delay_samples_center =
+            (target_delay_center - self.samples_count_center) * DELAY_SMOOTHING_FACTOR;
+        self.samples_count_center += target_delay_samples_center;
+        let new_samples_count_center = f32_to_usize_clamped(self.samples_count_center.floor());
+        let chorused_samples_center = self.delayed_sample_from_buffer(
+            buffer_len,
+            self.samples_count_center,
+            new_samples_count_center,
+            Voice::Center,
         );
 
         // Chorus Voice R
@@ -167,27 +202,32 @@ impl AudioEffect for Chorus {
             buffer_len,
             self.samples_count_right,
             new_samples_count_right,
-            Side::Right,
+            Voice::Right,
         );
 
+        let attenuated_center = chorused_samples_center * Defaults::APPROXIMATE_RMS_TWO_SAMPLES;
+        let left_wet_samples = chorused_samples_left + attenuated_center;
+        let right_wet_samples = chorused_samples_right + attenuated_center;
+
         self.buffer[self.write_index] = (
-            samples.0
-                + (chorused_samples_left * feedback)
-                    * Defaults::SAMPLE_MIXING_LEVEL_CORRECTION_FACTOR,
-            samples.1
-                + (chorused_samples_right * feedback)
-                    * Defaults::SAMPLE_MIXING_LEVEL_CORRECTION_FACTOR,
+            rms_of_sum(samples.0, left_wet_samples * feedback),
+            rms_of_sum(samples.1, right_wet_samples * feedback),
         );
 
         self.write_index = (self.write_index + 1) & (buffer_len - 1);
 
-        let chorused_samples = (chorused_samples_left, chorused_samples_right);
+        let chorused_samples = (left_wet_samples, right_wet_samples);
+
         wet_dry_blend(samples, chorused_samples, blend)
     }
 }
 
 fn delay_center_value(sample_rate: f32) -> f32 {
     ((CHORUS_DEFAULT_DELAY_MILLISECONDS / 1000.0) * sample_rate).round()
+}
+
+fn rms_of_sum(sample_1: f32, sample_2: f32) -> f32 {
+    (sample_1 + sample_2) * Defaults::APPROXIMATE_RMS_TWO_SAMPLES
 }
 
 #[cfg(test)]
@@ -318,8 +358,8 @@ mod tests {
         chorus.buffer[2] = (0.4, -0.2);
         chorus.buffer[1] = (0.8, -0.6);
 
-        let result_left = chorus.delayed_sample_from_buffer(buffer_len, 3.25, 3, Side::Left);
-        let result_right = chorus.delayed_sample_from_buffer(buffer_len, 3.25, 3, Side::Right);
+        let result_left = chorus.delayed_sample_from_buffer(buffer_len, 3.25, 3, Voice::Left);
+        let result_right = chorus.delayed_sample_from_buffer(buffer_len, 3.25, 3, Voice::Right);
 
         let expected = (0.5, -0.3);
         assert!(
