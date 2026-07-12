@@ -84,6 +84,7 @@ ignore = [
     { id = "RUSTSEC-2026-0194", reason = "quick-xml, transitive via Slint's Wayland backend; DoS only affects untrusted XML parsing, not exercised here; fix available upstream but pinned by Slint until its next release" },
     { id = "RUSTSEC-2026-0195", reason = "quick-xml, transitive via Slint's Wayland backend; DoS only affects untrusted XML parsing, not exercised here; fix available upstream but pinned by Slint until its next release" },
     { id = "RUSTSEC-2026-0192", reason = "ttf-parser, transitive via Slint's font rendering (resvg/usvg); unmaintained, no safe upgrade, pinned by Slint" },
+    { id = "RUSTSEC-2026-0206", reason = "rustybuzz, transitive via Slint's font rendering (resvg/usvg), same path as ttf-parser above; unmaintained, no safe upgrade, pinned by Slint" },
 ]
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
