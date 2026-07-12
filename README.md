@@ -31,7 +31,7 @@ Current:
 - Four-oscillator mono synth voice with multiple waveforms (sine, triangle, square, saw, pulse, ramp, supersaw, AM, FM, PM, Broken, and noise); the supersaw offers detune and voice-blend controls
 - Resonant lowpass filter with key tracking, envelope, and LFO modulation
 - Three ADSR envelopes (amplitude, pitch, and filter) and two LFOs for modulation (pitch via the mod wheel and filter), each with optional MIDI-clock sync and key sync
-- Audio effects: saturation, compressor, wave folder, clipper, gate, rectifier, chorus, bit shifter, delay, auto pan, and tremolo 
+- Audio effects: saturation, compressor, wave folder, clipper, gate, rectifier, chorus, flanger, bit shifter, delay, auto pan, and tremolo 
 - Preset & user patch system: save, load, and delete user patches; factory patches loaded in the app
 - MIDI input: Note On/Off, Velocity, Pitch Bend, Control Change, Channel Pressure, Sustain Pedal, Program Change, MIDI Clock (tempo sync with header BPM display) (see implementation chart in the 
   Wiki)
