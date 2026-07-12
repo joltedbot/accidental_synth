@@ -78,6 +78,8 @@ impl AudioEffect for Tremolo {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::modules::oscillator::WaveShape;
+    use strum::EnumCount;
 
     #[test]
     fn tremolo_process_samples_returns_original_when_disabled() {
@@ -151,6 +153,12 @@ mod tests {
     #[test]
     fn tremolo_process_samples_updates_shape_when_changed() {
         let mut tremolo = Tremolo::new(44100);
+
+        let test_shape_normalized: f32 = 1.0;
+        // Hand coded above with test values. Not dynamically created
+        #[allow(clippy::cast_precision_loss)]
+        let test_shape_index = (WaveShape::COUNT - 1) as f32;
+
         let effect = EffectParameters {
             name: String::new(),
             is_enabled: true,
@@ -165,7 +173,7 @@ mod tests {
         let new_effect = EffectParameters {
             name: String::new(),
             is_enabled: true,
-            parameters: vec![0.5, 0.5, 1.0, 0.0],
+            parameters: vec![0.5, 0.5, test_shape_normalized, 0.0],
         };
         tremolo.process_samples((0.5, 0.5), &new_effect);
 
@@ -173,7 +181,13 @@ mod tests {
             initial_shape,
             tremolo.lfo_parameters.waveshape_index
         ));
-        assert!(f32s_are_equal(tremolo.lfo_parameters.waveshape_index, 1.0));
+
+        assert!(
+            f32s_are_equal(tremolo.lfo_parameters.waveshape_index, test_shape_index),
+            "{} and {} are not equal",
+            tremolo.lfo_parameters.waveshape_index,
+            test_shape_index
+        );
     }
 
     #[test]

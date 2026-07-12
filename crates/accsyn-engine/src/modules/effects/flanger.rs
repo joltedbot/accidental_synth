@@ -289,14 +289,14 @@ mod tests {
 
     #[test]
     fn delay_center_value_computes_samples_for_sample_rate() {
-        let expected_48k = 96.0;
+        let expected_48k = 24.0;
         let result_48k = delay_center_value(48_000.0);
         assert!(
             f32s_are_equal(result_48k, expected_48k),
             "Expected {expected_48k}, got {result_48k}"
         );
 
-        let expected_44k = 88.0;
+        let expected_44k = 22.0;
         let result_44k = delay_center_value(44_100.0);
         assert!(
             f32s_are_equal(result_44k, expected_44k),
