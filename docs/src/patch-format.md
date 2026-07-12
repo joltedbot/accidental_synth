@@ -534,7 +534,7 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
     { "name": "Gate Clipping", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Wave Rectifier", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Chorus", "is_enabled": false, "parameters": [1.0, 0.2, 0.0, 0.3] },
-    { "name": "Flanger", "is_enabled": false, "parameters": [0.5,0.13566576,0.5,0.5] },
+    { "name": "Flanger", "is_enabled": false, "parameters": [0.5,0.06338433,0.5,0.5] },
     { "name": "Auto-Pan", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Tremolo", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Delay", "is_enabled": false, "parameters": [0, 0, 0, 0] }
