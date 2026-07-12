@@ -15,6 +15,11 @@ AccSyn is a native macOS app not a plugin. It is designed more to fit into a daw
 It is not an emulation of a hardware synth or trying to give you every feature. Hopefully, though, it leads you to make some sounds you wouldn't 
 normally make.
 
+## User Manual
+There is a manual for AccSyn available [here](https://accidental-synth-d0d73b.gitlab.io/)
+
+It is still something of a work in progress but it explains the controls and settings. It also has a Midi Implementation Chart, and instructions for 
+how to create and edit your own patches manualy is you are so inclined.
 
 ## Project Status
 Accidental Synthesizer is a working, playable synthesizer. The synth voice, MIDI integration, audio output, and UI are all fully connected and 
