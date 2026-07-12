@@ -63,7 +63,7 @@ impl Defaults {
     pub const DELAY_PARAMETERS: [f32; 4] = [0.5, 0.5, 0.5, 0.0];
     /// Default chorus effect parameters: [depth, rate, feedback, blend].
     pub const CHORUS_PARAMETERS: [f32; 4] = [1.0, 0.3, 0.0, 0.3];
-    /// Default FLANGER effect parameters: [depth, rate, feedback, blend].
+    /// Default flanger effect parameters: [depth, rate, feedback, blend].
     pub const FLANGER_PARAMETERS: [f32; 4] = [0.5, 0.135_347_57, 0.5, 0.5];
     /// Default autopan effect parameters: [rate, depth, unused, unused].
     pub const AUTOPAN_PARAMETERS: [f32; 4] = [0.1, 1.0, 0.0, 0.0];
