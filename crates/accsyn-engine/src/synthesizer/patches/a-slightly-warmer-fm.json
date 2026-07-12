@@ -246,6 +246,16 @@
       ]
     },
     {
+      "name": "Flanger",
+      "is_enabled": false,
+      "parameters": [
+        0.5,
+        0.13566576,
+        0.5,
+        0.5
+      ]
+    },
+    {
       "name": "Auto-Pan",
       "is_enabled": false,
       "parameters": [
