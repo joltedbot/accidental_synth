@@ -484,7 +484,7 @@ export component AutoPan inherits EffectBox {
         value_index: effect_values.parameters[2];
         enabled: false;
         drop_down_changed(index, name) => {
-            effect_parameter_changed(root.effect-index, 2, index);
+            effect_parameter_changed(root.effect-index, 2, index / (Constant.OSC_WAVE_SHAPES.length - 1));
         }
     }
 }
@@ -536,7 +536,7 @@ export component Tremolo inherits EffectBox {
         enabled: false;
         value_index: effect_values.parameters[2];
         drop_down_changed(index, name) => {
-            effect_parameter_changed(root.effect-index, 2, index);
+            effect_parameter_changed(root.effect-index, 2, index / (Constant.OSC_WAVE_SHAPES.length - 1));
         }
     }
 }

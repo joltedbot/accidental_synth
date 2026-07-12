@@ -2,7 +2,9 @@ use crate::modules::effects::constants::{
     DEFAULT_LFO_WAVESHAPE_INDEX, TREMOLO_LFO_CENTER_VALUE, TREMOLO_LFO_RANGE, TREMOLO_MAX_DEPTH,
 };
 use crate::modules::lfo::Lfo;
-use crate::synthesizer::midi_value_converters::exponential_curve_lfo_frequency_from_normal_value;
+use crate::synthesizer::midi_value_converters::{
+    exponential_curve_lfo_frequency_from_normal_value, normal_value_to_wave_shape_index,
+};
 use accsyn_core::casting::f32_to_u8_clamped;
 use accsyn_core::defaults::Defaults;
 use accsyn_core::effects::{AudioEffect, EffectParameters};
@@ -49,7 +51,7 @@ impl AudioEffect for Tremolo {
 
         let new_frequency = effect.parameters[0];
         let new_depth = effect.parameters[1];
-        let new_shape = effect.parameters[2];
+        let new_shape = f32::from(normal_value_to_wave_shape_index(effect.parameters[2]));
 
         if !f32s_are_equal(new_frequency, self.lfo_parameters.frequency) {
             self.lfo_parameters.frequency = new_frequency;
