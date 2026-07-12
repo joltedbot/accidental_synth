@@ -653,3 +653,66 @@ export component Chorus inherits EffectBox {
         }
     }
 }
+
+
+export component Flanger inherits EffectBox {
+    callback effect_parameter_changed(int, int, float);
+    in property <EffectsValues> effect_values;
+    property <int> patch_generation: PatchState.generation;
+
+    title: effect_values.name;
+    is_enabled: effect_values.is_enabled;
+
+    changed patch_generation => {
+        root.is_enabled = effect_values.is_enabled;
+    }
+
+    changed is_enabled => {
+        depth.enabled = self.is_enabled;
+        rate.enabled = self.is_enabled;
+        feedback.enabled = self.is_enabled;
+        blend.enabled = self.is_enabled;
+    }
+
+    HorizontalSpacer { }
+
+    depth := HorizontalParameterSlider {
+        slider-width: 230px;
+        label: Theme.flanger-parameter1;
+        value: effect_values.parameters[0];
+        enabled: false;
+        horizontal-parameter-slider-changed(theshold) => {
+            effect_parameter_changed(parent.effect-index, 0, theshold);
+        }
+    }
+
+    rate := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.flanger-parameter2;
+        value: effect_values.parameters[1];
+        horizontal-parameter-slider-changed(amount) => {
+            effect_parameter_changed(parent.effect-index, 1, amount);
+        }
+    }
+
+    feedback := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.flanger-parameter3;
+        value: effect_values.parameters[2];
+        horizontal-parameter-slider-changed(amount) => {
+            effect_parameter_changed(parent.effect-index, 2, amount);
+        }
+    }
+
+    blend := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        label: Theme.flanger-parameter4;
+        value: effect_values.parameters[3];
+        horizontal-parameter-slider-changed(amount) => {
+            effect_parameter_changed(parent.effect-index, 3, amount);
+        }
+    }
+}

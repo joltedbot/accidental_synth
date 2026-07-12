@@ -19,6 +19,7 @@ import {
     Gate,
     Rectifier,
     Chorus,
+    Flanger,
     AutoPan,
     Tremolo,
     Delay,
@@ -185,7 +186,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                AutoPan {
+                Flanger {
                     effect-index: 8;
                     effect_values: effects_values[self.effect-index];
 
@@ -202,7 +203,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Tremolo {
+                AutoPan {
                     effect-index: 9;
                     effect_values: effects_values[self.effect-index];
 
@@ -227,8 +228,25 @@ export component EffectsPanel inherits Panel {
             padding: Theme.effect-box-padding;
             spacing: Theme.effect-box-spacing;
 
-            Delay {
+            Tremolo {
                 effect-index: 10;
+                effect_values: effects_values[self.effect-index];
+
+                effect_enabled(effect-index, is_enabled) => {
+                    effect_enabled(effect-index, is_enabled);
+                }
+                effect_parameter_changed(effect_index, parameter_index, value) => {
+                    effect_parameter_changed(effect_index, parameter_index, value);
+                }
+            }
+
+            VerticalSpacer {
+                left-padding: 0px;
+                right-padding: 0px;
+            }
+
+            Delay {
+                effect-index: 11;
                 effect_values: effects_values[self.effect-index];
 
                 effect_enabled(effect-index, is_enabled) => {

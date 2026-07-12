@@ -40,6 +40,9 @@ pub enum EffectIndex {
     /// Stereo Chorus effect.
     #[strum(to_string = "Chorus")]
     Chorus,
+    /// Flanger effect.
+    #[strum(to_string = "Flanger")]
+    Flanger,
     /// Automatic stereo panning effect.
     #[strum(to_string = "Auto-Pan")]
     AutoPan,
@@ -132,6 +135,13 @@ impl EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
                         parameters: Defaults::CHORUS_PARAMETERS.to_vec(),
+                    });
+                }
+                EffectIndex::Flanger => {
+                    effect_parameters.push(EffectParameters {
+                        name: effect.to_string(),
+                        is_enabled: false,
+                        parameters: Defaults::FLANGER_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::AutoPan => {

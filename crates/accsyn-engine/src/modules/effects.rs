@@ -18,6 +18,7 @@ mod clipper;
 mod compressor;
 mod constants;
 mod delay;
+mod flanger;
 mod gate;
 mod rectifier;
 mod saturation;
@@ -84,11 +85,12 @@ impl Effects {
         let autopan = Box::new(autopan::AutoPan::new(sample_rate));
         let tremolo = Box::new(tremolo::Tremolo::new(sample_rate));
         let chorus = Box::new(chorus::Chorus::new(sample_rate));
+        let flanger = Box::new(flanger::Flanger::new(sample_rate));
 
         Self {
             effects: vec![
                 saturation, compressor, wavefolder, bitshifter, clipper, gate, rectifier, chorus,
-                autopan, tremolo, delay,
+                flanger, autopan, tremolo, delay,
             ],
             parameters: EffectParameters::default_all(),
         }

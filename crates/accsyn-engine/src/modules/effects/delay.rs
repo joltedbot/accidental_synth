@@ -49,7 +49,7 @@ impl Delay {
         samples_count: f32,
         new_samples_count: usize,
     ) -> (f32, f32) {
-        // chorus_samples is bounded by MAX_DELAY_SAMPLES (a small constant), within f32 precision (2²³ = 8_388_608)
+        // new_samples_count is bounded by MAX_DELAY_SAMPLES (a small constant), within f32 precision (2²³ = 8_388_608)
         #[allow(clippy::cast_precision_loss)]
         let fractional_index1 = samples_count - new_samples_count as f32;
         let read_index = (self.write_index + buffer_len - new_samples_count) & (buffer_len - 1);
