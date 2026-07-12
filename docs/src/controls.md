@@ -248,7 +248,18 @@ Flips or removes negative samples, changing the waveform symmetry and adding har
 | **Feedback** | How much of the wet signal is fed back into the delay buffer |
 | **Blend** | Wet/Dry signal blend (Left: 0% Wet, Right: 100% Wet) |
 
-### 9 — Auto Pan
+### 9 — Flanger
+
+Flanger effect
+
+| Control                   | Description                                                           |
+|---------------------------|-----------------------------------------------------------------------|
+| **Depth** | The depth of the flanger effect  |
+| **Rate** | Speed of the modulation |
+| **Feedback** | How much of the wet signal is fed back into the delay buffer |
+| **Blend** | Wet/Dry signal blend (Left: 0% Wet, Right: 100% Wet) |
+
+### 10 — Auto Pan
 
 Automatically pans the signal between left and right.
 
@@ -258,7 +269,7 @@ Automatically pans the signal between left and right.
 | **Width**      | Maximum pan amount.                     |
 | **Wave Shape** | LFO shape driving the panning movement. |
 
-### 10 — Tremolo
+### 11 — Tremolo
 
 Modulates the output amplitude.
 
@@ -268,7 +279,7 @@ Modulates the output amplitude.
 | **Depth**      | Tremolo intensity.                          |
 | **Wave Shape** | LFO shape driving the amplitude modulation. |
 
-### 11 — Delay
+### 12 — Delay
 
 A simple stereo delay.
 

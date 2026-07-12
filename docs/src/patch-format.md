@@ -268,9 +268,10 @@ Effects are processed in this order:
 | 5     | Gate Clipping     | threshold                             | pre-gate level cut     | post-gate makeup gain                                | unused       |
 | 6     | Wave Rectifier    | full wave mode toggle (0 = half wave) | blend                  | unused                                               | unused       |
 | 7     | Chorus            | Depth                                 | Rate                   | Feedback                                             | Blend        |
-| 8     | Auto-Pan          | rate                                  | width                  | wave shape                                           | unused       |
-| 9     | Tremolo           | rate                                  | depth                  | wave shape                                           | unused       |
-| 10    | Delay             | amount                                | time                   | feedback                                             | unused       |
+| 8     | Flanger            | Depth                                 | Rate                   | Feedback                                             | Blend        |
+| 9     | Auto-Pan          | rate                                  | width                  | wave shape                                           | unused       |
+| 10     | Tremolo           | rate                                  | depth                  | wave shape                                           | unused       |
+| 11    | Delay             | amount                                | time                   | feedback                                             | unused       |
 
 All parameters use the range 0.0 to 1.0, including "unused" fields which should be set to 0.
 Toggle parameters are 0.0 for Off and > 0.0 values for on but 1.0 is the preferred On value.
@@ -533,6 +534,7 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
     { "name": "Gate Clipping", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Wave Rectifier", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Chorus", "is_enabled": false, "parameters": [1.0, 0.2, 0.0, 0.3] },
+    { "name": "Flanger", "is_enabled": false, "parameters": [0.5,0.13566576,0.5,0.5] },
     { "name": "Auto-Pan", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Tremolo", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Delay", "is_enabled": false, "parameters": [0, 0, 0, 0] }
