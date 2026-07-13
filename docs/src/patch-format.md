@@ -18,7 +18,7 @@ Get creative with it but be careful about the levels when combining effects as t
 
 A patch file has the following top-level keys:
 
-```json
+```
 {
   "clock": {...},
   "effects": [...],
@@ -372,7 +372,7 @@ Start from `init.json` as a template and modify parameters as desired. The initi
 
 ## Example: Creating a Saw Lead
 
-Here is a simplified example of a sawtooth lead patch focusing on the key changes:
+Here is a simplified example of a sawtooth lead patch with portamento:
 
 ```json
 {
@@ -386,7 +386,7 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
       "shape_parameter2": 0,
       "pitch_bend": 0,
       "portamento_enabled": true,
-      "portamento_time": 150,
+      "portamento_time": 27,
       "hard_sync_enabled": false,
       "key_sync_enabled": false,
       "gate_flag": false,
@@ -401,7 +401,7 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
       "shape_parameter2": 0,
       "pitch_bend": 0,
       "portamento_enabled": true,
-      "portamento_time": 150,
+      "portamento_time": 27,
       "hard_sync_enabled": false,
       "key_sync_enabled": false,
       "gate_flag": false,
@@ -416,7 +416,7 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
       "shape_parameter2": 0,
       "pitch_bend": 0,
       "portamento_enabled": true,
-      "portamento_time": 150,
+      "portamento_time": 27,
       "hard_sync_enabled": false,
       "key_sync_enabled": false,
       "gate_flag": false,
@@ -533,11 +533,14 @@ Here is a simplified example of a sawtooth lead patch focusing on the key change
     { "name": "Clipper", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Gate Clipping", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Wave Rectifier", "is_enabled": false, "parameters": [0, 0, 0, 0] },
-    { "name": "Chorus", "is_enabled": false, "parameters": [1.0, 0.2, 0.0, 0.3] },
-    { "name": "Flanger", "is_enabled": false, "parameters": [0.5,0.06338433,0.5,0.5] },
+    { "name": "Chorus", "is_enabled": true, "parameters": [1.0, 0.2, 0.0, 0.3] },
+    { "name": "Flanger", "is_enabled": false, "parameters": [0.5,0.0633,0.5,0.5] },
     { "name": "Auto-Pan", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Tremolo", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Delay", "is_enabled": false, "parameters": [0, 0, 0, 0] }
-  ]
+  ],
+  "clock": {
+    "bpm": 1
+  }
 }
 ```
