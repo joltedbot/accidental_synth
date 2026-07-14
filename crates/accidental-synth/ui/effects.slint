@@ -481,7 +481,7 @@ export component AutoPan inherits EffectBox {
         label: Theme.lfo-label-wave-shape;
         value-list: Constant.OSC_WAVE_SHAPES;
         dropdown-width: Theme.effect-dropdown-width;
-        value_index: effect_values.parameters[2];
+        value_index: ceil(effect_values.parameters[2] * (Constant.OSC_WAVE_SHAPES.length - 1));
         enabled: false;
         drop_down_changed(index, name) => {
             effect_parameter_changed(root.effect-index, 2, index / (Constant.OSC_WAVE_SHAPES.length - 1));
@@ -534,7 +534,7 @@ export component Tremolo inherits EffectBox {
         value-list: Constant.OSC_WAVE_SHAPES;
         dropdown-width: Theme.effect-dropdown-width;
         enabled: false;
-        value_index: effect_values.parameters[2];
+        value_index: ceil(effect_values.parameters[2] * (Constant.OSC_WAVE_SHAPES.length - 1));
         drop_down_changed(index, name) => {
             effect_parameter_changed(root.effect-index, 2, index / (Constant.OSC_WAVE_SHAPES.length - 1));
         }
