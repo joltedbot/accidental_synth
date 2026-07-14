@@ -106,7 +106,7 @@
       "parameters": [
         0.35011888,
         1.0,
-        8.0,
+        0.72727272,
         0.0
       ]
     },
@@ -237,7 +237,7 @@
       "portamento_time": 8,
       "shape_parameter1": 0.67642665,
       "shape_parameter2": 0.0,
-      "wave_shape_index": 10,
+      "wave_shape_index": 11,
       "pitch_envelope_amount": 0.0
     },
     {
@@ -252,7 +252,7 @@
       "portamento_time": 8,
       "shape_parameter1": 0.6732507,
       "shape_parameter2": 0.0,
-      "wave_shape_index": 10,
+      "wave_shape_index": 11,
       "pitch_envelope_amount": 0.0
     },
     {
@@ -267,7 +267,7 @@
       "portamento_time": 8,
       "shape_parameter1": 0.6055537,
       "shape_parameter2": 0.0,
-      "wave_shape_index": 10,
+      "wave_shape_index": 11,
       "pitch_envelope_amount": 0.0
     },
     {
@@ -282,7 +282,7 @@
       "portamento_time": 8,
       "shape_parameter1": 0.60100204,
       "shape_parameter2": 0.0,
-      "wave_shape_index": 10,
+      "wave_shape_index": 11,
       "pitch_envelope_amount": 0.0
     }
   ],

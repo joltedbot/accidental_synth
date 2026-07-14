@@ -109,7 +109,7 @@
       "pitch_bend": 0,
       "shape_parameter1": 0.0,
       "shape_parameter2": 0.85,
-      "wave_shape_index": 10,
+      "wave_shape_index": 11,
       "gate_flag": false,
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
@@ -271,7 +271,7 @@
       "parameters": [
         0.0,
         0.0,
-        2.0,
+        0.18181818,
         0.0
       ]
     },
