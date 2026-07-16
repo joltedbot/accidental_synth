@@ -16,9 +16,9 @@
       "parameters": [0.7, 0.3, 0.5, 0.2]
     },
     {
-      "name": "Bit Shifter",
+      "name": "Bit Crusher",
       "is_enabled": false,
-      "parameters": [0.4, 0.6, 0.3, 0.0]
+      "parameters": [0.0, 1.0, 1.0, 0.0]
     },
     {
       "name": "Clipper",

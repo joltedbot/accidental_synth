@@ -196,12 +196,12 @@
       ]
     },
     {
-      "name": "Bit Shifter",
+      "name": "Bit Crusher",
       "is_enabled": true,
       "parameters": [
         0.69442934,
         1.0,
-        0.0,
+        1.0,
         0.0
       ]
     },
