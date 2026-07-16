@@ -248,7 +248,7 @@ Single keyboard object controlling MIDI response and velocity sensitivity.
 
 ## Effects
 
-Array of 11 effect objects in fixed order. Each effect has:
+Array of 12 effect objects in fixed order. Each effect has:
 
 | Field        | Type       | Range   | Description                                                            |
 |--------------|------------|---------|------------------------------------------------------------------------|

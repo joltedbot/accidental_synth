@@ -24,20 +24,20 @@ oscillator is pitched 1 octave below the played note.
 
 #### Waveforms
 
-| Index | Name     | Mod Wheel       | Shape Parameter 1 | Shape Parameter 2 | Notes                       |
-|-------|----------|-----------------|-------------------|-------------------|-----------------------------|
-| 0     | Sine     | Pitch           | N/A               | N/A               |                             |
-| 1     | Triangle | Pitch           | N/A               | N/A               |                             |
-| 2     | Square   | Pitch           | N/A               | N/A               |                             |
-| 3     | Saw      | Pitch           | N/A               | N/A               | Rising sawtooth wave        |
-| 4     | Pulse    | PWM             | Pulse Width       | N/A               | Width adjustable pulse      |
-| 5     | Ramp     | Pitch           | N/A               | N/A               | Falling sawtooth wave       |
-| 6     | Supersaw | Pitch           | Detune            | N/A               | 7 detunes Sawtooth waves    |
-| 7     | AM/RM    | Modulator Pitch | Modulation Amount | Ring Mod Amount   | Morph between AM & Ring Mod |
-| 8     | FM       | Modulator Pitch | Modulation Amount | Ratio             | Bare Bones 2 Op FM          |
-| 9     | PM       | Carrier Pitch   | Modulation Amount | N/A               | Phase Modulation            |
-| 10    | Broken   | Pitch           | How Broken?       | N/A               | Sort of self explanitory    |
-| 11    | Noise    | N/A             | N/A               | N/A               | N/A                         |
+| Index | Name     | Shape Parameter 1 | Shape Parameter 2 | Notes                       |
+|-------|----------|-------------------|-------------------|-----------------------------|
+| 0     | Sine     | N/A               | N/A               |                             |
+| 1     | Triangle | N/A               | N/A               |                             |
+| 2     | Square   | N/A               | N/A               |                             |
+| 3     | Saw      | N/A               | N/A               | Rising sawtooth wave        |
+| 4     | Pulse    | Pulse Width       | N/A               | Width adjustable pulse      |
+| 5     | Ramp     | N/A               | N/A               | Falling sawtooth wave       |
+| 6     | Supersaw | Detune            | N/A               | 7 detunes Sawtooth waves    |
+| 7     | AM/RM    | Modulation Amount | Ring Mod Amount   | Morph between AM & Ring Mod |
+| 8     | FM       | Modulation Amount | Ratio             | Bare Bones 2 Op FM          |
+| 9     | PM       | Modulation Amount | N/A               | Phase Modulation            |
+| 10    | Broken   | How Broken?       | N/A               | Sort of self explanitory    |
+| 11    | Noise    | N/A               | N/A               | N/A                         |
 
 ---
 
@@ -50,13 +50,24 @@ A resonant lowpass filter placed after the oscillator mix.
 | **Cutoff**       | Filter cutoff frequency in Hz.                        |
 | **Resonance**    | Resonance (peak) at the cutoff frequency.             |
 | **Poles**        | Filter slope: 1–4 poles (6, 12, 18, or 24 dB/octave). |
-| **Key Tracking** | Positive and negative key tracking                    |
+| **Key Tracking** | Positive and negative key tracking. See note.         |
 | **EG Amount**    | How much the Filter Envelope modulates the cutoff.    |
 | **LFO Amount**   | How much the Filter LFO modulates the cutoff.         |
 
+__Filter Key Tracking Note__ - The value is bipolar.  The key tracking centers around E4/MIDI note 64 which will always get the filter value you set with cutoff and then notes above or
+below are altered as you change the key tracking. 
+In the middle there is no tracking, To the right you get normal key tracking where the 
+filter opens up as you play higher notes. To the left you get negative key tracking where the higher notes get darker and the lower notes get 
+brighter.   
+
 #### Filter Envelope
 
-An ADSR envelope dedicated to filter cutoff modulation.
+An ADSR envelope dedicated to filter cutoff modulation. An ADSR envelope to modulate the cutoff of the filter over time with the played note. The 
+inverted mode flips the envelope so that the filter starts at maximum cutoff frequency (full brightness) and then the envelope lowers the cutoff and 
+brings it back to full based on how you set it.
+
+Due to the interaction of the filter envelope sustain and the need for there to be somewhere for the cutoff to go I suggest starting with the 
+cutoff either all the way off, or maybe in the center and tune by ear from there. 
 
 | Control      | Description                   |
 |--------------|-------------------------------|
@@ -70,6 +81,9 @@ An ADSR envelope dedicated to filter cutoff modulation.
 
 A dedicated LFO for filter cutoff modulation
 
+The LFO modulates the cutoff around (above and below) the current frequency set by cutoff slider. It also follows the cut off value produced by the 
+Filter Envelope value so using both can produce some interesting effects. 
+
 | Control        | Description                                                                    |
 |----------------|--------------------------------------------------------------------------------|
 | **Frequency**  | LFO rate in Hz (or in beat intervals when Clock Sync is enabled.               |
@@ -82,7 +96,8 @@ A dedicated LFO for filter cutoff modulation
 
 ### Amp Envelope
 
-Controls the amplitude over the note's lifecycle.
+An ADSR envelope to modulate the amplitude of the played notes over time. The inverted mode flips the envelope so that the 
+note starts at maximum amplitude and then the envelope lowers the amplitude and brings it back to full based on how you set it.
 
 | Control      | Description                                                                                                                |
 |--------------|----------------------------------------------------------------------------------------------------------------------------|
@@ -90,14 +105,13 @@ Controls the amplitude over the note's lifecycle.
 | **Dec**      | Decay time in milliseconds.                                                                                                |
 | **Sus**      | Sustain level (0.0–1.0).                                                                                                   |
 | **Rel**      | Release time in milliseconds.                                                                                              |
-| **Amount**   | Overall envelope depth. At 1.0 the envelope fully opens and closes the amplitude; lower values compress the dynamic range. |
 | **Inverted** | Inverts the envelope — amplitude starts at full and decreases on attack.                                                   |
 
 ---
 
 ### Pitch Envelope
 
-A single ADSR envelope that modulates oscillator pitch. Each oscillator has a **Pitch Envelope Amount** control that determines how much it is affected.
+An ADSR envelope that modulates oscillator pitch. Each oscillator has a **Pitch Envelope Amount** control that determines how much it is affected.
 
 | Control | Description                   |
 |---------|-------------------------------|
@@ -138,7 +152,7 @@ Global and per-oscillator performance settings.
 |----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Portamento**       | Enables pitch glide between notes. The UI controls all oscillators together; per-oscillator values can be set manually in patch files.                              |
 | **Time**             | Portamento glide duration.                                                                                                                                          |
-| **Hard Sync**        | Syncs the oscillator's phase to the Sub oscillator, producing hard sync timbres.                                                                                    |
+| **Hard Sync**        | Syncs oscillator 2's phase to oscillator 1, producing hard sync effect.                                                                                             |
 | **Key Sync**         | Resets the oscillator phase on each note-on. Useful for consistent attack transients.                                                                               |
 | **Pitch Bend Range** | Maximum pitch bend in semitones (2–12).                                                                                                                             |
 | **Velocity Curve**   | Shapes how MIDI velocity maps to amplitude. 0.5 is linear; lower values compress dynamics; higher values expand them.                                               |
@@ -147,19 +161,37 @@ Global and per-oscillator performance settings.
 
 ---
 
-### Mod Wheel
+### Modulation (Mod) Wheel
 
-The mod wheel controls a dedicated LFO that modulates oscillator pitch depth. The LFO parameters are set here and its depth is set by the mod wheel (CC #1) in real time.
+The midi mod wheel parameter `CC#1` controls the range parameter of a dedicated LFO which controls the depth/amount of the effect on the oscillators.
 
-| Control          | Description                                            |
-|------------------|--------------------------------------------------------|
-| **Frequency**    | LFO rate in Hz (or musical divisions with Clock Sync). |
-| **Center Value** | Center point of the modulation range (−1.0 to 1.0).    |
-| **Range**        | Modulation depth. 0 disables modulation.               |
-| **Wave Shape**   | LFO waveform.                                          |
-| **Phase**        | Starting phase.                                        |
-| **Reset**        | Resets LFO phase on note-on.                           |
-| **Clock Sync**   | Syncs LFO rate to MIDI clock.                          |
+With some exceptions noted in this table that LFO is applied to the pitch of the oscillator producing a Vibrator effect. Here is the effect it has 
+on each oscillator.
+
+| Waveshape | Target              | Effect Produced                                      | 
+|-----------|---------------------|------------------------------------------------------|
+| Sine      | Frequency           | Vibrato                                              |
+| Triangle  | Frequency           | Vibrato                                              |
+| Square    | Frequency           | Vibrato                                              |
+| Ramp      | Frequency           | Vibrato                                              |
+| Supersaw  | Frequency           | Vibrato                                              |
+| AM/RM     | Modulator Frequency | Ghostly Overtone Vibrato                             |
+| FM        | Modulator Frequency | Basic 3rd Operator. Modwheel -> Modulator -> Carrier |
+| PM        | Frequency           | Pulsing effect that changes speed in time to the LFO |
+| Broken    | Frequency           | Vibrato                                              |
+| Noise     | N/A                 | N/A                                                  |
+
+
+The Mod Wheel control section has the following controls for the underlying Mod Wheel LFO
+
+| Control        | Description                                                       |
+|----------------|-------------------------------------------------------------------|
+| **Frequency**  | The LFO's rate in Hz or clock divisions if clock synced           |
+| **Wave Shape** | Wave shape for the LFO                                            |
+| **Phase**      | Set the current phase of the LFO. Manually sync to other sounds   |
+| **Clock Sync** | Syncs LFO rate to MIDI clock                                      |
+| **Key Sync**   | Reset the LFO on each key press. Works with or without Clock Sync |
+
 
 ---
 
@@ -218,7 +250,7 @@ Hard clips the signal, adding aggressive saturation at high levels.
 | **Post-Clip Makeup Gain** | Output level trim after clipping.                                            |
 | **Notch**                 | Enables a notch filter at the clip frequency for a different spectral shape. |
 
-### 6 — Gate
+### 6 — Gate Clipping
 
 Silences signal below a threshold.
 
