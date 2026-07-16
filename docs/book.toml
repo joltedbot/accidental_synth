@@ -1,4 +1,17 @@
 [book]
 title = "Accidental Synthesizer User Manual"
 authors = ["Dave White"]
+description = "User manual for Accidental Synthesizer (AccSyn), a standalone four-oscillator monosynth desktop app for macOS."
 language = "en"
+
+[build]
+create-missing = false
+
+[output.html]
+default-theme = "ayu"
+preferred-dark-theme = "ayu"
+smart-punctuation = false
+git-repository-url = "https://gitlab.com/joltedbot-public/accidental-synth"
+git-repository-icon = "fab-gitlab"
+edit-url-template = "https://gitlab.com/joltedbot-public/accidental-synth/-/edit/main/docs/{path}"
+site-url = "https://accidental-synth-d0d73b.gitlab.io/"
