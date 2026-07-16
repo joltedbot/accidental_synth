@@ -14,7 +14,7 @@ import {
     Saturation,
     Compressor,
     Wavefolder,
-    Bitshifter,
+    BitCrusher,
     Clipper,
     Gate,
     Rectifier,
@@ -94,7 +94,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                Bitshifter {
+                BitCrusher {
                     effect-index: 3;
                     effect_values: effects_values[self.effect-index];
 

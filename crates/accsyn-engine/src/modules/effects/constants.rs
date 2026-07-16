@@ -1,6 +1,6 @@
 pub const MAX_THRESHOLD: f32 = 1.0;
-pub const MAX_BITSHIFT_BITS: u32 = 16;
-pub const MIN_BITSHIFT_BITS: u32 = 1;
+pub const MAX_BITSHIFT_BITS: u32 = 12;
+pub const MIN_BITSHIFT_BITS: u32 = 2;
 pub const MIN_RATIO: u8 = 1;
 pub const MAX_RATIO: u8 = 20;
 pub const MIN_MAKEUP_GAIN_FACTOR: f32 = 1.0;

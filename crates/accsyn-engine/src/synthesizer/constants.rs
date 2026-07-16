@@ -48,7 +48,6 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
         "Alien Invasion*",
         include_str!("patches/alien-invasion.json"),
     ),
-    ("Ambient Drone*", include_str!("patches/ambient-drone.json")),
     (
         "Analog Nostalgia*",
         include_str!("patches/analog-nostalgia.json"),
@@ -83,6 +82,10 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
     (
         "Major 6 Bounce*",
         include_str!("patches/major-6-bounce.json"),
+    ),
+    (
+        "Noisecore Drone*",
+        include_str!("patches/noisecore-drone.json"),
     ),
     (
         "Phase Mod Bass Pulse*",

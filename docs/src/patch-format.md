@@ -529,7 +529,7 @@ Here is a simplified example of a sawtooth lead patch with portamento:
     { "name": "Saturation", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Colour Compressor", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Wave Folder", "is_enabled": false, "parameters": [0, 0, 0, 0] },
-    { "name": "Bit Shifter", "is_enabled": false, "parameters": [0, 0, 0, 0] },
+    { "name": "Bit Crusher", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Clipper", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Gate Clipping", "is_enabled": false, "parameters": [0, 0, 0, 0] },
     { "name": "Wave Rectifier", "is_enabled": false, "parameters": [0, 0, 0, 0] },

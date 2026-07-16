@@ -238,7 +238,7 @@ export component Wavefolder inherits EffectBox {
     }
 }
 
-export component Bitshifter inherits EffectBox {
+export component BitCrusher inherits EffectBox {
     callback effect_parameter_changed(int, int, float);
     in property <EffectsValues> effect_values;
     property <int> patch_generation: PatchState.generation;
@@ -252,6 +252,7 @@ export component Bitshifter inherits EffectBox {
 
     changed is_enabled => {
         bits.enabled = self.is_enabled;
+        cut.enabled = self.is_enabled;
         blend.enabled = self.is_enabled;
     }
 
@@ -261,19 +262,29 @@ export component Bitshifter inherits EffectBox {
         enabled: false;
         slider-width: 230px;
         value: effect_values.parameters[0];
-        label: Theme.bitshifter-parameter1;
+        label: Theme.bitcrusher-parameter1;
         horizontal-parameter-slider-changed(amount) => {
             effect_parameter_changed(parent.effect-index, 0, amount);
+        }
+    }
+
+    cut := HorizontalParameterSlider {
+        enabled: false;
+        slider-width: 230px;
+        value: effect_values.parameters[1];
+        label: Theme.rectifier-cut;
+        horizontal-parameter-slider-changed(amount) => {
+            effect_parameter_changed(parent.effect-index, 1, amount);
         }
     }
 
     blend := HorizontalParameterSlider {
         enabled: false;
         slider-width: 230px;
-        value: effect_values.parameters[1];
+        value: effect_values.parameters[2];
         label: Theme.rectifier-blend;
         horizontal-parameter-slider-changed(amount) => {
-            effect_parameter_changed(parent.effect-index, 1, amount);
+            effect_parameter_changed(parent.effect-index, 2, amount);
         }
     }
 }

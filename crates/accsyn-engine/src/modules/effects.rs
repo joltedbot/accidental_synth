@@ -1,4 +1,4 @@
-use crate::modules::effects::bitshifter::BitShifter;
+use crate::modules::effects::bitcrusher::BitCrusher;
 use crate::modules::effects::clipper::Clipper;
 use crate::modules::effects::gate::Gate;
 use crate::modules::effects::rectifier::Rectifier;
@@ -12,7 +12,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
 
 mod autopan;
-mod bitshifter;
+mod bitcrusher;
 mod chorus;
 mod clipper;
 mod compressor;
@@ -80,7 +80,7 @@ impl Effects {
         let clipper = Box::new(Clipper::new());
         let gate = Box::new(Gate::new());
         let rectifier = Box::new(Rectifier::new());
-        let bitshifter = Box::new(BitShifter::new());
+        let bitcrusher = Box::new(BitCrusher::new());
         let delay = Box::new(delay::Delay::new());
         let autopan = Box::new(autopan::AutoPan::new(sample_rate));
         let tremolo = Box::new(tremolo::Tremolo::new(sample_rate));
@@ -89,7 +89,7 @@ impl Effects {
 
         Self {
             effects: vec![
-                saturation, compressor, wavefolder, bitshifter, clipper, gate, rectifier, chorus,
+                saturation, compressor, wavefolder, bitcrusher, clipper, gate, rectifier, chorus,
                 flanger, autopan, tremolo, delay,
             ],
             parameters: EffectParameters::default_all(),
@@ -351,7 +351,7 @@ mod tests {
 
         let result = effects.process(input);
 
-        // First wavefolder (disabled), then clipper (enabled), then rectifier (enabled), then bitshifter (disabled)
+        // First wavefolder (disabled), then clipper (enabled), then rectifier (enabled), then bitcrusher (disabled)
         // Clipper: 0.6 > 0.4 -> clipped to 0.4, -0.6 -> clipped to -0.4
         // Rectifier full-wave: 0.4 stays 0.4, -0.4 becomes 0.4
         assert!(f32s_are_equal(result.0, 0.4));

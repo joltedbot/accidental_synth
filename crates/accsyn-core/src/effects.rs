@@ -27,7 +27,7 @@ pub enum EffectIndex {
     WaveFolder,
     /// Bit-shifting digital distortion effect.
     #[strum(to_string = "Bit Shifter")]
-    BitShifter,
+    BitCrusher,
     /// Hard clipper distortion effect.
     #[strum(to_string = "Clipper")]
     Clipper,
@@ -116,7 +116,7 @@ impl EffectParameters {
                         parameters: Defaults::COMPRESSOR_PARAMETERS.to_vec(),
                     });
                 }
-                EffectIndex::BitShifter => {
+                EffectIndex::BitCrusher => {
                     effect_parameters.push(EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,

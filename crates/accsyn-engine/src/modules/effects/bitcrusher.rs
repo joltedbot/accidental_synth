@@ -3,17 +3,17 @@ use crate::modules::effects::constants::{MAX_BITSHIFT_BITS, MIN_BITSHIFT_BITS};
 use crate::synthesizer::midi_value_converters::normal_value_to_unsigned_integer_range;
 use accsyn_core::effects::{AudioEffect, EffectParameters};
 
-pub struct BitShifter {}
+pub struct BitCrusher {}
 
-impl BitShifter {
+impl BitCrusher {
     pub fn new() -> Self {
-        log::debug!(target: "synthesizer::effects::bitshifter", "Constructing BitShifter Effect Module");
+        log::debug!(target: "synthesizer::effects::bitcrusher", "Constructing BitCrusher Effect Module");
 
         Self {}
     }
 }
 
-impl AudioEffect for BitShifter {
+impl AudioEffect for BitCrusher {
     fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
         if !effect.is_enabled {
             return samples;
@@ -25,8 +25,12 @@ impl AudioEffect for BitShifter {
             MAX_BITSHIFT_BITS,
         );
 
-        let bit_shifted_samples = (shift_sample(samples.0, bits), shift_sample(samples.1, bits));
-        let blend_amount = effect.parameters[1];
+        let gain_factor = effect.parameters[1];
+        let bit_shifted_samples = (
+            shift_sample(samples.0, bits) * gain_factor,
+            shift_sample(samples.1, bits) * gain_factor,
+        );
+        let blend_amount = effect.parameters[2];
         effects::wet_dry_blend(samples, bit_shifted_samples, blend_amount)
     }
 }
@@ -53,8 +57,8 @@ mod tests {
     use accsyn_core::math::f32s_are_equal;
 
     #[test]
-    fn bitshifter_process_samples_returns_original_when_disabled() {
-        let mut bitshifter = BitShifter::new();
+    fn bitcrusher_process_samples_returns_original_when_disabled() {
+        let mut bitcrusher = BitCrusher::new();
         let effect = EffectParameters {
             name: String::new(),
             is_enabled: false,
@@ -62,7 +66,7 @@ mod tests {
         };
         let input = (0.6, -0.4);
 
-        let result = bitshifter.process_samples(input, &effect);
+        let result = bitcrusher.process_samples(input, &effect);
 
         assert!(f32s_are_equal(result.0, 0.6));
         assert!(f32s_are_equal(result.1, -0.4));
