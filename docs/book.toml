@@ -13,5 +13,4 @@ preferred-dark-theme = "ayu"
 smart-punctuation = false
 git-repository-url = "https://gitlab.com/joltedbot-public/accidental-synth"
 git-repository-icon = "fab-gitlab"
-edit-url-template = "https://gitlab.com/joltedbot-public/accidental-synth/-/edit/main/docs/{path}"
 site-url = "https://accidental-synth-d0d73b.gitlab.io/"
