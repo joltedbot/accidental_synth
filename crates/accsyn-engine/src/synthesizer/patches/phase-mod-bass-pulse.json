@@ -4,7 +4,7 @@
     "resonance": 0.2941779,
     "filter_poles": 4,
     "key_tracking_amount": 0.5,
-    "current_note_number": 46
+    "current_note_number": 55
   },
   "mixer": {
     "level": 1.0,
@@ -42,10 +42,10 @@
   },
   "lfos": [
     {
-      "frequency": 10.0,
+      "frequency": 0.17958143,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 192,
+      "thirty_second_notes": 384,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 1.0,
@@ -58,8 +58,8 @@
     {
       "frequency": 1395.8231,
       "synced_frequency": 3.201406,
-      "sync_triggered": true,
-      "thirty_second_notes": 6,
+      "sync_triggered": false,
+      "thirty_second_notes": 256,
       "clock_synced": true,
       "key_synced": true,
       "center_value": 0.0,
@@ -73,7 +73,7 @@
   "envelopes": [
     {
       "attack_ms": 23,
-      "decay_ms": 0,
+      "decay_ms": 10,
       "release_ms": 44,
       "sustain_level": 1.0,
       "amount": 1.0,
@@ -171,7 +171,7 @@
       "parameters": [
         0.0,
         1.0,
-        0.47929686,
+        0.12474524,
         0.0
       ]
     },
@@ -287,6 +287,6 @@
     }
   ],
   "clock": {
-    "bpm": 144
+    "bpm": 1
   }
 }

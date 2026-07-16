@@ -4,7 +4,7 @@
     "resonance": 0.44650036,
     "filter_poles": 4,
     "key_tracking_amount": 0.5,
-    "current_note_number": 81
+    "current_note_number": 83
   },
   "mixer": {
     "level": 0.14421873,
@@ -34,7 +34,7 @@
     ]
   },
   "keyboard": {
-    "mod_wheel_amount": 0.0,
+    "mod_wheel_amount": 0.62992126,
     "aftertouch_amount": 0.0,
     "velocity_curve": 0.0,
     "polarity_flipped": false,
@@ -42,31 +42,31 @@
   },
   "lfos": [
     {
-      "center_value": 1.0,
-      "frequency": 10.0,
+      "frequency": 0.0504568,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 32,
+      "thirty_second_notes": 512,
       "clock_synced": false,
       "key_synced": false,
-      "phase": 0.0,
+      "center_value": 1.0,
       "range": 2.0,
-      "reset": false,
+      "phase": 0.0,
       "wave_shape": 0,
+      "reset": false,
       "gate_flag": false
     },
     {
-      "center_value": 0.0,
       "frequency": 0.1,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 32,
+      "thirty_second_notes": 256,
       "clock_synced": false,
       "key_synced": false,
+      "center_value": 0.0,
+      "range": 0.01,
       "phase": 0.0,
-      "range": 0.0,
-      "reset": false,
       "wave_shape": 0,
+      "reset": false,
       "gate_flag": false
     }
   ],
@@ -83,7 +83,7 @@
     },
     {
       "attack_ms": 10,
-      "decay_ms": 0,
+      "decay_ms": 10,
       "release_ms": 200,
       "sustain_level": 0.78806424,
       "amount": 0.0,
@@ -92,14 +92,14 @@
       "gate_flag": 0
     },
     {
-      "amount": 1,
       "attack_ms": 1,
       "decay_ms": 200,
-      "gate_flag": 0,
-      "is_inverted": false,
       "release_ms": 10,
-      "sustain_level": 0,
-      "sustain_pedal": false
+      "sustain_level": 0.0,
+      "amount": 1.0,
+      "sustain_pedal": false,
+      "is_inverted": false,
+      "gate_flag": 0
     }
   ],
   "oscillators": [
@@ -116,7 +116,7 @@
       "portamento_enabled": true,
       "portamento_time": 8,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     },
     {
       "fine_tune": 0,
@@ -131,7 +131,7 @@
       "portamento_enabled": true,
       "portamento_time": 8,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     },
     {
       "fine_tune": 0,
@@ -146,7 +146,7 @@
       "portamento_enabled": true,
       "portamento_time": 8,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     },
     {
       "fine_tune": 0,
@@ -161,7 +161,7 @@
       "portamento_enabled": true,
       "portamento_time": 8,
       "clipper_boost": 0,
-      "pitch_envelope_amount": 0
+      "pitch_envelope_amount": 0.0
     }
   ],
   "effects": [
@@ -169,7 +169,7 @@
       "name": "Saturation",
       "is_enabled": true,
       "parameters": [
-        4.0,
+        1.0,
         0.8144701,
         0.606199,
         0.0
@@ -271,7 +271,7 @@
       "parameters": [
         0.16559103,
         0.40399116,
-        1.0,
+        0.09090909,
         0.0
       ]
     },

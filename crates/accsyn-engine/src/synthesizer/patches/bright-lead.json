@@ -237,12 +237,12 @@
     },
     {
       "name": "Chorus",
-      "is_enabled": false,
+      "is_enabled": true,
       "parameters": [
         1.0,
-        0.2,
-        0.0,
-        0.3
+        0.17156929,
+        0.6841712,
+        0.5045007
       ]
     },
     {

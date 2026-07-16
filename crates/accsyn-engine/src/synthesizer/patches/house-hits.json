@@ -4,15 +4,15 @@
     "resonance": 0.17490233,
     "filter_poles": 4,
     "key_tracking_amount": 0.5,
-    "current_note_number": 59
+    "current_note_number": 55
   },
   "mixer": {
-    "level": 1.0002447,
+    "level": 1.0,
     "balance": 0.0,
     "is_muted": false,
     "quad_mixer_inputs": [
       {
-        "level": 1.0002447,
+        "level": 1.0,
         "balance": 0.0,
         "mute": false
       },
@@ -45,7 +45,7 @@
       "frequency": 10.0,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 32,
+      "thirty_second_notes": 160,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 1.0,
@@ -59,11 +59,11 @@
       "frequency": 0.1,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 32,
+      "thirty_second_notes": 224,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 0.0,
-      "range": 0.0,
+      "range": 0.01,
       "phase": 0.0,
       "wave_shape": 0,
       "reset": false,
@@ -82,7 +82,7 @@
       "gate_flag": 0
     },
     {
-      "attack_ms": 0,
+      "attack_ms": 1,
       "decay_ms": 112,
       "release_ms": 200,
       "sustain_level": 0.5014757,
@@ -237,12 +237,12 @@
     },
     {
       "name": "Chorus",
-      "is_enabled": false,
+      "is_enabled": true,
       "parameters": [
         1.0,
-        0.2,
+        0.27056727,
         0.0,
-        0.3
+        0.5417799
       ]
     },
     {
@@ -261,7 +261,7 @@
       "parameters": [
         0.079381794,
         0.12810801,
-        1.0,
+        0.09090909,
         0.0
       ]
     },
@@ -271,7 +271,7 @@
       "parameters": [
         0.15869565,
         0.4046875,
-        1.0,
+        0.09090909,
         0.0
       ]
     },

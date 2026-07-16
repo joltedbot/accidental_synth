@@ -4,15 +4,15 @@
     "resonance": 0.22928268,
     "filter_poles": 3,
     "key_tracking_amount": 0.5,
-    "current_note_number": 67
+    "current_note_number": 50
   },
   "mixer": {
-    "level": 1.0002447,
+    "level": 1.0,
     "balance": 0.0,
     "is_muted": false,
     "quad_mixer_inputs": [
       {
-        "level": 1.0002447,
+        "level": 1.0,
         "balance": -0.5645312,
         "mute": false
       },
@@ -22,7 +22,7 @@
         "mute": false
       },
       {
-        "level": 1.0002447,
+        "level": 1.0,
         "balance": -0.9328125,
         "mute": false
       },
@@ -42,38 +42,38 @@
   },
   "lfos": [
     {
-      "center_value": 1.0,
       "frequency": 10.0,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 32,
+      "thirty_second_notes": 160,
       "clock_synced": false,
       "key_synced": false,
-      "phase": 0.0,
+      "center_value": 1.0,
       "range": 2.0,
-      "reset": false,
+      "phase": 0.0,
       "wave_shape": 0,
+      "reset": false,
       "gate_flag": false
     },
     {
-      "center_value": 0.0,
       "frequency": 0.35400364,
       "synced_frequency": 0.5,
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
-      "phase": 0.0,
+      "center_value": 0.0,
       "range": 0.10381611,
-      "reset": false,
+      "phase": 0.0,
       "wave_shape": 8,
+      "reset": false,
       "gate_flag": false
     }
   ],
   "envelopes": [
     {
       "attack_ms": 25,
-      "decay_ms": 0,
+      "decay_ms": 10,
       "release_ms": 169,
       "sustain_level": 1.0,
       "amount": 1.0,
@@ -82,9 +82,9 @@
       "gate_flag": 0
     },
     {
-      "attack_ms": 0,
-      "decay_ms": 0,
-      "release_ms": 0,
+      "attack_ms": 1,
+      "decay_ms": 10,
+      "release_ms": 10,
       "sustain_level": 0.0,
       "amount": 0.0,
       "sustain_pedal": false,
@@ -92,7 +92,7 @@
       "gate_flag": 0
     },
     {
-      "attack_ms": 0,
+      "attack_ms": 1,
       "decay_ms": 138,
       "release_ms": 10,
       "sustain_level": 0.0,
@@ -190,7 +190,7 @@
       "is_enabled": false,
       "parameters": [
         0.0,
-        -1.0,
+        0.0,
         0.0,
         0.0
       ]
@@ -261,7 +261,7 @@
       "parameters": [
         0.099609375,
         0.58598846,
-        1.0,
+        0.90909094,
         0.0
       ]
     },
@@ -271,7 +271,7 @@
       "parameters": [
         0.08957201,
         0.39599186,
-        1.0,
+        0.90909094,
         0.0
       ]
     },

@@ -4,15 +4,15 @@
     "resonance": 0.14163175,
     "filter_poles": 4,
     "key_tracking_amount": 0.7167969,
-    "current_note_number": 65
+    "current_note_number": 55
   },
   "mixer": {
-    "level": 0.43215558,
+    "level": 0.29033524,
     "balance": 0.0,
     "is_muted": false,
     "quad_mixer_inputs": [
       {
-        "level": 1.0002447,
+        "level": 1.0,
         "balance": 0.0,
         "mute": false
       },
@@ -45,7 +45,7 @@
       "frequency": 10.000001,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 1024,
+      "thirty_second_notes": 384,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 1.0,
@@ -59,11 +59,11 @@
       "frequency": 0.32885945,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 1024,
+      "thirty_second_notes": 256,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 0.0,
-      "range": 0.0,
+      "range": 0.01,
       "phase": 0.0,
       "wave_shape": 0,
       "reset": false,
@@ -72,7 +72,7 @@
   ],
   "envelopes": [
     {
-      "attack_ms": 0,
+      "attack_ms": 1,
       "decay_ms": 5000,
       "release_ms": 173,
       "sustain_level": 0.0,
@@ -82,9 +82,9 @@
       "gate_flag": 0
     },
     {
-      "attack_ms": 0,
-      "decay_ms": 0,
-      "release_ms": 0,
+      "attack_ms": 1,
+      "decay_ms": 10,
+      "release_ms": 10,
       "sustain_level": 0.0,
       "amount": 0.0,
       "sustain_pedal": false,
@@ -190,7 +190,7 @@
       "is_enabled": false,
       "parameters": [
         0.7890285,
-        -1.0,
+        0.0,
         0.7019871,
         0.0
       ]
@@ -247,12 +247,12 @@
     },
     {
       "name": "Flanger",
-      "is_enabled": false,
+      "is_enabled": true,
       "parameters": [
-        0.5,
-        0.06338433,
-        0.5,
-        0.5
+        0.8277683,
+        0.10976563,
+        0.59546536,
+        0.26297554
       ]
     },
     {
