@@ -411,8 +411,8 @@ impl Envelope {
     fn decay_next_value(&mut self) -> f32 {
         if self.is_inverted {
             self.level += self.decay_level_increment;
-            if self.level <= MIN_SUSTAIN_LEVEL {
-                self.level = MIN_SUSTAIN_LEVEL;
+            if self.level >= MAX_SUSTAIN_LEVEL {
+                self.level = MAX_SUSTAIN_LEVEL;
                 self.state_action(StageAction::NextStage);
             }
 
