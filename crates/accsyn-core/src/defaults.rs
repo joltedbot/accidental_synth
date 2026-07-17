@@ -118,7 +118,7 @@ impl Defaults {
     /// Maximum LFO output range (peak-to-peak).
     pub const MAX_LFO_RANGE: f32 = 2.0;
     /// Minimum LFO output range (peak-to-peak).
-    pub const MIN_LFO_RANGE: f32 = 0.01;
+    pub const MIN_LFO_RANGE: f32 = 0.0;
     /// Maximum LFO center value (bipolar offset).
     pub const MAX_LFO_CENTER_VALUE: f32 = 1.0;
     /// Minimum LFO center value (bipolar offset).
