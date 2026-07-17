@@ -82,7 +82,7 @@ impl GenerateWave for Supersaw {
             }
         }
 
-        f64_to_f32_clamped(voice_mix) / 2.0
+        f64_to_f32_clamped(voice_mix)
     }
 
     fn set_shape_parameter1(&mut self, parameter: f32) {
