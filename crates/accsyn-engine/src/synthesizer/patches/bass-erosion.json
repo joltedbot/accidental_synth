@@ -4,7 +4,7 @@
     "resonance": 0.15604581,
     "filter_poles": 2,
     "key_tracking_amount": 0.5,
-    "current_note_number": 60
+    "current_note_number": 29
   },
   "mixer": {
     "level": 0.8,
@@ -17,12 +17,12 @@
         "mute": false
       },
       {
-        "level": 1.0002447,
+        "level": 1.0,
         "balance": 0.0,
         "mute": false
       },
       {
-        "level": 1.0002447,
+        "level": 1.0,
         "balance": 0.0,
         "mute": false
       },
@@ -63,7 +63,7 @@
       "clock_synced": false,
       "key_synced": false,
       "center_value": 0.0,
-      "range": 0.0,
+      "range": 0.01,
       "phase": 0.0,
       "wave_shape": 0,
       "reset": false,
@@ -82,9 +82,9 @@
       "gate_flag": 0
     },
     {
-      "attack_ms": 0,
+      "attack_ms": 1,
       "decay_ms": 460,
-      "release_ms": 0,
+      "release_ms": 10,
       "sustain_level": 0.0,
       "amount": 0.2898738,
       "sustain_pedal": false,
@@ -171,7 +171,7 @@
       "parameters": [
         1.0,
         1.0,
-        0.29481998,
+        0.42421874,
         0.0
       ]
     },
@@ -187,21 +187,21 @@
     },
     {
       "name": "Wave Folder",
-      "is_enabled": true,
+      "is_enabled": false,
       "parameters": [
-        0.85529894,
         0.0,
-        0.7992697,
+        0.0,
+        0.0,
         0.0
       ]
     },
     {
       "name": "Bit Crusher",
-      "is_enabled": false,
+      "is_enabled": true,
       "parameters": [
-        0.0,
         1.0,
-        1.0,
+        0.44252717,
+        0.50939196,
         0.0
       ]
     },
@@ -261,7 +261,7 @@
       "parameters": [
         0.22007473,
         0.49894702,
-        0.90909090,
+        0.90909094,
         0.0
       ]
     },
@@ -271,7 +271,7 @@
       "parameters": [
         0.21513247,
         0.3125,
-        0.63636363,
+        0.90909094,
         0.0
       ]
     },

@@ -3,7 +3,7 @@
     "cutoff_frequency": 139.96173,
     "resonance": 0.15,
     "filter_poles": 3,
-    "key_tracking_amount": 0.6859074,
+    "key_tracking_amount": 0.6973858,
     "current_note_number": 77
   },
   "mixer": {
@@ -63,7 +63,7 @@
       "clock_synced": false,
       "key_synced": false,
       "center_value": 0.0,
-      "range": 0.0,
+      "range": 0.01,
       "phase": 0.0,
       "wave_shape": 0,
       "reset": false,
@@ -171,7 +171,7 @@
       "parameters": [
         1.0,
         1.0,
-        0.6229789,
+        0.28636208,
         0.0
       ]
     },
@@ -209,9 +209,9 @@
       "name": "Clipper",
       "is_enabled": true,
       "parameters": [
-        0.5,
-        0.3,
-        0.2,
+        0.21576087,
+        0.1257303,
+        0.0,
         0.0
       ]
     },
