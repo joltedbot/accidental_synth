@@ -1,5 +1,6 @@
 // Derived from https://www.musicdsp.org/en/latest/Filters/253-perfect-lp4-filter.html
 
+use crate::modules::oscillator::constants::DEFAULT_NOTE_FREQUENCY;
 use accsyn_core::defaults::Defaults;
 use accsyn_core::parameter_types::{FilterPoles, Hertz, NormalizedValue};
 use serde::{Deserialize, Serialize};
@@ -91,7 +92,9 @@ pub struct Filter {
     poles: u8,
     key_tracking_amount: f32,
     key_tracking_frequency_offset: f32,
+    current_note_frequency: f32,
     cutoff_modulation_amount: f32,
+    cutoff_envelope_amount: f32,
     coefficients: Coefficients,
     left_ladder_state: LadderState,
     right_ladder_state: LadderState,
@@ -126,6 +129,7 @@ impl Filter {
             poles: DEFAULT_FILTER_POLES,
             key_tracking_amount: DEFAULT_KEY_TRACKING_AMOUNT,
             key_tracking_frequency_offset: DEFAULT_KEY_TRACKING_FREQUENCY_OFFSET,
+            current_note_frequency: DEFAULT_NOTE_FREQUENCY,
             coefficients: Coefficients {
                 cutoff_coefficient,
                 gain_coefficient,
@@ -149,11 +153,13 @@ impl Filter {
         &mut self,
         left_sample: f32,
         right_sample: f32,
+        envelope: f32,
         modulation: Option<f32>,
     ) -> (f32, f32) {
         let modulation_amount = modulation.unwrap_or(0.0);
-        self.modulate_cutoff_frequency(modulation_amount);
-        self.cutoff_frequency = self.calculate_filter_cutoff_frequency();
+        self.cutoff_modulation_amount = modulation_amount;
+        self.cutoff_envelope_amount = envelope;
+        self.cutoff_frequency = self.calculate_cutoff_frequency();
 
         let left_output = self.left_ladder_filter(left_sample);
         let right_output = self.right_ladder_filter(right_sample);
@@ -161,13 +167,27 @@ impl Filter {
         (left_output, right_output)
     }
 
-    /// Applies external modulation to the filter cutoff frequency.
-    pub fn modulate_cutoff_frequency(&mut self, modulation: f32) {
-        self.cutoff_modulation_amount = modulation * self.max_frequency;
+    fn calculate_cutoff_frequency(&mut self) -> f32 {
+        let key_tracked_cutoff_frequency =
+            self.cutoff_frequency * self.key_tracking_frequency_offset;
+
+        let envelope_cutoff_frequency = if self.cutoff_envelope_amount >= 0.0 {
+            key_tracked_cutoff_frequency
+                + ((self.max_frequency - key_tracked_cutoff_frequency)
+                    * self.cutoff_envelope_amount)
+        } else {
+            key_tracked_cutoff_frequency
+                + ((key_tracked_cutoff_frequency - self.current_note_frequency)
+                    * self.cutoff_envelope_amount)
+        };
+
+        let modulated_cutoff_frequency =
+            envelope_cutoff_frequency + (envelope_cutoff_frequency * self.cutoff_modulation_amount);
+        modulated_cutoff_frequency.clamp(Defaults::MIN_FILTER_CUTOFF, self.max_frequency)
     }
 
     fn calculate_coefficients(&mut self) {
-        let cutoff_frequency = self.calculate_filter_cutoff_frequency();
+        let cutoff_frequency = self.calculate_cutoff_frequency();
         self.coefficients.cutoff_coefficient =
             calculate_cutoff_coefficient(cutoff_frequency, self.sample_rate);
         self.coefficients.gain_coefficient =
@@ -250,8 +270,11 @@ impl Filter {
         self.resonance = parameters.resonance.load();
         self.poles = parameters.filter_poles.load();
         self.key_tracking_amount = parameters.key_tracking_amount.load();
+        let current_note_number = parameters.current_note_number.load(Relaxed);
+        self.current_note_frequency =
+            Defaults::MIDI_NOTE_FREQUENCIES[current_note_number as usize].0;
         self.key_tracking_frequency_offset = get_tracking_offset_from_midi_note_number(
-            parameters.current_note_number.load(Relaxed),
+            current_note_number,
             self.key_tracking_amount,
         );
     }
@@ -278,12 +301,6 @@ impl Filter {
         input * self.coefficients.gain_coefficient
             + ladder_state.input_unit_delay * self.coefficients.gain_coefficient
             - self.coefficients.pole_coefficient * ladder_state.stage1_output
-    }
-
-    fn calculate_filter_cutoff_frequency(&mut self) -> f32 {
-        ((self.cutoff_frequency * self.key_tracking_frequency_offset)
-            + self.cutoff_modulation_amount)
-            .clamp(0.0, self.max_frequency)
     }
 }
 

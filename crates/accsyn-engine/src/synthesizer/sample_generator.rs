@@ -198,14 +198,18 @@ fn generate_audio_samples(
                 amp_envelope_value,
             );
 
-            let filter_envelope_value = modules.filter_envelope.generate();
+            let mut filter_envelope_value = modules.filter_envelope.generate();
             let filter_lfo_value = modules.filter_lfo.generate(None);
-            let filter_modulation = filter_envelope_value + filter_lfo_value;
+
+            if modules.filter_envelope.get_is_inverted() {
+                filter_envelope_value -= 1.0;
+            }
 
             let (filtered_left, filtered_right) = modules.filter.process(
                 left_envelope_sample,
                 right_envelope_sample,
-                Some(filter_modulation),
+                filter_envelope_value,
+                Some(filter_lfo_value)
             );
 
             let (mut effected_left, mut effected_right) =
