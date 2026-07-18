@@ -88,6 +88,7 @@ pub struct Filter {
     sample_rate: u32,
     max_frequency: f32,
     cutoff_frequency: f32,
+    base_cutoff_frequency: f32,
     resonance: f32,
     poles: u8,
     key_tracking_amount: f32,
@@ -124,6 +125,7 @@ impl Filter {
         Self {
             sample_rate,
             cutoff_frequency: max_frequency,
+            base_cutoff_frequency: max_frequency,
             max_frequency,
             resonance: DEFAULT_RESONANCE,
             poles: DEFAULT_FILTER_POLES,
@@ -148,17 +150,16 @@ impl Filter {
         self.calculate_coefficients();
     }
 
-    /// Processes a stereo sample pair through the ladder filter with optional modulation.
+    /// Processes a stereo sample pair through the ladder filter with envelope and modulation.
     pub fn process(
         &mut self,
         left_sample: f32,
         right_sample: f32,
-        envelope: f32,
-        modulation: Option<f32>,
+        envelope_value: f32,
+        modulation_amount: f32,
     ) -> (f32, f32) {
-        let modulation_amount = modulation.unwrap_or(0.0);
-        self.cutoff_modulation_amount = modulation_amount;
-        self.cutoff_envelope_amount = envelope;
+        self.cutoff_modulation_amount = modulation_amount.clamp(-1.0, 1.0);
+        self.cutoff_envelope_amount = envelope_value.clamp(-1.0, 1.0);
         self.cutoff_frequency = self.calculate_cutoff_frequency();
 
         let left_output = self.left_ladder_filter(left_sample);
@@ -169,20 +170,27 @@ impl Filter {
 
     fn calculate_cutoff_frequency(&mut self) -> f32 {
         let key_tracked_cutoff_frequency =
-            self.cutoff_frequency * self.key_tracking_frequency_offset;
+            self.base_cutoff_frequency * self.key_tracking_frequency_offset;
 
-        let envelope_cutoff_frequency = if self.cutoff_envelope_amount >= 0.0 {
+        let envelope_cutoff_frequency = if self.cutoff_envelope_amount > 0.0 {
             key_tracked_cutoff_frequency
                 + ((self.max_frequency - key_tracked_cutoff_frequency)
                     * self.cutoff_envelope_amount)
-        } else {
+        } else if self.cutoff_envelope_amount < 0.0 {
             key_tracked_cutoff_frequency
                 + ((key_tracked_cutoff_frequency - self.current_note_frequency)
                     * self.cutoff_envelope_amount)
+        } else {
+            key_tracked_cutoff_frequency
         };
 
         let modulated_cutoff_frequency =
             envelope_cutoff_frequency + (envelope_cutoff_frequency * self.cutoff_modulation_amount);
+
+        if !modulated_cutoff_frequency.is_finite() {
+            return self.max_frequency;
+        }
+
         modulated_cutoff_frequency.clamp(Defaults::MIN_FILTER_CUTOFF, self.max_frequency)
     }
 
@@ -266,13 +274,12 @@ impl Filter {
     }
 
     fn store_filter_parameters(&mut self, parameters: &FilterParameters) {
-        self.cutoff_frequency = parameters.cutoff_frequency.load();
+        self.base_cutoff_frequency = parameters.cutoff_frequency.load();
         self.resonance = parameters.resonance.load();
         self.poles = parameters.filter_poles.load();
         self.key_tracking_amount = parameters.key_tracking_amount.load();
         let current_note_number = parameters.current_note_number.load(Relaxed);
-        self.current_note_frequency =
-            Defaults::MIDI_NOTE_FREQUENCIES[current_note_number as usize].0;
+        self.current_note_frequency = Defaults::midi_note_frequency(current_note_number);
         self.key_tracking_frequency_offset = get_tracking_offset_from_midi_note_number(
             current_note_number,
             self.key_tracking_amount,

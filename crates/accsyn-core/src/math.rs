@@ -8,6 +8,9 @@ const CENTS_PER_OCTAVE: f32 = 1200.0;
 const MAX_MIDI_VALUE: f32 = 127.0;
 const CENTER_MIDI_VALUE: u8 = 64;
 
+/// Byte mask for converting MIDI bytes to 7-bit bytes for safe use in the rest of the application
+pub const MIDI_DATA_BYTE_7BIT_MASK: u8 = 0x7F;
+
 /// Exponential coefficient for filter cutoff frequency mapping (ln(20000)).
 pub const EXPONENTIAL_FILTER_COEFFICIENT: f32 = 9.903_487;
 // filter range 20,000hz so ln(20000) = 9.903487

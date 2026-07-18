@@ -134,9 +134,7 @@ pub fn process_midi_note_on_message(
 
     action_midi_note_events(MidiNoteEvent::NoteOn, module_parameters);
 
-    let note_name = Defaults::MIDI_NOTE_FREQUENCIES[midi_note as usize & 0x7F]
-        .1
-        .to_string();
+    let note_name = Defaults::midi_note_name(midi_note);
     send_ui_update(ui_update_sender, UIUpdates::MidiScreen(note_name));
 }
 

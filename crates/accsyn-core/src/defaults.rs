@@ -1,3 +1,5 @@
+use crate::math::MIDI_DATA_BYTE_7BIT_MASK;
+
 /// Default values and constants for all synthesizer parameters.
 pub struct Defaults {}
 
@@ -146,6 +148,20 @@ impl Defaults {
 }
 
 impl Defaults {
+    /// Get the note frequency from a midi note byte
+    #[must_use]
+    pub fn midi_note_frequency(note: u8) -> f32 {
+        Self::MIDI_NOTE_FREQUENCIES[(note & MIDI_DATA_BYTE_7BIT_MASK) as usize].0
+    }
+
+    /// Get the note name from a midi note byte
+    #[must_use]
+    pub fn midi_note_name(note: u8) -> String {
+        Self::MIDI_NOTE_FREQUENCIES[(note & MIDI_DATA_BYTE_7BIT_MASK) as usize]
+            .1
+            .to_string()
+    }
+
     /// MIDI note number to frequency (Hz) and note name lookup table.
     pub const MIDI_NOTE_FREQUENCIES: [(f32, &str); 128] = [
         (8.175, "C-1"),

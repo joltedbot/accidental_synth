@@ -46,7 +46,7 @@ use crate::modules::oscillator::constants::{
 };
 use accsyn_core::defaults::Defaults;
 use accsyn_core::math;
-use accsyn_core::math::{dbfs_to_f32_sample, f32s_are_equal};
+use accsyn_core::math::{MIDI_DATA_BYTE_7BIT_MASK, dbfs_to_f32_sample, f32s_are_equal};
 use accsyn_core::parameter_types::{
     BiPolarNormalizedValue, Cents, NormalizedValue, PitchBend, PortamentoBuffers, Semitones,
 };
@@ -572,7 +572,7 @@ fn get_wave_generator_from_wave_shape(
 }
 
 fn midi_note_to_frequency(note_number: u8) -> f32 {
-    Defaults::MIDI_NOTE_FREQUENCIES[note_number as usize].0
+    Defaults::MIDI_NOTE_FREQUENCIES[(note_number & MIDI_DATA_BYTE_7BIT_MASK) as usize].0
 }
 
 #[cfg(test)]

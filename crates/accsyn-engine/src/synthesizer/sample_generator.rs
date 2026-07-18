@@ -209,7 +209,7 @@ fn generate_audio_samples(
                 left_envelope_sample,
                 right_envelope_sample,
                 filter_envelope_value,
-                Some(filter_lfo_value)
+                filter_lfo_value,
             );
 
             let (mut effected_left, mut effected_right) =
