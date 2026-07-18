@@ -604,6 +604,46 @@ mod tests {
     }
 
     #[test]
+    fn calculate_cutoff_frequency_handles_positive_negative_and_zero_envelope() {
+        let mut filter = Filter::new(48000);
+        // Isolate the envelope branch: key tracking is 1:1 and modulation is off.
+        filter.base_cutoff_frequency = 1000.0;
+        filter.key_tracking_frequency_offset = 1.0;
+        filter.max_frequency = 5000.0;
+        filter.current_note_frequency = 200.0;
+        filter.cutoff_modulation_amount = 0.0;
+
+        // Zero envelope: cutoff stays at the key-tracked base frequency.
+        filter.cutoff_envelope_amount = 0.0;
+        let expected_zero = 1000.0;
+        let result_zero = filter.calculate_cutoff_frequency();
+        assert!(
+            f32s_are_equal(result_zero, expected_zero),
+            "Expected: {expected_zero}, got: {result_zero:?}"
+        );
+
+        // Positive envelope: runs from the base frequency up toward max_frequency.
+        // 1000 + (5000 - 1000) * 0.5 = 3000.
+        filter.cutoff_envelope_amount = 0.5;
+        let expected_positive = 3000.0;
+        let result_positive = filter.calculate_cutoff_frequency();
+        assert!(
+            f32s_are_equal(result_positive, expected_positive),
+            "Expected: {expected_positive}, got: {result_positive:?}"
+        );
+
+        // Negative envelope: runs from the base frequency down toward the current note frequency.
+        // 1000 + (1000 - 200) * -0.5 = 600.
+        filter.cutoff_envelope_amount = -0.5;
+        let expected_negative = 600.0;
+        let result_negative = filter.calculate_cutoff_frequency();
+        assert!(
+            f32s_are_equal(result_negative, expected_negative),
+            "Expected: {expected_negative}, got: {result_negative:?}"
+        );
+    }
+
+    #[test]
     fn calculate_non_linear_saturation_returns_expected_values() {
         let expected_result = 0.0;
         let result = calculate_non_linear_saturation(0.0);
