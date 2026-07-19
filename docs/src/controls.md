@@ -1,6 +1,18 @@
 # Controls
 
-The main interface has two tabs: **Synth** and **Effects**.
+There are 3 sections to the UI. The Synth and Effects Tabs and the Settings Menu.
+
+The main Synth tab contains all controls for the synth voices, the mixer, and the performance controls like Mod Wheel and Pitch Bend parameters. 
+
+
+The Effects tab contains all the effects modules and sit in the over all signal chain between everything in the Synth panel, with the exception of 
+the output mixer, and the final audio output. The effects are laid out in order of signal flow starting from the top left and proceeding effect to 
+effect. The last effect in a row then goes to the first (left most) effect in the next row down.
+
+
+The Settings Menu has is own page [here](./settings-menu.md)
+
+Most controls should reset to the defaults for the patch you selected, or the init patch if you haven't, when you double click them.
 
 ---
 
@@ -11,15 +23,15 @@ The main interface has two tabs: **Synth** and **Effects**.
 AccSyn has four oscillators: **Sub Oscillator**, **Oscillator 1**, **Oscillator 2**, and **Oscillator 3**. They are identical except that the sub 
 oscillator is pitched 1 octave below the played note. 
 
-| Control | Description                                                                                                      |
-|---------|------------------------------------------------------------------------------------------------------------------|
-| **Wave Shape** | Selects the waveform. See the [Waveforms](#waveforms) section below.                                             |
-| **Coarse Tune** | Pitch offset in semitones (−12 to +12).                                                                          |
-| **Fine Tune** | Pitch offset in cents (−63 to +63).                                                                              |
-| **Boost** | Per Osillator Clipper output boost (0–30db). Adds harmonic content and dirt before the signal reaches the mixer. |
+| Control                   | Description                                                                                                      |
+|---------------------------|------------------------------------------------------------------------------------------------------------------|
+| **Wave Shape**            | Selects the waveform. See the [Waveforms](#waveforms) section below.                                             |
+| **Coarse Tune**           | Pitch offset in semitones (−12 to +12).                                                                          |
+| **Fine Tune**             | Pitch offset in cents (−63 to +63).                                                                              |
+| **Boost**                 | Per Osillator Clipper output boost (0–30db). Adds harmonic content and dirt before the signal reaches the mixer. |
 | **Pitch Envelope Amount** | Determines maximum pitch above or below the fundamental that the envelope controls. +/- 1 octave                 |
-| **Shape Parameter 1** | Waveform dependent.See the [Waveforms](#waveforms) section below.                                                |
-| **Shape Parameter 2** | Waveform dependent. See the [Waveforms](#waveforms) section below.                                               |
+| **Shape Parameter 1**     | Waveform dependent.See the [Waveforms](#waveforms) section below.                                                |
+| **Shape Parameter 2**     | Waveform dependent. See the [Waveforms](#waveforms) section below.                                               |
 
 
 #### Waveforms
@@ -243,22 +255,23 @@ Reduces bit depth for lo-fi aliasing and quantization noise.
 
 Hard clips the signal, adding aggressive saturation at high levels.
 
-| Control                   | Description                                                                  |
-|---------------------------|------------------------------------------------------------------------------|
-| **Threshold**             | Clip threshold.                                                              |
-| **Pre-Clip Boost**        | Gain added before clipping to push more of the signal into saturation.       |
-| **Post-Clip Makeup Gain** | Output level trim after clipping.                                            |
-| **Notch**                 | Enables a notch filter at the clip frequency for a different spectral shape. |
+| Control                   | Description                                                                    |
+|---------------------------|--------------------------------------------------------------------------------|
+| **Threshold**             | Clip threshold.                                                                |
+| **Pre-Clip Boost**        | Gain added before clipping to push more of the signal into saturation.         |
+| **Post-Clip Makeup Gain** | Output level trim after clipping.                                              |
+| **Notch**                 | Clips the value to 0 rather than to the threshold for more extreme distortion. |
 
 ### 6 — Gate Clipping
 
-Silences signal below a threshold.
 
-| Control                   | Description                            |
-|---------------------------|----------------------------------------|
-| **Threshold**             | Level below which the gate closes.     |
-| **Pre-Gate Cut**          | Attenuates signal before the gate.     |
-| **Post-Gate Makeup Gain** | Amplifies signal after the gate opens. |
+
+| Control                   | Description                                                                    |
+|---------------------------|--------------------------------------------------------------------------------|
+| **Threshold**             | Level below which the gate closes.                                             |
+| **Pre-Gate Cut**          | Attenuates signal before the gate.                                             |
+| **Post-Gate Makeup Gain** | Amplifies signal after the gate opens.                                         |
+| **Notch**                 | Clips the value to 0 rather than to the threshold for more extreme distortion. |
 
 ### 7 — Wave Rectifier
 

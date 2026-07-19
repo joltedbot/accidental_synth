@@ -265,12 +265,12 @@ Effects are processed in this order:
 | 2     | Wave Folder       | fold amount (positive samples)        | asymmetric mode toggle | fold amount (negative samples, asymmetric mode only) | unused       |
 | 3     | Bit Shifter       | bit reduction (normalized 1–16)       | blend                  | unused                                               | unused       |
 | 4     | Clipper           | threshold                             | pre-clip boost         | post-clip makeup gain                                | notch toggle |
-| 5     | Gate Clipping     | threshold                             | pre-gate level cut     | post-gate makeup gain                                | unused       |
+| 5     | Gate Clipping     | threshold                             | pre-gate level cut     | post-gate makeup gain                                | notch toggle |
 | 6     | Wave Rectifier    | full wave mode toggle (0 = half wave) | blend                  | unused                                               | unused       |
 | 7     | Chorus            | Depth                                 | Rate                   | Feedback                                             | Blend        |
-| 8     | Flanger            | Depth                                 | Rate                   | Feedback                                             | Blend        |
+| 8     | Flanger           | Depth                                 | Rate                   | Feedback                                             | Blend        |
 | 9     | Auto-Pan          | rate                                  | width                  | wave shape                                           | unused       |
-| 10     | Tremolo           | rate                                  | depth                  | wave shape                                           | unused       |
+| 10    | Tremolo           | rate                                  | depth                  | wave shape                                           | unused       |
 | 11    | Delay             | amount                                | time                   | feedback                                             | unused       |
 
 All parameters use the range 0.0 to 1.0, including "unused" fields which should be set to 0.
