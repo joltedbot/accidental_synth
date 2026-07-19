@@ -1,0 +1,180 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1208" width="1400" height="1208" role="img" aria-label="Accidental Synthesizer signal flow block diagram">
+<defs><marker id="arrow-audio" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#151a20"/></marker><marker id="arrow-mod" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7c8a99"/></marker><marker id="arrow-midi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2f6fb0"/></marker></defs>
+<rect x="0" y="0" width="1400" height="1208" fill="#ffffff"/>
+<rect x="190" y="44" width="380" height="62" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.6"/>
+<text x="380" y="74.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">VIRTUAL MIDI PORT</text>
+<text x="380" y="88.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#5b6672" text-anchor="middle">"AccSyn MIDI Input" — always available</text>
+<path d="M 380 106 L 380 132" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round"/>
+<rect x="610" y="44" width="380" height="62" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.6"/>
+<text x="800" y="74.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">MIDI INPUT DEVICE</text>
+<text x="800" y="88.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#5b6672" text-anchor="middle">Selectable · Channel Filter</text>
+<path d="M 800 106 L 800 132" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M 380 132 L 800 132" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round"/>
+<circle cx="380" cy="132" r="3.2" fill="#2f6fb0"/>
+<circle cx="800" cy="132" r="3.2" fill="#2f6fb0"/>
+<text x="590" y="150" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#5b6672" text-anchor="middle">Note · Velocity · Pitch Bend · Mod Wheel · Aftertouch · CC · Program Change · Clock</text>
+<path d="M 380 132 L 40 132 L 40 592" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round"/>
+<circle cx="40" cy="178" r="3.2" fill="#2f6fb0"/>
+<circle cx="40" cy="304" r="3.2" fill="#2f6fb0"/>
+<circle cx="40" cy="496" r="3.2" fill="#2f6fb0"/>
+<path d="M 40 178 L 1020 178" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="271.5" y="170" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#2f6fb0" text-anchor="start">PITCH  ·  Tune · Portamento · Pitch Bend · Key Sync</text>
+<circle cx="277.5" cy="178" r="3.2" fill="#2f6fb0"/>
+<path d="M 277.5 178 L 277.5 206" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<rect x="190" y="206" width="175" height="112" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="277.5" y="242" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">SUB OSC</text>
+<text x="277.5" y="256.5" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">One Octave Below</text>
+<text x="277.5" y="271" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Wave Shape + Shape Params</text>
+<line x1="200" y1="290" x2="355" y2="290" stroke="#ffffff" stroke-width="1" opacity="0.28"/>
+<text x="277.5" y="308" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">BOOST + AFTERTOUCH</text>
+<circle cx="474.5" cy="178" r="3.2" fill="#2f6fb0"/>
+<path d="M 474.5 178 L 474.5 206" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<rect x="387" y="206" width="175" height="112" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="474.5" y="242" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">OSC 1</text>
+<text x="474.5" y="256.5" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Sync Source</text>
+<text x="474.5" y="271" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Wave Shape + Shape Params</text>
+<line x1="397" y1="290" x2="552" y2="290" stroke="#ffffff" stroke-width="1" opacity="0.28"/>
+<text x="474.5" y="308" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">BOOST + AFTERTOUCH</text>
+<circle cx="705.5" cy="178" r="3.2" fill="#2f6fb0"/>
+<path d="M 705.5 178 L 705.5 206" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<rect x="618" y="206" width="175" height="112" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="705.5" y="242" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">OSC 2</text>
+<text x="705.5" y="256.5" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Sync Target</text>
+<text x="705.5" y="271" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Wave Shape + Shape Params</text>
+<line x1="628" y1="290" x2="783" y2="290" stroke="#ffffff" stroke-width="1" opacity="0.28"/>
+<text x="705.5" y="308" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">BOOST + AFTERTOUCH</text>
+<circle cx="902.5" cy="178" r="3.2" fill="#2f6fb0"/>
+<path d="M 902.5 178 L 902.5 206" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<rect x="815" y="206" width="175" height="112" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="902.5" y="242" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">OSC 3</text>
+<text x="902.5" y="256.5" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Independent</text>
+<text x="902.5" y="271" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Wave Shape + Shape Params</text>
+<line x1="825" y1="290" x2="980" y2="290" stroke="#ffffff" stroke-width="1" opacity="0.28"/>
+<text x="902.5" y="308" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.3">BOOST + AFTERTOUCH</text>
+<path d="M 562 262 L 618 262" fill="none" stroke="#151a20" stroke-width="1.4" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<text x="590" y="253" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#151a20" text-anchor="middle">SYNC</text>
+<path d="M 40 304 L 190 304" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<text x="115" y="296" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#2f6fb0" text-anchor="middle">AFTERTOUCH</text>
+<path d="M 365 304 L 387 304" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<path d="M 562 304 L 618 304" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<path d="M 793 304 L 815 304" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<path d="M 277.5 318 L 277.5 360" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 474.5 318 L 474.5 360" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 705.5 318 L 705.5 360" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 902.5 318 L 902.5 360" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<rect x="190" y="360" width="800" height="64" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="590" y="393.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">OSCILLATOR MIXER</text>
+<text x="590" y="407.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Level · Balance · Mute per Oscillator</text>
+<path d="M 590 424 L 590 464" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<rect x="190" y="464" width="800" height="64" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="590" y="497.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">AMPLIFIER</text>
+<text x="590" y="511.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Velocity × Amp Envelope</text>
+<path d="M 590 528 L 590 556" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<rect x="190" y="556" width="800" height="72" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="590" y="586" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">FILTER</text>
+<text x="590" y="600.5" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Resonant Ladder Lowpass · 1–4 Poles</text>
+<text x="590" y="615" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Cutoff · Resonance · Key Tracking</text>
+<path d="M 40 496 L 190 496" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<text x="115" y="488" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#2f6fb0" text-anchor="middle">VELOCITY</text>
+<path d="M 40 592 L 190 592" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<text x="115" y="584" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#2f6fb0" text-anchor="middle">NOTE / KEY TRACK</text>
+<rect x="190" y="656" width="800" height="298" rx="6" fill="#eef1f4" stroke="#b6c0ca" stroke-width="1.2"/>
+<text x="208" y="678" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#151a20" text-anchor="start">EFFECTS  —  processed in order, each bypassable</text>
+<path d="M 590 628 L 590 656" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 346 717 L 366 717" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 502 717 L 522 717" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 658 717 L 678 717" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 814 717 L 834 717" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 346 813 L 366 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 502 813 L 522 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 658 813 L 678 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 814 813 L 834 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 346 909 L 366 909" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 970 717 L 984 717 L 984 765 L 199 765 L 199 813 L 210 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 970 813 L 984 813 L 984 861 L 199 861 L 199 909 L 210 909" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<rect x="210" y="690" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="218" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">1</text>
+<text x="278" y="722.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Saturation</text>
+<rect x="366" y="690" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="374" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">2</text>
+<text x="434" y="722.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Colour Compressor</text>
+<rect x="522" y="690" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="530" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">3</text>
+<text x="590" y="722.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Wave Folder</text>
+<rect x="678" y="690" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="686" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">4</text>
+<text x="746" y="722.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Bit Shifter</text>
+<rect x="834" y="690" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="842" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">5</text>
+<text x="902" y="722.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Clipper</text>
+<rect x="210" y="786" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="218" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">6</text>
+<text x="278" y="818.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Gate Clipping</text>
+<rect x="366" y="786" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="374" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">7</text>
+<text x="434" y="818.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Wave Rectifier</text>
+<rect x="522" y="786" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="530" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">8</text>
+<text x="590" y="818.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Chorus</text>
+<rect x="678" y="786" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="686" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">9</text>
+<text x="746" y="818.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Flanger</text>
+<rect x="834" y="786" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="842" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">10</text>
+<text x="902" y="818.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Auto-Pan</text>
+<rect x="210" y="882" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="218" y="896" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">11</text>
+<text x="278" y="914.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Tremolo</text>
+<rect x="366" y="882" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="374" y="896" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">12</text>
+<text x="434" y="914.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Delay</text>
+<path d="M 434 954 L 434 977 L 590 977 L 590 1000" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<rect x="190" y="1000" width="800" height="64" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="590" y="1033.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">OUTPUT MIXER</text>
+<text x="590" y="1047.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Master Level · Balance · Mute · Polarity</text>
+<path d="M 470 1064 L 470 1092" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<text x="478" y="1082" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#5b6672" text-anchor="start">LEFT</text>
+<path d="M 710 1064 L 710 1092" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<text x="718" y="1082" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#5b6672" text-anchor="start">RIGHT</text>
+<rect x="190" y="1092" width="800" height="72" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.6"/>
+<text x="590" y="1127.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">AUDIO OUTPUT DEVICE</text>
+<text x="590" y="1141.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#5b6672" text-anchor="middle">Core Audio · Selected Device</text>
+<rect x="1040" y="206" width="230" height="56" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="1155" y="232.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">PITCH ENVELOPE</text>
+<text x="1155" y="247.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Per-Oscillator Amount</text>
+<path d="M 1300 234 L 1270 234" fill="none" stroke="#2f6fb0" stroke-width="1.4" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<text x="1304" y="227" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="normal" fill="#2f6fb0" text-anchor="start">GATE</text>
+<path d="M 1040 234 L 1020 234 L 1020 178" fill="none" stroke="#7c8a99" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="5 4" marker-end="url(#arrow-mod)"/>
+<rect x="1040" y="278" width="230" height="56" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="1155" y="304.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">MOD WHEEL LFO</text>
+<text x="1155" y="319.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Vibrato — CC 1</text>
+<path d="M 1300 306 L 1270 306" fill="none" stroke="#2f6fb0" stroke-width="1.4" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<text x="1304" y="299" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="normal" fill="#2f6fb0" text-anchor="start">CLOCK</text>
+<path d="M 1040 306 L 1010 306 L 1010 178" fill="none" stroke="#7c8a99" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="5 4" marker-end="url(#arrow-mod)"/>
+<rect x="1040" y="464" width="230" height="56" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="1155" y="490.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">AMP ENVELOPE</text>
+<text x="1155" y="505.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Attack Decay Sustain Release</text>
+<path d="M 1300 492 L 1270 492" fill="none" stroke="#2f6fb0" stroke-width="1.4" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<text x="1304" y="485" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="normal" fill="#2f6fb0" text-anchor="start">GATE</text>
+<path d="M 1040 492 L 990 496" fill="none" stroke="#7c8a99" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="5 4" marker-end="url(#arrow-mod)"/>
+<rect x="1040" y="540" width="230" height="56" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="1155" y="566.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">FILTER ENVELOPE</text>
+<text x="1155" y="581.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Invertible</text>
+<path d="M 1300 568 L 1270 568" fill="none" stroke="#2f6fb0" stroke-width="1.4" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<text x="1304" y="561" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="normal" fill="#2f6fb0" text-anchor="start">GATE</text>
+<path d="M 1040 568 L 990 578" fill="none" stroke="#7c8a99" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="5 4" marker-end="url(#arrow-mod)"/>
+<rect x="1040" y="612" width="230" height="56" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="1155" y="638.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">FILTER LFO</text>
+<text x="1155" y="653.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Clock Syncable</text>
+<path d="M 1300 640 L 1270 640" fill="none" stroke="#2f6fb0" stroke-width="1.4" stroke-linejoin="round" marker-end="url(#arrow-midi)"/>
+<text x="1304" y="633" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="normal" fill="#2f6fb0" text-anchor="start">CLOCK</text>
+<path d="M 1040 640 L 1000 640 L 1000 606 L 990 606" fill="none" stroke="#7c8a99" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="5 4" marker-end="url(#arrow-mod)"/>
+<rect x="1040" y="716" width="230" height="106" rx="6" fill="#ffffff" stroke="#b6c0ca" stroke-width="1.2"/>
+<text x="1056" y="740" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#151a20" text-anchor="start" letter-spacing="0.6">SIGNAL KEY</text>
+<path d="M 1056 762 L 1096 762" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="1106" y="766" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#151a20" text-anchor="start">Audio</text>
+<path d="M 1056 782 L 1096 782" fill="none" stroke="#7c8a99" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<text x="1106" y="786" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#151a20" text-anchor="start">Modulation</text>
+<path d="M 1056 802 L 1096 802" fill="none" stroke="#2f6fb0" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="1106" y="806" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#151a20" text-anchor="start">MIDI / Note Control</text>
+</svg>
