@@ -42,7 +42,7 @@
   },
   "lfos": [
     {
-      "frequency": 10.0,
+      "frequency": 2.0,
       "synced_frequency": 0.5,
       "sync_triggered": false,
       "thirty_second_notes": 32,

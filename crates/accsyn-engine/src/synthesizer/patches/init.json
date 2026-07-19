@@ -170,7 +170,7 @@
   "lfos": [
     {
       "center_value": 1,
-      "frequency": 10,
+      "frequency": 2,
       "synced_frequency": 0.5,
       "sync_triggered": false,
       "thirty_second_notes": 32,
