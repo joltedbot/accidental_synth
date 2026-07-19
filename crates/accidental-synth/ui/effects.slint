@@ -370,6 +370,7 @@ export component Gate inherits EffectBox {
         threshold.enabled = self.is_enabled;
         pregain.enabled = self.is_enabled;
         postgain.enabled = self.is_enabled;
+        notch.enabled = self.is_enabled;
     }
 
     HorizontalSpacer { }
@@ -401,6 +402,19 @@ export component Gate inherits EffectBox {
         label: Theme.gate-parameter3;
         horizontal-parameter-slider-changed(amount) => {
             effect_parameter_changed(parent.effect-index, 2, amount);
+        }
+    }
+
+    notch := ToggleSwitch {
+        enabled: false;
+        label: Theme.clipper-parameter4;
+        checked: effect_values.parameters[3] > 0.0;
+        toggle_switch_updated(enabled) => {
+            if (enabled) {
+                effect_parameter_changed(parent.effect-index, 3, 1.0);
+            } else {
+                effect_parameter_changed(parent.effect-index, 3, 0.0);
+            }
         }
     }
 }
