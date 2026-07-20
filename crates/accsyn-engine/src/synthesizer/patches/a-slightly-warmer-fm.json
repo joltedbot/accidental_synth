@@ -7,7 +7,7 @@
     "current_note_number": 50
   },
   "mixer": {
-    "level": 1.0002447,
+    "level": 1.0,
     "balance": 0.0,
     "is_muted": false,
     "quad_mixer_inputs": [

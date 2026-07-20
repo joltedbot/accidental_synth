@@ -12,7 +12,7 @@
     "is_muted": false,
     "quad_mixer_inputs": [
       {
-        "level": 1.0002447,
+        "level": 1.0,
         "balance": 0.0,
         "mute": false
       },
@@ -108,7 +108,7 @@
       "course_tune": 0,
       "pitch_bend": 0,
       "shape_parameter1": 0.15,
-      "shape_parameter2": 1.0,
+      "shape_parameter2": 0.7,
       "wave_shape_index": 6,
       "gate_flag": false,
       "key_sync_enabled": false,
@@ -123,7 +123,7 @@
       "course_tune": 0,
       "pitch_bend": 0,
       "shape_parameter1": 0.15,
-      "shape_parameter2": 1.0,
+      "shape_parameter2": 0.7,
       "wave_shape_index": 6,
       "gate_flag": false,
       "key_sync_enabled": false,
@@ -138,7 +138,7 @@
       "course_tune": -5,
       "pitch_bend": 0,
       "shape_parameter1": 0.15,
-      "shape_parameter2": 1.0,
+      "shape_parameter2": 0.7,
       "wave_shape_index": 6,
       "gate_flag": false,
       "key_sync_enabled": false,
@@ -153,7 +153,7 @@
       "course_tune": 7,
       "pitch_bend": 0,
       "shape_parameter1": 0.15,
-      "shape_parameter2": 1.0,
+      "shape_parameter2": 0.7,
       "wave_shape_index": 6,
       "gate_flag": false,
       "key_sync_enabled": false,
@@ -177,7 +177,7 @@
     },
     {
       "name": "Colour Compressor",
-      "is_enabled": true,
+      "is_enabled": false,
       "parameters": [
         0.2102072,
         0.23296535,
