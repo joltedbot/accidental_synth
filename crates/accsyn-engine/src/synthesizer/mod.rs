@@ -78,7 +78,8 @@ impl Default for CurrentNote {
 }
 
 /// Parameters controlled by the MIDI keyboard input.
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct KeyboardParameters {
     mod_wheel_amount: NormalizedValue,
     aftertouch_amount: NormalizedValue,
@@ -105,8 +106,21 @@ impl KeyboardParameters {
     }
 }
 
+impl Default for KeyboardParameters {
+    fn default() -> Self {
+        Self {
+            mod_wheel_amount: NormalizedValue::default(),
+            aftertouch_amount: NormalizedValue::default(),
+            velocity_curve: NormalizedValue::new(Defaults::VELOCITY_CURVE_NORMAL_VALUE),
+            polarity_flipped: AtomicBool::new(false),
+            pitch_bend_range: AtomicU8::new(Defaults::PITCH_BEND_RANGE),
+        }
+    }
+}
+
 /// Level, balance, and mute state for a single oscillator in the quad mixer.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct QuadMixerInput {
     /// Output level for this mixer input.
     pub level: NormalizedValue,
@@ -137,6 +151,7 @@ impl Default for QuadMixerInput {
 
 /// Parameters for the output mixer including per-oscillator sub-mixer inputs.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct MixerParameters {
     /// Master output level.
     pub level: NormalizedValue,
@@ -181,20 +196,28 @@ impl Default for MixerParameters {
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct ModuleParameters {
     /// Filter module parameters.
+    #[serde(default)]
     pub filter: FilterParameters,
     /// Output mixer parameters including per-oscillator levels.
+    #[serde(default)]
     pub mixer: MixerParameters,
+    #[serde(default)]
     /// Keyboard-related parameters such as velocity curve and pitch bend range.
     pub keyboard: KeyboardParameters,
     /// Parameters for the two LFOs (mod wheel and filter).
+    #[serde(default)]
     pub lfos: [LfoParameters; 2],
     /// Parameters for the three envelopes (amplitude, pitch, and filter).
+    #[serde(default)]
     pub envelopes: [EnvelopeParameters; 3],
     /// Parameters for each of the four oscillators.
+    #[serde(default)]
     pub oscillators: [OscillatorParameters; OscillatorIndex::COUNT],
     /// Parameters for the audio effects chain.
+    #[serde(default)]
     pub effects: Vec<AudioEffectParameters>,
-    /// Parameters for clock and clock syncronization
+    /// Parameters for clock and clock synchronization
+    #[serde(default)]
     pub clock: ClockParameters,
 }
 

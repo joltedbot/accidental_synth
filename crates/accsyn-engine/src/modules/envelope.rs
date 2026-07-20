@@ -37,6 +37,7 @@ pub const MAX_RELEASE_MILLISECONDS: u32 = 10000;
 
 /// Shared atomic parameters for controlling an ADSR envelope from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct EnvelopeParameters {
     /// Attack time in milliseconds.
     pub attack_ms: Milliseconds,

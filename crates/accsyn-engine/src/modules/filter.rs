@@ -19,10 +19,12 @@ pub const DEFAULT_KEY_TRACKING_AMOUNT: f32 = 0.5;
 /// Default frequency offset multiplier from key tracking.
 pub const DEFAULT_KEY_TRACKING_FREQUENCY_OFFSET: f32 = 1.0;
 const DEFAULT_FILTER_POLES: u8 = 4;
+const DEFAULT_FILTER_FREQUENCY: f32 = 16_800.0;
 const MAX_FILTER_PERCENT_OF_NYQUIST: f32 = 0.35;
 
 /// Shared atomic parameters for controlling the filter from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct FilterParameters {
     /// Filter cutoff frequency in Hz.
     pub cutoff_frequency: Hertz,
@@ -51,7 +53,7 @@ impl FilterParameters {
 impl Default for FilterParameters {
     fn default() -> Self {
         Self {
-            cutoff_frequency: Hertz::default(),
+            cutoff_frequency: Hertz::new(DEFAULT_FILTER_FREQUENCY),
             resonance: NormalizedValue::default(),
             filter_poles: FilterPoles::new(DEFAULT_FILTER_POLES),
             key_tracking_amount: NormalizedValue::new(DEFAULT_KEY_TRACKING_AMOUNT),

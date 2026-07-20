@@ -27,6 +27,7 @@ mod wavefolder;
 
 /// Shared atomic parameters for controlling a single audio effect from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct AudioEffectParameters {
     /// Effect name
     pub name: String,

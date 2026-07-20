@@ -2,6 +2,46 @@
 
 This project has switched from Semantic Versioning to Calendar Versioning.
 
+## Unreleased
+
+### Added
+- New Chorus effect (stereo chorus, or a crude Leslie-cabinet simulation at 100% wet blend), plus a Chorus Organ preset
+- New Flanger effect
+- New mdBook-based user manual, replacing the scattered markdown docs, including a block diagram of the signal flow
+- Post-crush, pre-blend gain-cut slider for the BitCrusher effect
+- Integration tests covering adversarial and malformed patch files (out-of-range values, divide-by-zero, NaN, and infinity)
+- `cargo-deny` configuration for dependency license/advisory auditing
+- `#[serde(default)]` applied to `ModuleParameters` and every nested patch parameter struct, so a field added in a future update no longer breaks loading of previously saved user patches
+
+### Fixed
+- Security: `assign_from` now clamps deserialized envelope attack/decay/release values to their valid range, same as the UI-driven path, preventing malformed patches from loading out-of-range values
+- Security: fixed a divide-by-zero when portamento time was set to 0 buffers
+- Keyboard pitch bend range no longer falls back to an invalid value (0, outside the 2-12 semitone range) when missing from a patch; now defaults to 12 semitones, matching the Init patch
+- Filter cutoff frequency no longer silently falls back to 0 Hz (a fully closed, silent filter) when missing from a patch; now defaults to 16800 Hz, matching the Init patch
+- WaveShape indexing bug that prevented MIDI CC from properly addressing all wave shapes
+- Autopan and Tremolo effects were stuck on the sine wave shape due to a normalized-value bug, including a related off-by-one indexing error and incorrect float-to-combobox-index denormalization
+- Oscillator and effect index mismatches in factory patches introduced by the PM oscillator and Autopan/Tremolo wave shape changes
+- Inverse envelope mode no longer runs away toward infinity instead of stopping at 1.0 when returning to the ground state
+- Filter response to the inverse envelope now correctly runs from the base frequency up to the filter cutoff
+- LFOs could not be set to a 0 range/amount
+- Gate Clipper effect now behaves as an actual clipper and shares its controls with the Clipper effect
+- Supersaw level and default voice blend were too subdued
+- Various MIDI byte-handling issues
+- Delay effect UI spacing issue
+- Settings window was cutting off patch text fields
+- The example "Saw Lead" patch was broken due to a missing clock parameter
+- Inaccuracies in the patch format reference documentation
+- Inconsistent naming and UI defaults for the PM oscillator
+
+### Changed
+- Default output mixer level raised from 0.5 to 0.8 to match the Init patch
+- Renamed the Bit Shifter effect to BitCrusher (its correct name)
+- Updated the default Mod Wheel LFO rate from 10 Hz to 2 Hz in the factory presets
+- Updated and improved several factory presets, including renaming one for clarity and revising the Init patch's envelope settings
+- Changed how the build number is generated so it's derived from the date rather than a git commit count/env var
+- Updated dependencies, including unpinning Slint from 0.16.1 to 0.17.1 now that the combobox popup clipping regression is resolved
+- Removed an "understand anything" tool output directory that had been accidentally checked into the repo
+
 ## 2026.07.04.1
 
 ### Added

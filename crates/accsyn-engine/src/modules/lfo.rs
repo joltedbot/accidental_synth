@@ -10,6 +10,7 @@ use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU16};
 
 /// Shared atomic parameters for controlling an LFO from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct LfoParameters {
     /// LFO oscillation frequency in Hz.
     pub frequency: Hertz,

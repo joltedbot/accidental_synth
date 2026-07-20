@@ -141,7 +141,7 @@ impl Hertz {
     #[inline]
     fn sanitize(value: f32) -> f32 {
         if value.is_finite() {
-            value.clamp(Defaults::MIN_FILTER_CUTOFF, Defaults::MAX_FILTER_CUTOFF)
+            value.clamp(Defaults::MIN_HERTZ_VALUE, Defaults::MAX_HERTZ_VALUE)
         } else {
             0.0
         }

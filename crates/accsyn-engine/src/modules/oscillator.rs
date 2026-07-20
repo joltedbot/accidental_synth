@@ -118,6 +118,7 @@ pub enum HardSyncRole {
 
 /// Shared atomic parameters for controlling an oscillator from the UI thread.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct OscillatorParameters {
     /// Fine tuning offset in cents.
     pub fine_tune: Cents,

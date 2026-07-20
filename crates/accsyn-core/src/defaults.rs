@@ -26,7 +26,7 @@ impl Defaults {
 
     // Mixer Defaults
     /// Default output mixer level (0.0–1.0).
-    pub const OUTPUT_MIXER_LEVEL: f32 = 0.5;
+    pub const OUTPUT_MIXER_LEVEL: f32 = 0.8;
     /// Default output mixer stereo balance (-1.0 left to 1.0 right).
     pub const OUTPUT_MIXER_BALANCE: f32 = 0.0;
     /// Default output mixer mute state.
@@ -145,6 +145,10 @@ impl Defaults {
     pub const APPROXIMATE_RMS_TWO_SAMPLES: f32 = 0.707;
     /// The level correction factor when adding 3 samples. 0.577
     pub const APPROXIMATE_RMS_THREE_SAMPLES: f32 = 0.577;
+    /// Minimum value for the Hertz type
+    pub const MIN_HERTZ_VALUE: f32 = 0.0;
+    /// Maximum value for the Hertz type.
+    pub const MAX_HERTZ_VALUE: f32 = 20_000.0;
 }
 
 impl Defaults {
