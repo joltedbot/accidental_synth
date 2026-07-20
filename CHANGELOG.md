@@ -12,6 +12,7 @@ This project has switched from Semantic Versioning to Calendar Versioning.
 - Integration tests covering adversarial and malformed patch files (out-of-range values, divide-by-zero, NaN, and infinity)
 - `cargo-deny` configuration for dependency license/advisory auditing
 - `#[serde(default)]` applied to `ModuleParameters` and every nested patch parameter struct, so a field added in a future update no longer breaks loading of previously saved user patches
+- New preset `Hard Bass Pulse`
 
 ### Fixed
 - Security: `assign_from` now clamps deserialized envelope attack/decay/release values to their valid range, same as the UI-driven path, preventing malformed patches from loading out-of-range values
@@ -32,6 +33,7 @@ This project has switched from Semantic Versioning to Calendar Versioning.
 - The example "Saw Lead" patch was broken due to a missing clock parameter
 - Inaccuracies in the patch format reference documentation
 - Inconsistent naming and UI defaults for the PM oscillator
+- All the presets that had mixer levels incorrectly set to 1.0002447 are no set to the max value 1.0
 
 ### Changed
 - Default output mixer level raised from 0.5 to 0.8 to match the Init patch
