@@ -75,6 +75,7 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
         "Guys I Thing I Broke It*",
         include_str!("patches/guys-I-think-I-Broke-It.json"),
     ),
+    ("Hard Bass Pulse*", include_str!("patches/hard-bass-pulse.json")),
     ("House Hits*", include_str!("patches/house-hits.json")),
     ("Kick (Long)*", include_str!("patches/kick-long.json")),
     ("Kick (Short)*", include_str!("patches/kick-short.json")),
