@@ -76,7 +76,7 @@ impl Defaults {
     /// Default compressor effect parameters: [threshold, ratio, unused, unused].
     pub const COMPRESSOR_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
     /// Default bitcrusher effect parameters: [Full/Half Wave, blend, unused, unused].
-    pub const BITSHIFTER_PARAMETERS: [f32; 4] = [0.0, 1.0, 1.0, 0.0];
+    pub const BITCRUSHER_PARAMETERS: [f32; 4] = [0.0, 1.0, 1.0, 0.0];
     /// Default rectifier effect parameters: [Full/Half Wave, blend, unused, unused].
     pub const RECTIFIER_PARAMETERS: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
     /// Default clipper effect parameters: [threshold, unused, unused, unused].

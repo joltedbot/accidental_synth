@@ -39,7 +39,7 @@ Current:
 - Audio effects: saturation, compressor, wave folder, clipper, gate, rectifier, chorus, flanger, bit crusher, delay, auto pan, and tremolo 
 - Preset & user patch system: save, load, and delete user patches; factory patches loaded in the app
 - MIDI input: Note On/Off, Velocity, Pitch Bend, Control Change, Channel Pressure, Sustain Pedal, Program Change, MIDI Clock (tempo sync with header BPM display) (see implementation chart in the 
-  Wiki)
+  [manual](https://accidental-synth-d0d73b.gitlab.io/midi-implementation.html))
 - Virtual MIDI input device for DAW integration; omni mode or per-channel filtering
 - Hot-swappable MIDI and audio devices
 - Native macOS UI
@@ -74,7 +74,7 @@ cargo build --release
 - AccSyn also presents itself as a MIDI input device in CoreMIDI so you can use it directly from a DAW or other tools.
 - It is basically fully controllable with midi CC
 - It defaults to omni-channel mode but you can change that in the settings panel
-- Supported messages: Note On/Off, Velocity, Pitch Bend, Control Change (see the [MIDI Implementation Chart](https://gitlab.com/joltedbot-public/accidental-synth/-/wikis/home)).
+- Supported messages: Note On/Off, Velocity, Pitch Bend, Control Change (see the [MIDI Implementation Chart](https://accidental-synth-d0d73b.gitlab.io/midi-implementation.html)).
 
 ### Audio
 - By default, the first CoreAudio output device is selected at startup. You can select other devices in the settings panel.
@@ -104,4 +104,4 @@ Licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file 
 ## Links
 - Repository: https://gitlab.com/joltedbot-public/accidental-synth
 - Issues: https://gitlab.com/joltedbot-public/accidental-synth/-/issues
-- Wiki & MIDI Implementation Chart: https://gitlab.com/joltedbot-public/accidental-synth/-/wikis/home
+- User Manual & MIDI Implementation Chart: https://accidental-synth-d0d73b.gitlab.io/

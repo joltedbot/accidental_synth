@@ -263,7 +263,7 @@ Effects are processed in this order:
 | 0     | Saturation        | type                                  | drive amount           | post-saturation gain cut                             | unused       |
 | 1     | Colour Compressor | threshold                             | ratio                  | makeup gain                                          | blend        |
 | 2     | Wave Folder       | fold amount (positive samples)        | asymmetric mode toggle | fold amount (negative samples, asymmetric mode only) | unused       |
-| 3     | Bit Shifter       | bit reduction (normalized 1–16)       | blend                  | unused                                               | unused       |
+| 3     | Bit Crusher       | bit reduction (normalized 1–16)       | blend                  | unused                                               | unused       |
 | 4     | Clipper           | threshold                             | pre-clip boost         | post-clip makeup gain                                | notch toggle |
 | 5     | Gate Clipping     | threshold                             | pre-gate level cut     | post-gate makeup gain                                | notch toggle |
 | 6     | Wave Rectifier    | full wave mode toggle (0 = half wave) | blend                  | unused                                               | unused       |

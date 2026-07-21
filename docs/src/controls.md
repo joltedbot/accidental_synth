@@ -242,7 +242,7 @@ Folds the waveform back on itself, adding upper harmonics.
 | **Asymmetrical**         | When enabled, positive and negative samples are folded independently. |
 | **Negative Fold Amount** | Folding depth for negative samples (active in Asymmetrical mode).     |
 
-### 4 — Bit Shifter
+### 4 — Bit Crusher
 
 Reduces bit depth for lo-fi aliasing and quantization noise.
 
