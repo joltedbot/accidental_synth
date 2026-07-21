@@ -30,7 +30,7 @@ This project has switched from Semantic Versioning to Calendar Versioning.
 - Various MIDI byte-handling issues
 - Delay effect UI spacing issue
 - Settings window was cutting off patch text fields
-- The example "Saw Lead" patch was broken due to a missing clock parameter
+- The example "Saw Lead" patch in the manual was broken due to a missing clock parameter
 - Inaccuracies in the patch format reference documentation
 - Inconsistent naming and UI defaults for the PM oscillator
 - All the presets that had mixer levels incorrectly set to 1.0002447 are no set to the max value 1.0
@@ -39,7 +39,7 @@ This project has switched from Semantic Versioning to Calendar Versioning.
 - Default output mixer level raised from 0.5 to 0.8 to match the Init patch
 - Renamed the Bit Shifter effect to BitCrusher (its correct name)
 - Updated the default Mod Wheel LFO rate from 10 Hz to 2 Hz in the factory presets
-- Updated and improved several factory presets, including renaming one for clarity and revising the Init patch's envelope settings
+- Updated and improved several factory presets and revising the Init patch's envelope settings
 - Changed how the build number is generated so it's derived from the date rather than a git commit count/env var
 - Updated dependencies, including unpinning Slint from 0.16.1 to 0.17.1 now that the combobox popup clipping regression is resolved
 - Removed an "understand anything" tool output directory that had been accidentally checked into the repo
