@@ -2,7 +2,7 @@
 
 This project has switched from Semantic Versioning to Calendar Versioning.
 
-## 2026.07.20
+## 2026.07.20.553
 
 ### Added
 - New Chorus effect (stereo chorus, or a crude Leslie-cabinet simulation at 100% wet blend), plus a Chorus Organ preset
