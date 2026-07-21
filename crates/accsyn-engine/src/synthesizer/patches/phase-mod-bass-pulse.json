@@ -4,7 +4,7 @@
     "resonance": 0.2941779,
     "filter_poles": 4,
     "key_tracking_amount": 0.5,
-    "current_note_number": 55
+    "current_note_number": 41
   },
   "mixer": {
     "level": 1.0,
@@ -45,7 +45,7 @@
       "frequency": 0.17958143,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 384,
+      "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 1.0,
@@ -56,16 +56,16 @@
       "gate_flag": false
     },
     {
-      "frequency": 1395.8231,
-      "synced_frequency": 3.201406,
-      "sync_triggered": false,
-      "thirty_second_notes": 256,
+      "frequency": 4238.9136,
+      "synced_frequency": 5.6351256,
+      "sync_triggered": true,
+      "thirty_second_notes": 4,
       "clock_synced": true,
       "key_synced": true,
       "center_value": 0.0,
-      "range": 0.049729567,
+      "range": 0.14879808,
       "phase": 0.0,
-      "wave_shape": 0,
+      "wave_shape": 2,
       "reset": false,
       "gate_flag": false
     }
@@ -108,8 +108,8 @@
       "course_tune": 0,
       "pitch_bend": 0,
       "shape_parameter1": 0.25003397,
-      "shape_parameter2": 1.0,
-      "wave_shape_index": 0.0,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 9,
       "gate_flag": false,
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
@@ -123,8 +123,8 @@
       "course_tune": 0,
       "pitch_bend": 0,
       "shape_parameter1": 0.3572011,
-      "shape_parameter2": 1.0,
-      "wave_shape_index": 0.0,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 9,
       "gate_flag": false,
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
@@ -138,8 +138,8 @@
       "course_tune": 0,
       "pitch_bend": 0,
       "shape_parameter1": 0.5,
-      "shape_parameter2": 1.0,
-      "wave_shape_index": 0.0,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 9,
       "gate_flag": false,
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
@@ -153,8 +153,8 @@
       "course_tune": 0,
       "pitch_bend": 0,
       "shape_parameter1": 0.7496773,
-      "shape_parameter2": 1.0,
-      "wave_shape_index": 0.0,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 9,
       "gate_flag": false,
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
@@ -287,6 +287,6 @@
     }
   ],
   "clock": {
-    "bpm": 1
+    "bpm": 169
   }
 }

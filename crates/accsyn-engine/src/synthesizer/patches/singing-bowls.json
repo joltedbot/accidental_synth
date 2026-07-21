@@ -1,13 +1,13 @@
 {
   "filter": {
-    "cutoff_frequency": 588.7534,
+    "cutoff_frequency": 251.14934,
     "resonance": 0.44650036,
-    "filter_poles": 4,
+    "filter_poles": 2,
     "key_tracking_amount": 0.5,
-    "current_note_number": 83
+    "current_note_number": 79
   },
   "mixer": {
-    "level": 0.14421873,
+    "level": 1.0,
     "balance": 0.0,
     "is_muted": false,
     "quad_mixer_inputs": [
@@ -42,12 +42,12 @@
   },
   "lfos": [
     {
-      "frequency": 0.0504568,
+      "frequency": 0.03621854,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 512,
+      "thirty_second_notes": 762,
       "clock_synced": false,
-      "key_synced": false,
+      "key_synced": true,
       "center_value": 1.0,
       "range": 2.0,
       "phase": 0.0,
@@ -56,14 +56,14 @@
       "gate_flag": false
     },
     {
-      "frequency": 0.1,
+      "frequency": 1.0158238,
       "synced_frequency": 0.5,
-      "sync_triggered": false,
-      "thirty_second_notes": 256,
+      "sync_triggered": true,
+      "thirty_second_notes": 224,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 0.0,
-      "range": 0.01,
+      "range": 0.24014424,
       "phase": 0.0,
       "wave_shape": 0,
       "reset": false,
@@ -72,7 +72,7 @@
   ],
   "envelopes": [
     {
-      "attack_ms": 529,
+      "attack_ms": 724,
       "decay_ms": 1043,
       "release_ms": 1706,
       "sustain_level": 0.5193142,
@@ -83,9 +83,9 @@
     },
     {
       "attack_ms": 10,
-      "decay_ms": 10,
-      "release_ms": 200,
-      "sustain_level": 0.78806424,
+      "decay_ms": 134,
+      "release_ms": 0,
+      "sustain_level": 0.0,
       "amount": 0.0,
       "sustain_pedal": false,
       "is_inverted": false,
@@ -114,7 +114,7 @@
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": true,
-      "portamento_time": 8,
+      "portamento_time": 18,
       "clipper_boost": 0,
       "pitch_envelope_amount": 0.0
     },
@@ -123,13 +123,13 @@
       "course_tune": 0,
       "pitch_bend": 0,
       "shape_parameter1": 0.4453711,
-      "shape_parameter2": 0.0,
+      "shape_parameter2": 0.83316916,
       "wave_shape_index": 7,
       "gate_flag": false,
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": true,
-      "portamento_time": 8,
+      "portamento_time": 18,
       "clipper_boost": 0,
       "pitch_envelope_amount": 0.0
     },
@@ -138,13 +138,13 @@
       "course_tune": 0,
       "pitch_bend": 0,
       "shape_parameter1": 0.43476564,
-      "shape_parameter2": 0.0,
+      "shape_parameter2": 0.8450917,
       "wave_shape_index": 7,
       "gate_flag": false,
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": true,
-      "portamento_time": 8,
+      "portamento_time": 18,
       "clipper_boost": 0,
       "pitch_envelope_amount": 0.0
     },
@@ -153,13 +153,13 @@
       "course_tune": 0,
       "pitch_bend": 0,
       "shape_parameter1": 0.42503905,
-      "shape_parameter2": 0.0,
+      "shape_parameter2": 1.0,
       "wave_shape_index": 7,
       "gate_flag": false,
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": true,
-      "portamento_time": 8,
+      "portamento_time": 18,
       "clipper_boost": 0,
       "pitch_envelope_amount": 0.0
     }
@@ -170,8 +170,8 @@
       "is_enabled": true,
       "parameters": [
         1.0,
-        0.8144701,
-        0.606199,
+        0.65565556,
+        0.5267663,
         0.0
       ]
     },
@@ -230,7 +230,7 @@
       "is_enabled": false,
       "parameters": [
         0.0,
-        1.0,
+        0.0,
         0.0,
         0.0
       ]
@@ -247,12 +247,12 @@
     },
     {
       "name": "Flanger",
-      "is_enabled": false,
+      "is_enabled": true,
       "parameters": [
-        0.5,
-        0.06338433,
-        0.5,
-        0.5
+        0.5005265,
+        0.21632133,
+        1.0,
+        0.46659306
       ]
     },
     {
@@ -267,11 +267,11 @@
     },
     {
       "name": "Tremolo",
-      "is_enabled": true,
+      "is_enabled": false,
       "parameters": [
-        0.16559103,
-        0.40399116,
-        0.09090909,
+        0.21601562,
+        0.2903023,
+        0.0,
         0.0
       ]
     },
@@ -287,6 +287,6 @@
     }
   ],
   "clock": {
-    "bpm": 1
+    "bpm": 169
   }
 }

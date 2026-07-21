@@ -4,7 +4,7 @@
     "resonance": 0.17490233,
     "filter_poles": 4,
     "key_tracking_amount": 0.5,
-    "current_note_number": 55
+    "current_note_number": 53
   },
   "mixer": {
     "level": 1.0,
@@ -45,7 +45,7 @@
       "frequency": 2.0,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 160,
+      "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 1.0,
@@ -59,7 +59,7 @@
       "frequency": 0.1,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 224,
+      "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 0.0,
@@ -167,11 +167,11 @@
   "effects": [
     {
       "name": "Saturation",
-      "is_enabled": true,
+      "is_enabled": false,
       "parameters": [
-        0.0,
-        0.34481996,
-        0.35866168,
+        1.0,
+        0.6561481,
+        0.43980977,
         0.0
       ]
     },

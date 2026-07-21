@@ -4,7 +4,7 @@
     "resonance": 0.0,
     "filter_poles": 3,
     "key_tracking_amount": 0.53759015,
-    "current_note_number": 58
+    "current_note_number": 79
   },
   "mixer": {
     "level": 0.36449552,
@@ -42,31 +42,31 @@
   },
   "lfos": [
     {
-      "center_value": 1.0,
       "frequency": 2.0,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 32,
+      "thirty_second_notes": 762,
       "clock_synced": false,
       "key_synced": false,
-      "phase": 0.0,
+      "center_value": 1.0,
       "range": 2.0,
-      "reset": false,
+      "phase": 0.0,
       "wave_shape": 0,
+      "reset": false,
       "gate_flag": false
     },
     {
-      "center_value": 0.0,
       "frequency": 0.01728603,
       "synced_frequency": 0.5,
-      "sync_triggered": false,
-      "thirty_second_notes": 32,
+      "sync_triggered": true,
+      "thirty_second_notes": 224,
       "clock_synced": false,
       "key_synced": false,
-      "phase": 0.0,
+      "center_value": 0.0,
       "range": 0.0,
-      "reset": false,
+      "phase": 0.0,
       "wave_shape": 0,
+      "reset": false,
       "gate_flag": false
     }
   ],
@@ -82,9 +82,9 @@
       "gate_flag": 0
     },
     {
-      "attack_ms": 0,
+      "attack_ms": 1,
       "decay_ms": 2332,
-      "release_ms": 0,
+      "release_ms": 10,
       "sustain_level": 0.0,
       "amount": 0.0,
       "sustain_pedal": false,
@@ -92,9 +92,9 @@
       "gate_flag": 0
     },
     {
-      "attack_ms": 0,
+      "attack_ms": 1,
       "decay_ms": 411,
-      "release_ms": 0,
+      "release_ms": 10,
       "sustain_level": 0.0,
       "amount": 1.0,
       "sustain_pedal": false,
@@ -179,10 +179,10 @@
       "name": "Colour Compressor",
       "is_enabled": true,
       "parameters": [
-        0.21944633,
-        0.19811481,
+        0.15986753,
+        0.22314878,
         0.29712975,
-        1.0
+        0.7254416
       ]
     },
     {
@@ -190,7 +190,7 @@
       "is_enabled": false,
       "parameters": [
         0.0,
-        -1.0,
+        0.0,
         0.0,
         0.0
       ]
@@ -261,7 +261,7 @@
       "parameters": [
         0.06722147,
         0.6727242,
-        0.63636363,
+        0.6363636,
         0.0
       ]
     },
@@ -271,7 +271,7 @@
       "parameters": [
         0.3855299,
         0.31129417,
-        0.72727272,
+        0.72727275,
         0.0
       ]
     },
@@ -287,6 +287,6 @@
     }
   ],
   "clock": {
-    "bpm": 1
+    "bpm": 169
   }
 }

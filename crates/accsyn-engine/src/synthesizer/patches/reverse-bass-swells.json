@@ -1,10 +1,10 @@
 {
   "filter": {
-    "cutoff_frequency": 0.0,
+    "cutoff_frequency": 3625.9595,
     "resonance": 0.36463425,
     "filter_poles": 4,
     "key_tracking_amount": 0.5,
-    "current_note_number": 40
+    "current_note_number": 47
   },
   "mixer": {
     "level": 0.8,
@@ -42,38 +42,38 @@
   },
   "lfos": [
     {
-      "center_value": 1.0,
       "frequency": 2.0,
       "synced_frequency": 0.5,
       "sync_triggered": false,
       "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
-      "phase": 0.0,
+      "center_value": 1.0,
       "range": 2.0,
-      "reset": false,
+      "phase": 0.0,
       "wave_shape": 0,
+      "reset": false,
       "gate_flag": false
     },
     {
-      "center_value": 0.0,
       "frequency": 0.1,
       "synced_frequency": 0.5,
-      "sync_triggered": false,
-      "thirty_second_notes": 32,
+      "sync_triggered": true,
+      "thirty_second_notes": 4,
       "clock_synced": false,
       "key_synced": false,
-      "phase": 0.0,
+      "center_value": 0.0,
       "range": 0.0,
-      "reset": false,
+      "phase": 0.0,
       "wave_shape": 0,
+      "reset": false,
       "gate_flag": false
     }
   ],
   "envelopes": [
     {
-      "attack_ms": 0,
-      "decay_ms": 0,
+      "attack_ms": 1,
+      "decay_ms": 10,
       "release_ms": 2258,
       "sustain_level": 1.0,
       "amount": 1.0,
@@ -82,19 +82,19 @@
       "gate_flag": 0
     },
     {
-      "attack_ms": 1054,
+      "attack_ms": 700,
       "decay_ms": 1162,
       "release_ms": 1893,
       "sustain_level": 0.23745659,
-      "amount": 0.23461539,
+      "amount": 0.43638822,
       "sustain_pedal": false,
       "is_inverted": true,
       "gate_flag": 0
     },
     {
-      "attack_ms": 0,
+      "attack_ms": 1,
       "decay_ms": 327,
-      "release_ms": 0,
+      "release_ms": 10,
       "sustain_level": 0.0,
       "amount": 1.0,
       "sustain_pedal": false,
@@ -287,6 +287,6 @@
     }
   ],
   "clock": {
-    "bpm": 1
+    "bpm": 169
   }
 }

@@ -1,10 +1,10 @@
 {
   "filter": {
-    "cutoff_frequency": 312.1755,
+    "cutoff_frequency": 2334.524,
     "resonance": 0.17228161,
     "filter_poles": 2,
     "key_tracking_amount": 0.5,
-    "current_note_number": 92
+    "current_note_number": 65
   },
   "mixer": {
     "level": 0.8,
@@ -45,7 +45,7 @@
       "frequency": 0.021219924,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 762,
+      "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 1.0,
@@ -59,7 +59,7 @@
       "frequency": 4.645951,
       "synced_frequency": 0.5,
       "sync_triggered": false,
-      "thirty_second_notes": 160,
+      "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 0.0,
@@ -241,8 +241,8 @@
       "parameters": [
         1.0,
         0.06700068,
-        1.0,
-        0.44867527
+        0.76105636,
+        0.5210428
       ]
     },
     {
@@ -257,9 +257,9 @@
     },
     {
       "name": "Auto-Pan",
-      "is_enabled": true,
+      "is_enabled": false,
       "parameters": [
-        0.31233016,
+        0.18738112,
         0.46195653,
         0.0,
         0.0
