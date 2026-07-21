@@ -2,12 +2,12 @@
 
 This project has switched from Semantic Versioning to Calendar Versioning.
 
-## Unreleased
+## 2026.07.20
 
 ### Added
 - New Chorus effect (stereo chorus, or a crude Leslie-cabinet simulation at 100% wet blend), plus a Chorus Organ preset
 - New Flanger effect
-- New mdBook-based user manual, replacing the scattered markdown docs, including a block diagram of the signal flow
+- New mdBook-based user manual, replacing the scattered markdown docs, including a block diagram of the signal flow, now auto-published to GitLab Pages on every push to `main`
 - Post-crush, pre-blend gain-cut slider for the BitCrusher effect
 - Integration tests covering adversarial and malformed patch files (out-of-range values, divide-by-zero, NaN, and infinity)
 - `cargo-deny` configuration for dependency license/advisory auditing
@@ -43,6 +43,7 @@ This project has switched from Semantic Versioning to Calendar Versioning.
 - Changed how the build number is generated so it's derived from the date rather than a git commit count/env var
 - Updated dependencies, including unpinning Slint from 0.16.1 to 0.17.1 now that the combobox popup clipping regression is resolved
 - Removed an "understand anything" tool output directory that had been accidentally checked into the repo
+- Renamed the "Ambient Drone" preset to "Noisecore Drone" to better reflect the sound
 
 ## 2026.07.04.1
 
