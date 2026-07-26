@@ -10,7 +10,7 @@ the output mixer, and the final audio output. The effects are laid out in order 
 effect. The last effect in a row then goes to the first (left most) effect in the next row down.
 
 
-The Settings Menu has is own page [here](./settings-menu.md)
+The Settings Menu has its own page [here](./settings-menu.md)
 
 Most controls should reset to the defaults for the patch you selected, or the init patch if you haven't, when you double click them.
 
@@ -23,16 +23,17 @@ Most controls should reset to the defaults for the patch you selected, or the in
 AccSyn has four oscillators: **Sub Oscillator**, **Oscillator 1**, **Oscillator 2**, and **Oscillator 3**. They are identical except that the sub 
 oscillator is pitched 1 octave below the played note. 
 
-| Control                   | Description                                                                                                      |
-|---------------------------|------------------------------------------------------------------------------------------------------------------|
-| **Wave Shape**            | Selects the waveform. See the [Waveforms](#waveforms) section below.                                             |
-| **Coarse Tune**           | Pitch offset in semitones (−12 to +12).                                                                          |
-| **Fine Tune**             | Pitch offset in cents (−63 to +63).                                                                              |
-| **Boost**                 | Per Osillator Clipper output boost (0–30db). Adds harmonic content and dirt before the signal reaches the mixer. |
-| **Pitch Envelope Amount** | Determines maximum pitch above or below the fundamental that the envelope controls. +/- 1 octave                 |
-| **Shape Parameter 1**     | Waveform dependent.See the [Waveforms](#waveforms) section below.                                                |
-| **Shape Parameter 2**     | Waveform dependent. See the [Waveforms](#waveforms) section below.                                               |
+| Control                   | Description                                                                                                     |
+|---------------------------|-----------------------------------------------------------------------------------------------------------------|
+| **Wave Shape**            | Selects the waveform. See the [Waveforms](#waveforms) section below.                                            |
+| **Coarse Tune**           | Pitch offset in semitones (−12 to +12).                                                                         |
+| **Fine Tune**             | Pitch offset in cents (−63 to +63).                                                                             |
+| **Boost**                 | Per Osillator Clipper input boost (0–30db). Adds harmonic content and dirt before the signal reaches the mixer. |
+| **Pitch Envelope Amount** | Determines maximum pitch above or below the fundamental that the envelope controls. +/- 1 octave                |
+| **Shape Parameter 1**     | Waveform dependent.See the [Waveforms](#waveforms) section below.                                               |
+| **Shape Parameter 2**     | Waveform dependent. See the [Waveforms](#waveforms) section below.                                              |
 
+The Oscillator boost is integral to the Oscillator and is totally separate from the Effects section Clipper.
 
 #### Waveforms
 
@@ -74,12 +75,16 @@ brighter.
 
 #### Filter Envelope
 
-An ADSR envelope dedicated to filter cutoff modulation. An ADSR envelope to modulate the cutoff of the filter over time with the played note. The 
-inverted mode flips the envelope so that the filter starts at maximum cutoff frequency (full brightness) and then the envelope lowers the cutoff and 
-brings it back to full based on how you set it.
+An ADSR envelope dedicated to filter cutoff modulation. An ADSR envelope to modulate the cutoff of the filter over time with the played note. 
+
+In normal mode, the envelope modulation starts at the cutoff value you set and then goes up to the maximum and back down. Setting just decay with 
+give you the standard filter envelope high to low effect on each note.
+
+The inverted mode flips the envelope so that the filter starts at the cut off value that you set and goes down to the note fundamental frequency 
+and back up. Setting just the decay gives you the standard filter envelope low to high effect on each note.
 
 Due to the interaction of the filter envelope sustain and the need for there to be somewhere for the cutoff to go I suggest starting with the 
-cutoff either all the way off, or maybe in the center and tune by ear from there. 
+cutoff in the center and tune by ear from there. 
 
 | Control      | Description                   |
 |--------------|-------------------------------|
@@ -93,7 +98,7 @@ cutoff either all the way off, or maybe in the center and tune by ear from there
 
 A dedicated LFO for filter cutoff modulation
 
-The LFO modulates the cutoff around (above and below) the current frequency set by cutoff slider. It also follows the cut off value produced by the 
+The LFO modulates the cutoff around (above and below) the current frequency set by cutoff slider. It also follows the cutoff value produced by the 
 Filter Envelope value so using both can produce some interesting effects. 
 
 | Control        | Description                                                                    |
@@ -213,7 +218,7 @@ All effects are applied in series after the synthesizer signal chain. Each has a
 
 ### 1 — Saturation
 
-Adds harmonic distortion.
+Adds harmonic distortion. 
 
 | Control                      | Description                                                    |
 |------------------------------|----------------------------------------------------------------|
@@ -221,20 +226,38 @@ Adds harmonic distortion.
 | **Amount**                   | Drive amount.                                                  |
 | **Post Saturation Gain Cut** | Level trim after saturation to compensate for volume increase. |
 
+
+Saturation Types:
+
+| Type           | Description                                                                              |
+|----------------|------------------------------------------------------------------------------------------|
+| Analog Modeled | Emulates saturation from analog devices                                                  |
+| Tube Like      | Emulates saturation from tubes                                                           |
+| Soft Clipping  | Provides a softer saturation that the hard clippers in the oscillator or Clipper effects |
+| Wave Shaping   | Adjust the odd harmonics giving the wave a rounder but steeper shape                     |
+| Sine Shapper   | Rounds out the wave form to make it more sine like                                       |
+| Polynomial     | Chebyshev Polynomial Wave Shaping                                                        | 
+
+
+
 ### 2 — Colour Compressor
 
-Dynamics compression with a colored character.
+A really basic compressor with instant linear attack and release. More an effect to add colour and harmonics more than for subtle transient control.
 
 | Control         | Description                                          |
 |-----------------|------------------------------------------------------|
 | **Threshold**   | Level above which compression is applied.            |
 | **Ratio**       | Compression ratio.                                   |
-| **Makeup Gain** | Output gain to compensate for gain reduction.        |
+| **Makeup Gain** | Add back level lost due to compression               |
 | **Blend**       | Wet/Dry signal blend (Left: 0% Wet, Right: 100% Wet) |
 
 ### 3 — Wave Folder
 
-Folds the waveform back on itself, adding upper harmonics.
+Folds the waveform back on itself, adding upper harmonics. Think of it like a clipper but instead of holding the level at the threshold, values 
+above the threshold are mirrored back down below it.
+
+Normal mode applies the threshold to both positive and negative sample values. Asymmetrical mode allows you to fold the positive and negative 
+samples by different amounts. 
 
 | Control                  | Description                                                           |
 |--------------------------|-----------------------------------------------------------------------|
@@ -244,38 +267,40 @@ Folds the waveform back on itself, adding upper harmonics.
 
 ### 4 — Bit Crusher
 
-Reduces bit depth for lo-fi aliasing and quantization noise.
+Reduces the bit depth of the signal for lo-fi aliasing and quantization noise.
 
 | Control           | Description                                          |
 |-------------------|------------------------------------------------------|
-| **Bit Reduction** | Amount of bit depth reduction. Higher = more lo-fi.  |
+| **Bit Reduction** | Amount of bit depth reduction. Higher = less bit.    |
 | **Blend**         | Wet/Dry signal blend (Left: 0% Wet, Right: 100% Wet) | 
 
 ### 5 — Clipper
 
-Hard clips the signal, adding aggressive saturation at high levels.
+Applies basic hard clipping to the signal, think fuzz pedal. The normal mode clips signal above the threshold level down to the threshold.  Notch 
+mode sets signal above the threshold level to 0 creating a much more aggressive distortion.
 
 | Control                   | Description                                                                    |
 |---------------------------|--------------------------------------------------------------------------------|
 | **Threshold**             | Clip threshold.                                                                |
-| **Pre-Clip Boost**        | Gain added before clipping to push more of the signal into saturation.         |
-| **Post-Clip Makeup Gain** | Output level trim after clipping.                                              |
+| **Pre-Clip Boost**        | Gain added before clipping to push more of the signal into threshold.          |
+| **Post-Clip Makeup Gain** | Add back level lost due to clipping.                                           |
 | **Notch**                 | Clips the value to 0 rather than to the threshold for more extreme distortion. |
 
 ### 6 — Gate Clipping
 
-
+This is an inverted `Clipper`. It Hard clips the signal below a minimum threshold level rather than above. The normal mode clips signal below the threshold level up to the threshold, mirroring the `Clipper` functionality.  Notch mode sets signal below the threshold level to 0 creating a much more aggressive distortion.
 
 | Control                   | Description                                                                    |
 |---------------------------|--------------------------------------------------------------------------------|
 | **Threshold**             | Level below which the gate closes.                                             |
-| **Pre-Gate Cut**          | Attenuates signal before the gate.                                             |
-| **Post-Gate Makeup Gain** | Amplifies signal after the gate opens.                                         |
+| **Pre-Gate Cut**          | Attenuates signal before the gate to increase the amount of clipping.          |
+| **Post-Gate Makeup Gain** | Add back level lost due to clipping.                                           |
 | **Notch**                 | Clips the value to 0 rather than to the threshold for more extreme distortion. |
 
 ### 7 — Wave Rectifier
 
-Flips or removes negative samples, changing the waveform symmetry and adding harmonics.
+Flips or removes negative samples, changing the waveform symmetry and adding harmonics. 
+Full Wave effectively doubles the frequency of the signal. The effect varies depending on the harmonics already in the signal. For more complex signals it creates a sort of octave fuzz type sound. It also produces different results when stacked with other effects.
 
 | Control                   | Description                                                           |
 |---------------------------|-----------------------------------------------------------------------|
@@ -284,25 +309,25 @@ Flips or removes negative samples, changing the waveform symmetry and adding har
 
 ### 8 — Chorus
 
-2 voice chorus effect
+3 voice chorus effect
 
-| Control                   | Description                                                           |
-|---------------------------|-----------------------------------------------------------------------|
-| **Depth** | The depth of the chorusing effect  |
-| **Rate** | Speed of the modulation |
+| Control      | Description                                                  |
+|--------------|--------------------------------------------------------------|
+| **Depth**    | The depth of the chorusing effect                            |
+| **Rate**     | Speed of the modulation                                      |
 | **Feedback** | How much of the wet signal is fed back into the delay buffer |
-| **Blend** | Wet/Dry signal blend (Left: 0% Wet, Right: 100% Wet) |
+| **Blend**    | Wet/Dry signal blend (Left: 0% Wet, Right: 100% Wet)         |
 
 ### 9 — Flanger
 
 Flanger effect
 
-| Control                   | Description                                                           |
-|---------------------------|-----------------------------------------------------------------------|
-| **Depth** | The depth of the flanger effect  |
-| **Rate** | Speed of the modulation |
+| Control      | Description                                                  |
+|--------------|--------------------------------------------------------------|
+| **Depth**    | The depth of the flanger effect                              |
+| **Rate**     | Speed of the modulation                                      |
 | **Feedback** | How much of the wet signal is fed back into the delay buffer |
-| **Blend** | Wet/Dry signal blend (Left: 0% Wet, Right: 100% Wet) |
+| **Blend**    | Wet/Dry signal blend (Left: 0% Wet, Right: 100% Wet)         |
 
 ### 10 — Auto Pan
 
@@ -316,7 +341,7 @@ Automatically pans the signal between left and right.
 
 ### 11 — Tremolo
 
-Modulates the output amplitude.
+Modulates the output level (amplitude)
 
 | Control        | Description                                 |
 |----------------|---------------------------------------------|
@@ -326,10 +351,10 @@ Modulates the output amplitude.
 
 ### 12 — Delay
 
-A simple stereo delay.
+A simple stereo delay
 
-| Control      | Description                                     |
-|--------------|-------------------------------------------------|
-| **Amount**   | Wet delay level.                                |
-| **Time**     | Delay time.                                     |
-| **Feedback** | Amount of delay output fed back into the input. |
+| Control      | Description                                    |
+|--------------|------------------------------------------------|
+| **Amount**   | Wet delay level                                |
+| **Time**     | Delay time                                     |
+| **Feedback** | Amount of delay output fed back into the input |

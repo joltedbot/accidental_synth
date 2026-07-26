@@ -2,9 +2,11 @@
 
 ## Requirements
 
-AccSyn is a macOS application. A MIDI keyboard or controller is recommended but not required — you can trigger notes via MIDI from a DAW or other software.
+AccSyn is a macOS application. A MIDI keyboard or controller is recommended but not required. You can trigger notes via MIDI from a DAW or other software.
 
-You can download the release binaries for Apple Silicon Mac's. They are unsigned so you will have to do the dance with Apple security setting to get it running. 
+You can download the release binaries for Apple Silicon Mac's from the Gitlab repo [releases page](https://gitlabcom/joltedbot-public/accidental-synth/-/releases) 
+
+They are unsigned so you will have to do [the dance](apple-gatekeeper.md) with Apple security setting to get it running. 
 
 To build AccSyn yourself you will need to setup a rust development chain as per: [Rustup](https://rustup.rs/) or [Rust's Getting started Page](https://rust-lang.org/learn/get-started/)
 
@@ -18,6 +20,11 @@ cargo build --release
 ```
 
 The compiled binary is at `target/release/accidental-synth`. You can run it directly or copy it somewhere in your shell path.
+
+## Apple Gatekeeper Workaround
+If you get warnings or errors when trying to start the application or macOS just wont load it, then you are likely running into Apple Gatekeeper trying to prevent you from using free and open source software.
+
+It is annoying but there is however an [Apple Gatekeeper Workaround](./apple-gatekeeper.md)
 
 ## First Launch
 

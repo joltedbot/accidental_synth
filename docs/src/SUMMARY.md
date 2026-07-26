@@ -7,3 +7,4 @@
 - [Settings Menu](./settings-menu.md)
 - [MIDI Implementation](midi-implementation.md)
 - [Patch Format](./patch-format.md)
+- [Apple Gatekeeper Workaround](./apple-gatekeeper.md)
