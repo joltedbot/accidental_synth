@@ -1,5 +1,6 @@
 use accsyn_core::casting::f32_to_u32_clamped;
 use accsyn_core::effects::{AudioEffect, EffectParameters};
+use strum::EnumCount as saturationCount;
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
 const WAVE_SHAPER_MAX_AMOUNT: f32 = 0.99;
@@ -16,8 +17,7 @@ impl Saturation {
 
 impl AudioEffect for Saturation {
     fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
-        let mode_index = effect.parameters[0];
-        let mode = SaturationMode::from_f32(mode_index);
+        let mode = SaturationMode::from_normal_value(effect.parameters[0]);
         let mut amount = effect.parameters[1];
         let gain_reduction = effect.parameters[2];
 
@@ -82,8 +82,12 @@ pub enum SaturationMode {
 }
 
 impl SaturationMode {
-    pub fn from_f32(index: f32) -> Self {
-        Self::from_repr(f32_to_u32_clamped(index.trunc())).unwrap_or_default()
+    pub fn from_normal_value(normal_value: f32) -> Self {
+        // The number of saturation modes is a very small list created by hand and not dynamic.
+        // It fits well within an f32
+        #[allow(clippy::cast_precision_loss)]
+        let index = normal_value * (Self::COUNT - 1) as f32;
+        Self::from_repr(f32_to_u32_clamped(index)).unwrap_or_default()
     }
 }
 
@@ -311,18 +315,11 @@ mod tests {
     }
 
     #[test]
-    fn saturation_mode_from_f32_returns_default_for_invalid_index() {
-        let mode = SaturationMode::from_f32(100.0); // Invalid index
+    fn saturation_mode_from_normal_value_returns_default_for_invalid_index() {
+        let mode = SaturationMode::from_normal_value(100.0); // Invalid index
 
         // Should return default (AnalogModeled)
         assert!(matches!(mode, SaturationMode::AnalogModeled));
-    }
-
-    #[test]
-    fn saturation_mode_from_f32_truncates_decimal() {
-        let mode = SaturationMode::from_f32(2.9); // Should truncate to 2
-
-        assert!(matches!(mode, SaturationMode::SoftClipping));
     }
 
     #[test]

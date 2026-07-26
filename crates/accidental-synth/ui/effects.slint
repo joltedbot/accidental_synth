@@ -89,10 +89,10 @@ export component Saturation inherits EffectBox {
             label: Theme.saturation-parameter1;
             value-list: Constant.SATURATION_MODES;
             dropdown-width: Theme.effect-dropdown-width;
-            value-index: effect_values.parameters[0];
             enabled: false;
+            value-index: round(effect_values.parameters[0] * (Constant.SATURATION_MODES.length - 1));
             drop_down_changed(index, name) => {
-                effect_parameter_changed(root.effect-index, 0, index);
+                effect_parameter_changed(root.effect-index, 0, index / (Constant.SATURATION_MODES.length - 1));
             }
         }
 
