@@ -2,6 +2,19 @@
 
 This project has switched from Semantic Versioning to Calendar Versioning.
 
+## 2026.07.26.562
+
+### Added
+- New preset `Electric Metallic Lead`
+
+### Fixed
+- Regression in Saturation's mode selector: the drop-down index wasn't converted to/from a normalized 0.0-1.0 value the way Autopan and Tremolo's now are, so it stopped selecting the correct saturation mode; factory patches updated to match
+- Updated and additions to the manual (oscillator boost, filter envelope modes, effects descriptions, Chorus voice count, Apple Gatekeeper)
+
+### Changed
+- Updated the README screenshots to represent the current UI state
+- Updated dependencies
+
 ## 2026.07.20.553
 
 ### Added
