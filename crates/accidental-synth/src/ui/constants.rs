@@ -8,3 +8,7 @@ pub const MIDI_CHANNEL_LIST: [&str; 17] = [
 
 pub const MAX_PHASE_VALUE: f32 = 360.0;
 pub const MIDI_SCREEN_TOTAL_SLOTS: usize = 4;
+pub const MANUAL_URL: &str = "https://accidental-synth-d0d73b.gitlab.io/";
+pub const GIT_REPO_URL: &str = "https://gitlab.com/joltedbot-public/accidental-synth";
+pub const MIDI_IMPLEMENTATION_CHART_URL: &str =
+    "https://accidental-synth-d0d73b.gitlab.io/midi-implementation.html";

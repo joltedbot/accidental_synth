@@ -1,6 +1,7 @@
 mod effects;
 mod filter;
 mod global;
+mod menubar;
 mod modulation;
 mod oscillators;
 mod settings;
@@ -12,6 +13,7 @@ use accsyn_core::ui_events::UIUpdates;
 use accsyn_midi::MidiDeviceUpdateEvents;
 use crossbeam_channel::Sender;
 use slint::Weak;
+use std::path::PathBuf;
 
 pub fn register_callbacks(
     ui_weak: &Weak<AccidentalSynth>,
@@ -19,7 +21,12 @@ pub fn register_callbacks(
     audio_output_device_sender: &Sender<AudioDeviceUpdateEvents>,
     synthesizer_update_sender: &Sender<SynthesizerUpdateEvents>,
     ui_update_sender: &Sender<UIUpdates>,
+    user_patch_directory: PathBuf,
 ) {
+    menubar::callback_open_manual(ui_weak);
+    menubar::callback_open_git_repo(ui_weak);
+    menubar::callback_open_midi_chart(ui_weak);
+    menubar::callback_open_patch_folder(ui_weak, user_patch_directory);
     settings::callback_midi_input_channel_changed(ui_weak, midi_update_sender.clone());
     settings::callback_midi_input_port_changed(ui_weak, midi_update_sender);
     settings::callback_audio_output_device_changed(ui_weak, audio_output_device_sender.clone());

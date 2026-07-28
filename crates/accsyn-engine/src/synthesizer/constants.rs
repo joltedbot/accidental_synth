@@ -66,7 +66,10 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
         include_str!("patches/dirty-bass-echo.json"),
     ),
     ("Drifting Pad*", include_str!("patches/drifting-pad.json")),
-    ("Electric Metallic Lead*", include_str!("patches/electric-metallic-lead.json")),
+    (
+        "Electric Metallic Lead*",
+        include_str!("patches/electric-metallic-lead.json"),
+    ),
     (
         "Electric Piano*",
         include_str!("patches/electric-piano.json"),

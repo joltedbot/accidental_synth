@@ -16,6 +16,7 @@ import { Mixer } from "global-panel.slint";
 import { EffectsPanel } from "effects-panel.slint";
 import { EffectsValues } from "effects.slint";
 
+
 export component AccidentalSynth inherits Window {
     title: Theme.window-title;
     icon: Theme.icon;
@@ -127,13 +128,55 @@ export component AccidentalSynth inherits Window {
     callback effect_parameter_changed(int, int, float);
     in property <[EffectsValues]> effects_values;
 
+    // Menubar
+    callback open_manual();
+    callback open_git_repo();
+    callback open_midi_chart();
+    callback open_patch_folder();
+
+    MenuBar {
+        Menu {
+            title: Theme.menu-title;
+            icon: Theme.icon;
+            MenuItem {
+                title: Theme.menu-manual;
+                activated => {
+                    open_manual();
+                }
+            }
+
+            MenuItem {
+                title: Theme.menu-midi;
+                activated => {
+                    open_midi_chart();
+                }
+            }
+
+            MenuItem {
+                title: Theme.menu-patch;
+                activated => {
+                    open_patch_folder();
+                }
+            }
+
+            MenuItem {
+                title: Theme.menu-git;
+                activated => {
+                    open_git_repo();
+                }
+            }
+        }
+    }
+
     top-level := Rectangle {
         background: Theme.window-background;
         border-width: Theme.window-border-width;
         border-color: Theme.window-border-colour;
         border-bottom-left-radius: Theme.window-border-radius;
         border-bottom-right-radius: Theme.window-border-radius;
-        height: parent.height;
+        height: Theme.window-height;
+        y: 0px;
+        x: 0px;
 
         VerticalLayout {
             padding: 0px;

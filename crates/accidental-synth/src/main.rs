@@ -86,6 +86,5 @@ fn main() {
     application
         .run()
         .expect("Could not create the user interface.");
-
     log::info!(target: "main", "Exiting Accidental Synthesizer");
 }

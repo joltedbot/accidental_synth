@@ -16,7 +16,7 @@ import { Palette } from "std-widgets.slint";
 export global Theme {
 
     // Main Window
-    out property <string> window-title: "Accidental Synthesizer";
+    out property <string> window-title: @tr("Accidental Synthesizer");
     in property <image> icon: @image-url("images/icon.png");
     in property <image> settings-image: @image-url("images/gear.png");
     out property <length> window-width: 1440px;
@@ -25,6 +25,13 @@ export global Theme {
     out property <color> window-background: Palette.background;
     out property <color> window-border-colour: Palette.border;
     out property <length> window-border-radius: 15px;
+
+    // Menu Bar
+    out property <string> menu-title: @tr("Help");
+    out property <string> menu-manual: @tr("User Manual");
+    out property <string> menu-midi: @tr("Midi Implementation Chart");
+    out property <string> menu-patch: @tr("User Patch Folder");
+    out property <string> menu-git:  @tr("Git Repo");
 
     // Text Defaults
     out property <length> default-text-size: 14px;

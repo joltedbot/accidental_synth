@@ -100,15 +100,18 @@ impl UI {
         patches: Arc<Mutex<Patches>>,
     ) -> Result<()> {
         let ui_update_receiver = self.ui_update_receiver.clone();
+        let unlocked_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
+        let user_patch_directory = unlocked_patches.user_patch_directory();
+
         register_callbacks(
             &ui_weak.clone(),
             midi_update_sender,
             audio_output_device_sender,
             synthesizer_update_sender,
             &self.ui_update_sender.clone(),
+            user_patch_directory,
         );
 
-        let unlocked_patches = patches.lock().unwrap_or_else(PoisonError::into_inner);
         let patch_list = unlocked_patches.patch_list();
         let user_patch_list = unlocked_patches.user_patch_names();
         drop(unlocked_patches);

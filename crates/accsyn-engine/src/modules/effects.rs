@@ -364,7 +364,7 @@ mod tests {
         let samples = (0.1234, -0.9876);
         let rectified_samples = (1.0, -1.0);
         let blend_amount = 0.75;
-        let expected_values = (0.971103, -1.301818);
+        let expected_values = (0.971_103, -1.301_818);
 
         let result = wet_dry_blend(samples, rectified_samples, blend_amount);
 

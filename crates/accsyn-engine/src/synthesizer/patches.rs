@@ -215,6 +215,12 @@ impl Patches {
         self.patches.delete_user_patch(patch_name)?;
         Ok(())
     }
+
+    /// Returns the path to the directory where the user patches are stored for the current suer
+    #[must_use]
+    pub fn user_patch_directory(&self) -> PathBuf {
+        self.paths.user_patches.clone()
+    }
 }
 
 /// Returns the embedded factory/system patches as `(name, content)` pairs, independent of any
