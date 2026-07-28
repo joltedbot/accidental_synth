@@ -20,6 +20,7 @@ env_logger = { workspace = true }
 log = { workspace = true }
 slint = { workspace = true }
 strum = { workspace = true }
+open = { workspace = true }
 
 [build-dependencies]
 slint-build = { workspace = true }
