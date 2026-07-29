@@ -26,6 +26,8 @@ impl Sine {
 }
 impl GenerateWave for Sine {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
+        let new_sample = self.phase.sin();
+
         let new_frequency = tone_frequency * modulation.unwrap_or(1.0);
         self.phase += self.phase_coefficient * f64::from(new_frequency);
 
@@ -33,7 +35,7 @@ impl GenerateWave for Sine {
             self.phase -= RADS_PER_CYCLE;
         }
 
-        f64_to_f32_clamped(self.phase.sin())
+        f64_to_f32_clamped(new_sample)
     }
 
     fn set_shape_parameter1(&mut self, _parameters: f32) {}
