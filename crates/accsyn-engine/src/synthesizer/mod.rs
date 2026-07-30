@@ -172,6 +172,8 @@ impl MixerParameters {
         self.balance.store(parameters.balance.load());
         self.is_muted
             .store(parameters.is_muted.load(Relaxed), Relaxed);
+        self.soft_clip_is_enabled
+            .store(parameters.soft_clip_is_enabled.load(Relaxed), Relaxed);
 
         parameters
             .quad_mixer_inputs
