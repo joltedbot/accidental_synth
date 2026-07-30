@@ -37,6 +37,7 @@ Current:
 - Resonant lowpass filter with key tracking, envelope, and LFO modulation
 - Three ADSR envelopes (amplitude, pitch, and filter) and two LFOs for modulation (pitch via the mod wheel and filter), each with optional MIDI-clock sync and key sync
 - Audio effects: saturation, compressor, wave folder, clipper, gate, rectifier, chorus, flanger, bit crusher, delay, auto pan, and tremolo 
+- Output soft clipper to protect your hearing from unexpectedly loud patches; can be enabled/disabled in the settings menu
 - Preset & user patch system: save, load, and delete user patches; factory patches loaded in the app
 - MIDI input: Note On/Off, Velocity, Pitch Bend, Control Change, Channel Pressure, Sustain Pedal, Program Change, MIDI Clock (tempo sync with header BPM display) (see implementation chart in the 
   [manual](https://accidental-synth-d0d73b.gitlab.io/midi-implementation.html))
