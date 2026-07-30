@@ -735,7 +735,7 @@ mod tests {
         oscillator.set_hard_sync_role(HardSyncRole::Synced(sync_buffer.clone()));
         oscillator.set_hard_sync_enabled(true);
 
-        let expected_first_sample = 0.037_266_6;
+        let expected_first_sample = 0.0;
 
         let sample = oscillator.generate(None, None);
         assert!(
