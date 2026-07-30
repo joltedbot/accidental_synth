@@ -191,20 +191,21 @@ Low-frequency oscillators provide modulation sources for other parameters.
 
 Single mixer object controlling oscillator levels and master output.
 
-| Field | Type | Range | Description |
-|-------|------|-------|-------------|
-| `level` | number | 0.0-1.0 | Master output level |
-| `balance` | number | -1.0 to 1.0 | Master stereo pan (0 = center) |
-| `is_muted` | boolean | | Mute master output |
-| `quad_mixer_inputs` | array | | 4 objects (one per oscillator) |
+| Field                  | Type    | Range       | Description                     |
+|------------------------|---------|-------------|---------------------------------|
+| `level`                | number  | 0.0-1.0     | Master output level             |
+| `balance`              | number  | -1.0 to 1.0 | Master stereo pan (0 = center)  |
+| `is_muted`             | boolean |             | Mute master output              |
+| `soft_clip_is_enabled` | boolena |             | Enable the output soft clipping |
+| `quad_mixer_inputs`    | array   |             | 4 objects (one per oscillator)  |
 
 Each `quad_mixer_inputs` object has:
 
-| Field | Type | Range | Description |
-|-------|------|-------|-------------|
-| `level` | number | 0.0-1.0 | Oscillator output level |
-| `balance` | number | -1.0 to 1.0 | Oscillator stereo pan (0 = center) |
-| `mute` | boolean | | Mute this oscillator |
+| Field     | Type    | Range       | Description                        |
+|-----------|---------|-------------|------------------------------------|
+| `level`   | number  | 0.0-1.0     | Oscillator output level            |
+| `balance` | number  | -1.0 to 1.0 | Oscillator stereo pan (0 = center) |
+| `mute`    | boolean |             | Mute this oscillator               |
 
 ### Example Mixer
 
@@ -213,6 +214,7 @@ Each `quad_mixer_inputs` object has:
   "level": 0.8,
   "balance": 0,
   "is_muted": false,
+  "soft_clip_is_enabled": true,
   "quad_mixer_inputs": [
     { "level": 0, "balance": 0, "mute": false },
     { "level": 1, "balance": 0, "mute": false },
@@ -511,6 +513,7 @@ Here is a simplified example of a sawtooth lead patch with portamento:
     "level": 0.8,
     "balance": 0,
     "is_muted": false,
+    "soft_clip_is_enabled": true,
     "quad_mixer_inputs": [
       { "level": 0.3, "balance": -0.3, "mute": false },
       { "level": 1, "balance": 0, "mute": false },

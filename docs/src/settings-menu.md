@@ -28,6 +28,11 @@ This option swaps the polarity of the waveform the synth outputs. It is a simple
 
 If you find that you are getting some kind of cancelation or destructive interference, say with a bass patch and your kick, you can try swapping the polarity. It shouldn't be needed most of the time but if you aren't using a DAW where you can do the polarity swap this might come in handy in certain circumstances.
 
+### _Output Soft Clipping_
+To protect your hearing, not to mention your monitors, there is soft clipping added to the output after the final output mixer level control. It 
+is on by default.
+
+This should remain transparent until very high levels. If you do notice it or if you want to exceed 0dbfs then you can use this to disable it.
 
 ## User Patches
 
