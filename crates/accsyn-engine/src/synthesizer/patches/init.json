@@ -201,6 +201,7 @@
     "balance": 0.0,
     "is_muted": false,
     "level": 0.8,
+    "soft_clip_is_enabled": true,
     "quad_mixer_inputs": [
       {
         "balance": 0.0,
