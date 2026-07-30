@@ -433,12 +433,12 @@ pub fn start_ui_update_listener(
                 }
                 UIUpdates::HardSync(is_enabled) => {
                     let global_options_values = &mut values.global_options;
-                    global_options_values.hard_sync_is_enabled = normal_value_to_bool(is_enabled);
+                    global_options_values.hard_sync_is_enabled = is_enabled;
                     set_global_options_values(&ui_weak_thread, global_options_values);
                 }
                 UIUpdates::KeySync(is_enabled) => {
                     let global_options_values = &mut values.global_options;
-                    global_options_values.key_sync_is_enabled = normal_value_to_bool(is_enabled);
+                    global_options_values.key_sync_is_enabled = is_enabled;
                     set_global_options_values(&ui_weak_thread, global_options_values);
                 }
                 UIUpdates::SustainPedal(is_enabled) => {

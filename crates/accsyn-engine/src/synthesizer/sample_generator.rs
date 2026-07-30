@@ -157,6 +157,8 @@ fn generate_audio_samples(
         let output_balance = module_parameters.mixer.balance.load();
         let output_is_muted = module_parameters.mixer.is_muted.load(Relaxed);
         let velocity = load_f32_from_atomic_u32(&current_note.velocity);
+        let output_soft_clip_is_enabled =
+            module_parameters.mixer.soft_clip_is_enabled.load(Relaxed);
 
         // Loop Here
 
@@ -221,12 +223,17 @@ fn generate_audio_samples(
             }
 
             // Final output level control
-            let (output_left, output_right) = output_mix(
+            let (mut output_left, mut output_right) = output_mix(
                 (effected_left, effected_right),
                 output_level,
                 output_balance,
                 output_is_muted,
             );
+
+            if output_soft_clip_is_enabled {
+                output_left = output_soft_clip(output_left);
+                output_right = output_soft_clip(output_right);
+            }
 
             local_buffer.push(output_left);
             local_buffer.push(output_right);
@@ -273,6 +280,18 @@ fn generate_audio_samples(
             ));
         }
     }
+}
+
+fn output_soft_clip(sample: f32) -> f32 {
+    const THRESHOLD: f32 = 0.90;
+    let abs_sample = sample.abs();
+    if abs_sample <= THRESHOLD {
+        return sample;
+    }
+    let clip_range = 1.0 - THRESHOLD;
+    let excess = (abs_sample - THRESHOLD) / clip_range;
+    let soft_clip = excess.tanh();
+    sample.signum() * (THRESHOLD + clip_range * soft_clip)
 }
 
 fn initialize_synth_modules(sample_rate: u32) -> Modules {

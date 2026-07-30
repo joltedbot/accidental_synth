@@ -114,7 +114,7 @@
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": true,
-      "portamento_time": 28,
+      "portamento_time": 5,
       "clipper_boost": 30,
       "pitch_envelope_amount": 0
     },
@@ -129,7 +129,7 @@
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": true,
-      "portamento_time": 28,
+      "portamento_time": 5,
       "clipper_boost": 0,
       "pitch_envelope_amount": 0
     },
@@ -144,7 +144,7 @@
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": true,
-      "portamento_time": 28,
+      "portamento_time": 5,
       "clipper_boost": 6,
       "pitch_envelope_amount": 0
     },
@@ -159,7 +159,7 @@
       "key_sync_enabled": false,
       "hard_sync_enabled": false,
       "portamento_enabled": true,
-      "portamento_time": 28,
+      "portamento_time": 5,
       "clipper_boost": 3,
       "pitch_envelope_amount": 0
     }

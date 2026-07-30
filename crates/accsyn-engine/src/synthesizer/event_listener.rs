@@ -20,8 +20,9 @@ use crate::synthesizer::set_parameters::{
     set_oscillator_course_tune, set_oscillator_fine_tune, set_oscillator_hard_sync,
     set_oscillator_key_sync, set_oscillator_level, set_oscillator_mute,
     set_oscillator_pitch_envelope_amount, set_oscillator_polarity, set_oscillator_shape_parameter1,
-    set_oscillator_shape_parameter2, set_output_balance, set_output_level, set_output_mute,
-    set_pitch_bend_range, set_portamento_enabled, set_portamento_time, set_velocity_curve,
+    set_oscillator_shape_parameter2, set_oscillator_soft_clip, set_output_balance,
+    set_output_level, set_output_mute, set_pitch_bend_range, set_portamento_enabled,
+    set_portamento_time, set_velocity_curve,
 };
 use accsyn_core::casting::i32_to_u8_clamped;
 use accsyn_core::defaults::Defaults;
@@ -575,15 +576,17 @@ pub fn start_update_event_listener(
                     );
                 }
                 SynthesizerUpdateEvents::HardSyncEnabled(is_enabled) => {
-                    set_oscillator_hard_sync(&module_parameters.oscillators, f32::from(is_enabled));
+                    set_oscillator_hard_sync(&module_parameters.oscillators, is_enabled);
                 }
                 SynthesizerUpdateEvents::KeySyncEnabled(is_enabled) => {
-                    set_oscillator_key_sync(&module_parameters.oscillators, f32::from(is_enabled));
+                    set_oscillator_key_sync(&module_parameters.oscillators, is_enabled);
                 }
                 SynthesizerUpdateEvents::PolarityFlipped(is_flipped) => {
-                    set_oscillator_polarity(&module_parameters.keyboard, f32::from(is_flipped));
+                    set_oscillator_polarity(&module_parameters.keyboard, is_flipped);
                 }
-
+                SynthesizerUpdateEvents::SoftClipEnabled(is_enabled) => {
+                    set_oscillator_soft_clip(&module_parameters.mixer, is_enabled);
+                }
                 SynthesizerUpdateEvents::OutputBalance(balance) => {
                     set_output_balance(&module_parameters.mixer, balance);
                 }

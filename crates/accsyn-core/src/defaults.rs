@@ -31,6 +31,8 @@ impl Defaults {
     pub const OUTPUT_MIXER_BALANCE: f32 = 0.0;
     /// Default output mixer mute state.
     pub const OUTPUT_MIXER_IS_MUTED: bool = false;
+    /// Default state for the output Soft Clipping  state.
+    pub const OUTPUT_SOFT_CLIP_ENABLED: bool = true;
     /// Default per-oscillator mixer level (0.0–1.0).
     pub const QUAD_MIXER_LEVEL: f32 = 1.0;
     /// Default per-oscillator sub-oscillator level (0.0–1.0).
@@ -145,6 +147,8 @@ impl Defaults {
     pub const APPROXIMATE_RMS_TWO_SAMPLES: f32 = 0.707;
     /// The level correction factor when adding 3 samples. 0.577
     pub const APPROXIMATE_RMS_THREE_SAMPLES: f32 = 0.577;
+    /// The level correction factor when adding 3 samples. 0.577
+    pub const APPROXIMATE_RMS_FOUR_SAMPLES: f32 = 0.5;
     /// Minimum value for the Hertz type
     pub const MIN_HERTZ_VALUE: f32 = 0.0;
     /// Maximum value for the Hertz type.

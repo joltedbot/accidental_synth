@@ -159,6 +159,8 @@ pub struct MixerParameters {
     pub balance: Balance,
     /// Whether the master output is muted.
     pub is_muted: AtomicBool,
+    /// The current state of the output soft clipping
+    pub soft_clip_is_enabled: AtomicBool,
     /// Per-oscillator mixer input controls.
     pub quad_mixer_inputs: [QuadMixerInput; 4],
 }
@@ -186,7 +188,8 @@ impl Default for MixerParameters {
         Self {
             level: NormalizedValue::new(Defaults::OUTPUT_MIXER_LEVEL),
             balance: Balance::new(Defaults::OUTPUT_MIXER_BALANCE),
-            is_muted: AtomicBool::new(false),
+            is_muted: AtomicBool::new(Defaults::OUTPUT_MIXER_IS_MUTED),
+            soft_clip_is_enabled: AtomicBool::new(Defaults::OUTPUT_SOFT_CLIP_ENABLED),
             quad_mixer_inputs: Default::default(),
         }
     }

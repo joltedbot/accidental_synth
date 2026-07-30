@@ -264,9 +264,9 @@ pub fn process_midi_cc_values(
             );
         }
         CC::OscillatorKeySyncEnabled(value) => {
-            let normal_value = normalize_midi_value(value);
-            set_oscillator_key_sync(&module_parameters.oscillators, normal_value);
-            send_ui_update(ui_update_sender, UIUpdates::KeySync(normal_value));
+            let is_enabled = midi_value_to_bool(value);
+            set_oscillator_key_sync(&module_parameters.oscillators, is_enabled);
+            send_ui_update(ui_update_sender, UIUpdates::KeySync(is_enabled));
         }
         CC::SubOscillatorPitchEnvelopeAmount(value) => {
             let pitch_envelope_amount_value = normalize_midi_value(value);
@@ -368,10 +368,10 @@ pub fn process_midi_cc_values(
             send_ui_update(ui_update_sender, UIUpdates::PortamentoTime(normal_value));
         }
         CC::OscillatorHardSync(value) => {
-            let normal_value = normalize_midi_value(value);
-            set_oscillator_hard_sync(&module_parameters.oscillators, normal_value);
+            let is_enabled = midi_value_to_bool(value);
+            set_oscillator_hard_sync(&module_parameters.oscillators, is_enabled);
 
-            send_ui_update(ui_update_sender, UIUpdates::HardSync(normal_value));
+            send_ui_update(ui_update_sender, UIUpdates::HardSync(is_enabled));
         }
         CC::SubOscillatorShape(value) => {
             let normal_value = normalize_midi_value(value);

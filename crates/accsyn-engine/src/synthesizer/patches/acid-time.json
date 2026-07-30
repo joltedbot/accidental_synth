@@ -169,7 +169,7 @@
       "name": "Saturation",
       "is_enabled": true,
       "parameters": [
-        0.25,
+        0.0,
         0.6215353,
         0.18534307,
         0.0

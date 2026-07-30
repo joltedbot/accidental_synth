@@ -171,6 +171,7 @@ export component HeaderPanel inherits Panel {
     in property <[string]> midi-display-values;
     in property <int> midi-clock-value;
     in property <bool> polarity-is-flipped;
+    in property <bool> soft-clip-is-enabled;
 
     callback audio-output-device-changed(string);
     callback audio-output-left-channel-changed(string);
@@ -183,6 +184,7 @@ export component HeaderPanel inherits Panel {
     callback patch-saved(string);
     callback patch-deleted(string);
     callback polarity-flipped(bool);
+    callback soft-clip-enabled(bool);
 
     height: Theme.header-panel-height;
     background: Theme.header-panel-background;
@@ -194,6 +196,7 @@ export component HeaderPanel inherits Panel {
         patch-delete-status: patch-delete-status;
         user-patch-list: user-patch-list;
         polarity-is-flipped: polarity-is-flipped;
+        soft-clip-is-enabled: soft-clip-is-enabled;
 
         audio-output-device-changed(device) => {
             audio-output-device-changed(device);
@@ -224,6 +227,9 @@ export component HeaderPanel inherits Panel {
         }
         polarity-flipped(is_flipped) => {
             polarity-flipped(is_flipped);
+        }
+        soft-clip-enabled(is_flipped) => {
+            soft-clip-enabled(is_flipped);
         }
     }
 

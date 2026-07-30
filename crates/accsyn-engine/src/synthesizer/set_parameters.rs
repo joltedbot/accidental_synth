@@ -187,25 +187,23 @@ pub fn set_oscillator_shape_parameter2(parameters: &OscillatorParameters, normal
     parameters.shape_parameter2.store(normal_value);
 }
 
-pub fn set_oscillator_polarity(parameters: &KeyboardParameters, normal_value: f32) {
-    parameters
-        .polarity_flipped
-        .store(normal_value_to_bool(normal_value), Relaxed);
+pub fn set_oscillator_polarity(parameters: &KeyboardParameters, is_flipped: bool) {
+    parameters.polarity_flipped.store(is_flipped, Relaxed);
 }
 
-pub fn set_oscillator_key_sync(parameters: &[OscillatorParameters; 4], normal_value: f32) {
+pub fn set_oscillator_soft_clip(parameters: &MixerParameters, is_enabled: bool) {
+    parameters.soft_clip_is_enabled.store(is_enabled, Relaxed);
+}
+
+pub fn set_oscillator_key_sync(parameters: &[OscillatorParameters; 4], is_enabled: bool) {
     for parameters in parameters {
-        parameters
-            .key_sync_enabled
-            .store(normal_value_to_bool(normal_value), Relaxed);
+        parameters.key_sync_enabled.store(is_enabled, Relaxed);
     }
 }
 
-pub fn set_oscillator_hard_sync(parameters: &[OscillatorParameters; 4], normal_value: f32) {
+pub fn set_oscillator_hard_sync(parameters: &[OscillatorParameters; 4], is_enabled: bool) {
     for parameters in parameters {
-        parameters
-            .hard_sync_enabled
-            .store(normal_value_to_bool(normal_value), Relaxed);
+        parameters.hard_sync_enabled.store(is_enabled, Relaxed);
     }
 }
 

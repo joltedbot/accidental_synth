@@ -115,6 +115,7 @@ export component AccidentalSynth inherits Window {
     callback hard-sync-enabled(bool);
     callback key-sync-enabled(bool);
     callback polarity-flipped(bool);
+    callback soft-clip-enabled(bool);
     callback sustain-enabled(bool);
     callback output-balance-update(float);
     callback output-level-update(float);
@@ -197,6 +198,7 @@ export component AccidentalSynth inherits Window {
                 patch-delete-status: patch-delete-status;
                 midi-display-values: midi-display-values;
                 polarity-is-flipped: global-options-values.polarity-is-flipped;
+                soft-clip-is-enabled: global-options-values.soft-clip-is-enabled;
 
                 audio-output-device-changed(device) => {
                     audio-output-device-changed(device);
@@ -230,6 +232,9 @@ export component AccidentalSynth inherits Window {
                 }
                 polarity-flipped(is_flipped) => {
                     polarity-flipped(is_flipped);
+                }
+                soft-clip-enabled(is_flipped) => {
+                    soft-clip-enabled(is_flipped);
                 }
             }
 

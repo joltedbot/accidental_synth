@@ -153,3 +153,39 @@ pub fn callback_patch_deleted(
         });
     }
 }
+
+pub fn callback_polarity_flipped(
+    ui_weak: &Weak<AccidentalSynth>,
+    synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_polarity_flipped(move |is_flipped| {
+            log::trace!(target: "ui::settings", "callback_polarity_flipped(): Sending \
+            SynthesizerUpdateEvents::PolarityFlipped : {is_flipped}");
+            synthesizer_update_sender
+                .send(SynthesizerUpdateEvents::PolarityFlipped(is_flipped))
+                .expect(
+                    "callback_polarity_flipped(): Could not send new \
+            polarity state to the synthesizer module. Exiting.",
+                );
+        });
+    }
+}
+
+pub fn callback_output_soft_clip_enabled(
+    ui_weak: &Weak<AccidentalSynth>,
+    synthesizer_update_sender: Sender<SynthesizerUpdateEvents>,
+) {
+    if let Some(ui) = ui_weak.upgrade() {
+        ui.on_soft_clip_enabled(move |is_enabled| {
+            log::trace!(target: "ui::settings", "callback_output_soft_clip_enabled(): Sending \
+            SynthesizerUpdateEvents::SoftClipFlipped : {is_enabled:#?}");
+            synthesizer_update_sender
+                .send(SynthesizerUpdateEvents::SoftClipEnabled(is_enabled))
+                .expect(
+                    "callback_output_soft_clip_enabled(): Could not send new \
+            output soft clipping state to the synthesizer module. Exiting.",
+                );
+        });
+    }
+}

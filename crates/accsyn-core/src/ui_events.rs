@@ -101,9 +101,9 @@ pub enum UIUpdates {
     /// Velocity curve changed (normalized value).
     VelocityCurve(f32),
     /// Hard sync enabled state changed (0.0 or 1.0).
-    HardSync(f32),
+    HardSync(bool),
     /// Key sync enabled state changed (0.0 or 1.0).
-    KeySync(f32),
+    KeySync(bool),
     /// Sustain pedal enabled state changed (0.0 or 1.0).
     SustainPedal(f32),
     /// Effect parameters changed (effect index, enabled, param1, param2, param3, param4).

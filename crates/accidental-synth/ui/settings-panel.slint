@@ -155,7 +155,9 @@ export component MidiSettings inherits VerticalLayout {
 
 export component SynthSettings inherits VerticalLayout {
     in-out property <bool> polarity-is-flipped: false;
+    in-out property <bool> soft-clip-is-enabled: true;
     callback polarity-flipped(bool);
+    callback soft-clip-enabled(bool);
 
     padding: Theme.settings-panel-padding;
     spacing: Theme.settings-panel-spacing;
@@ -164,11 +166,23 @@ export component SynthSettings inherits VerticalLayout {
         label: Theme.settings-synth-options-title;
     }
 
-    ToggleSwitch {
-        label: Theme.osc-options-polarity;
-        checked: polarity-is-flipped;
-        toggle_switch_updated(is_flipped) => {
-            polarity-flipped(is_flipped);
+    HorizontalLayout {
+        alignment: space-evenly;
+        spacing: Theme.settings-panel-spacing;
+        polarity := ToggleSwitch {
+            label: Theme.osc-options-polarity;
+            checked: polarity-is-flipped;
+            toggle_switch_updated(is_flipped) => {
+                polarity-flipped(is_flipped);
+            }
+        }
+
+        soft-clip := ToggleSwitch {
+            label: Theme.osc-options-soft-clip;
+            checked: soft-clip-is-enabled;
+            toggle_switch_updated(is_enabled) => {
+                soft-clip-enabled(is_enabled);
+            }
         }
     }
 }
@@ -284,6 +298,7 @@ export component SettingsWindow inherits PopupWindow {
     in property <PatchStatus> patch-save-status;
     in property <PatchStatus> patch-delete-status;
     in property <bool> polarity-is-flipped;
+    in property <bool> soft-clip-is-enabled;
     in property <[string]> user-patch-list;
 
     callback audio-output-device-changed(string);
@@ -296,6 +311,7 @@ export component SettingsWindow inherits PopupWindow {
     callback patch-saved(string);
     callback patch-deleted(string);
     callback polarity-flipped(bool);
+    callback soft-clip-enabled(bool);
 
     width: Theme.settings-panel-width;
     height: Theme.settings-panel-height;
@@ -378,9 +394,14 @@ export component SettingsWindow inherits PopupWindow {
 
                     SynthSettings {
                         polarity-is-flipped: polarity-is-flipped;
+                        soft-clip-is-enabled: soft-clip-is-enabled;
 
                         polarity-flipped(is_flipped) => {
                             polarity-flipped(is_flipped);
+                        }
+
+                        soft-clip-enabled(is_flipped) => {
+                            soft-clip-enabled(is_flipped);
                         }
                     }
 

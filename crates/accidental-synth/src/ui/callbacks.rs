@@ -27,6 +27,8 @@ pub fn register_callbacks(
     menubar::callback_open_git_repo(ui_weak);
     menubar::callback_open_midi_chart(ui_weak);
     menubar::callback_open_patch_folder(ui_weak, user_patch_directory);
+    settings::callback_output_soft_clip_enabled(ui_weak, synthesizer_update_sender.clone());
+    settings::callback_polarity_flipped(ui_weak, synthesizer_update_sender.clone());
     settings::callback_midi_input_channel_changed(ui_weak, midi_update_sender.clone());
     settings::callback_midi_input_port_changed(ui_weak, midi_update_sender);
     settings::callback_audio_output_device_changed(ui_weak, audio_output_device_sender.clone());
@@ -81,7 +83,6 @@ pub fn register_callbacks(
     global::callback_velocity_curve_changed(ui_weak, synthesizer_update_sender.clone());
     global::callback_hard_sync_enabled(ui_weak, synthesizer_update_sender.clone());
     global::callback_key_sync_enabled(ui_weak, synthesizer_update_sender.clone());
-    global::callback_polarity_flipped(ui_weak, synthesizer_update_sender.clone());
     global::callback_sustain_enabled(ui_weak, synthesizer_update_sender.clone());
     global::callback_output_balance_update(ui_weak, synthesizer_update_sender.clone());
     global::callback_output_level_update(ui_weak, synthesizer_update_sender.clone());
