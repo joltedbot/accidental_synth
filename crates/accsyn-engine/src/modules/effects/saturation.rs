@@ -3,7 +3,8 @@ use accsyn_core::effects::{AudioEffect, EffectParameters};
 use strum::EnumCount as saturationCount;
 use strum_macros::{EnumCount, EnumIter, FromRepr};
 
-const WAVE_SHAPER_MAX_AMOUNT: f32 = 0.99;
+const MAXIMUM_AMOUNT: f32 = 0.999;
+const MINIMUM_AMOUNT: f32 = 0.001;
 
 pub struct Saturation {}
 
@@ -17,17 +18,13 @@ impl Saturation {
 
 impl AudioEffect for Saturation {
     fn process_samples(&mut self, samples: (f32, f32), effect: &EffectParameters) -> (f32, f32) {
-        let mode = SaturationMode::from_normal_value(effect.parameters[0]);
-        let mut amount = effect.parameters[1];
-        let gain_reduction = effect.parameters[2];
-
-        if !effect.is_enabled || amount == 0.0 {
+        if !effect.is_enabled {
             return samples;
         }
 
-        if amount > WAVE_SHAPER_MAX_AMOUNT {
-            amount = WAVE_SHAPER_MAX_AMOUNT;
-        }
+        let mode = SaturationMode::from_normal_value(effect.parameters[0]);
+        let amount = effect.parameters[1].clamp(MINIMUM_AMOUNT, MAXIMUM_AMOUNT);
+        let gain_reduction = effect.parameters[2];
 
         let mut saturated_samples = match mode {
             SaturationMode::AnalogModeled => {
@@ -40,9 +37,14 @@ impl AudioEffect for Saturation {
                 let right_saturation_sample = saturation_exponential_tube_like(samples.1, amount);
                 (left_saturation_sample, right_saturation_sample)
             }
-            SaturationMode::SoftClipping => {
+            SaturationMode::CubicSoftClipping => {
                 let left_saturation_sample = saturation_cubic_soft_clipping(samples.0, amount);
                 let right_saturation_sample = saturation_cubic_soft_clipping(samples.1, amount);
+                (left_saturation_sample, right_saturation_sample)
+            }
+            SaturationMode::TanhSoftClipping => {
+                let left_saturation_sample = tanh_soft_clipping(samples.0, amount);
+                let right_saturation_sample = tanh_soft_clipping(samples.1, amount);
                 (left_saturation_sample, right_saturation_sample)
             }
             SaturationMode::WaveShaping => {
@@ -75,7 +77,8 @@ pub enum SaturationMode {
     #[default]
     AnalogModeled,
     TubeLike,
-    SoftClipping,
+    CubicSoftClipping,
+    TanhSoftClipping,
     WaveShaping,
     SineShaper,
     Polynomial,
@@ -99,23 +102,28 @@ fn saturation_analog_modeled(sample: f32, amount: f32) -> f32 {
 }
 
 fn saturation_exponential_tube_like(sample: f32, amount: f32) -> f32 {
-    let factor = amount * 2.0;
+    let factor = 1.0 + amount * 2.0;
     let shaped = sample.signum() * (1.0 - (-sample.abs() * factor).exp());
     let makeup = 1.0 + amount * (3.0 - amount * 1.5);
     shaped * makeup
 }
 
 fn saturation_cubic_soft_clipping(sample: f32, amount: f32) -> f32 {
-    let drive = amount * 3.0;
-    let x = sample * drive;
-    let shaped = if x.abs() < 1.0 {
-        x - (x.powi(3) / 3.0)
+    let drive = 1.0 + amount * 3.0;
+    let driven_sample = sample * drive;
+    let shaped = if driven_sample.abs() < 1.0 {
+        driven_sample - (driven_sample.powi(3) / 3.0)
     } else {
-        x.signum() * (2.0 / 3.0)
+        driven_sample.signum() * (2.0 / 3.0)
     };
 
     let makeup = 1.0 + amount * (2.0 - amount);
     shaped * makeup
+}
+
+fn tanh_soft_clipping(sample: f32, amount: f32) -> f32 {
+    let clipping_coefficient = 1.0 + amount * 7.0;
+    (sample * clipping_coefficient).tanh() / clipping_coefficient.tanh()
 }
 
 fn saturation_asymptotic_waveshaper(sample: f32, amount: f32) -> f32 {
@@ -126,17 +134,17 @@ fn saturation_asymptotic_waveshaper(sample: f32, amount: f32) -> f32 {
 }
 
 fn saturation_sine_shaper(sample: f32, amount: f32) -> f32 {
-    let drive = amount * std::f32::consts::PI * 0.5;
+    let drive = 1.0 + amount * std::f32::consts::PI * 0.5;
     let shaped = (sample * drive).sin();
     let makeup = 1.0 + amount * (1.5 - amount * 0.5);
     shaped * makeup
 }
 
 fn saturation_chebyshev_polynomial(sample: f32, amount: f32) -> f32 {
-    let x = sample.clamp(-1.0, 1.0);
-    let t3 = 4.0 * x.powi(3) - 3.0 * x;
-    let t3_scale = 0.25 + amount * 0.5;
-    x * (1.0 - amount) + t3 * amount * t3_scale
+    let clamped_sample = sample.clamp(-1.0, 1.0);
+    let third_harmonic = 4.0 * clamped_sample.powi(3);
+    let third_harmonic_scale = 0.25 + amount * 0.5;
+    (clamped_sample + third_harmonic * amount * third_harmonic_scale).clamp(-1.0, 1.0)
 }
 
 #[cfg(test)]
@@ -233,7 +241,7 @@ mod tests {
         let effect = EffectParameters {
             name: String::new(),
             is_enabled: true,
-            parameters: vec![2.0, 0.5, 1.0, 0.0], // mode index 2 = SoftClipping
+            parameters: vec![2.0, 0.5, 1.0, 0.0], // mode index 2 = CubicSoftClipping
         };
         let input = (0.5, -0.5);
 
