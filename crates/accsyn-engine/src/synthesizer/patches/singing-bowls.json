@@ -4,7 +4,7 @@
     "resonance": 0.44650036,
     "filter_poles": 2,
     "key_tracking_amount": 0.5,
-    "current_note_number": 79
+    "current_note_number": 62
   },
   "mixer": {
     "level": 1.0,
@@ -45,8 +45,8 @@
     {
       "frequency": 0.03621854,
       "synced_frequency": 0.5,
-      "sync_triggered": false,
-      "thirty_second_notes": 762,
+      "sync_triggered": true,
+      "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": true,
       "center_value": 1.0,
@@ -60,7 +60,7 @@
       "frequency": 1.0158238,
       "synced_frequency": 0.5,
       "sync_triggered": true,
-      "thirty_second_notes": 224,
+      "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 0.0,
@@ -85,7 +85,7 @@
     {
       "attack_ms": 10,
       "decay_ms": 134,
-      "release_ms": 0,
+      "release_ms": 10,
       "sustain_level": 0.0,
       "amount": 0.0,
       "sustain_pedal": false,
@@ -171,7 +171,7 @@
       "is_enabled": true,
       "parameters": [
         0.16666667,
-        0.65565556,
+        0.2849015,
         0.5267663,
         0.0
       ]
@@ -250,9 +250,9 @@
       "name": "Flanger",
       "is_enabled": true,
       "parameters": [
-        0.5005265,
-        0.21632133,
-        1.0,
+        0.51604956,
+        0.7040931,
+        0.42766643,
         0.46659306
       ]
     },
@@ -288,6 +288,6 @@
     }
   ],
   "clock": {
-    "bpm": 169
+    "bpm": 158
   }
 }

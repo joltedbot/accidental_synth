@@ -45,8 +45,8 @@
     {
       "frequency": 2.0,
       "synced_frequency": 0.5,
-      "sync_triggered": false,
-      "thirty_second_notes": 384,
+      "sync_triggered": true,
+      "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 1.0,
@@ -59,8 +59,8 @@
     {
       "frequency": 0.049139805,
       "synced_frequency": 0.5,
-      "sync_triggered": false,
-      "thirty_second_notes": 256,
+      "sync_triggered": true,
+      "thirty_second_notes": 32,
       "clock_synced": false,
       "key_synced": false,
       "center_value": 0.0,
@@ -168,11 +168,11 @@
   "effects": [
     {
       "name": "Saturation",
-      "is_enabled": true,
+      "is_enabled": false,
       "parameters": [
         0.16666667,
-        0.45100203,
-        0.65716714,
+        0.18286344,
+        0.5102072,
         0.0
       ]
     },
@@ -288,6 +288,6 @@
     }
   ],
   "clock": {
-    "bpm": 1
+    "bpm": 158
   }
 }
