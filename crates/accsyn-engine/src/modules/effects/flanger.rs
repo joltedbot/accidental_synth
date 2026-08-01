@@ -38,7 +38,7 @@ impl Flanger {
         // Sample rate is always ≤ 192_000, within f32 precision (2²³ = 8_388_608)
         #[allow(clippy::cast_precision_loss)]
         let sample_rate = sample_rate as f32;
-        let delay_center_value = delay_center_value(sample_rate);
+        let delay_center_value = delay_ms_to_samples(sample_rate);
 
         Self {
             buffer,
@@ -55,7 +55,7 @@ impl Flanger {
     fn reset(&mut self) {
         self.buffer.fill((0.0, 0.0));
         self.write_index = 0;
-        let current_flanger_samples = delay_center_value(self.sample_rate);
+        let current_flanger_samples = delay_ms_to_samples(self.sample_rate);
         self.samples_count = current_flanger_samples;
         self.lfo.set_phase(FLANGER_LFO_PHASE);
     }
@@ -113,12 +113,10 @@ impl AudioEffect for Flanger {
 
         // Flanger delay line
         let delay_offset_right = self.lfo.generate(None);
-        let target_delay_right = self.delay_center + (self.delay_center * delay_offset_right);
+        let target_delay_right = self.delay_center * 2f32.powf(delay_offset_right); 
         let target_delay_samples_right =
             (target_delay_right - self.samples_count) * DELAY_SMOOTHING_FACTOR;
         self.samples_count += target_delay_samples_right;
-        // Clamped locally (not just relying on upstream parameter/LFO-range invariants) so a
-        // future change to those invariants can't reintroduce an out-of-bounds buffer offset.
         let new_samples_count_right =
             f32_to_usize_clamped(self.samples_count.floor()).min(buffer_len - 1);
         let flanged_samples = self.delayed_samples_from_buffer(
@@ -138,7 +136,7 @@ impl AudioEffect for Flanger {
     }
 }
 
-fn delay_center_value(sample_rate: f32) -> f32 {
+fn delay_ms_to_samples(sample_rate: f32) -> f32 {
     ((FLANGER_DEFAULT_DELAY_MILLISECONDS / 1000.0) * sample_rate).round()
 }
 
@@ -290,14 +288,14 @@ mod tests {
     #[test]
     fn delay_center_value_computes_samples_for_sample_rate() {
         let expected_48k = 24.0;
-        let result_48k = delay_center_value(48_000.0);
+        let result_48k = delay_ms_to_samples(48_000.0);
         assert!(
             f32s_are_equal(result_48k, expected_48k),
             "Expected {expected_48k}, got {result_48k}"
         );
 
         let expected_44k = 22.0;
-        let result_44k = delay_center_value(44_100.0);
+        let result_44k = delay_ms_to_samples(44_100.0);
         assert!(
             f32s_are_equal(result_44k, expected_44k),
             "Expected {expected_44k}, got {result_44k}"
