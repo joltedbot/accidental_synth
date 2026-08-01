@@ -169,19 +169,30 @@ mod tests {
     }
 
     #[test]
-    fn saturation_process_samples_returns_original_when_amount_is_zero() {
+    fn saturation_process_samples_clamps_amount_to_minimum() {
         let mut saturation = Saturation::new();
         let effect = EffectParameters {
             name: String::new(),
             is_enabled: true,
-            parameters: vec![0.0, 0.0, 1.0, 0.0], // amount = 0.0
+            parameters: vec![0.0, 0.0, 1.0, 0.0], // amount below MINIMUM_AMOUNT clamps to it
         };
         let input = (0.7, -0.4);
 
         let result = saturation.process_samples(input, &effect);
 
-        assert!(f32s_are_equal(result.0, 0.7));
-        assert!(f32s_are_equal(result.1, -0.4));
+        let expected_left = saturation_analog_modeled(0.7, MINIMUM_AMOUNT);
+        let expected_right = saturation_analog_modeled(-0.4, MINIMUM_AMOUNT);
+
+        assert!(
+            f32s_are_equal(result.0, expected_left),
+            "Expected: {expected_left}, got: {}",
+            result.0
+        );
+        assert!(
+            f32s_are_equal(result.1, expected_right),
+            "Expected: {expected_right}, got: {}",
+            result.1
+        );
     }
 
     #[test]
@@ -348,14 +359,19 @@ mod tests {
 
     #[test]
     fn saturation_cubic_soft_clipping_handles_negative_samples() {
-        let amount: f32 = 0.5;
-        let drive = amount * 3.0;
-        let x = -0.5 * drive;
+        let amount: f32 = 0.2;
+        let sample: f32 = -0.5;
+        let drive = 1.0 + amount * 3.0;
+        let x = sample * drive;
+        assert!(
+            x.abs() < 1.0,
+            "test input must stay in the soft-clip branch"
+        );
         let expected = x - (x.powi(3) / 3.0);
         let makeup = 1.0 + amount * (2.0 - amount);
         let expected_output = expected * makeup;
 
-        let result = saturation_cubic_soft_clipping(-0.5, amount);
+        let result = saturation_cubic_soft_clipping(sample, amount);
 
         assert!(
             f32s_are_equal(result, expected_output),
