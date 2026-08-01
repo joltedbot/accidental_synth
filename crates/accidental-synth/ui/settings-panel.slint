@@ -197,6 +197,13 @@ export component PatchSaveSettings inherits VerticalLayout {
 
     patch-name := TextInput {
         label: Theme.settings-patch-name;
+        return-pressed => {
+            if (self.text != "") {
+                patch-saved(patch-name.text);
+                self.text = "";
+                save-status.visible = true;
+            }
+        }
     }
 
     HorizontalLayout {

@@ -133,6 +133,8 @@ export component TextInput inherits VerticalLayout {
     in-out property <string> label;
     in-out property <string> text <=> text-box.text;
 
+    callback return-pressed();
+
     padding: Theme.osc-controls-panel-padding;
     spacing: Theme.osc-controls-panel-spacing;
 
@@ -141,9 +143,16 @@ export component TextInput inherits VerticalLayout {
     }
 
     text-box := LineEdit {
-
         height: Theme.settings-patch-name-box-height;
         width: Theme.settings-patch-name-box-width;
+
+        key-pressed(KeyEvent) => {
+            if (KeyEvent.text == Key.Return) {
+                return-pressed();
+                return accept;
+            }
+            return reject;
+        }
     }
 }
 
