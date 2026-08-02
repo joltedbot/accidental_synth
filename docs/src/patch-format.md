@@ -278,6 +278,40 @@ Effects are processed in this order:
 All parameters use the range 0.0 to 1.0, including "unused" fields which should be set to 0.
 Toggle parameters are 0.0 for Off and > 0.0 values for on but 1.0 is the preferred On value.
 
+#### Saturation Type Values:
+
+While each type actually corresponds to a range of values these are the simplest ones if you are doing this by hand
+
+| Type                     | Field Value |
+|--------------------------|-------------|
+| Analog Modeled           | 0           |
+| Tube Like                | 0.2         |
+| Diode Like Soft Clipping | 0.3         |
+| OpAmp Like Soft Clipping | 0.5         |
+| Wave Shaping             | 0.6         |
+| Sine Shapper             | 0.8         |
+| Polynomial               | 1           | 
+
+#### Auto Pan and Tremolo Wave Shape Values
+
+While each type actually corresponds to a range of values these are the simplest ones if you are doing this by hand
+
+| Wave Shape | Value |
+|------------|-------|
+| Sine       | 0     |
+| Triangle   | 0.1   |
+| Square     | 0.2   |
+| Saw        | 0.25  |
+| Pulse      | 0.35  |
+| Ramp       | 0.45  |
+| Supersaw   | 0.5   |
+| AM/RM      | 0.6   |
+| FM         | 0.7   |
+| PM         | 0.8   |
+| Broken     | 0.9   |
+| Noise      | 1     |
+
+
 ### Example Effect
 
 ```json

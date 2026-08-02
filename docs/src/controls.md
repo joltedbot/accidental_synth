@@ -35,7 +35,7 @@ oscillator is pitched 1 octave below the played note.
 
 The Oscillator boost is integral to the Oscillator and is totally separate from the Effects section Clipper.
 
-#### Waveforms
+#### Wave Shape
 
 | Index | Name     | Shape Parameter 1 | Shape Parameter 2 | Notes                       |
 |-------|----------|-------------------|-------------------|-----------------------------|
@@ -229,14 +229,15 @@ Adds harmonic distortion.
 
 Saturation Types:
 
-| Type           | Description                                                                              |
-|----------------|------------------------------------------------------------------------------------------|
-| Analog Modeled | Emulates saturation from analog devices                                                  |
-| Tube Like      | Emulates saturation from tubes                                                           |
-| Soft Clipping  | Provides a softer saturation that the hard clippers in the oscillator or Clipper effects |
-| Wave Shaping   | Adjust the odd harmonics giving the wave a rounder but steeper shape                     |
-| Sine Shapper   | Rounds out the wave form to make it more sine like                                       |
-| Polynomial     | Chebyshev Polynomial Wave Shaping                                                        | 
+| Type                     | Description                                                                                 |
+|--------------------------|---------------------------------------------------------------------------------------------|
+| Analog Modeled           | Emulates saturation from analog devices                                                     |
+| Tube Like                | Emulates saturation from tubes                                                              |
+| Diode Like Soft Clipping | Cubic soft clipping. Softer than hard clipping but softer than the OpAmp soft clipping      |
+| OpAmp Like Soft Clipping | Tanh soft clipping. A gentler soft clipping but less transparent at lower levels than cubic |
+| Wave Shaping             | Adjust the odd harmonics giving the wave a rounder but steeper shape                        |
+| Sine Shapper             | Rounds out the wave form to make it more sine like                                          |
+| Polynomial               | Chebyshev Polynomial Wave Shaping                                                           | 
 
 
 
