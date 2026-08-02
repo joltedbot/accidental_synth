@@ -10,6 +10,13 @@ use serde::{Deserialize, Serialize};
 use std::f32::consts::FRAC_PI_2;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
+use crate::modules::effects::autopan::AutoPan;
+use crate::modules::effects::chorus::Chorus;
+use crate::modules::effects::compressor::Compressor;
+use crate::modules::effects::delay::Delay;
+use crate::modules::effects::flanger::Flanger;
+use crate::modules::effects::saturation::Saturation;
+use crate::modules::effects::tremolo::Tremolo;
 
 mod autopan;
 mod bitcrusher;
@@ -75,18 +82,18 @@ pub struct Effects {
 impl Effects {
     /// Creates a new effects chain with all available effects initialized.
     pub(crate) fn new(sample_rate: u32) -> Self {
-        let saturation = Box::new(saturation::Saturation::new());
-        let compressor = Box::new(compressor::Compressor::new());
+        let saturation = Box::new(Saturation::new());
+        let compressor = Box::new(Compressor::new());
         let wavefolder = Box::new(WaveFolder::new());
         let clipper = Box::new(Clipper::new());
         let gate = Box::new(Gate::new());
         let rectifier = Box::new(Rectifier::new());
         let bitcrusher = Box::new(BitCrusher::new());
-        let delay = Box::new(delay::Delay::new());
-        let autopan = Box::new(autopan::AutoPan::new(sample_rate));
-        let tremolo = Box::new(tremolo::Tremolo::new(sample_rate));
-        let chorus = Box::new(chorus::Chorus::new(sample_rate));
-        let flanger = Box::new(flanger::Flanger::new(sample_rate));
+        let delay = Box::new(Delay::new());
+        let autopan = Box::new(AutoPan::new(sample_rate));
+        let tremolo = Box::new(Tremolo::new(sample_rate));
+        let chorus = Box::new(Chorus::new(sample_rate));
+        let flanger = Box::new(Flanger::new(sample_rate));
 
         Self {
             effects: vec![
