@@ -1,0 +1,293 @@
+{
+  "filter": {
+    "cutoff_frequency": 555.26825,
+    "resonance": 0.21886364,
+    "filter_poles": 2,
+    "key_tracking_amount": 0.54915863,
+    "current_note_number": 63
+  },
+  "mixer": {
+    "level": 0.48180172,
+    "balance": 0.0,
+    "is_muted": false,
+    "soft_clip_is_enabled": true,
+    "quad_mixer_inputs": [
+      {
+        "level": 0.31269976,
+        "balance": 0.0,
+        "mute": false
+      },
+      {
+        "level": 1.0,
+        "balance": 0.0,
+        "mute": false
+      },
+      {
+        "level": 1.0,
+        "balance": -0.09687501,
+        "mute": false
+      },
+      {
+        "level": 1.0,
+        "balance": 0.20265627,
+        "mute": false
+      }
+    ]
+  },
+  "keyboard": {
+    "mod_wheel_amount": 0.56692916,
+    "aftertouch_amount": 0.0,
+    "velocity_curve": 0.0,
+    "polarity_flipped": false,
+    "pitch_bend_range": 12
+  },
+  "lfos": [
+    {
+      "frequency": 266.63187,
+      "synced_frequency": 1.7231798,
+      "sync_triggered": true,
+      "thirty_second_notes": 12,
+      "clock_synced": true,
+      "key_synced": false,
+      "center_value": 1.0,
+      "range": 2.0,
+      "phase": 0.0,
+      "wave_shape": 10,
+      "reset": false,
+      "gate_flag": false
+    },
+    {
+      "frequency": 0.6376429,
+      "synced_frequency": 0.080774054,
+      "sync_triggered": true,
+      "thirty_second_notes": 256,
+      "clock_synced": true,
+      "key_synced": false,
+      "center_value": 0.0,
+      "range": 0.4825721,
+      "phase": 0.0,
+      "wave_shape": 10,
+      "reset": false,
+      "gate_flag": false
+    }
+  ],
+  "envelopes": [
+    {
+      "attack_ms": 36,
+      "decay_ms": 253,
+      "release_ms": 961,
+      "sustain_level": 0.741059,
+      "amount": 1.0,
+      "sustain_pedal": false,
+      "is_inverted": false,
+      "gate_flag": 0
+    },
+    {
+      "attack_ms": 0,
+      "decay_ms": 962,
+      "release_ms": 0,
+      "sustain_level": 0.0,
+      "amount": 0.14465144,
+      "sustain_pedal": false,
+      "is_inverted": false,
+      "gate_flag": 0
+    },
+    {
+      "attack_ms": 0,
+      "decay_ms": 284,
+      "release_ms": 0,
+      "sustain_level": 0.0,
+      "amount": 1.0,
+      "sustain_pedal": false,
+      "is_inverted": false,
+      "gate_flag": 0
+    }
+  ],
+  "oscillators": [
+    {
+      "fine_tune": -6,
+      "course_tune": 0,
+      "pitch_bend": 0,
+      "shape_parameter1": 0.39962634,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 9,
+      "gate_flag": false,
+      "key_sync_enabled": false,
+      "hard_sync_enabled": false,
+      "portamento_enabled": true,
+      "portamento_time": 11,
+      "clipper_boost": 11,
+      "pitch_envelope_amount": 0.0
+    },
+    {
+      "fine_tune": 6,
+      "course_tune": 0,
+      "pitch_bend": 0,
+      "shape_parameter1": 0.20450068,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 9,
+      "gate_flag": false,
+      "key_sync_enabled": false,
+      "hard_sync_enabled": false,
+      "portamento_enabled": true,
+      "portamento_time": 11,
+      "clipper_boost": 6,
+      "pitch_envelope_amount": 0.0
+    },
+    {
+      "fine_tune": -12,
+      "course_tune": 0,
+      "pitch_bend": 0,
+      "shape_parameter1": 0.50441575,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 9,
+      "gate_flag": false,
+      "key_sync_enabled": false,
+      "hard_sync_enabled": false,
+      "portamento_enabled": true,
+      "portamento_time": 11,
+      "clipper_boost": 7,
+      "pitch_envelope_amount": 0.0
+    },
+    {
+      "fine_tune": 12,
+      "course_tune": 0,
+      "pitch_bend": 0,
+      "shape_parameter1": 0.8016984,
+      "shape_parameter2": 0.0,
+      "wave_shape_index": 9,
+      "gate_flag": false,
+      "key_sync_enabled": false,
+      "hard_sync_enabled": false,
+      "portamento_enabled": true,
+      "portamento_time": 11,
+      "clipper_boost": 9,
+      "pitch_envelope_amount": 0.0
+    }
+  ],
+  "effects": [
+    {
+      "name": "Saturation",
+      "is_enabled": true,
+      "parameters": [
+        1.0,
+        1.0,
+        0.7913553,
+        0.0
+      ]
+    },
+    {
+      "name": "Colour Compressor",
+      "is_enabled": true,
+      "parameters": [
+        0.12970449,
+        0.21078464,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "Wave Folder",
+      "is_enabled": true,
+      "parameters": [
+        0.5701936,
+        0.0,
+        0.6429518,
+        0.0
+      ]
+    },
+    {
+      "name": "Bit Crusher",
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        1.0,
+        1.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Clipper",
+      "is_enabled": true,
+      "parameters": [
+        0.3956352,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "Gate Clipping",
+      "is_enabled": true,
+      "parameters": [
+        0.14791101,
+        1.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "Wave Rectifier",
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Chorus",
+      "is_enabled": true,
+      "parameters": [
+        0.65648776,
+        0.43940216,
+        0.2757303,
+        0.43590352
+      ]
+    },
+    {
+      "name": "Flanger",
+      "is_enabled": true,
+      "parameters": [
+        0.5006454,
+        0.48459578,
+        0.45670855,
+        0.53566575
+      ]
+    },
+    {
+      "name": "Auto-Pan",
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Tremolo",
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Delay",
+      "is_enabled": true,
+      "parameters": [
+        1.0,
+        0.10178329,
+        0.20640285,
+        0.0
+      ]
+    }
+  ],
+  "clock": {
+    "bpm": 155
+  }
+}

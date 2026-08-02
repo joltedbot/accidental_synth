@@ -62,6 +62,10 @@ pub const SYSTEM_PATCHES: &[(&str, &str)] = &[
     ("Chorus Organ*", include_str!("patches/chorus-organ.json")),
     ("Deep Bass*", include_str!("patches/deep-bass.json")),
     (
+        "Degraded Phase Lead*",
+        include_str!("patches/degraded-phase-lead.json"),
+    ),
+    (
         "Dirty Bass Echo*",
         include_str!("patches/dirty-bass-echo.json"),
     ),
