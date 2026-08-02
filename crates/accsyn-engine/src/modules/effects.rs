@@ -1,7 +1,14 @@
+use crate::modules::effects::autopan::AutoPan;
 use crate::modules::effects::bitcrusher::BitCrusher;
+use crate::modules::effects::chorus::Chorus;
 use crate::modules::effects::clipper::Clipper;
+use crate::modules::effects::compressor::Compressor;
+use crate::modules::effects::delay::Delay;
+use crate::modules::effects::flanger::Flanger;
 use crate::modules::effects::gate::Gate;
 use crate::modules::effects::rectifier::Rectifier;
+use crate::modules::effects::saturation::Saturation;
+use crate::modules::effects::tremolo::Tremolo;
 use crate::modules::effects::wavefolder::WaveFolder;
 pub use accsyn_core::effects::EffectIndex;
 use accsyn_core::effects::{AudioEffect, EffectParameters, PARAMETERS_PER_EFFECT};
@@ -10,13 +17,6 @@ use serde::{Deserialize, Serialize};
 use std::f32::consts::FRAC_PI_2;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
-use crate::modules::effects::autopan::AutoPan;
-use crate::modules::effects::chorus::Chorus;
-use crate::modules::effects::compressor::Compressor;
-use crate::modules::effects::delay::Delay;
-use crate::modules::effects::flanger::Flanger;
-use crate::modules::effects::saturation::Saturation;
-use crate::modules::effects::tremolo::Tremolo;
 
 mod autopan;
 mod bitcrusher;

@@ -113,7 +113,7 @@ impl AudioEffect for Flanger {
 
         // Flanger delay line
         let delay_offset_right = self.lfo.generate(None);
-        let target_delay_right = self.delay_center * 2f32.powf(delay_offset_right); 
+        let target_delay_right = self.delay_center * 2f32.powf(delay_offset_right);
         let target_delay_samples_right =
             (target_delay_right - self.samples_count) * DELAY_SMOOTHING_FACTOR;
         self.samples_count += target_delay_samples_right;
