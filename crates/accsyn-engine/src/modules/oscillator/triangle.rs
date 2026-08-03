@@ -32,26 +32,39 @@ impl GenerateWave for Triangle {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         let sample_rate_f64 = f64::from(self.sample_rate);
         let tone_frequency_f64 = f64::from(tone_frequency);
+        let period = sample_rate_f64 / tone_frequency_f64;
+        let new_x_increment = DEFAULT_X_INCREMENT * f64::from(modulation.unwrap_or(1.0));
 
         if let Some(phase) = self.phase {
-            self.x_coordinate = (phase / RADS_PER_CYCLE) * (sample_rate_f64 / tone_frequency_f64);
+            self.x_coordinate = (phase / RADS_PER_CYCLE) * period;
             self.phase = None;
         }
 
-        let y_coordinate = 2.0 / PI
+        let normalized_x_increment = new_x_increment / period;
+        let normalized_x_coordinate = (self.x_coordinate / period).rem_euclid(1.0);
+
+        let mut y_coordinate = 2.0 / PI
             * (tone_frequency_f64 * RADS_PER_CYCLE * (self.x_coordinate / sample_rate_f64))
                 .sin()
                 .asin();
 
-        self.x_coordinate += DEFAULT_X_INCREMENT * f64::from(modulation.unwrap_or(1.0));
+        let scale = 4.0 * normalized_x_increment;
+        y_coordinate -= scale
+            * poly_blamp(
+                (normalized_x_coordinate - 0.25).rem_euclid(1.0),
+                normalized_x_increment,
+            );
+        y_coordinate += scale
+            * poly_blamp(
+                (normalized_x_coordinate - 0.75).rem_euclid(1.0),
+                normalized_x_increment,
+            );
 
-        if tone_frequency_f64 > 0.0 {
-            let period = sample_rate_f64 / tone_frequency_f64;
-            if self.x_coordinate >= period {
-                self.x_coordinate -= period;
-            }
+        self.x_coordinate += new_x_increment;
+
+        if tone_frequency > 0.0 && self.x_coordinate >= period {
+            self.x_coordinate -= period;
         }
-
         f64_to_f32_clamped(y_coordinate)
     }
 
@@ -71,3 +84,64 @@ impl GenerateWave for Triangle {
         self.x_coordinate = DEFAULT_X_COORDINATE;
     }
 }
+
+fn poly_blamp(mut normalized_phase: f64, phase_increment: f64) -> f64 {
+    if phase_increment <= 0.0 {
+        return 0.0;
+    }
+
+    if normalized_phase < phase_increment {
+        normalized_phase = normalized_phase / phase_increment - 1.0;
+        return -1.0 / 3.0 * (normalized_phase * normalized_phase * normalized_phase);
+    }
+
+    if normalized_phase > (1.0 - phase_increment) {
+        normalized_phase = (normalized_phase - 1.0) / phase_increment + 1.0;
+        return 1.0 / 3.0 * (normalized_phase * normalized_phase * normalized_phase);
+    }
+
+    0.0
+}
+
+/*
+
+
+
+// Setup oscillator.
+double freq = 220; // Hz
+double phase = 0;
+double phase_inc = freq / sample_rate;
+
+// Generate samples.
+for (int i = 0; i < num_samples; ++i)
+{
+    // Start with naive triangle.
+    double sample = 4 * phase;
+    if (sample >= 3)
+    {
+        sample = sample - 4;
+    }
+    else if (sample > 1)
+    {
+        sample = 2 - sample;
+    }
+
+    // Correct falling discontinuity.
+    double scale = 4 * phase_inc;
+    double phase2 = phase + 0.25;
+    phase2 = phase2 - floor(phase2);
+    sample = sample + scale * poly_blamp(phase2, phase_inc);
+
+    // Correct rising discontinuity.
+    phase2 = phase2 + 0.5;
+    phase2 = phase2 - floor(phase2);
+    sample = sample - scale * poly_blamp(phase2, phase_inc);
+
+    // Increment phase for next sample.
+    phase = phase + phase_inc;
+    phase = phase - floor(phase);
+
+    // Output current sample.
+    output_buffer[i] = sample;
+}
+ */

@@ -1,5 +1,5 @@
-use super::WaveShape;
 use super::constants::{DEFAULT_X_COORDINATE, DEFAULT_X_INCREMENT};
+use super::{WaveShape, poly_blep};
 use crate::modules::oscillator::generate_wave_trait::GenerateWave;
 use accsyn_core::casting::f64_to_f32_clamped;
 use std::f64::consts::PI;
@@ -33,23 +33,23 @@ impl GenerateWave for Saw {
     fn next_sample(&mut self, tone_frequency: f32, modulation: Option<f32>) -> f32 {
         let sample_rate_f64 = f64::from(self.sample_rate);
         let tone_frequency_f64 = f64::from(tone_frequency);
+        let period = sample_rate_f64 / tone_frequency_f64;
+        let new_x_increment = DEFAULT_X_INCREMENT * f64::from(modulation.unwrap_or(1.0));
 
         if let Some(phase) = self.phase {
-            self.x_coordinate = (phase / PI) * (sample_rate_f64 / tone_frequency_f64);
+            self.x_coordinate = (phase / PI) * period;
             self.phase = None;
         }
 
-        let y_coordinate = (-2.0 / PI)
-            * (1.0 / (tone_frequency_f64 * PI * (self.x_coordinate / sample_rate_f64)).tan())
-                .atan();
+        let normalized_x_increment = new_x_increment / period;
+        let normalized_x_coordinate = (self.x_coordinate / period).rem_euclid(1.0);
+        let y_coordinate = (2.0 * normalized_x_coordinate - 1.0)
+            - poly_blep(normalized_x_coordinate, normalized_x_increment);
 
-        self.x_coordinate += DEFAULT_X_INCREMENT * f64::from(modulation.unwrap_or(1.0));
+        self.x_coordinate += new_x_increment;
 
-        if tone_frequency > 0.0 {
-            let period = sample_rate_f64 / tone_frequency_f64;
-            if self.x_coordinate >= period {
-                self.x_coordinate -= period;
-            }
+        if tone_frequency > 0.0 && self.x_coordinate >= period {
+            self.x_coordinate -= period;
         }
 
         f64_to_f32_clamped(y_coordinate)

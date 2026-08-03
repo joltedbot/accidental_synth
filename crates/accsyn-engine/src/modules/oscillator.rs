@@ -576,6 +576,24 @@ fn midi_note_to_frequency(note_number: u8) -> f32 {
     Defaults::MIDI_NOTE_FREQUENCIES[(note_number & MIDI_DATA_BYTE_7BIT_MASK) as usize].0
 }
 
+fn poly_blep(mut normalized_phase: f64, phase_increment: f64) -> f64 {
+    if phase_increment <= 0.0 {
+        return 0.0;
+    }
+
+    if normalized_phase < phase_increment {
+        normalized_phase /= phase_increment;
+        return (normalized_phase + normalized_phase) - (normalized_phase * normalized_phase) - 1.0;
+    }
+
+    if normalized_phase > (1.0 - phase_increment) {
+        normalized_phase = (normalized_phase - 1.0) / phase_increment;
+        return (normalized_phase * normalized_phase) + (normalized_phase + normalized_phase) + 1.0;
+    }
+
+    0.0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
