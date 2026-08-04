@@ -383,7 +383,8 @@ FX_H = (
     + FX_PAD
 )
 Y_OUTPUT = Y_FX + FX_H + 46
-Y_DEVICE = Y_OUTPUT + H_BAR + 28
+Y_CLIP = Y_OUTPUT + H_BAR + 28
+Y_DEVICE = Y_CLIP + H_BAR + 28
 CANVAS_H = Y_DEVICE + H_DEVICE + 44
 
 
@@ -657,6 +658,20 @@ def build() -> str:
     )
     parts.extend(draw_box(output))
 
+    # Runs on the already-mixed signal, after Master Level/Balance/Polarity and
+    # before the L/R split to the device — a tanh soft clip that keeps the
+    # output from exceeding 0 dBFS, toggleable from the settings menu.
+    clip = Box(
+        MAIN_X,
+        Y_CLIP,
+        MAIN_W,
+        H_BAR,
+        "OUTPUT SOFT CLIPPER",
+        ["Tanh Clip — Prevents Exceeding 0 dBFS", "Enable/Disable in Settings"],
+    )
+    parts.append(path([(output.cx, output.bottom), (clip.cx, clip.top)], AUDIO))
+    parts.extend(draw_box(clip))
+
     device_box = Box(
         MAIN_X,
         Y_DEVICE,
@@ -667,17 +682,17 @@ def build() -> str:
         kind="source",
     )
     for offset, channel in ((-120, "LEFT"), (120, "RIGHT")):
-        x_channel = output.cx + offset
+        x_channel = clip.cx + offset
         parts.append(
             path(
-                [(x_channel, output.bottom), (x_channel, device_box.top)],
+                [(x_channel, clip.bottom), (x_channel, device_box.top)],
                 AUDIO,
             )
         )
         parts.append(
             text(
                 x_channel + 8,
-                (output.bottom + device_box.top) / 2 + 4,
+                (clip.bottom + device_box.top) / 2 + 4,
                 channel,
                 size=SIZE_LABEL,
                 fill=INK_SOFT,

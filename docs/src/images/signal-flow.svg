@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1208" width="1400" height="1208" role="img" aria-label="Accidental Synthesizer signal flow block diagram">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1300" width="1400" height="1300" role="img" aria-label="Accidental Synthesizer signal flow block diagram">
 <defs><marker id="arrow-audio" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#151a20"/></marker><marker id="arrow-mod" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7c8a99"/></marker><marker id="arrow-midi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2f6fb0"/></marker></defs>
-<rect x="0" y="0" width="1400" height="1208" fill="#ffffff"/>
+<rect x="0" y="0" width="1400" height="1300" fill="#ffffff"/>
 <rect x="190" y="44" width="380" height="62" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.6"/>
 <text x="380" y="74.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">VIRTUAL MIDI PORT</text>
 <text x="380" y="88.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#5b6672" text-anchor="middle">"AccSyn MIDI Input" — always available</text>
@@ -132,13 +132,18 @@
 <rect x="190" y="1000" width="800" height="64" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
 <text x="590" y="1033.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">OUTPUT MIXER</text>
 <text x="590" y="1047.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Master Level · Balance · Mute · Polarity</text>
-<path d="M 470 1064 L 470 1092" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
-<text x="478" y="1082" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#5b6672" text-anchor="start">LEFT</text>
-<path d="M 710 1064 L 710 1092" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
-<text x="718" y="1082" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#5b6672" text-anchor="start">RIGHT</text>
-<rect x="190" y="1092" width="800" height="72" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.6"/>
-<text x="590" y="1127.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">AUDIO OUTPUT DEVICE</text>
-<text x="590" y="1141.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#5b6672" text-anchor="middle">Core Audio · Selected Device</text>
+<path d="M 590 1064 L 590 1092" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<rect x="190" y="1092" width="800" height="64" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
+<text x="590" y="1118" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">OUTPUT SOFT CLIPPER</text>
+<text x="590" y="1132.5" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Tanh Clip — Prevents Exceeding 0 dBFS</text>
+<text x="590" y="1147" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Enable/Disable in Settings</text>
+<path d="M 470 1156 L 470 1184" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<text x="478" y="1174" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#5b6672" text-anchor="start">LEFT</text>
+<path d="M 710 1156 L 710 1184" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<text x="718" y="1174" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#5b6672" text-anchor="start">RIGHT</text>
+<rect x="190" y="1184" width="800" height="72" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.6"/>
+<text x="590" y="1219.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">AUDIO OUTPUT DEVICE</text>
+<text x="590" y="1233.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#5b6672" text-anchor="middle">Core Audio · Selected Device</text>
 <rect x="1040" y="206" width="230" height="56" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
 <text x="1155" y="232.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">PITCH ENVELOPE</text>
 <text x="1155" y="247.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Per-Oscillator Amount</text>
