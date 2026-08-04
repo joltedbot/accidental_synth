@@ -307,7 +307,7 @@ export component VerticalControlLabel inherits Rectangle {
     }
 }
 
-export component FilterControlLabel inherits Rectangle {
+export component SliderControlLabel inherits Rectangle {
     in property <string> label;
     in property <bool> enabled: true;
     property <color> text-color: enabled ? Theme.default-font-color : Theme.default-font-color.darker(2);
@@ -501,7 +501,7 @@ export component CenteredParameterSlider inherits VerticalLayout {
     }
 }
 
-export component LabeledVerticalSlider inherits VerticalLayout {
+export component LabeledVerticalSlider inherits Rectangle {
     in property <string> label;
     in property <float> minimum: 0;
     in property <float> maximum: 100;
@@ -512,22 +512,24 @@ export component LabeledVerticalSlider inherits VerticalLayout {
     in property <bool> enabled: true;
     callback vertical-slider-changed(float);
 
-    spacing: 10px;
+    VerticalLayout {
+        spacing: 7px;
 
-    FilterControlLabel {
-        label: label;
-        enabled: root.enabled;
-    }
-
-    HorizontalLayout {
-        alignment: center;
-        fslider := VerticalSlider {
-            height: slider-height;
-            width: slider-width;
-            value: value;
+        SliderControlLabel {
+            label: label;
             enabled: root.enabled;
-            updated(value) => {
-                vertical-slider-changed(value)
+        }
+
+        HorizontalLayout {
+            alignment: center;
+            fslider := VerticalSlider {
+                height: slider-height;
+                width: slider-width;
+                value: value;
+                enabled: root.enabled;
+                updated(value) => {
+                    vertical-slider-changed(value)
+                }
             }
         }
     }
@@ -662,6 +664,18 @@ export component MixerBalance inherits VerticalLayout {
     in property <float> value: Constant.DEFAULT_BALANCE_NORMAL;
     callback mixer-balance-update(float);
 
+    function display_value(value: float) -> string {
+        let number-value = round((value * 100) - 50);
+
+        if (number-value) == 0 {
+            return "Center";
+        } else if (number-value < 0) {
+            return number-value.abs() + "L";
+        } else {
+            return number-value + "R";
+        }
+    }
+
     Text {
         horizontal-alignment: center;
         width: slider.width;
@@ -670,31 +684,51 @@ export component MixerBalance inherits VerticalLayout {
         text: Theme.mixer-balance-label;
     }
 
+    changed value => {
+        slider.tip = display_value(value);
+    }
+
     slider := BalanceSlider {
+        property <string> tip;
+
         height: 25px;
         width: 50px;
         value: value;
+
+        Tooltip {
+            text: @markdown("\{tip}");
+        }
+
         updated(value) => {
             mixer-balance-update(value);
+            tip = display_value(value);
         }
     }
 }
 
 export component MixerLevel inherits VerticalLayout {
     in property <float> value: 0.0;
-    in property <length> slider-height: 100px;
+    in property <length> slider-height: 120px;
     callback mixer-level-update(float);
 
-    title := ComponentLabel {
-        height: 20px;
-        label: Theme.mixer-level-label;
+    changed value => {
+        slider.tip = round(value * 100);
     }
 
-    VerticalSlider {
+    slider := LabeledVerticalSlider {
+        property <string> tip;
+
+        label: Theme.mixer-level-label;
         value: value;
         height: slider-height;
-        updated(value) => {
+
+        Tooltip {
+            text: @markdown("\{tip}%");
+        }
+
+        vertical-slider-changed(value) => {
             mixer-level-update(value);
+            tip = round(value * 100);
         }
     }
 }
@@ -711,44 +745,79 @@ export component EnvelopeSection inherits VerticalLayout {
     alignment: start;
     spacing: 5px;
 
+    changed envelope-values => {
+        attack.tip = round(envelope-values.attack * 100);
+        decay.tip = round(envelope-values.decay * 100);
+        sustain.tip = round(envelope-values.sustain * 100);
+        release.tip = round(envelope-values.release * 100);
+    }
+
     HorizontalLayout {
         padding: Theme.osc-controls-panel-padding;
         spacing: Theme.osc-controls-panel-spacing;
         alignment: space-between;
 
         attack := LabeledVerticalSlider {
+            property <string> tip;
             label: Theme.envelope-label-attack;
             value: envelope-values.attack;
             slider-height: 90px;
+
+            Tooltip {
+                text: @markdown("\{tip}%");
+            }
+
             vertical-slider-changed(milliseconds) => {
                 envelope-attack-changed(milliseconds);
+                tip = round(milliseconds * 100);
             }
         }
 
         decay := LabeledVerticalSlider {
+            property <string> tip;
             label: Theme.envelope-label-decay;
             value: envelope-values.decay;
             slider-height: 90px;
+
+            Tooltip {
+                text: @markdown("\{tip}%");
+            }
+
             vertical-slider-changed(milliseconds) => {
                 envelope-decay-changed(milliseconds);
+                tip = round(milliseconds * 100);
             }
         }
 
         sustain := LabeledVerticalSlider {
+            property <string> tip;
             label: Theme.envelope-label-sustain;
             value: envelope-values.sustain;
             slider-height: 90px;
+
+            Tooltip {
+                text: @markdown("\{tip}%");
+            }
+
             vertical-slider-changed(level) => {
                 envelope-sustain-changed(level);
+                tip = round(level * 100);
             }
         }
 
         release := LabeledVerticalSlider {
+            property <string> tip;
             label: Theme.envelope-label-release;
             value: envelope-values.release;
             slider-height: 90px;
+
+            Tooltip {
+                text: @markdown("\{tip}%");
+            }
+
             vertical-slider-changed(milliseconds) => {
                 envelope-release-changed(milliseconds);
+                tip = round(milliseconds * 100);
             }
         }
 

@@ -93,13 +93,14 @@ export component VerticalSlider inherits Rectangle {
     }
 
     handle := SliderHandle {
-        z: 2;
+        z: 3;
         y: get_handle_position();
     }
 
     track := SliderTrack {
         track-height: parent.height;
         position: enabled ? indicator-current-position : indicator-default-position;
+        z: 2;
     }
 }
 

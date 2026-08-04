@@ -41,23 +41,42 @@ export component FilterCutoffSection inherits HorizontalLayout {
 
     alignment: start;
 
-    LabeledVerticalSlider {
+    changed filter-cutoff-values => {
+        cutoff.tip = round(filter-cutoff-values.cutoff * 100);
+        resonance.tip = round(filter-cutoff-values.resonance * 100);
+    }
+
+    cutoff := LabeledVerticalSlider {
+        property <string> tip;
         label: Theme.filter-label-cutoff;
         slider-height: 220px;
         slider-width: 50px;
         value: filter-cutoff-values.cutoff;
+
+        Tooltip {
+            text: @markdown("\{tip}%");
+        }
+
         vertical-slider-changed(frequency) => {
             filter-cutoff-changed(frequency);
+            tip = round(frequency * 100);
         }
     }
 
-    LabeledVerticalSlider {
+    resonance := LabeledVerticalSlider {
+        property <string> tip;
         label: Theme.filter-label-resonance;
         slider-width: 50px;
         slider-height: 220px;
         value: filter-cutoff-values.resonance;
+
+        Tooltip {
+            text: @markdown("\{tip}%");
+        }
+
         vertical-slider-changed(amount) => {
             filter-resonance-changed(amount);
+            tip = round(amount * 100);
         }
     }
 }
