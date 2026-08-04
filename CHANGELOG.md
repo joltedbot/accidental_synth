@@ -2,6 +2,30 @@
 
 This project has switched from Semantic Versioning to Calendar Versioning.
 
+## 2026.08.04.588
+
+### Added
+ - Tool tips on hover for vertical sliders where space doesn't permit a fixed value field as well as for the mixer balance horizontal sliders
+ - New preset `Degraded Phase Lead` 
+ - You can now hit enter to save a preset if the preset name text box is selected and not empty
+ - New Saturation effect type `OpAmp Like Soft Clipping` based on a tanh soft clipping
+ - A soft clipper to the output after the output level mixer to prevent the output exceeding 0 dbfs 
+ - Output Soft Clipping disable/enable switch in the settings menu
+ - A `Help` menu bar item in the macOS menu bar at the top of the screen. It provides the user access to various documentation and the user 
+   patches directory
+
+### Fixed
+- The aliasing noise on the Square, Pulse, Saw, Supersaw, and Ramp wave shapes with PolyBlep and Triangle wave shape with PolyBlamp
+- Several presets needed to be adapted for recent changes to the Flanger and Saturation effects
+- Resolved a potential bug in deserializing presets where the soft clipper would silently override and turn the soft clipping on even if the patch had it set to off
+- An order of operations issue in the sine oscillator that made it start slightly past the proper phase 0.0 first sample
+
+### Changed
+- The depth of the Flanger effect was very small so I updated it to give it more flange
+- The saturation effect type `Soft Clipping` is now called `Diode Like Soft Clipping` to distinguish it from the new tanh soft clipping type 
+- Updated the documentation
+- Update dependencies including adding the `open` crate used by the new help menu
+
 ## 2026.07.26.562
 
 ### Added
