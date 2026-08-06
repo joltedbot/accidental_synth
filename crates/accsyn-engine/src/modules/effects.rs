@@ -6,6 +6,7 @@ use crate::modules::effects::compressor::Compressor;
 use crate::modules::effects::delay::Delay;
 use crate::modules::effects::flanger::Flanger;
 use crate::modules::effects::gate::Gate;
+use crate::modules::effects::phaser::Phaser;
 use crate::modules::effects::rectifier::Rectifier;
 use crate::modules::effects::saturation::Saturation;
 use crate::modules::effects::tremolo::Tremolo;
@@ -27,6 +28,7 @@ mod constants;
 mod delay;
 mod flanger;
 mod gate;
+mod phaser;
 mod rectifier;
 mod saturation;
 mod tremolo;
@@ -94,11 +96,12 @@ impl Effects {
         let tremolo = Box::new(Tremolo::new(sample_rate));
         let chorus = Box::new(Chorus::new(sample_rate));
         let flanger = Box::new(Flanger::new(sample_rate));
+        let phaser = Box::new(Phaser::new(sample_rate));
 
         Self {
             effects: vec![
                 saturation, compressor, wavefolder, bitcrusher, clipper, gate, rectifier, chorus,
-                flanger, autopan, tremolo, delay,
+                flanger, phaser, autopan, tremolo, delay,
             ],
             parameters: EffectParameters::default_all(),
         }

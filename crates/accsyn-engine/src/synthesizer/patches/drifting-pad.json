@@ -91,6 +91,16 @@
       ]
     },
     {
+      "name": "Phaser",
+      "is_enabled": false,
+      "parameters": [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
       "name": "Auto-Pan",
       "is_enabled": true,
       "parameters": [

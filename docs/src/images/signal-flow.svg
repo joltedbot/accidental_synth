@@ -81,54 +81,58 @@
 <rect x="190" y="656" width="800" height="298" rx="6" fill="#eef1f4" stroke="#b6c0ca" stroke-width="1.2"/>
 <text x="208" y="678" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#151a20" text-anchor="start">EFFECTS  —  processed in order, each bypassable</text>
 <path d="M 590 628 L 590 656" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
-<path d="M 346 717 L 366 717" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
-<path d="M 502 717 L 522 717" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
-<path d="M 658 717 L 678 717" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
-<path d="M 814 717 L 834 717" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
-<path d="M 346 813 L 366 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
-<path d="M 502 813 L 522 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
-<path d="M 658 813 L 678 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
-<path d="M 814 813 L 834 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
-<path d="M 346 909 L 366 909" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
-<path d="M 970 717 L 984 717 L 984 765 L 199 765 L 199 813 L 210 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 320 717 L 340 717" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 450 717 L 470 717" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 580 717 L 600 717" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 710 717 L 730 717" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 320 813 L 340 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 450 813 L 470 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 580 813 L 600 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 710 813 L 730 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 840 813 L 860 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 320 909 L 340 909" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<path d="M 840 717 L 984 717 L 984 765 L 199 765 L 199 813 L 210 813" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
 <path d="M 970 813 L 984 813 L 984 861 L 199 861 L 199 909 L 210 909" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
-<rect x="210" y="690" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<rect x="210" y="690" width="110" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
 <text x="218" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">1</text>
-<text x="278" y="722.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Saturation</text>
-<rect x="366" y="690" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
-<text x="374" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">2</text>
-<text x="434" y="722.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Colour Compressor</text>
-<rect x="522" y="690" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
-<text x="530" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">3</text>
-<text x="590" y="722.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Wave Folder</text>
-<rect x="678" y="690" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
-<text x="686" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">4</text>
-<text x="746" y="722.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Bit Crusher</text>
-<rect x="834" y="690" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
-<text x="842" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">5</text>
-<text x="902" y="722.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Clipper</text>
-<rect x="210" y="786" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="265" y="721.564" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9.12779" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Saturation</text>
+<rect x="340" y="690" width="110" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="348" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">2</text>
+<text x="395" y="721.564" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9.12779" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Colour Compressor</text>
+<rect x="470" y="690" width="110" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="478" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">3</text>
+<text x="525" y="721.564" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9.12779" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Wave Folder</text>
+<rect x="600" y="690" width="110" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="608" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">4</text>
+<text x="655" y="721.564" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9.12779" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Bit Crusher</text>
+<rect x="730" y="690" width="110" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="738" y="704" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">5</text>
+<text x="785" y="721.564" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9.12779" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Clipper</text>
+<rect x="210" y="786" width="110" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
 <text x="218" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">6</text>
-<text x="278" y="818.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Gate Clipping</text>
-<rect x="366" y="786" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
-<text x="374" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">7</text>
-<text x="434" y="818.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Wave Rectifier</text>
-<rect x="522" y="786" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
-<text x="530" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">8</text>
-<text x="590" y="818.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Chorus</text>
-<rect x="678" y="786" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
-<text x="686" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">9</text>
-<text x="746" y="818.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Flanger</text>
-<rect x="834" y="786" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
-<text x="842" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">10</text>
-<text x="902" y="818.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Auto-Pan</text>
-<rect x="210" y="882" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
-<text x="218" y="896" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">11</text>
-<text x="278" y="914.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Tremolo</text>
-<rect x="366" y="882" width="136" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
-<text x="374" y="896" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">12</text>
-<text x="434" y="914.882" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.7647" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Delay</text>
-<path d="M 434 954 L 434 977 L 590 977 L 590 1000" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
+<text x="265" y="817.564" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9.12779" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Gate Clipping</text>
+<rect x="340" y="786" width="110" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="348" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">7</text>
+<text x="395" y="817.564" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9.12779" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Wave Rectifier</text>
+<rect x="470" y="786" width="110" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="478" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">8</text>
+<text x="525" y="817.564" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9.12779" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Chorus</text>
+<rect x="600" y="786" width="110" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="608" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">9</text>
+<text x="655" y="817.564" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9.12779" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Flanger</text>
+<rect x="730" y="786" width="110" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="738" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">10</text>
+<text x="785" y="817.564" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9.12779" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Phaser</text>
+<rect x="860" y="786" width="110" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="868" y="800" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">11</text>
+<text x="915" y="817.564" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9.12779" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Auto-Pan</text>
+<rect x="210" y="882" width="110" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="218" y="896" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">12</text>
+<text x="265" y="913.564" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9.12779" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Tremolo</text>
+<rect x="340" y="882" width="110" height="54" rx="3" fill="#ffffff" stroke="#151a20" stroke-width="1.3"/>
+<text x="348" y="896" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#5b6672" text-anchor="start">13</text>
+<text x="395" y="913.564" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="9.12779" font-weight="bold" fill="#151a20" text-anchor="middle" letter-spacing="0.4">Delay</text>
+<path d="M 395 954 L 395 977 L 590 977 L 590 1000" fill="none" stroke="#151a20" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arrow-audio)"/>
 <rect x="190" y="1000" width="800" height="64" rx="3" fill="#151a20" stroke="none" stroke-width="1.4"/>
 <text x="590" y="1033.25" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="17" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.4">OUTPUT MIXER</text>
 <text x="590" y="1047.75" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#a9b4c0" text-anchor="middle">Master Level · Balance · Mute · Polarity</text>

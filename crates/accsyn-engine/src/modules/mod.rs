@@ -12,3 +12,5 @@ pub mod lfo;
 pub mod mixer;
 /// Waveform generation oscillators supporting multiple wave shapes.
 pub mod oscillator;
+/// All pass filter for use in various other effects
+pub mod phase_shift_all_pass;

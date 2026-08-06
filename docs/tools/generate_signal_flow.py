@@ -320,7 +320,7 @@ OSC_FOOTER = "BOOST + AFTERTOUCH"
 # (row1 / row2 / row3). That reading order is also the DSP processing order.
 EFFECT_ROWS = [
     ["Saturation", "Colour Compressor", "Wave Folder", "Bit Crusher", "Clipper"],
-    ["Gate Clipping", "Wave Rectifier", "Chorus", "Flanger", "Auto-Pan"],
+    ["Gate Clipping", "Wave Rectifier", "Chorus", "Flanger", "Phaser", "Auto-Pan"],
     ["Tremolo", "Delay"],
 ]
 

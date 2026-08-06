@@ -43,6 +43,9 @@ pub enum EffectIndex {
     /// Flanger effect.
     #[strum(to_string = "Flanger")]
     Flanger,
+    /// Phaser effect.
+    #[strum(to_string = "Phaser")]
+    Phaser,
     /// Automatic stereo panning effect.
     #[strum(to_string = "Auto-Pan")]
     AutoPan,
@@ -142,6 +145,13 @@ impl EffectParameters {
                         name: effect.to_string(),
                         is_enabled: false,
                         parameters: Defaults::FLANGER_PARAMETERS.to_vec(),
+                    });
+                }
+                EffectIndex::Phaser => {
+                    effect_parameters.push(EffectParameters {
+                        name: effect.to_string(),
+                        is_enabled: false,
+                        parameters: Defaults::PHASER_PARAMETERS.to_vec(),
                     });
                 }
                 EffectIndex::AutoPan => {

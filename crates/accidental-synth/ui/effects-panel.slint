@@ -20,6 +20,7 @@ import {
     Rectifier,
     Chorus,
     Flanger,
+    Phaser,
     AutoPan,
     Tremolo,
     Delay,
@@ -203,7 +204,7 @@ export component EffectsPanel inherits Panel {
                     right-padding: 0px;
                 }
 
-                AutoPan {
+                Phaser {
                     effect-index: 9;
                     effect_values: effects_values[self.effect-index];
 
@@ -219,6 +220,11 @@ export component EffectsPanel inherits Panel {
                     left-padding: 0px;
                     right-padding: 0px;
                 }
+
+                VerticalSpacer {
+                    left-padding: 0px;
+                    right-padding: 0px;
+                }
             }
 
             HorizontalSpacer { }
@@ -228,7 +234,7 @@ export component EffectsPanel inherits Panel {
             padding: Theme.effect-box-padding;
             spacing: Theme.effect-box-spacing;
 
-            Tremolo {
+            AutoPan {
                 effect-index: 10;
                 effect_values: effects_values[self.effect-index];
 
@@ -245,8 +251,25 @@ export component EffectsPanel inherits Panel {
                 right-padding: 0px;
             }
 
-            Delay {
+            Tremolo {
                 effect-index: 11;
+                effect_values: effects_values[self.effect-index];
+
+                effect_enabled(effect-index, is_enabled) => {
+                    effect_enabled(effect-index, is_enabled);
+                }
+                effect_parameter_changed(effect_index, parameter_index, value) => {
+                    effect_parameter_changed(effect_index, parameter_index, value);
+                }
+            }
+
+            VerticalSpacer {
+                left-padding: 0px;
+                right-padding: 0px;
+            }
+
+            Delay {
+                effect-index: 12;
                 effect_values: effects_values[self.effect-index];
 
                 effect_enabled(effect-index, is_enabled) => {

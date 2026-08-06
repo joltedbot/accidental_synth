@@ -330,7 +330,17 @@ Flanger effect
 | **Feedback** | How much of the wet signal is fed back into the delay buffer |
 | **Blend**    | Wet/Dry signal blend (Left: 0% Wet, Right: 100% Wet)         |
 
-### 10 — Auto Pan
+### 10 — Phaser
+
+4-stage all-pass phaser. Sweeps notches through the signal by cascading phase-shift
+all-pass filters and blending the result back with the dry signal.
+
+| Control   | Description                                          |
+|-----------|-------------------------------------------------------|
+| **Rate**  | Speed of the sweep modulation                         |
+| **Blend** | Wet/Dry signal blend (Left: 0% Wet, Right: 100% Wet)  |
+
+### 11 — Auto Pan
 
 Automatically pans the signal between left and right.
 
@@ -340,7 +350,7 @@ Automatically pans the signal between left and right.
 | **Width**      | Maximum pan amount.                     |
 | **Wave Shape** | LFO shape driving the panning movement. |
 
-### 11 — Tremolo
+### 12 — Tremolo
 
 Modulates the output level (amplitude)
 
@@ -350,7 +360,7 @@ Modulates the output level (amplitude)
 | **Depth**      | Tremolo intensity.                          |
 | **Wave Shape** | LFO shape driving the amplitude modulation. |
 
-### 12 — Delay
+### 13 — Delay
 
 A simple stereo delay
 
