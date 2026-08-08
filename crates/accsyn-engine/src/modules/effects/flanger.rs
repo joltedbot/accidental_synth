@@ -12,6 +12,7 @@ use accsyn_core::math::{exponential_curve_from_normal_value_and_coefficient, f32
 
 // Ensure MAX_DELAY_SAMPLES is a power of 2 to guarantee the bitwise wrapping logic is safe
 const _: () = assert!(MAX_FLANGER_DELAY_SAMPLES.is_power_of_two());
+const WET_DRY_MIX_RATIO: f32 = 0.5;
 
 pub struct Flanger {
     buffer: Vec<(f32, f32)>,
@@ -119,19 +120,20 @@ impl AudioEffect for Flanger {
         self.samples_count += target_delay_samples_right;
         let new_samples_count_right =
             f32_to_usize_clamped(self.samples_count.floor()).min(buffer_len - 1);
-        let flanged_samples = self.delayed_samples_from_buffer(
+        let wet_samples = self.delayed_samples_from_buffer(
             buffer_len,
             self.samples_count,
             new_samples_count_right,
         );
 
         self.buffer[self.write_index] = (
-            samples.0 + flanged_samples.0 * feedback,
-            samples.1 + flanged_samples.1 * feedback,
+            samples.0 + wet_samples.0 * feedback,
+            samples.1 + wet_samples.1 * feedback,
         );
 
         self.write_index = (self.write_index + 1) & (buffer_len - 1);
 
+        let flanged_samples = wet_dry_blend(samples, wet_samples, WET_DRY_MIX_RATIO);
         wet_dry_blend(samples, flanged_samples, blend)
     }
 }
